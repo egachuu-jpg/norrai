@@ -1,0 +1,362 @@
+{
+  "name": "Client Onboarding → Claude Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding_form",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5a722edc-6663-4f9d-8f83-f99b452c05f6",
+      "name": "Webhook — Form Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        -336
+      ],
+      "webhookId": "d2cb954a-1e75-4fd9-85e5-18346030f341"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Build the Claude prompt from all form fields ───────────────────────────\nconst d = $input.first().json.body;\n\nconst prompt = `You are an automation consultant analyzing a discovery questionnaire from a potential client in the event operations space. Your job is to identify the highest-impact automation opportunities and produce a prioritized, opinionated build list for a builder who uses n8n and the Claude API.\n\nHere is the completed discovery questionnaire:\n\n## ABOUT THE CLIENT\nName: ${d.name || 'Not provided'}\nRole: ${d.role || 'Not specified'}\nCompany: ${d.company || 'Not specified'}\nEmail: ${d.email || 'Not provided'}\nTeam size: ${d.team_size || 'Not specified'}\n\n## CAPACITY CONTEXT (they recently lost two team members)\n${d.capacity_gap || 'Not provided'}\n\n## EVENT VOLUME\nEvents per year: ${d.events_per_year || 'Not specified'}\nAverage attendees per event: ${d.avg_attendees || 'Not specified'}\nEvent types they run: ${d.event_types || 'Not specified'}\nBusiest season: ${d.busiest_season || 'Not specified'}\n\n## WHERE THEIR TIME GOES (1 = barely any · 5 = consumes their week)\nRegistration & intake: ${d.time_registration || 'Not rated'}/5\nAttendee communications: ${d.time_communications || 'Not rated'}/5\nVendor & venue coordination: ${d.time_vendor || 'Not rated'}/5\nScheduling & logistics: ${d.time_scheduling || 'Not rated'}/5\nPost-event follow-up: ${d.time_post_event || 'Not rated'}/5\nReporting & data: ${d.time_reporting || 'Not rated'}/5\nSocial media & marketing: ${d.time_social || 'Not rated'}/5\n\n## PAIN POINTS (in their own words)\nTask they dread most / biggest time sink:\n${d.biggest_time_sink || 'Not provided'}\n\nWhat's actually falling through the cracks since losing team members:\n${d.what_falls_through || 'Not provided'}\n\n## CURRENT TOOLS & STACK\nRegistration tools: ${d.registration_tools || 'Not specified'}\nCommunication tools: ${d.comms_tools || 'Not specified'}\nWhere data lives: ${d.data_tools || 'Not specified'}\nOpenness to new tools: ${d.open_to_new_tools || 'Not specified'}\n\nWhat happens manually after someone registers (their exact words):\n${d.manual_steps || 'Not provided'}\n\n## REPETITIVE WORK PATTERNS\nThings they copy-paste or reformat across systems:\n${d.copy_paste || 'Not provided'}\n\nTypes of emails they write over and over:\n${d.emails_written || 'Not provided'}\n\nRegular reports they produce and who gets them:\n${d.reports_created || 'Not provided'}\n\n## PRIORITIES & GOALS\nThe one thing they'd eliminate from their plate tomorrow:\n${d.biggest_pain || 'Not provided'}\n\nWhat success looks like in 90 days: ${d.success_looks_like || 'Not specified'}\n\nAnything else they want you to know:\n${d.anything_else || 'None'}\n\n---\n\nBased on this discovery, produce a structured analysis with exactly these sections:\n\n**SITUATION SUMMARY**\n3-4 sentences. What's really going on here — the operational reality, not a restatement of the facts. What the capacity gap means in practical terms for their day-to-day. What the biggest risk is if nothing changes.\n\n**TOP AUTOMATION OPPORTUNITIES** (ranked by impact-to-effort ratio, highest first)\nFor each opportunity, include:\n- A short name for the automation\n- The exact manual work it eliminates\n- Estimated time saved per event or per week\n- Build complexity: Low / Medium / High — and why\n- Stack: exactly which tools to connect (e.g. rSchoolToday webhook → n8n → SendGrid, or Eventbrite API → n8n → Airtable → Gmail). Be specific to what they told you they use.\n- Trigger: what event kicks it off\n- Output: what it produces or sends\n\n**RECOMMENDED BUILD ORDER**\nFirst, second, third — with a one-sentence rationale for each. Be opinionated. Prioritize based on what's actively falling through the cracks and what will relieve the most pressure fastest given their reduced headcount.\n\n**QUICK WINS (live in under a week)**\nAnything achievable with minimal effort that would provide immediate relief. These should be the first thing you talk about.\n\n**STACK NOTES**\nHonest assessment of their current tools. What integrations will be smooth, what will be painful, where the data gaps are, and what to watch out for.\n\n**ONE QUESTION BEFORE BUILDING**\nThe single most important clarifying question — the one whose answer would most change your recommendations. One question only.\n\nBe specific and direct throughout. Use their exact words back to them where it makes the point stronger. No generic automation advice — every recommendation should be traceable to something they actually told you.`;\n\n// Serialize the full Claude API request body here — avoids n8n expression\n// parser choking on the prompt's special characters and newlines.\nconst claude_request_body = JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 4096,\n  messages: [{ role: 'user', content: prompt }]\n});\n\nreturn [{\n  json: {\n    prompt,\n    claude_request_body,\n    submitter_name: d.name || 'Unknown',\n    submitter_email: d.email || '',\n    submitted_at: d.submitted_at || new Date().toISOString()\n  }\n}];"
+      },
+      "id": "18676b34-7773-47bc-b916-0f93d3ff50fc",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $vars.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: \"claude-sonnet-4-6\", max_tokens: 500, messages: [{ role: \"user\", content: $json.prompt }] } }}",
+        "options": {}
+      },
+      "id": "b9184aeb-5ab0-4bc8-9f2a-69a2055fc3bc",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Extract Claude's text response ────────────────────────────────────────\nconst claudeResponse = $input.first().json;\nconst analysis = claudeResponse.content?.[0]?.text ?? 'No response from Claude.';\n\n// Pull submitter info from the Build Prompt node\nconst submitterName = $('Build Claude Prompt').first().json.submitter_name;\nconst submitterEmail = $('Build Claude Prompt').first().json.submitter_email;\nconst submittedAt = $('Build Claude Prompt').first().json.submitted_at;\n\n// Format a clean HTML email body\nconst htmlBody = `\n<div style=\"font-family: 'Inter', -apple-system, sans-serif; max-width: 720px; margin: 0 auto; color: #0A0F1A;\">\n  <div style=\"background: #0A0F1A; padding: 32px; border-radius: 8px 8px 0 0;\">\n    <div style=\"font-family: monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #7FA9B8; margin-bottom: 8px;\">Norr AI · Discovery Analysis</div>\n    <div style=\"font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 22px; color: #FAFAF7; letter-spacing: -0.03em;\">Event Ops Discovery — ${submitterName}</div>\n    <div style=\"font-size: 12px; color: #6A6F78; margin-top: 6px;\">Submitted: ${new Date(submittedAt).toLocaleString('en-US', { timeZone: 'America/Chicago' })} CT · ${submitterEmail}</div>\n  </div>\n  <div style=\"background: #FAFAF7; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px; padding: 32px;\">\n    <div style=\"white-space: pre-wrap; font-size: 14px; line-height: 1.75; color: #3A3F48;\">${analysis.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>').replace(/\\n/g, '<br>')}</div>\n  </div>\n  <div style=\"text-align: center; padding: 24px; font-size: 11px; color: #9EA3AA; font-family: monospace; letter-spacing: 0.1em;\">NORR AI · FARIBAULT, MN · AUTOMATED ANALYSIS</div>\n</div>\n`;\n\nreturn [{\n  json: {\n    analysis,\n    html_body: htmlBody,\n    submitter_name: submitterName,\n    submitter_email: submitterEmail,\n    subject: `Discovery analysis — ${submitterName} (Event Ops)`\n  }\n}];"
+      },
+      "id": "1c01f9f0-dee6-4b53-affc-7de2e4f598b2",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SENDGRID_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"studio@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }] } }}",
+        "options": {}
+      },
+      "id": "39cfb0f7-3b32-49b8-9c66-4870ba585572",
+      "name": "Send Analysis via SendGrid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2528,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"message\": \"Got it — we'll review your answers and reach out within one business day.\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e9ee3aa4-8b8c-452e-8d5e-f9d75447ff93",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2752,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09c9c0dc-11bd-431f-93fe-eda5e92be7a6",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=21FB348E-12B4-41EF-B164-43188A647E9C",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1408,
+        -336
+      ],
+      "id": "c107b631-9962-4908-a5de-b56ce139e9ab",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "QOSX5Gv13oKFmcaW",
+          "mode": "list",
+          "cachedResultName": "valid_emails",
+          "cachedResultUrl": "/projects/dHMe2aoOwTztDaWE/datatables/QOSX5Gv13oKFmcaW"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email_address",
+              "keyValue": "={{ $node[\"Get Listing Details\"].json.body.agent_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        -336
+      ],
+      "id": "03ef7e55-3c0a-4b17-9727-66be8a599dfa",
+      "name": "Valid Email Check"
+    }
+  ],
+  "pinData": {
+    "Webhook — Form Intake": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "content-length": "1656",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "152.117.90.20",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f09066e08bbe7f8-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "null",
+            "priority": "u=1, i",
+            "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "152.117.90.20, 108.162.216.227",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-hwvz7",
+            "x-is-trusted": "yes",
+            "x-real-ip": "152.117.90.20"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "name": "deez nutz",
+            "email": "egachuu@gmail.com",
+            "role": "Senior Event Coordinator",
+            "company": "Prep Network",
+            "team_size": "4–6 people",
+            "capacity_gap": "Follow up on events is falling through the cracks, reminders for registration are not being sent out, drowning in data entry from one app to another",
+            "events_per_year": "31–50",
+            "avg_attendees": "50–200",
+            "busiest_season": "Summer (Jun–Aug)",
+            "biggest_time_sink": "Building event schedule manually every time",
+            "what_falls_through": "payments aren't being tracked, correct communication to teams and coaches aren't happening",
+            "manual_steps": "we get an email notification, manually add them to a spreadsheet and create a google calendar entry to remind them that its coming up",
+            "copy_paste": "exporting contact info from salesforce into our payment tracker",
+            "emails_written": "Registration confirmations, reminders and thank yous, summaries to execs",
+            "reports_created": "post event attendance to leadership, news article recap for attendees",
+            "biggest_pain": "Coordinating gym space with local facilities. The back and forth with facility managers takes an entire week",
+            "open_to_new_tools": "prefer_existing",
+            "anything_else": "minor information is sensitive",
+            "time_registration": "4",
+            "time_communications": "3",
+            "time_vendor": "2",
+            "time_scheduling": "5",
+            "time_post_event": "3",
+            "time_reporting": "4",
+            "time_social": "2",
+            "event_types": "tournaments, showcases, college_exposure",
+            "registration_tools": "active_network, email_direct",
+            "comms_tools": "email_manual, mailchimp, sms",
+            "data_tools": "excel_sheets, salesforce",
+            "success_looks_like": "fewer_hours",
+            "submitted_at": "2026-04-23T01:16:50.004Z",
+            "source": "event_ops_discovery_form"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook-test/event-ops-discovery",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook — Form Intake": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Send Analysis via SendGrid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Analysis via SendGrid": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Valid Email Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Email Check": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c2aa7360-52b3-4bb9-bdf8-66ace5c3a6a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "b9KeIvQzK6HBVj4L",
+  "tags": []
+}

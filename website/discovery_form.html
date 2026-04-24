@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discovery — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 700px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--bone);
+    margin-bottom: 12px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 500px;
+  }
+  .site-header p strong { color: #c8d0db; font-weight: 500; }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Section cards ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-body { padding: 24px; }
+  .section-intro {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-bottom: 20px;
+    line-height: 1.55;
+  }
+
+  /* ── Fields ── */
+  .row   { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239EA3AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  textarea { resize: vertical; min-height: 88px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Rating scales ── */
+  .rating-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rating-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .rating-row:first-child { padding-top: 0; }
+  .rating-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--ink);
+    min-width: 0;
+  }
+  .scale-group {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .scale-group input[type="radio"] { display: none; }
+  .scale-group label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    background: var(--bone);
+    letter-spacing: 0;
+    user-select: none;
+  }
+  .scale-group input[type="radio"]:checked + label {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.15);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .scale-group label:hover { border-color: var(--glacial); }
+  .scale-legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .scale-legend span { display: flex; align-items: center; gap: 6px; }
+
+  /* ── Pill checkboxes ── */
+  .pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+    background: var(--bone);
+  }
+  .pill input[type="checkbox"] { display: none; }
+  .pill:hover { border-color: var(--glacial); }
+  .pill.active {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ── Radio options ── */
+  .radio-group { display: flex; flex-direction: column; gap: 8px; }
+  .radio-group.inline { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .radio-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background: var(--bone);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .radio-option:hover { border-color: var(--glacial); }
+  .radio-option input[type="radio"] { margin-top: 3px; accent-color: var(--glacial); flex-shrink: 0; }
+  .radio-option:has(input:checked) {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.08);
+  }
+  .radio-content strong { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .radio-content span  { display: block; font-size: 12px; color: var(--secondary); margin-top: 2px; }
+  .radio-group.inline .radio-option { flex: 1; min-width: 120px; }
+
+  /* ── Conditional reveal ── */
+  .conditional { display: none; }
+  .conditional.show { display: block; margin-top: 16px; }
+
+  /* ── Submit area ── */
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 15px 24px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  @media (max-width: 580px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
+    .rating-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .radio-group.inline { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · Discovery</div>
+    <h1>Let's figure out<br><span class="accent">what you need</span></h1>
+    <p>Takes about 10 minutes. No right answers — the more specific you are about what's painful, the better I can tell you what's actually worth building.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="discovery-form">
+
+    <!-- 01 About You -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">About You</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="contact_name">Your name <span class="req">*</span></label>
+            <input type="text" id="contact_name" name="contact_name" autocomplete="name" placeholder="Jane Smith" required>
+          </div>
+          <div class="field">
+            <label for="contact_email">Business email <span class="req">*</span></label>
+            <input type="email" id="contact_email" name="contact_email" autocomplete="email" placeholder="jane@yourbusiness.com" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="contact_phone">Phone</label>
+            <input type="tel" id="contact_phone" name="contact_phone" autocomplete="tel" placeholder="507-555-1234">
+          </div>
+          <div class="field">
+            <label for="business_name">Business name <span class="req">*</span></label>
+            <input type="text" id="business_name" name="business_name" placeholder="Northfield Dental, Smith & Associates..." required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="industry">Industry <span class="req">*</span></label>
+            <select id="industry" name="industry" required>
+              <option value="">Select...</option>
+              <option>Real Estate</option>
+              <option>Dental / Medical</option>
+              <option>Insurance</option>
+              <option>Legal</option>
+              <option>Home Services (Plumbing, Electrical, HVAC, etc.)</option>
+              <option>Construction / Contracting</option>
+              <option>Salon, Spa &amp; Wellness</option>
+              <option>Fitness &amp; Gym</option>
+              <option>Auto Repair</option>
+              <option>Landscaping / Lawn Care</option>
+              <option>Veterinary</option>
+              <option>Retail</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="team_size">Team size</label>
+            <select id="team_size" name="team_size">
+              <option value="">Select...</option>
+              <option>Just me</option>
+              <option>2–5</option>
+              <option>6–15</option>
+              <option>16+</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 The Problem -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">The Problem</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="what_brings_you">What made you reach out? <span class="req">*</span></label>
+          <textarea id="what_brings_you" name="what_brings_you" placeholder="Something specific — a frustration, a near-miss, a process that's eating your week..." required></textarea>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <label>Rate how much each of these costs you time or stress <span style="font-weight:400;color:var(--muted)">(1 = barely any · 5 = major pain)</span></label>
+          <div class="scale-legend">
+            <span>1 · No issue</span>
+            <span>5 · Major pain</span>
+          </div>
+          <div class="rating-row">
+            <div class="rating-label">Speed of response to new leads</div>
+            <div class="scale-group" role="group" aria-label="Speed of response rating">
+              <input type="radio" name="pain_missed_leads" id="pain_missed_leads_1" value="1">
+              <label for="pain_missed_leads_1">1</label>
+              <input type="radio" name="pain_missed_leads" id="pain_missed_leads_2" value="2">
+              <label for="pain_missed_leads_2">2</label>
+              <input type="radio" name="pain_missed_leads" id="pain_missed_leads_3" value="3">
+              <label for="pain_missed_leads_3">3</label>
+              <input type="radio" name="pain_missed_leads" id="pain_missed_leads_4" value="4">
+              <label for="pain_missed_leads_4">4</label>
+              <input type="radio" name="pain_missed_leads" id="pain_missed_leads_5" value="5">
+              <label for="pain_missed_leads_5">5</label>
+            </div>
+          </div>
+          <div class="rating-row">
+            <div class="rating-label">Time spent on manual follow-up</div>
+            <div class="scale-group" role="group" aria-label="Manual follow-up rating">
+              <input type="radio" name="pain_manual_followup" id="pain_manual_followup_1" value="1">
+              <label for="pain_manual_followup_1">1</label>
+              <input type="radio" name="pain_manual_followup" id="pain_manual_followup_2" value="2">
+              <label for="pain_manual_followup_2">2</label>
+              <input type="radio" name="pain_manual_followup" id="pain_manual_followup_3" value="3">
+              <label for="pain_manual_followup_3">3</label>
+              <input type="radio" name="pain_manual_followup" id="pain_manual_followup_4" value="4">
+              <label for="pain_manual_followup_4">4</label>
+              <input type="radio" name="pain_manual_followup" id="pain_manual_followup_5" value="5">
+              <label for="pain_manual_followup_5">5</label>
+            </div>
+          </div>
+          <div class="rating-row">
+            <div class="rating-label">No-shows or missed appointments</div>
+            <div class="scale-group" role="group" aria-label="No-shows rating">
+              <input type="radio" name="pain_no_shows" id="pain_no_shows_1" value="1">
+              <label for="pain_no_shows_1">1</label>
+              <input type="radio" name="pain_no_shows" id="pain_no_shows_2" value="2">
+              <label for="pain_no_shows_2">2</label>
+              <input type="radio" name="pain_no_shows" id="pain_no_shows_3" value="3">
+              <label for="pain_no_shows_3">3</label>
+              <input type="radio" name="pain_no_shows" id="pain_no_shows_4" value="4">
+              <label for="pain_no_shows_4">4</label>
+              <input type="radio" name="pain_no_shows" id="pain_no_shows_5" value="5">
+              <label for="pain_no_shows_5">5</label>
+            </div>
+          </div>
+          <div class="rating-row">
+            <div class="rating-label">Asking clients for reviews</div>
+            <div class="scale-group" role="group" aria-label="Review requests rating">
+              <input type="radio" name="pain_review_requests" id="pain_review_requests_1" value="1">
+              <label for="pain_review_requests_1">1</label>
+              <input type="radio" name="pain_review_requests" id="pain_review_requests_2" value="2">
+              <label for="pain_review_requests_2">2</label>
+              <input type="radio" name="pain_review_requests" id="pain_review_requests_3" value="3">
+              <label for="pain_review_requests_3">3</label>
+              <input type="radio" name="pain_review_requests" id="pain_review_requests_4" value="4">
+              <label for="pain_review_requests_4">4</label>
+              <input type="radio" name="pain_review_requests" id="pain_review_requests_5" value="5">
+              <label for="pain_review_requests_5">5</label>
+            </div>
+          </div>
+          <div class="rating-row">
+            <div class="rating-label">Repetitive admin / data entry</div>
+            <div class="scale-group" role="group" aria-label="Admin time rating">
+              <input type="radio" name="pain_admin_time" id="pain_admin_time_1" value="1">
+              <label for="pain_admin_time_1">1</label>
+              <input type="radio" name="pain_admin_time" id="pain_admin_time_2" value="2">
+              <label for="pain_admin_time_2">2</label>
+              <input type="radio" name="pain_admin_time" id="pain_admin_time_3" value="3">
+              <label for="pain_admin_time_3">3</label>
+              <input type="radio" name="pain_admin_time" id="pain_admin_time_4" value="4">
+              <label for="pain_admin_time_4">4</label>
+              <input type="radio" name="pain_admin_time" id="pain_admin_time_5" value="5">
+              <label for="pain_admin_time_5">5</label>
+            </div>
+          </div>
+          <div class="rating-row">
+            <div class="rating-label">Inconsistent client communication</div>
+            <div class="scale-group" role="group" aria-label="Inconsistent comms rating">
+              <input type="radio" name="pain_inconsistent_comms" id="pain_inconsistent_comms_1" value="1">
+              <label for="pain_inconsistent_comms_1">1</label>
+              <input type="radio" name="pain_inconsistent_comms" id="pain_inconsistent_comms_2" value="2">
+              <label for="pain_inconsistent_comms_2">2</label>
+              <input type="radio" name="pain_inconsistent_comms" id="pain_inconsistent_comms_3" value="3">
+              <label for="pain_inconsistent_comms_3">3</label>
+              <input type="radio" name="pain_inconsistent_comms" id="pain_inconsistent_comms_4" value="4">
+              <label for="pain_inconsistent_comms_4">4</label>
+              <input type="radio" name="pain_inconsistent_comms" id="pain_inconsistent_comms_5" value="5">
+              <label for="pain_inconsistent_comms_5">5</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="biggest_pain">Which of the above hurts most — and what does it actually cost you?</label>
+          <textarea id="biggest_pain" name="biggest_pain" placeholder="'Manual follow-up — I'm spending 2 hours a day on it and still losing deals', 'No-shows cost me about $400/week'..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Current Tools -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">Current Tools</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="current_crm">CRM</label>
+            <select id="current_crm" name="current_crm">
+              <option value="">Select...</option>
+              <option>HubSpot</option>
+              <option>Salesforce</option>
+              <option>Follow Up Boss</option>
+              <option>LionDesk</option>
+              <option>kvCORE</option>
+              <option>Chime</option>
+              <option>Real Geeks</option>
+              <option>ServiceTitan</option>
+              <option>Jobber</option>
+              <option>Jane App</option>
+              <option>Mindbody</option>
+              <option>None / spreadsheet</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="scheduling_tool">Scheduling / booking tool</label>
+            <select id="scheduling_tool" name="scheduling_tool">
+              <option value="">Select...</option>
+              <option>Calendly</option>
+              <option>Acuity Scheduling</option>
+              <option>Jane App</option>
+              <option>Square Appointments</option>
+              <option>Google Calendar</option>
+              <option>Phone / manual</option>
+              <option>None</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>How you communicate with clients today</label>
+          <div class="pill-group">
+            <label class="pill" data-val="email"><input type="checkbox"> Email</label>
+            <label class="pill" data-val="sms"><input type="checkbox"> SMS / text</label>
+            <label class="pill" data-val="phone"><input type="checkbox"> Phone calls</label>
+            <label class="pill" data-val="in_person"><input type="checkbox"> In person</label>
+            <label class="pill" data-val="social_dm"><input type="checkbox"> Social DM</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Do you have a website?</label>
+          <div class="radio-group inline">
+            <label class="radio-option">
+              <input type="radio" name="has_website" value="yes">
+              <div class="radio-content"><strong>Yes</strong></div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="has_website" value="no">
+              <div class="radio-content"><strong>No</strong></div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="has_website" value="in_progress">
+              <div class="radio-content"><strong>In progress</strong></div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 Volume & Scale -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">04</span>
+        <span class="section-title">Volume &amp; Scale</span>
+      </div>
+      <div class="section-body">
+        <p class="section-intro">Helps calibrate what's worth building vs. what would be overkill for your current volume.</p>
+        <div class="row">
+          <div class="field">
+            <label for="leads_per_month">New leads or inquiries per month</label>
+            <input type="number" id="leads_per_month" name="leads_per_month" min="0" step="1" placeholder="25">
+          </div>
+          <div class="field">
+            <label for="clients_per_month">Active clients or jobs per month</label>
+            <input type="number" id="clients_per_month" name="clients_per_month" min="0" step="1" placeholder="15">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="admin_hours_per_week">Hours per week on manual admin / follow-up</label>
+            <select id="admin_hours_per_week" name="admin_hours_per_week">
+              <option value="">Select...</option>
+              <option>Under 2 hrs</option>
+              <option>2–5 hrs</option>
+              <option>5–10 hrs</option>
+              <option>10+ hrs</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="revenue_range">Approximate annual revenue</label>
+            <select id="revenue_range" name="revenue_range">
+              <option value="">Prefer not to say</option>
+              <option>Under $250k</option>
+              <option>$250k–$500k</option>
+              <option>$500k–$1M</option>
+              <option>$1M+</option>
+            </select>
+            <div class="hint">Optional — helps size the ROI conversation.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 Priorities -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">05</span>
+        <span class="section-title">Priorities</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label>Timeline for wanting something in place</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="timeline" value="asap">
+              <div class="radio-content">
+                <strong>ASAP</strong>
+                <span>Something is actively on fire — I need this solved.</span>
+              </div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="timeline" value="within_30_days">
+              <div class="radio-content">
+                <strong>Within 30 days</strong>
+                <span>Ready to move but not in crisis mode.</span>
+              </div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="timeline" value="1_3_months">
+              <div class="radio-content">
+                <strong>1–3 months</strong>
+                <span>Planning ahead — evaluating options now.</span>
+              </div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="timeline" value="just_exploring">
+              <div class="radio-content">
+                <strong>Just exploring</strong>
+                <span>Not urgent — learning what's possible.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <label>Have you tried automation tools before?</label>
+          <div class="radio-group inline">
+            <label class="radio-option">
+              <input type="radio" name="tried_automation_before" value="yes" id="tried_yes">
+              <div class="radio-content"><strong>Yes</strong></div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="tried_automation_before" value="no" id="tried_no">
+              <div class="radio-content"><strong>No</strong></div>
+            </label>
+          </div>
+          <div class="conditional" id="automation-experience-wrap">
+            <div class="field" style="margin-bottom:0">
+              <label for="automation_experience">What did you try and what happened?</label>
+              <textarea id="automation_experience" name="automation_experience" placeholder="Zapier for a bit but it broke, tried HubSpot workflows but setup was too complex..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="success_looks_like">What does success look like 6 months from now? <span class="req">*</span></label>
+          <textarea id="success_looks_like" name="success_looks_like" placeholder="Never miss a follow-up, cut admin time in half, consistent reviews coming in on their own..." required></textarea>
+        </div>
+
+        <div class="field">
+          <label for="anything_else">Anything else worth knowing?</label>
+          <textarea id="anything_else" name="anything_else" placeholder="Concerns, constraints, something specific you'd want to build first..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <div id="status" class="status"></div>
+      <button type="submit" id="submit-btn">Submit Discovery</button>
+    </div>
+
+  </form>
+
+  <footer>Norr AI &middot; <a href="mailto:hello@norrai.co">hello@norrai.co</a></footer>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/discovery';
+  const NORR_TOKEN  = '21FB348E-12B4-41EF-B164-43188A647E9C';
+
+  // ── Pill toggles ─────────────────────────────────────────────────────────────
+  document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      pill.classList.toggle('active');
+      pill.querySelector('input[type="checkbox"]').checked = pill.classList.contains('active');
+    });
+  });
+
+  // ── Conditional: automation experience ───────────────────────────────────────
+  document.querySelectorAll('[name="tried_automation_before"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const wrap = document.getElementById('automation-experience-wrap');
+      if (radio.value === 'yes' && radio.checked) {
+        wrap.classList.add('show');
+      } else {
+        wrap.classList.remove('show');
+      }
+    });
+  });
+
+  // ── Form submit ───────────────────────────────────────────────────────────────
+  const form   = document.getElementById('discovery-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Submitting\u2026';
+
+    const fd = new FormData(form);
+    const payload = {};
+    for (const [key, value] of fd.entries()) {
+      payload[key] = value;
+    }
+
+    // Multi-select pills → comma-separated string
+    payload.comms_channels = [...document.querySelectorAll('.pill.active')].map(p => p.dataset.val).join(', ');
+
+    // Pain ratings → integers (null if not selected)
+    const painFields = [
+      'pain_missed_leads', 'pain_manual_followup', 'pain_no_shows',
+      'pain_review_requests', 'pain_admin_time', 'pain_inconsistent_comms'
+    ];
+    painFields.forEach(f => {
+      payload[f] = payload[f] ? parseInt(payload[f], 10) : null;
+    });
+
+    // Numeric fields → numbers or null
+    ['leads_per_month', 'clients_per_month'].forEach(k => {
+      payload[k] = (payload[k] !== '' && payload[k] != null) ? Number(payload[k]) : null;
+    });
+
+    // Defaults for optional fields not in FormData if unchecked/unselected
+    if (!payload.has_website)               payload.has_website = '';
+    if (!payload.timeline)                  payload.timeline = '';
+    if (!payload.tried_automation_before)   payload.tried_automation_before = '';
+    if (!payload.automation_experience)     payload.automation_experience = '';
+
+    payload.submitted_at = new Date().toISOString();
+    payload.source = 'discovery_form_web';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': NORR_TOKEN,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      status.textContent = `Got it, ${payload.contact_name}. I'll review your answers and reach out within one business day.`;
+      status.className = 'status success show';
+      form.reset();
+      document.querySelectorAll('.pill.active').forEach(p => {
+        p.classList.remove('active');
+        p.querySelector('input[type="checkbox"]').checked = false;
+      });
+      document.getElementById('automation-experience-wrap').classList.remove('show');
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co.`;
+      status.className = 'status error show';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit Discovery';
+    }
+  });
+</script>
+</body>
+</html>
