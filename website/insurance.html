@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insurance Broker Automation — Norr AI</title>
+<meta name="description" content="Every policy has a built-in renewal date. That's a calendar of automated touchpoints — if you build it. Norr AI builds it for insurance brokers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+.workflow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.wf-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 24px; }
+.wf-num { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px; }
+.wf-title { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; margin-bottom: 10px; }
+.wf-body { font-size: 13px; line-height: 1.65; color: var(--text-secondary); }
+.dark-wf .wf-card { background: #0D1424; border-color: #1a2030; }
+.dark-wf .wf-title { color: #FAFAF7; }
+.dark-wf .wf-body  { color: #6A6F78; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+
+.renewal-timeline {
+  background: var(--ink);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+}
+.rtl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #1a2030;
+}
+.rtl-item:last-child { border-bottom: none; }
+.rtl-dot {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(127,169,184,0.12);
+  border: 1px solid rgba(127,169,184,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--glacial); letter-spacing: 0.05em;
+}
+.rtl-when { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--glacial); margin-bottom: 4px; }
+.rtl-label { font-size: 14px; font-weight: 500; color: #FAFAF7; margin-bottom: 4px; }
+.rtl-body { font-size: 12px; line-height: 1.55; color: #6A6F78; }
+
+@media (max-width: 900px) {
+  .workflow-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; gap: 32px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Insurance brokers · Automation built for you</div>
+    <h1 class="page-hero-headline">Every policy has<br>a renewal date.<br><span class="acc">Use it.</span></h1>
+    <p class="page-hero-sub">Your book of business is a calendar of future revenue — every renewal date is an automated touchpoint waiting to happen. Most brokers touch these manually, inconsistently, or not at all. We fix that.</p>
+    <div class="page-hero-actions">
+      <a href="contact.html" class="btn-accent">Book a free audit</a>
+      <a href="pricing.html" class="btn-ghost" style="color:#6A6F78;">See pricing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- RENEWAL MATH -->
+<section class="section-bone">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">The math</span>
+        <h2 class="section-title">Your renewals are a built-in revenue calendar</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:20px; margin-bottom:20px;">Every policy has an expiration date. That date is also the highest-risk moment for churn — and the best moment for a touchpoint. If you're not reaching out 90, 60, 30, and 7 days before, you're leaving the door open for a competitor to get there first.</p>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary);">The Starter tier automates renewal sequences for every policy in your book — and it runs every year, automatically, without you building a spreadsheet reminder system.</p>
+        <div style="margin-top: 32px; padding: 24px 28px; background: rgba(127,169,184,0.08); border: 1px solid rgba(127,169,184,0.2); border-radius: var(--radius-md);">
+          <p style="font-size: 15px; font-style: italic; line-height: 1.65; color: var(--graphite);">"If there were clients about to leave at renewal and you didn't know who they are — what would it be worth to find out in advance?"</p>
+        </div>
+      </div>
+      <div>
+        <div class="renewal-timeline">
+          <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 20px;">Automated renewal sequence</div>
+          <div class="rtl-item">
+            <div class="rtl-dot">90d</div>
+            <div>
+              <div class="rtl-when">90 days before renewal</div>
+              <div class="rtl-label">Early awareness touchpoint</div>
+              <p class="rtl-body">Personalized message flagging the upcoming renewal. Sets expectation, opens the conversation, invites questions. No hard sell.</p>
+            </div>
+          </div>
+          <div class="rtl-item">
+            <div class="rtl-dot">60d</div>
+            <div>
+              <div class="rtl-when">60 days before renewal</div>
+              <div class="rtl-label">Coverage review offer</div>
+              <p class="rtl-body">AI-written message offering a coverage review. Good time to surface cross-sell opportunities if the client has had a life event since last renewal.</p>
+            </div>
+          </div>
+          <div class="rtl-item">
+            <div class="rtl-dot">30d</div>
+            <div>
+              <div class="rtl-when">30 days before renewal</div>
+              <div class="rtl-label">Confirmation and options</div>
+              <p class="rtl-body">Confirm renewal intent. Present any changes to coverage or premium. Flag if a call would be valuable. This is the moment competitors try hardest to get in.</p>
+            </div>
+          </div>
+          <div class="rtl-item">
+            <div class="rtl-dot">7d</div>
+            <div>
+              <div class="rtl-when">7 days before renewal</div>
+              <div class="rtl-label">Final action prompt</div>
+              <p class="rtl-body">Last touch before expiration. Direct message, clear next step. If they haven't confirmed by now, this is your last automated chance to keep them.</p>
+            </div>
+          </div>
+          <div class="rtl-item">
+            <div class="rtl-dot">+1</div>
+            <div>
+              <div class="rtl-when">Post-renewal</div>
+              <div class="rtl-label">Thank you + review request</div>
+              <p class="rtl-body">Renewed client gets a thank you and a review request. Happy clients, asked at the right moment, leave reviews. This fires automatically for every renewal.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STARTER WORKFLOWS -->
+<section class="section-ink">
+  <div class="section-inner">
+    <span class="section-eyebrow">Starter tier · Insurance</span>
+    <h2 class="section-title light" style="margin-bottom:16px;">What goes live in the first 2 weeks</h2>
+    <p style="font-size:16px; line-height:1.7; color:#6A6F78; max-width:600px; margin-bottom:56px;">All of these run without manual input. We build them around your book of business — your CRM, your renewal data, your contact records.</p>
+    <div class="workflow-grid dark-wf">
+      <div class="wf-card">
+        <div class="wf-num">01</div>
+        <div class="wf-title">Renewal sequences (90/60/30/7)</div>
+        <p class="wf-body">Four automated touches before every policy renewal. Personalized by policy type, client history, and your tone. Runs for every policy in your book, every year.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">02</div>
+        <div class="wf-title">Post-renewal thank you + review</div>
+        <p class="wf-body">Renewed client gets a thank you message and a review request within 48 hours. Happy at the moment, asked at the right time — this is when reviews actually get written.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">03</div>
+        <div class="wf-title">Lapsed policy win-back</div>
+        <p class="wf-body">Client whose policy lapsed gets a 3-touch win-back sequence. AI writes it. You never need to remember who lapsed or when — the system catches it and sequences them.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">04</div>
+        <div class="wf-title">Instant quote request response</div>
+        <p class="wf-body">New quote request comes in — AI sends an immediate, personalized acknowledgment and asks the qualifying questions you'd ask. Response time goes from hours to seconds.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">05</div>
+        <div class="wf-title">Missed call → auto SMS</div>
+        <p class="wf-body">Every missed call gets an instant text back. Insurance clients calling you are often comparing quotes — the first broker to respond wins. This ensures you're always first.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">06</div>
+        <div class="wf-title">Cold lead 5-touch nurture</div>
+        <p class="wf-body">Quote requested but not converted → 5-touch nurture over 30 days. Keeps you in front of the lead until they decide — without you manually following up every few days.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GROWTH + SALESFORCE NOTE -->
+<section class="section-bone">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">Growth tier · Insurance</span>
+        <h2 class="section-title">Cross-sell automation and the Salesforce angle</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:20px; margin-bottom:20px;">Growth adds two high-value workflows: a cross-sell campaign that identifies mono-line clients and sequences a personalized second-line offer, and life event triggers that fire when a client's situation changes.</p>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-bottom:32px;">If you're on Salesforce, we have a specific angle worth discussing: most small brokers are on Starter Suite using Salesforce as an expensive contact database with zero automation running. We complete Salesforce — we don't compete with it.</p>
+        <ul class="feature-list">
+          <li>Cross-sell campaign — mono-line clients, AI-written second-line offer</li>
+          <li>Life event triggers: new home, new baby, marriage, business launch → relevant coverage</li>
+          <li>Salesforce integration (Starter Suite and above) — connect the CRM you already pay for</li>
+          <li>Full performance dashboard — cross-sell conversion, renewal retention rate by segment</li>
+        </ul>
+        <div style="margin-top: 32px; padding: 20px 24px; background: rgba(127,169,184,0.08); border: 1px solid rgba(127,169,184,0.2); border-radius: var(--radius-md);">
+          <p style="font-size: 13px; line-height: 1.65; color: var(--text-secondary);"><strong style="color: var(--ink);">Qualifying question we ask:</strong> "Are you actually using Salesforce's automation features today?" The answer is almost always no. That's the gap we fill.</p>
+        </div>
+      </div>
+      <div style="padding-top: 8px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 36px 32px; margin-bottom: 12px;">
+          <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px;">Pro tier · Insurance</div>
+          <div style="font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; margin-bottom: 12px;">Book-of-business data pipeline</div>
+          <p style="font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin-bottom: 16px;">Full book-of-business ingestion, retention risk scoring by policy and segment, AI quote assistant, and claims follow-up automation. Built for brokers managing large books who need intelligence — not just automation.</p>
+          <ul class="feature-list">
+            <li>Book-of-business data pipeline from your AMS or CSV export</li>
+            <li>Retention risk model — flags clients at highest churn risk before renewal</li>
+            <li>AI quote assistant for faster, more consistent quote generation</li>
+            <li>Claims follow-up automation — keeps clients informed without manual status checks</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <span class="cta-eyebrow">Insurance brokers · Free audit</span>
+    <h2 class="cta-headline">Find out which clients<br>are about to <span class="acc">leave at renewal.</span></h2>
+    <p class="cta-body">30 minutes. We look at your book size, renewal schedule, and current follow-up process — then model the retention value of automating your sequences. Free. No sales pitch on the call.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

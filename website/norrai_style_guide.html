@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norr AI — Style Guide · Polar Modern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+
+/* ============================================================
+   TOKENS — Direction B: Polar Modern
+   ============================================================ */
+:root {
+  --bone:     #FAFAF7;
+  --ink:      #0A0F1A;
+  --glacial:  #7FA9B8;
+  --graphite: #3A3F48;
+  --blush:    #E8D4C4;
+
+  --text-primary:   #0A0F1A;
+  --text-secondary: #6A6F78;
+  --text-muted:     #9EA3AA;
+  --border:         #E5E4DE;
+  --surface:        #FFFFFF;
+  --bg:             #FAFAF7;
+
+  --font-display: 'Inter Tight', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+
+  --space-2:  2px;
+  --space-4:  4px;
+  --space-8:  8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-80: 80px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text-primary); }
+
+/* ============================================================
+   PAGE SHELL
+   ============================================================ */
+.sg-header {
+  background: var(--ink);
+  color: var(--bone);
+  padding: var(--space-64) var(--space-48);
+  border-bottom: 1px solid #1e2535;
+}
+.sg-header-inner { max-width: 960px; margin: 0 auto; }
+.sg-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: var(--space-16);
+}
+.sg-header h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 48px;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin-bottom: var(--space-24);
+}
+.sg-header h1 .accent { color: var(--glacial); }
+.sg-header p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #9EA3AA;
+  max-width: 560px;
+}
+
+.sg-nav {
+  background: var(--ink);
+  border-bottom: 1px solid #1e2535;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.sg-nav-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 var(--space-48);
+  display: flex;
+  gap: var(--space-32);
+}
+.sg-nav a {
+  display: block;
+  padding: var(--space-16) 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6A6F78;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.sg-nav a:hover { color: var(--bone); border-color: var(--glacial); }
+
+.sg-body { max-width: 960px; margin: 0 auto; padding: var(--space-80) var(--space-48); }
+
+/* ============================================================
+   SECTION STRUCTURE
+   ============================================================ */
+.sg-section { margin-bottom: var(--space-80); }
+.sg-section + .sg-section { padding-top: var(--space-80); border-top: 1px solid var(--border); }
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: var(--space-8);
+}
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-8);
+}
+.section-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin-bottom: var(--space-48);
+}
+
+/* ============================================================
+   COLOR
+   ============================================================ */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-12);
+  margin-bottom: var(--space-32);
+}
+.color-card { display: flex; flex-direction: column; }
+.color-swatch {
+  aspect-ratio: 1 / 1.1;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-12);
+}
+.color-swatch.bordered { border: 1px solid var(--border); }
+.color-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+.color-hex {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.color-usage { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+
+.color-roles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-12);
+}
+.color-role {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-16);
+}
+.color-role-swatch {
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: var(--space-12);
+}
+.color-role-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.color-role-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+.type-scale { display: flex; flex-direction: column; gap: var(--space-32); margin-bottom: var(--space-48); }
+.type-row { display: flex; align-items: baseline; gap: var(--space-24); padding-bottom: var(--space-24); border-bottom: 1px solid var(--border); }
+.type-row:last-child { border-bottom: none; }
+.type-meta { width: 140px; flex-shrink: 0; }
+.type-meta-label { font-family: var(--font-mono); font-size: 10px; color: var(--glacial); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+.type-meta-spec { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); line-height: 1.6; }
+.type-sample { flex: 1; }
+
+/* Scale samples */
+.t-hero    { font-family: var(--font-display); font-weight: 700; font-size: 72px; line-height: 0.92; letter-spacing: -0.04em; }
+.t-display { font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; }
+.t-h1      { font-family: var(--font-display); font-weight: 700; font-size: 36px; line-height: 1.0;  letter-spacing: -0.03em; }
+.t-h2      { font-family: var(--font-display); font-weight: 600; font-size: 28px; line-height: 1.1;  letter-spacing: -0.02em; }
+.t-h3      { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 1.2;  letter-spacing: -0.01em; }
+.t-body-lg { font-family: var(--font-body);    font-weight: 400; font-size: 17px; line-height: 1.65; }
+.t-body    { font-family: var(--font-body);    font-weight: 400; font-size: 15px; line-height: 1.65; }
+.t-small   { font-family: var(--font-body);    font-weight: 400; font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+.t-label   { font-family: var(--font-body);    font-weight: 500; font-size: 11px; line-height: 1.4;  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); }
+.t-mono    { font-family: var(--font-mono);    font-weight: 400; font-size: 13px; line-height: 1.6;  color: var(--text-secondary); }
+
+.accent-text { color: var(--glacial); }
+
+.font-families {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-12);
+  margin-top: var(--space-32);
+}
+.font-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-24);
+}
+.font-card-specimen { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--space-12); }
+.font-card-name { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; }
+.font-card-role { font-size: 12px; color: var(--text-muted); }
+
+/* ============================================================
+   SPACING
+   ============================================================ */
+.spacing-grid { display: flex; flex-direction: column; gap: var(--space-8); }
+.space-row { display: flex; align-items: center; gap: var(--space-16); }
+.space-bar-wrap { width: 200px; height: 24px; display: flex; align-items: center; }
+.space-bar { height: 8px; background: var(--glacial); border-radius: 2px; opacity: 0.7; }
+.space-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); width: 60px; }
+.space-name  { font-size: 12px; color: var(--text-muted); }
+
+/* ============================================================
+   COMPONENTS
+   ============================================================ */
+
+/* Buttons */
+.btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-12); margin-bottom: var(--space-32); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-8);
+  font-family: var(--font-body); font-weight: 500; cursor: pointer;
+  border: none; text-decoration: none; transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--ink); color: var(--bone);
+  padding: 14px 24px; font-size: 14px; border-radius: var(--radius-md);
+}
+.btn-primary:hover { background: #161e33; }
+
+.btn-secondary {
+  background: transparent; color: var(--ink);
+  border: 1px solid var(--border);
+  padding: 13px 23px; font-size: 14px; border-radius: var(--radius-md);
+}
+.btn-secondary:hover { border-color: var(--ink); }
+
+.btn-accent {
+  background: var(--glacial); color: var(--ink);
+  padding: 14px 24px; font-size: 14px; border-radius: var(--radius-md);
+}
+
+.btn-ghost {
+  background: transparent; color: var(--text-secondary);
+  padding: 13px 20px; font-size: 14px; border-radius: var(--radius-md);
+}
+.btn-ghost:hover { color: var(--ink); background: var(--bg); }
+
+.btn-sm {
+  padding: 8px 16px; font-size: 12px; border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+.btn-lg {
+  padding: 18px 32px; font-size: 16px; border-radius: var(--radius-md);
+}
+
+.btn-spec {
+  background: transparent; color: var(--ink);
+  border: 1px solid var(--border);
+  padding: 13px 23px; font-size: 14px; border-radius: var(--radius-md);
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em;
+}
+
+/* Inputs */
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-24); margin-bottom: var(--space-32); }
+
+.field { display: flex; flex-direction: column; gap: var(--space-8); }
+.field-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-secondary);
+}
+.field-input {
+  width: 100%;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 11px 14px;
+  font-family: var(--font-body); font-size: 15px;
+  color: var(--text-primary); background: var(--surface);
+  outline: none; transition: border-color 0.15s;
+}
+.field-input:focus { border-color: var(--glacial); box-shadow: 0 0 0 3px rgba(127, 169, 184, 0.15); }
+.field-input.error { border-color: #C0392B; }
+.field-hint { font-size: 12px; color: var(--text-muted); }
+.field-error { font-size: 12px; color: #C0392B; }
+
+/* Cards */
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-24); margin-bottom: var(--space-32); }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--space-32);
+}
+.card-eyebrow {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--glacial); font-weight: 600; margin-bottom: var(--space-8);
+}
+.card h3 {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 22px; letter-spacing: -0.02em; margin-bottom: var(--space-8);
+}
+.card p { font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
+.card-footer {
+  margin-top: var(--space-24);
+  padding-top: var(--space-24);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-stat { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+.card-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.card-dark {
+  background: var(--ink); border-color: #1e2535; color: var(--bone);
+}
+.card-dark .card-eyebrow { color: var(--glacial); }
+.card-dark h3 { color: var(--bone); }
+.card-dark p { color: #9EA3AA; }
+.card-dark .card-footer { border-color: #1e2535; }
+
+/* Badges */
+.badge-row { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-bottom: var(--space-32); }
+.badge {
+  display: inline-flex; align-items: center; gap: var(--space-4);
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+}
+.badge-default { background: #F0EFE8; color: var(--graphite); }
+.badge-accent  { background: rgba(127, 169, 184, 0.15); color: #4A7A8A; }
+.badge-dark    { background: var(--ink); color: var(--bone); }
+.badge-outline { border: 1px solid var(--border); color: var(--text-secondary); background: transparent; }
+.badge-dot::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--glacial); }
+
+/* Tags / Chips */
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 5px 12px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500; background: #F0EFE8;
+  color: var(--graphite); font-family: var(--font-mono);
+}
+
+/* Dividers */
+.sg-divider { border: none; border-top: 1px solid var(--border); margin: var(--space-32) 0; }
+
+/* Code */
+.sg-code {
+  background: var(--ink); color: #C9D1D9;
+  padding: var(--space-16) var(--space-24);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono); font-size: 12px;
+  line-height: 1.7; overflow-x: auto;
+}
+.sg-code .token-key    { color: var(--glacial); }
+.sg-code .token-val    { color: #E8D4C4; }
+.sg-code .token-accent { color: #7FA9B8; }
+
+/* ============================================================
+   VOICE & TONE
+   ============================================================ */
+.voice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-24); margin-bottom: var(--space-32); }
+.voice-card {
+  border-radius: var(--radius-md);
+  padding: var(--space-24);
+  border: 1px solid var(--border);
+}
+.voice-card.do   { border-left: 3px solid var(--glacial); }
+.voice-card.dont { border-left: 3px solid #C0392B; }
+.voice-verdict {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; margin-bottom: var(--space-12);
+}
+.voice-card.do   .voice-verdict { color: var(--glacial); }
+.voice-card.dont .voice-verdict { color: #C0392B; }
+.voice-example {
+  font-size: 14px; line-height: 1.6; color: var(--text-primary);
+  margin-bottom: var(--space-8);
+}
+.voice-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+.voice-principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-12); margin-bottom: var(--space-48); }
+.vp {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-24);
+}
+.vp-num {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--glacial); letter-spacing: 0.15em; margin-bottom: var(--space-8);
+}
+.vp-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 17px; letter-spacing: -0.01em; margin-bottom: var(--space-8);
+}
+.vp-desc { font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+.logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-12); margin-bottom: var(--space-32); }
+.logo-panel {
+  border-radius: var(--radius-md);
+  padding: var(--space-48) var(--space-32);
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center;
+  gap: var(--space-8);
+}
+.logo-panel.light { background: var(--bone); border: 1px solid var(--border); }
+.logo-panel.dark  { background: var(--ink); }
+.logo-panel.accent { background: var(--glacial); }
+
+.logo-wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.logo-panel.light  .logo-wordmark { color: var(--ink); font-size: 32px; }
+.logo-panel.dark   .logo-wordmark { color: var(--bone); font-size: 32px; }
+.logo-panel.accent .logo-wordmark { color: var(--ink); font-size: 32px; }
+
+.logo-wordmark .logo-ai { color: var(--glacial); }
+.logo-panel.accent .logo-wordmark .logo-ai { color: var(--ink); opacity: 0.5; }
+.logo-panel.dark   .logo-wordmark .logo-ai { color: var(--glacial); }
+
+.logo-sub {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+.logo-panel.light  .logo-sub { color: var(--text-muted); }
+.logo-panel.dark   .logo-sub { color: #6A6F78; }
+.logo-panel.accent .logo-sub { color: var(--ink); opacity: 0.5; }
+
+.logo-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+}
+.logo-rule {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: var(--space-20, 20px) var(--space-24);
+}
+.logo-rule-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; margin-bottom: var(--space-8);
+}
+.logo-rule.do   .logo-rule-label { color: var(--glacial); }
+.logo-rule.dont .logo-rule-label { color: #C0392B; }
+.logo-rule p { font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+
+/* ============================================================
+   TAGLINES
+   ============================================================ */
+.tagline-set { display: flex; flex-direction: column; gap: var(--space-12); margin-bottom: var(--space-32); }
+.tagline-item {
+  display: flex; align-items: baseline; gap: var(--space-24);
+  padding: var(--space-20, 20px) var(--space-24);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.tagline-item.primary { background: var(--ink); border-color: transparent; }
+.tagline-role {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-muted); letter-spacing: 0.15em;
+  text-transform: uppercase; width: 80px; flex-shrink: 0;
+}
+.tagline-item.primary .tagline-role { color: #4A5060; }
+.tagline-text {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 22px; letter-spacing: -0.02em; color: var(--ink);
+}
+.tagline-item.primary .tagline-text { color: var(--bone); }
+.tagline-text .acc { color: var(--glacial); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.sg-footer {
+  background: var(--ink); color: #6A6F78;
+  padding: var(--space-48);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sg-footer-logo {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 18px; letter-spacing: -0.04em; color: var(--bone);
+}
+.sg-footer-logo .acc { color: var(--glacial); }
+.sg-footer-meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; }
+
+@media (max-width: 780px) {
+  .sg-header { padding: var(--space-48) var(--space-24); }
+  .sg-body { padding: var(--space-48) var(--space-24); }
+  .sg-nav-inner { padding: 0 var(--space-24); overflow-x: auto; }
+  .color-grid { grid-template-columns: repeat(3, 1fr); }
+  .color-roles, .font-families, .voice-principles { grid-template-columns: 1fr; }
+  .card-grid, .input-grid, .voice-grid, .logo-rules, .logo-grid { grid-template-columns: 1fr; }
+  .t-hero { font-size: 48px; }
+  .t-display { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="sg-header">
+  <div class="sg-header-inner">
+    <div class="sg-eyebrow">NORR AI · Style Guide · v1.0 · April 2026</div>
+    <h1>Polar<br><span class="accent">Modern.</span></h1>
+    <p>Direction B locked. This document defines the complete visual language for Norr AI — color, typography, spacing, components, and voice. Treat it as the source of truth for anything client-facing.</p>
+  </div>
+</header>
+
+<!-- ============================================================
+     NAV
+     ============================================================ -->
+<nav class="sg-nav">
+  <div class="sg-nav-inner">
+    <a href="#color">Color</a>
+    <a href="#typography">Type</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#components">Components</a>
+    <a href="#logo">Logo</a>
+    <a href="#voice">Voice</a>
+  </div>
+</nav>
+
+<main class="sg-body">
+
+  <!-- ============================================================
+       COLOR
+       ============================================================ -->
+  <section class="sg-section" id="color">
+    <div class="section-label">01 · Color</div>
+    <h2 class="section-title">Palette</h2>
+    <p class="section-desc">Five colors. Use them all. Don't add more. The restraint is the point — every additional color dilutes the system.</p>
+
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch bordered" style="background:#FAFAF7;"></div>
+        <div class="color-name">Bone</div>
+        <div class="color-hex">#FAFAF7</div>
+        <div class="color-usage">Page background. Never pure white.</div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#0A0F1A;"></div>
+        <div class="color-name">Ink</div>
+        <div class="color-hex">#0A0F1A</div>
+        <div class="color-usage">Primary text. Headers. Dark surfaces. Primary CTA background.</div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#7FA9B8;"></div>
+        <div class="color-name">Glacial</div>
+        <div class="color-hex">#7FA9B8</div>
+        <div class="color-usage">The one accent. Eyebrows, highlights, focus rings, key data points.</div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#3A3F48;"></div>
+        <div class="color-name">Graphite</div>
+        <div class="color-hex">#3A3F48</div>
+        <div class="color-usage">Secondary text. Subheadings on dark surfaces.</div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch bordered" style="background:#E8D4C4;"></div>
+        <div class="color-name">Blush</div>
+        <div class="color-hex">#E8D4C4</div>
+        <div class="color-usage">Subtle warmth. Tinted surfaces, illustration fills, soft dividers.</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-bottom: var(--space-16);">Functional roles</div>
+    <div class="color-roles">
+      <div class="color-role">
+        <div class="color-role-swatch" style="background: var(--ink);"></div>
+        <div class="color-role-label">Text Primary</div>
+        <div class="color-role-desc">Ink (#0A0F1A) — all body copy, headings, UI labels</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-swatch" style="background: #6A6F78;"></div>
+        <div class="color-role-label">Text Secondary</div>
+        <div class="color-role-desc">#6A6F78 — subtitles, supporting copy, form hints</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-swatch" style="background: #9EA3AA;"></div>
+        <div class="color-role-label">Text Muted</div>
+        <div class="color-role-desc">#9EA3AA — timestamps, metadata, disabled states</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-swatch" style="background: var(--border);"></div>
+        <div class="color-role-label">Border</div>
+        <div class="color-role-desc">#E5E4DE — all dividers, card edges, input outlines</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-swatch" style="background: var(--surface);"></div>
+        <div class="color-role-label">Surface</div>
+        <div class="color-role-desc">#FFFFFF — card backgrounds, input fills, modals</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-swatch" style="background: var(--glacial);"></div>
+        <div class="color-role-label">Accent / Focus</div>
+        <div class="color-role-desc">Glacial (#7FA9B8) — interactive states, links, focus rings</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       TYPOGRAPHY
+       ============================================================ -->
+  <section class="sg-section" id="typography">
+    <div class="section-label">02 · Typography</div>
+    <h2 class="section-title">Type system</h2>
+    <p class="section-desc">Three fonts, three jobs. Inter Tight owns display. Inter owns body. JetBrains Mono signals data, labels, and machine-generated content.</p>
+
+    <div class="font-families">
+      <div class="font-card">
+        <div class="font-card-specimen" style="font-family:'Inter Tight',sans-serif; font-weight:700; letter-spacing:-0.04em;">Display</div>
+        <div class="font-card-name">Inter Tight</div>
+        <div class="font-card-role">Headlines, wordmark, CTAs, numbers</div>
+      </div>
+      <div class="font-card">
+        <div class="font-card-specimen" style="font-family:'Inter',sans-serif; font-weight:400;">Body</div>
+        <div class="font-card-name">Inter</div>
+        <div class="font-card-role">All body copy, UI labels, form text</div>
+      </div>
+      <div class="font-card">
+        <div class="font-card-specimen" style="font-family:'JetBrains Mono',monospace; font-weight:400; font-size:22px; color: var(--glacial);">01 / Mono</div>
+        <div class="font-card-name">JetBrains Mono</div>
+        <div class="font-card-role">Section numbers, hex values, system labels, code</div>
+      </div>
+    </div>
+
+    <hr class="sg-divider">
+
+    <div class="section-label" style="margin-bottom: var(--space-16);">Type scale</div>
+    <div class="type-scale">
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Hero</div>
+          <div class="type-meta-spec">Inter Tight 700<br>72px / –0.04em<br>lh 0.92</div>
+        </div>
+        <div class="type-sample t-hero">Quiet <span class="accent-text">systems.</span></div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Display</div>
+          <div class="type-meta-spec">Inter Tight 700<br>48px / –0.04em<br>lh 0.95</div>
+        </div>
+        <div class="type-sample t-display">Built to <span class="accent-text">close.</span></div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">H1</div>
+          <div class="type-meta-spec">Inter Tight 700<br>36px / –0.03em<br>lh 1.0</div>
+        </div>
+        <div class="type-sample t-h1">Speed-to-lead automation</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">H2</div>
+          <div class="type-meta-spec">Inter Tight 600<br>28px / –0.02em<br>lh 1.1</div>
+        </div>
+        <div class="type-sample t-h2">What the Starter tier includes</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">H3</div>
+          <div class="type-meta-spec">Inter Tight 600<br>20px / –0.01em<br>lh 1.2</div>
+        </div>
+        <div class="type-sample t-h3">Missed Call → Auto SMS</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Body LG</div>
+          <div class="type-meta-spec">Inter 400<br>17px / normal<br>lh 1.65</div>
+        </div>
+        <div class="type-sample t-body-lg">We build the pipes, handle the integrations, and give you back the hours you were spending on follow-up.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Body</div>
+          <div class="type-meta-spec">Inter 400<br>15px / normal<br>lh 1.65</div>
+        </div>
+        <div class="type-sample t-body">Norr AI designs automation systems for small businesses in southern Minnesota. Every lead responded to in under five minutes. Every renewal reminded four times.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Small</div>
+          <div class="type-meta-spec">Inter 400<br>13px / normal<br>lh 1.55</div>
+        </div>
+        <div class="type-sample t-small">Includes setup, onboarding, and first-month support. Cancel anytime after month three.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Label</div>
+          <div class="type-meta-spec">Inter 500<br>11px / +0.08em<br>uppercase</div>
+        </div>
+        <div class="type-sample t-label">Property address</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-label">Mono</div>
+          <div class="type-meta-spec">JetBrains Mono 400<br>13px<br>lh 1.6</div>
+        </div>
+        <div class="type-sample t-mono">01 / AUTOMATION · TIER 1 · NORR AI</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SPACING
+       ============================================================ -->
+  <section class="sg-section" id="spacing">
+    <div class="section-label">03 · Spacing</div>
+    <h2 class="section-title">Spacing scale</h2>
+    <p class="section-desc">Base-4 scale. Use named tokens, not raw pixel values. This keeps the system consistent as it grows.</p>
+
+    <div class="spacing-grid">
+      <div class="space-row"><div class="space-label">--space-2</div><div class="space-bar-wrap"><div class="space-bar" style="width:2px;"></div></div><div class="space-name">2px — hairline gaps, icon nudges</div></div>
+      <div class="space-row"><div class="space-label">--space-4</div><div class="space-bar-wrap"><div class="space-bar" style="width:4px;"></div></div><div class="space-name">4px — tight inline gaps</div></div>
+      <div class="space-row"><div class="space-label">--space-8</div><div class="space-bar-wrap"><div class="space-bar" style="width:8px;"></div></div><div class="space-name">8px — label → input, icon → text</div></div>
+      <div class="space-row"><div class="space-label">--space-12</div><div class="space-bar-wrap"><div class="space-bar" style="width:12px;"></div></div><div class="space-name">12px — grid gaps (tight)</div></div>
+      <div class="space-row"><div class="space-label">--space-16</div><div class="space-bar-wrap"><div class="space-bar" style="width:16px;"></div></div><div class="space-name">16px — default stack rhythm inside a block</div></div>
+      <div class="space-row"><div class="space-label">--space-24</div><div class="space-bar-wrap"><div class="space-bar" style="width:24px;"></div></div><div class="space-name">24px — grid gaps (default), card internal padding (compact)</div></div>
+      <div class="space-row"><div class="space-label">--space-32</div><div class="space-bar-wrap"><div class="space-bar" style="width:32px;"></div></div><div class="space-name">32px — section subgroups, card padding</div></div>
+      <div class="space-row"><div class="space-label">--space-48</div><div class="space-bar-wrap"><div class="space-bar" style="width:48px;"></div></div><div class="space-name">48px — major section gaps, page header padding</div></div>
+      <div class="space-row"><div class="space-label">--space-64</div><div class="space-bar-wrap"><div class="space-bar" style="width:64px;"></div></div><div class="space-name">64px — page-level breathing room</div></div>
+      <div class="space-row"><div class="space-label">--space-80</div><div class="space-bar-wrap"><div class="space-bar" style="width:80px;"></div></div><div class="space-name">80px — between top-level sections</div></div>
+    </div>
+
+    <hr class="sg-divider">
+    <div class="section-label" style="margin-bottom: var(--space-16);">Border radius</div>
+    <div class="color-roles">
+      <div class="color-role">
+        <div style="height: 32px; width: 32px; background: var(--ink); border-radius: 4px; margin-bottom: 12px;"></div>
+        <div class="color-role-label">Small — 4px</div>
+        <div class="color-role-desc">Badges, tags, small buttons, code chips</div>
+      </div>
+      <div class="color-role">
+        <div style="height: 32px; width: 32px; background: var(--ink); border-radius: 6px; margin-bottom: 12px;"></div>
+        <div class="color-role-label">Medium — 6px</div>
+        <div class="color-role-desc">Buttons, inputs, dropdowns, tooltips</div>
+      </div>
+      <div class="color-role">
+        <div style="height: 32px; width: 32px; background: var(--ink); border-radius: 12px; margin-bottom: 12px;"></div>
+        <div class="color-role-label">Large — 12px</div>
+        <div class="color-role-desc">Cards, panels, modals, large surfaces</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       COMPONENTS
+       ============================================================ -->
+  <section class="sg-section" id="components">
+    <div class="section-label">04 · Components</div>
+    <h2 class="section-title">UI Components</h2>
+    <p class="section-desc">The building blocks. Every client-facing tool, form, and page is assembled from these.</p>
+
+    <!-- Buttons -->
+    <div class="section-label" style="margin-bottom: var(--space-16);">Buttons</div>
+    <div class="btn-row">
+      <button class="btn btn-primary">Generate listing copy</button>
+      <button class="btn btn-secondary">View settings</button>
+      <button class="btn btn-accent">Get started</button>
+      <button class="btn btn-ghost">Learn more</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm">Small primary</button>
+      <button class="btn btn-secondary btn-sm">Small secondary</button>
+      <button class="btn btn-spec btn-sm">01 / generate →</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-lg">Start your free audit</button>
+    </div>
+
+    <hr class="sg-divider">
+
+    <!-- Inputs -->
+    <div class="section-label" style="margin-bottom: var(--space-16);">Inputs</div>
+    <div class="input-grid">
+      <div class="field">
+        <label class="field-label">Property address</label>
+        <input class="field-input" type="text" value="123 Maple Street, Faribault" />
+        <span class="field-hint">Enter full street address including city.</span>
+      </div>
+      <div class="field">
+        <label class="field-label">List price</label>
+        <input class="field-input" type="text" placeholder="$349,900" />
+      </div>
+      <div class="field">
+        <label class="field-label">Agent name <span style="color:#C0392B;">*</span></label>
+        <input class="field-input error" type="text" value="" placeholder="Required" />
+        <span class="field-error">This field is required.</span>
+      </div>
+      <div class="field">
+        <label class="field-label">Listing type</label>
+        <select class="field-input">
+          <option>Single family residential</option>
+          <option>Condo / townhome</option>
+          <option>Acreage / rural</option>
+        </select>
+      </div>
+    </div>
+
+    <hr class="sg-divider">
+
+    <!-- Cards -->
+    <div class="section-label" style="margin-bottom: var(--space-16);">Cards</div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-eyebrow">Starter tier</div>
+        <h3>Speed-to-lead automation</h3>
+        <p>Instant lead response personalized by listing details. Cold lead 7-touch nurture over 30 days. Missed call → SMS in under 60 seconds.</p>
+        <div class="card-footer">
+          <div>
+            <div class="card-stat">$500<span style="font-size:16px;font-weight:400;color:var(--text-secondary);">/mo</span></div>
+            <div class="card-stat-label">+ $500 setup fee</div>
+          </div>
+          <button class="btn btn-primary btn-sm">Get started</button>
+        </div>
+      </div>
+      <div class="card card-dark">
+        <div class="card-eyebrow">Growth tier</div>
+        <h3>Sphere of influence re-engagement</h3>
+        <p>AI identifies contacts 90+ days silent, sequences warm outreach. Advanced content generation and monthly reporting included.</p>
+        <div class="card-footer">
+          <div>
+            <div class="card-stat" style="color:var(--bone);">$1,000<span style="font-size:16px;font-weight:400;color:#6A6F78;">/mo</span></div>
+            <div class="card-stat-label" style="color:#4A5060;">+ $1,000 setup fee</div>
+          </div>
+          <button class="btn btn-accent btn-sm">Get started</button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sg-divider">
+
+    <!-- Badges & Tags -->
+    <div class="section-label" style="margin-bottom: var(--space-16);">Badges</div>
+    <div class="badge-row">
+      <span class="badge badge-default">Real Estate</span>
+      <span class="badge badge-accent">Active</span>
+      <span class="badge badge-dark">Pro tier</span>
+      <span class="badge badge-outline">Insurance</span>
+      <span class="badge badge-accent badge-dot">Live</span>
+    </div>
+
+    <hr class="sg-divider">
+
+    <!-- Code -->
+    <div class="section-label" style="margin-bottom: var(--space-16);">Monospace / Data</div>
+    <div class="sg-code">
+<span class="token-key">→ lead.intake</span>   &nbsp; source=zillow  name="Sarah J."  phone=5075551234<br>
+<span class="token-key">→ lead.cleanse</span>  &nbsp; dedupe=pass     normalized=true<br>
+<span class="token-key">→ crm.upsert</span>    &nbsp; record_id=new   crm=follow_up_boss<br>
+<span class="token-key">→ sequence.fire</span> &nbsp; workflow=instant_response  claude=true<br>
+<span class="token-key">→ outcome.log</span>   &nbsp; <span class="token-val">status=sent</span>  latency=<span class="token-accent">4.2s</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       LOGO
+       ============================================================ -->
+  <section class="sg-section" id="logo">
+    <div class="section-label">05 · Logo & Wordmark</div>
+    <h2 class="section-title">Logo system</h2>
+    <p class="section-desc">Text-based wordmark in Inter Tight Bold. The "AI" carries the accent — it's the differentiator in the name, so let it breathe. Three approved surfaces.</p>
+
+    <div class="logo-grid">
+      <div class="logo-panel light">
+        <div class="logo-wordmark">NORR<span class="logo-ai"> AI</span></div>
+        <div class="logo-sub">Automation · norrai.co</div>
+      </div>
+      <div class="logo-panel dark">
+        <div class="logo-wordmark">NORR<span class="logo-ai"> AI</span></div>
+        <div class="logo-sub">Automation · norrai.co</div>
+      </div>
+      <div class="logo-panel accent">
+        <div class="logo-wordmark">NORR<span class="logo-ai"> AI</span></div>
+        <div class="logo-sub">Automation · norrai.co</div>
+      </div>
+    </div>
+
+    <hr class="sg-divider">
+
+    <div class="logo-rules">
+      <div class="logo-rule do">
+        <div class="logo-rule-label">✓ Do</div>
+        <p>Use on Bone, Ink, or Glacial backgrounds only. Always pair with the tagline or URL on first appearance in a document.</p>
+      </div>
+      <div class="logo-rule do">
+        <div class="logo-rule-label">✓ Do</div>
+        <p>Use all-caps. The wordmark is always set in Inter Tight 700 at –0.04em tracking. Never set it in any other weight or family.</p>
+      </div>
+      <div class="logo-rule dont">
+        <div class="logo-rule-label">✗ Don't</div>
+        <p>Don't place the logo on colorful, photographic, or patterned backgrounds. No drop shadows, outlines, or gradients.</p>
+      </div>
+      <div class="logo-rule dont">
+        <div class="logo-rule-label">✗ Don't</div>
+        <p>Don't change the accent color on "AI" to anything other than Glacial or Ink (on Glacial surface). No other colors.</p>
+      </div>
+    </div>
+
+    <hr class="sg-divider">
+
+    <div class="section-label" style="margin-bottom: var(--space-16);">Taglines</div>
+    <div class="tagline-set">
+      <div class="tagline-item primary">
+        <div class="tagline-role">Primary</div>
+        <div class="tagline-text">Quiet systems. <span class="acc">Loud results.</span></div>
+      </div>
+      <div class="tagline-item">
+        <div class="tagline-role">Alt 1</div>
+        <div class="tagline-text">Built for people who <span class="acc">close deals.</span></div>
+      </div>
+      <div class="tagline-item">
+        <div class="tagline-role">Alt 2</div>
+        <div class="tagline-text">Every lead answered. <span class="acc">Every renewal reminded.</span></div>
+      </div>
+      <div class="tagline-item">
+        <div class="tagline-role">Vertical</div>
+        <div class="tagline-text">Automation for agents who <span class="acc">don't have time to follow up.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VOICE & TONE
+       ============================================================ -->
+  <section class="sg-section" id="voice">
+    <div class="section-label">06 · Voice & Tone</div>
+    <h2 class="section-title">How Norr AI sounds</h2>
+    <p class="section-desc">The visual system is only half the brand. Copy needs to match it — precise, confident, never breathless. ROI-first always.</p>
+
+    <div class="voice-principles">
+      <div class="vp">
+        <div class="vp-num">01</div>
+        <div class="vp-title">Lead with the number</div>
+        <div class="vp-desc">Dentists think in appointment values. Realtors think in GCI. Insurance brokers think in retained premium. Start there, not with "AI" or "automation".</div>
+      </div>
+      <div class="vp">
+        <div class="vp-num">02</div>
+        <div class="vp-title">Confidence, not hype</div>
+        <div class="vp-desc">Never "game-changing", "revolutionary", or "cutting-edge". The work speaks. The copy stays calm. Precision over superlatives.</div>
+      </div>
+      <div class="vp">
+        <div class="vp-num">03</div>
+        <div class="vp-title">Short sentences win</div>
+        <div class="vp-desc">The logo is two words. The tagline is four. Keep the copy tight. One idea per sentence. Cut the sentence if removing it changes nothing.</div>
+      </div>
+    </div>
+
+    <div class="voice-grid">
+      <div class="voice-card do">
+        <div class="voice-verdict">✓ Write this</div>
+        <div class="voice-example">"One extra closed deal pays for the Starter tier many times over."</div>
+        <div class="voice-note">Concrete, ROI-first, no jargon. The client can do the math themselves.</div>
+      </div>
+      <div class="voice-card dont">
+        <div class="voice-verdict">✗ Not this</div>
+        <div class="voice-example">"Our cutting-edge AI-powered automation platform revolutionizes the way real estate professionals engage with leads."</div>
+        <div class="voice-note">Every word here is a red flag. Starts with "our", loaded with buzzwords, zero specifics.</div>
+      </div>
+      <div class="voice-card do">
+        <div class="voice-verdict">✓ Write this</div>
+        <div class="voice-example">"Every missed call gets a text back before the caller's car pulls out of your lot."</div>
+        <div class="voice-note">Specific, visual, makes the benefit tangible without explaining the technology behind it.</div>
+      </div>
+      <div class="voice-card dont">
+        <div class="voice-verdict">✗ Not this</div>
+        <div class="voice-example">"Leverage our intelligent n8n workflows and Claude API integration to streamline your lead response processes."</div>
+        <div class="voice-note">Never name the stack in client copy. They don't care. The outcome is the pitch.</div>
+      </div>
+      <div class="voice-card do">
+        <div class="voice-verdict">✓ Write this</div>
+        <div class="voice-example">"If there were clients about to leave at renewal and you didn't know who — what would it be worth to find out in advance?"</div>
+        <div class="voice-note">Question format that sells itself. Makes the problem vivid before offering the solution.</div>
+      </div>
+      <div class="voice-card dont">
+        <div class="voice-verdict">✗ Not this</div>
+        <div class="voice-example">"We are excited to offer a best-in-class solution that helps your business grow and scale to new heights!"</div>
+        <div class="voice-note">Excited is never the right energy. Exclamation points are banned. "Best-in-class" means nothing.</div>
+      </div>
+    </div>
+
+    <hr class="sg-divider">
+
+    <div class="section-label" style="margin-bottom: var(--space-16);">Punctuation & formatting rules</div>
+    <div class="color-roles">
+      <div class="color-role">
+        <div class="color-role-label">Em dashes — yes</div>
+        <div class="color-role-desc">Use em dashes freely. They're punchy and precise. No spaces around them.</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-label">Exclamation points — never</div>
+        <div class="color-role-desc">Not in copy, not in emails. The work is impressive enough without them.</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-label">Oxford comma — always</div>
+        <div class="color-role-desc">Dentists, realtors, and insurance brokers. Not dentists, realtors and insurance brokers.</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-label">Numbers — numerals</div>
+        <div class="color-role-desc">Always use numerals for numbers (5 minutes, not five minutes). Numbers are data.</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-label">Headers — sentence case</div>
+        <div class="color-role-desc">Sentence case for all headings. Title Case Looks Bureaucratic. don't do it.</div>
+      </div>
+      <div class="color-role">
+        <div class="color-role-label">Arrows → yes</div>
+        <div class="color-role-desc">→ for flow, sequence, and process. It's in the DNA of the brand. Use it in UI copy where it fits.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="sg-footer">
+  <div class="sg-footer-logo">NORR<span class="acc"> AI</span></div>
+  <div class="sg-footer-meta">STYLE GUIDE · v1.0 · APRIL 2026 · CONFIDENTIAL</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Services — Norr AI</title>
+<meta name="description" content="Three automation tiers built for local businesses. Starter, Growth, and Pro — each one designed to run without you lifting a finger.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+
+.tier-section {
+  padding: 96px 48px;
+  border-bottom: 1px solid var(--border);
+}
+.tier-section:nth-child(odd) { background: var(--bone); }
+.tier-section:nth-child(even) { background: var(--surface); }
+.tier-section.dark {
+  background: var(--ink);
+  border-bottom: 1px solid #1a2030;
+}
+.tier-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+.tier-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+  margin-bottom: 64px;
+}
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 16px;
+}
+.tier-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 48px;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin-bottom: 16px;
+}
+.tier-section.dark .tier-name { color: #FAFAF7; }
+.tier-tagline {
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+.tier-section.dark .tier-tagline { color: #6A6F78; }
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.tier-price-amount {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 42px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.tier-section.dark .tier-price-amount { color: #FAFAF7; }
+.tier-price-period {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.tier-setup {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+.tier-section.dark .tier-setup { color: #4A5060; }
+
+.tier-workflows {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.workflow-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+}
+.tier-section.dark .workflow-card {
+  background: #0D1424;
+  border-color: #1a2030;
+}
+.workflow-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--glacial);
+  margin-bottom: 12px;
+}
+.workflow-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+.tier-section.dark .workflow-title { color: #FAFAF7; }
+.workflow-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.tier-section.dark .workflow-body { color: #6A6F78; }
+
+.tier-right-col {
+  padding-top: 8px;
+}
+.tier-right-col p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+.tier-section.dark .tier-right-col p { color: #6A6F78; }
+.tier-right-col p:last-of-type { margin-bottom: 32px; }
+
+.tier-right-col .feature-list { margin-bottom: 40px; }
+
+.ideal-for {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.tier-section.dark .ideal-for { border-color: #1a2030; }
+.ideal-for-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 10px;
+}
+.ideal-for-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ideal-tag {
+  display: inline-block;
+  padding: 5px 12px;
+  background: rgba(127,169,184,0.12);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--graphite);
+}
+.tier-section.dark .ideal-tag {
+  background: rgba(127,169,184,0.1);
+  color: #9EA3AA;
+}
+
+/* Comparison table */
+.comparison {
+  background: var(--bone);
+  padding: 96px 48px;
+}
+.comparison-inner { max-width: var(--max-width); margin: 0 auto; }
+.comparison-header { text-align: center; margin-bottom: 64px; }
+.comparison-header .section-title { margin: 0 auto 16px; }
+.comparison-header p { font-size: 15px; color: var(--text-secondary); max-width: 500px; margin: 0 auto; line-height: 1.65; }
+
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.comp-table th {
+  padding: 20px 24px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #F5F4EF;
+}
+.comp-table th.tier-col {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.comp-table th.featured-col {
+  background: var(--ink);
+  color: #FAFAF7;
+}
+.comp-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.comp-table td:not(:first-child) { text-align: center; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: #F8F8F4; }
+.comp-check { color: var(--glacial); font-size: 16px; }
+.comp-dash  { color: var(--text-muted); }
+.comp-table td.featured-cell { background: rgba(10,15,26,0.03); }
+
+@media (max-width: 900px) {
+  .tier-header { grid-template-columns: 1fr; gap: 32px; }
+  .tier-workflows { grid-template-columns: 1fr; }
+  .tier-section { padding: 64px 24px; }
+  .comparison { padding: 64px 24px; }
+  .comp-table { font-size: 12px; }
+  .comp-table th, .comp-table td { padding: 12px 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html" class="active">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Services · Three tiers</div>
+    <h1 class="page-hero-headline">The system does the work.<br><span class="acc">You keep the revenue.</span></h1>
+    <p class="page-hero-sub">Three tiers, each one a complete automation system. Start with the essentials. Expand when you're ready. The stack grows with you — zero rebuild required.</p>
+    <div class="page-hero-actions">
+      <a href="contact.html" class="btn-accent">Book a free audit</a>
+      <a href="pricing.html" class="btn-ghost" style="color:#6A6F78; border-color: transparent;">See pricing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- TIER 01 — STARTER -->
+<section class="tier-section">
+  <div class="tier-inner">
+    <div class="tier-header">
+      <div>
+        <div class="tier-badge">Tier 01</div>
+        <div class="tier-name">Starter</div>
+        <div class="tier-tagline">The essentials. Every missed call answered, every lead followed up, every appointment reminded — all automatically.</div>
+        <div class="tier-price">
+          <div class="tier-price-amount">$500</div>
+          <div class="tier-price-period">/mo</div>
+        </div>
+        <div class="tier-setup">+ $500 one-time setup fee · Live in 1–2 weeks</div>
+        <a href="contact.html" class="btn-primary">Get started</a>
+        <div class="ideal-for">
+          <div class="ideal-for-label">Best for</div>
+          <div class="ideal-for-tags">
+            <span class="ideal-tag">Solo operators</span>
+            <span class="ideal-tag">First automation</span>
+            <span class="ideal-tag">High inbound volume</span>
+            <span class="ideal-tag">Service businesses</span>
+          </div>
+        </div>
+      </div>
+      <div class="tier-right-col">
+        <p>Starter is built around one core insight: most local businesses are losing money to three things — missed calls, slow lead response, and no-shows. All three are fixable without hiring anyone.</p>
+        <p>We set up your Twilio number, connect your CRM, and deploy the automations. You get a 30-minute handoff call. Then it runs.</p>
+        <ul class="feature-list">
+          <li>Missed call → auto-text back within 60 seconds, business hours aware</li>
+          <li>Instant lead response — AI-personalized by context and source</li>
+          <li>Appointment reminder sequences (48h out + 2h out)</li>
+          <li>Cold lead 7-touch nurture sequence over 30 days</li>
+          <li>Post-visit review request automation</li>
+          <li>Monthly summary report — what ran, what converted</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tier-workflows">
+      <div class="workflow-card">
+        <div class="workflow-num">01 / Missed call</div>
+        <div class="workflow-title">Missed Call → Auto SMS</div>
+        <p class="workflow-body">Every missed call triggers an immediate text: "Hey, it's [Business] — sorry we missed you. How can we help?" Business-hours aware. No after-hours spam.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">02 / Lead response</div>
+        <div class="workflow-title">Instant Lead Response</div>
+        <p class="workflow-body">New lead comes in from your website, Zillow, Facebook, or CRM — AI reads the context and sends a personalized reply within 5 minutes. Zero lag.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">03 / Appointment</div>
+        <div class="workflow-title">Reminder Sequences</div>
+        <p class="workflow-body">Two-touch reminder sequence: 48 hours before and 2 hours before. Reduces no-shows by 30–40% on average. One-click confirm link included.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">04 / Lead nurture</div>
+        <div class="workflow-title">Cold Lead 7-Touch</div>
+        <p class="workflow-body">Not every lead converts on day one. A 30-day, 7-touch sequence keeps your business top of mind — email and SMS — until they're ready.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">05 / Reviews</div>
+        <div class="workflow-title">Post-Visit Review Request</div>
+        <p class="workflow-body">After a visit or completed job, a timed review request goes out automatically. Simple link to your Google Business profile. No ask = no review.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">06 / Reporting</div>
+        <div class="workflow-title">Monthly Summary Report</div>
+        <p class="workflow-body">Every month: a clean summary of what the system did. Leads responded to, reminders sent, calls recovered, reviews requested. ROI in plain language.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIER 02 — GROWTH -->
+<section class="tier-section dark">
+  <div class="tier-inner">
+    <div class="tier-header">
+      <div>
+        <div class="tier-badge">Tier 02 · Most popular</div>
+        <div class="tier-name" style="color:#FAFAF7;">Growth</div>
+        <div class="tier-tagline">Advanced sequences, AI-written outreach, and full performance reporting. For businesses ready to grow — not just maintain.</div>
+        <div class="tier-price">
+          <div class="tier-price-amount">$1,000</div>
+          <div class="tier-price-period" style="color:#6A6F78;">/mo</div>
+        </div>
+        <div class="tier-setup">+ $1,000 one-time setup fee · Live in 2–3 weeks</div>
+        <a href="contact.html" class="btn-accent">Get started</a>
+        <div class="ideal-for">
+          <div class="ideal-for-label">Best for</div>
+          <div class="ideal-for-tags">
+            <span class="ideal-tag">Growing businesses</span>
+            <span class="ideal-tag">Large contact databases</span>
+            <span class="ideal-tag">Repeat-customer revenue</span>
+            <span class="ideal-tag">Ready to scale outreach</span>
+          </div>
+        </div>
+      </div>
+      <div class="tier-right-col">
+        <p>Growth includes everything in Starter, then adds the campaigns that generate revenue from your existing contact base — not just inbound leads.</p>
+        <p>Dormant customers. Silent spheres. Mono-line clients ready for a second product. These sequences find them, write to them, and bring them back — without you knowing their name.</p>
+        <ul class="feature-list light">
+          <li>Everything in Starter</li>
+          <li>Dormant customer reactivation — AI identifies and re-engages lapsed contacts</li>
+          <li>AI-written personalized outreach at scale</li>
+          <li>Cross-sell and upsell campaign automation</li>
+          <li>Life event and behavior triggers (new home, renewal window, silence threshold)</li>
+          <li>Full monthly performance dashboard — not just a summary, a full breakdown</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tier-workflows">
+      <div class="workflow-card">
+        <div class="workflow-num">07 / Reactivation</div>
+        <div class="workflow-title">Dormant Customer Reactivation</div>
+        <p class="workflow-body">AI scans your contact database for clients who've gone quiet — 90 days, 6 months, a year. Sequences them with context-aware, personalized outreach.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">08 / Outreach</div>
+        <div class="workflow-title">AI-Written Personalized Outreach</div>
+        <p class="workflow-body">Not a mail-merge. Claude reads the contact record — history, behavior, last interaction — and writes a message that sounds like you wrote it specifically to them.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">09 / Revenue</div>
+        <div class="workflow-title">Cross-Sell &amp; Upsell Campaigns</div>
+        <p class="workflow-body">Identifies single-product clients and sequences relevant second-line offers. Insurance brokers, real estate agents, dental offices — the logic adapts to your vertical.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">10 / Triggers</div>
+        <div class="workflow-title">Life Event Triggers</div>
+        <p class="workflow-body">New home purchase, marriage, new baby, business anniversary — triggers that fire the right message at the right moment without you watching the calendar.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">11 / Dashboard</div>
+        <div class="workflow-title">Performance Dashboard</div>
+        <p class="workflow-body">Full monthly breakdown: sequences sent, open rates, reply rates, conversions, revenue attributed. You see exactly what the system earned you.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">+ All Starter</div>
+        <div class="workflow-title">All Starter Workflows Included</div>
+        <p class="workflow-body">Every Starter automation runs alongside Growth campaigns. Nothing gets removed — the system expands, not restarts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIER 03 — PRO -->
+<section class="tier-section">
+  <div class="tier-inner">
+    <div class="tier-header">
+      <div>
+        <div class="tier-badge">Tier 03</div>
+        <div class="tier-name">Pro</div>
+        <div class="tier-tagline">Custom data pipelines, revenue dashboards, and white-labeled client portals. Built for businesses that want a real competitive edge.</div>
+        <div class="tier-price">
+          <div class="tier-price-amount">$2,000</div>
+          <div class="tier-price-period">/mo</div>
+        </div>
+        <div class="tier-setup">+ $3,000–$6,000 one-time build fee · Timeline varies by scope</div>
+        <a href="contact.html" class="btn-primary">Talk to us</a>
+        <div class="ideal-for">
+          <div class="ideal-for-label">Best for</div>
+          <div class="ideal-for-tags">
+            <span class="ideal-tag">Multi-location businesses</span>
+            <span class="ideal-tag">Data-rich operations</span>
+            <span class="ideal-tag">Client-facing portals</span>
+            <span class="ideal-tag">Competitive differentiation</span>
+          </div>
+        </div>
+      </div>
+      <div class="tier-right-col">
+        <p>Pro is custom by definition. We connect to your practice management software, point-of-sale system, or book of business and build pipelines that give you visibility most businesses in your category don't have.</p>
+        <p>Revenue and retention dashboards. AI scoring models that flag churn risk and lead quality. White-labeled portals your clients or team log into.</p>
+        <ul class="feature-list">
+          <li>Everything in Growth</li>
+          <li>Custom data pipelines from your existing business systems</li>
+          <li>Revenue and retention dashboards — production, collections, AR aging, deal velocity</li>
+          <li>AI scoring models — churn risk, lead quality, renewal likelihood</li>
+          <li>White-labeled client-facing tools and portals</li>
+          <li>Dedicated engineering support — we're on call, not on a ticket queue</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tier-workflows">
+      <div class="workflow-card">
+        <div class="workflow-num">Pro / Data</div>
+        <div class="workflow-title">Custom Data Pipelines</div>
+        <p class="workflow-body">We connect to Open Dental, Dentrix, Follow Up Boss, Salesforce, your POS — wherever your data lives. Clean it, normalize it, make it useful.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">Pro / Dashboards</div>
+        <div class="workflow-title">Revenue &amp; Retention Dashboards</div>
+        <p class="workflow-body">Production by provider. Collections rate. AR aging. Deal velocity. Retention risk by segment. Real numbers, updated automatically, visible at a glance.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">Pro / AI</div>
+        <div class="workflow-title">AI Scoring Models</div>
+        <p class="workflow-body">Which leads are most likely to close? Which clients are about to churn? Which renewals need a call instead of an email? Models trained on your data answer these.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">Pro / Portals</div>
+        <div class="workflow-title">White-Labeled Client Tools</div>
+        <p class="workflow-body">Buyer and seller portals. Agent-facing dashboards. Insurance client renewal trackers. Tools your clients use that carry your brand, not ours.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">Pro / Support</div>
+        <div class="workflow-title">Dedicated Engineering</div>
+        <p class="workflow-body">A direct line, not a helpdesk. When something needs to change — new workflow, new data source, new dashboard view — it gets done, not queued.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-num">+ All Growth</div>
+        <div class="workflow-title">All Growth Workflows Included</div>
+        <p class="workflow-body">The full automation stack from Starter and Growth runs underneath. Pro adds intelligence on top — not a replacement for the foundation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section class="comparison">
+  <div class="comparison-inner">
+    <div class="comparison-header">
+      <div class="section-eyebrow" style="display:block; text-align:center;">Feature comparison</div>
+      <h2 class="section-title" style="text-align:center; margin:0 auto 16px;">What's in each tier</h2>
+      <p>Every tier includes setup, onboarding, and ongoing support. No hidden per-seat or per-message fees.</p>
+    </div>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th style="width: 40%;">Feature</th>
+          <th class="tier-col" style="width:20%;">Starter<br><span style="font-weight:400; font-size:12px; color:var(--text-secondary);">$500/mo</span></th>
+          <th class="tier-col featured-col" style="width:20%;">Growth<br><span style="font-weight:400; font-size:12px; color:#6A6F78;">$1,000/mo</span></th>
+          <th class="tier-col" style="width:20%;">Pro<br><span style="font-weight:400; font-size:12px; color:var(--text-secondary);">$2,000/mo</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Missed call → auto-SMS</td>
+          <td><span class="comp-check">✓</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Instant lead response (AI-personalized)</td>
+          <td><span class="comp-check">✓</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Appointment reminders (48h + 2h)</td>
+          <td><span class="comp-check">✓</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Cold lead 7-touch nurture (30 days)</td>
+          <td><span class="comp-check">✓</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Post-visit review request</td>
+          <td><span class="comp-check">✓</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Monthly summary report</td>
+          <td><span class="comp-check">✓</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Dormant customer reactivation</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>AI-written personalized outreach</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Cross-sell / upsell campaigns</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Life event triggers</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Full performance dashboard</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-check">✓</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Custom data pipelines</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-dash">—</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Revenue &amp; retention dashboards</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-dash">—</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>AI scoring models (churn, lead quality)</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-dash">—</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>White-labeled client portals</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-dash">—</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Dedicated engineering support</td>
+          <td><span class="comp-dash">—</span></td>
+          <td class="featured-cell"><span class="comp-dash">—</span></td>
+          <td><span class="comp-check">✓</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <span class="cta-eyebrow">Free audit · No pressure</span>
+    <h2 class="cta-headline">Not sure which tier<br>you <span class="acc">actually need?</span></h2>
+    <p class="cta-body">Most businesses start with Starter and never need more. Some grow into Growth within 6 months. We'll tell you exactly which one fits — on the call, for free.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

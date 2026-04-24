@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How It Works — Norr AI</title>
+<meta name="description" content="Audit. Build. Run. Three steps from free call to live automation — no software to learn, no ongoing management required.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+
+/* Phase steps */
+.phases {
+  background: var(--bone);
+  padding: 96px 48px;
+}
+.phases-inner { max-width: var(--max-width); margin: 0 auto; }
+
+.phase-block {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 80px;
+  align-items: start;
+  padding: 64px 0;
+  border-bottom: 1px solid var(--border);
+}
+.phase-block:last-child { border-bottom: none; }
+
+.phase-left {}
+.phase-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 12px;
+}
+.phase-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 42px;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin-bottom: 20px;
+}
+.phase-pitch {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+.phase-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(127,169,184,0.12);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--glacial);
+}
+
+.phase-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+.phase-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 28px;
+}
+.phase-detail-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 10px;
+}
+.phase-detail-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+.phase-detail p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* What you bring */
+.bring {
+  background: var(--ink);
+  padding: 96px 48px;
+}
+.bring-inner { max-width: var(--max-width); margin: 0 auto; }
+.bring-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+  margin-bottom: 56px;
+}
+.bring-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.bring-card {
+  background: #0D1424;
+  border: 1px solid #1a2030;
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+}
+.bring-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+.bring-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: #FAFAF7;
+  margin-bottom: 8px;
+}
+.bring-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #6A6F78;
+}
+
+/* Timeline */
+.timeline {
+  background: var(--bone);
+  padding: 96px 48px;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-inner { max-width: var(--max-width); margin: 0 auto; }
+.timeline-header { text-align: center; margin-bottom: 64px; }
+.timeline-header .section-title { margin: 0 auto 16px; text-align: center; }
+.timeline-header p { font-size: 15px; color: var(--text-secondary); max-width: 500px; margin: 0 auto; line-height: 1.65; }
+
+.tl-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.tl-track::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.tl-item {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 24px;
+  padding: 0 0 40px;
+  position: relative;
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--glacial);
+  letter-spacing: 0.1em;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.tl-dot.active {
+  background: var(--ink);
+  border-color: var(--glacial);
+  color: var(--glacial);
+}
+.tl-content { padding-top: 8px; }
+.tl-when {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 6px;
+}
+.tl-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.tl-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* FAQ */
+.faq {
+  background: var(--surface);
+  padding: 96px 48px;
+}
+.faq-inner { max-width: var(--max-width); margin: 0 auto; }
+.faq-header { margin-bottom: 56px; }
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.faq-item {
+  background: var(--surface);
+  padding: 36px 32px;
+}
+.faq-q {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.faq-a {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .phase-block { grid-template-columns: 1fr; gap: 32px; }
+  .phases { padding: 64px 24px; }
+  .bring { padding: 64px 24px; }
+  .bring-header { grid-template-columns: 1fr; gap: 24px; }
+  .bring-list { grid-template-columns: 1fr; }
+  .timeline { padding: 64px 24px; }
+  .faq { padding: 64px 24px; }
+  .faq-grid { grid-template-columns: 1fr; }
+  .tl-track::before { left: 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html" class="active">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">How it works · Three steps</div>
+    <h1 class="page-hero-headline">We build it.<br>You run your <span class="acc">business.</span></h1>
+    <p class="page-hero-sub">No software to learn. No workflows to manage. You show up to a 30-minute call and tell us what's falling through the cracks. We take it from there.</p>
+    <div class="page-hero-actions">
+      <a href="contact.html" class="btn-accent">Start with a free audit</a>
+    </div>
+  </div>
+</section>
+
+<!-- PHASES -->
+<section class="phases">
+  <div class="phases-inner">
+
+    <div class="phase-block">
+      <div class="phase-left">
+        <div class="phase-num">01 / Audit</div>
+        <div class="phase-name">We map<br>your gaps.</div>
+        <p class="phase-pitch">A free 30-minute call. We walk through where leads are falling through, what manual tasks are eating your time, and what automation would actually move your revenue. No pitch, no pressure — you leave with a clear picture either way.</p>
+        <div class="phase-time">⏱ 30 minutes · Free</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-detail">
+          <div class="phase-detail-label">What we cover</div>
+          <div class="phase-detail-title">The 3 gaps most businesses have</div>
+          <p>Missed calls that go unanswered. Leads that go cold because no one followed up fast enough. Appointments that no-show because nobody sent a reminder. We've seen these in every vertical — the specifics differ, the pattern doesn't.</p>
+        </div>
+        <div class="phase-detail">
+          <div class="phase-detail-label">What you get</div>
+          <div class="phase-detail-title">A clear picture, whether you work with us or not</div>
+          <p>At the end of the call, you'll know exactly which automations would have the biggest impact on your revenue. If you want to move forward, we scope the build. If not, you leave with a map you can hand to anyone.</p>
+        </div>
+        <div class="phase-detail">
+          <div class="phase-detail-label">What we need from you</div>
+          <div class="phase-detail-title">30 minutes and honest answers</div>
+          <p>What CRM do you use? Where do leads come from? What's the biggest thing falling through the cracks right now? That's it. No prep required.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-block">
+      <div class="phase-left">
+        <div class="phase-num">02 / Build</div>
+        <div class="phase-name">We build<br>everything.</div>
+        <p class="phase-pitch">We configure your automations, connect your tools, set up your phone number, write the sequences, and run test scenarios before anything touches a real lead. You review. You approve. You don't touch a setting.</p>
+        <div class="phase-time">⏱ 1–2 weeks · Included in setup fee</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-detail">
+          <div class="phase-detail-label">Integrations</div>
+          <div class="phase-detail-title">We connect to what you already use</div>
+          <p>Your CRM, your calendar, your phone line, your email. We set up a dedicated Twilio number, connect SendGrid for email delivery, and wire everything together. No new software for you to manage.</p>
+        </div>
+        <div class="phase-detail">
+          <div class="phase-detail-label">Sequences</div>
+          <div class="phase-detail-title">Written to sound like you</div>
+          <p>We collect your tone, your typical openers, and examples of how you communicate with clients. The AI is instructed to match your voice — not produce generic templates. Every message reads like you wrote it.</p>
+        </div>
+        <div class="phase-detail">
+          <div class="phase-detail-label">Testing</div>
+          <div class="phase-detail-title">We test every path before go-live</div>
+          <p>Business hours logic. Duplicate lead handling. Edge cases. We run test leads through every workflow and show you the output before anything goes live. You sign off, then we flip the switch.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-block">
+      <div class="phase-left">
+        <div class="phase-num">03 / Run</div>
+        <div class="phase-name">It runs.<br>You watch<br>the <span style="color:var(--glacial);">results.</span></div>
+        <p class="phase-pitch">Go live in 1–2 weeks. From that point, the system runs without you — responding to leads, sending reminders, following up. Every month, we send a report showing exactly what ran and what it did for your business.</p>
+        <div class="phase-time">⏱ Ongoing · Included in monthly fee</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-detail">
+          <div class="phase-detail-label">Reporting</div>
+          <div class="phase-detail-title">What the system did, in plain language</div>
+          <p>Every month: leads responded to, appointments saved, calls recovered, reviews requested, sequences completed. We translate the numbers into revenue terms — not execution counts.</p>
+        </div>
+        <div class="phase-detail">
+          <div class="phase-detail-label">Tuning</div>
+          <div class="phase-detail-title">We adjust as you grow</div>
+          <p>New CRM? New phone number? New vertical? We update the system. The infrastructure is owned by Norr AI — which means changes happen at the engineering level, not your end.</p>
+        </div>
+        <div class="phase-detail">
+          <div class="phase-detail-label">Upgrade path</div>
+          <div class="phase-detail-title">Tier 1 to Tier 2 without a rebuild</div>
+          <p>From day one, we build with the upgrade in mind. Every Starter workflow logs clean data to a shared backend — so when you're ready for Growth, we expand the system, not restart it.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- WHAT YOU BRING -->
+<section class="bring">
+  <div class="bring-inner">
+    <div class="bring-header">
+      <div>
+        <span class="section-eyebrow">What we need from you</span>
+        <h2 class="section-title light">Less than you think.</h2>
+      </div>
+      <div style="padding-top: 8px;">
+        <p style="font-size: 17px; line-height: 1.7; color: #6A6F78; margin-bottom: 16px;">We've designed the onboarding to be as lightweight as possible. Most of what we need can be collected in a single form — the rest comes from the audit call.</p>
+        <p style="font-size: 15px; line-height: 1.65; color: #4A5060;">You do not need to understand automation, n8n, APIs, webhooks, or any technical concept. That's our job.</p>
+      </div>
+    </div>
+    <div class="bring-list">
+      <div class="bring-card">
+        <div class="bring-icon">📱</div>
+        <div class="bring-title">Your phone number (or let us get one)</div>
+        <p class="bring-body">We set up a dedicated local number through Twilio — or port your existing number if you prefer. Either way, calls route through it and the automations fire off it.</p>
+      </div>
+      <div class="bring-card">
+        <div class="bring-icon">📋</div>
+        <div class="bring-title">Access to your CRM</div>
+        <p class="bring-body">We connect directly to Follow Up Boss, HubSpot, Salesforce, or whatever you're using. Viewer access is usually enough to start. We'll guide you through what we need.</p>
+      </div>
+      <div class="bring-card">
+        <div class="bring-icon">✍️</div>
+        <div class="bring-title">Your voice and tone</div>
+        <p class="bring-body">A few examples of how you communicate with clients — emails, texts, past sequences. The AI is prompted to match your style, not produce generic copy.</p>
+      </div>
+      <div class="bring-card">
+        <div class="bring-icon">📅</div>
+        <div class="bring-title">Your booking link or scheduling process</div>
+        <p class="bring-body">Whatever you use to schedule calls — Calendly, Acuity, or just a phone call. We embed it into the sequences so leads can book without friction.</p>
+      </div>
+      <div class="bring-card">
+        <div class="bring-icon">🔗</div>
+        <div class="bring-title">Your Google Business profile</div>
+        <p class="bring-body">The review request workflow sends clients directly to your review page. We just need the URL. Everything else — the timing, the message — is handled by us.</p>
+      </div>
+      <div class="bring-card">
+        <div class="bring-icon">🕐</div>
+        <div class="bring-title">30 minutes for the audit + 30 for the handoff</div>
+        <p class="bring-body">That's the total time you spend in calls before you go live. One audit call to scope the build. One handoff call to review and approve. Then the system runs without you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="timeline">
+  <div class="timeline-inner">
+    <div class="timeline-header">
+      <span class="section-eyebrow" style="display:block; text-align:center;">Timeline</span>
+      <h2 class="section-title" style="text-align:center; margin:0 auto 16px;">Day 1 to live automation</h2>
+      <p>Most clients are fully live within 10 business days of the audit call. Here's what that looks like week by week.</p>
+    </div>
+    <div class="tl-track">
+      <div class="tl-item">
+        <div class="tl-dot active">D1</div>
+        <div class="tl-content">
+          <div class="tl-when">Day 1</div>
+          <div class="tl-title">Free audit call</div>
+          <p class="tl-body">30 minutes. We identify your top 3 gaps, agree on which automations to build first, and scope the engagement. You receive a written summary the same day.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">D2</div>
+        <div class="tl-content">
+          <div class="tl-when">Day 2–3</div>
+          <div class="tl-title">Onboarding form + CRM access</div>
+          <p class="tl-body">We send a short onboarding questionnaire — tone samples, tool access, booking link, Google Business URL. Takes about 20 minutes to fill out.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">W1</div>
+        <div class="tl-content">
+          <div class="tl-when">Week 1</div>
+          <div class="tl-title">Build and integrate</div>
+          <p class="tl-body">We set up your Twilio number, configure the workflows, write the sequences, and connect everything to your CRM and calendar. No input needed from you during this phase.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">W2</div>
+        <div class="tl-content">
+          <div class="tl-when">Week 2</div>
+          <div class="tl-title">Test and review</div>
+          <p class="tl-body">We run test leads through every workflow path and send you the results. You review the messages, timing, and logic. We adjust anything that needs it.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot active">→</div>
+        <div class="tl-content">
+          <div class="tl-when">Day 10–14</div>
+          <div class="tl-title">Go live</div>
+          <p class="tl-body">Handoff call. We walk through what's live, what each workflow does, and how to read your monthly report. Then it runs — you get back to running your business.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="faq-inner">
+    <div class="faq-header">
+      <span class="section-eyebrow">Common questions</span>
+      <h2 class="section-title">What most people ask<br>before the audit call</h2>
+    </div>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <div class="faq-q">Do I need to learn any new software?</div>
+        <p class="faq-a">No. You don't touch any of the automation tools. You use your existing CRM and phone as you always have — the system runs behind them. We send you a monthly report. That's the only interface you need.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What if I want to change a message or sequence later?</div>
+        <p class="faq-a">Just email us. Changes at the workflow level are handled by our team — usually turned around within a business day. You don't need to log into anything or configure anything yourself.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What happens if a lead replies with something unexpected?</div>
+        <p class="faq-a">The system flags it and stops the sequence. You get notified. We design every workflow with escape hatches — if the AI can't handle the reply confidently, it hands off to you rather than risk a bad interaction.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How do you make sure messages sound like me?</div>
+        <p class="faq-a">We collect samples of your actual writing — emails, past sequences, how you typically open a message to a client. The AI is given these as examples and instructed to match your style, word choices, and tone. Most clients can't tell the difference.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What CRMs do you work with?</div>
+        <p class="faq-a">Follow Up Boss, HubSpot, LionDesk, Salesforce (including Starter Suite), and most others with an API or webhook support. If you use something unusual, ask — we've connected to a wide range of tools and can usually make it work.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What if it doesn't work for my business?</div>
+        <p class="faq-a">Cancel after month 3 if it isn't working — though it will be. The audit call is free precisely so we can confirm fit before you spend anything. If the math doesn't work for your business, we'll tell you on the call.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <span class="cta-eyebrow">Free audit · No pressure</span>
+    <h2 class="cta-headline">Start with a<br><span class="acc">30-minute call.</span></h2>
+    <p class="cta-body">We'll map the 3 gaps costing you the most right now — missed calls, slow follow-up, or manual work eating your time. You leave with a clear picture. We leave with a scope.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

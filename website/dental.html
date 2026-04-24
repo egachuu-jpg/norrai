@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dental Practice Automation — Norr AI</title>
+<meta name="description" content="Reduce no-shows by 30–40%. Reactivate dormant patients automatically. Collect more reviews without asking manually. Built for dental offices.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.wf-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+}
+.wf-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 12px;
+}
+.wf-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+.wf-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.dark-wf .wf-card {
+  background: #0D1424;
+  border-color: #1a2030;
+}
+.dark-wf .wf-title { color: #FAFAF7; }
+.dark-wf .wf-body  { color: #6A6F78; }
+
+.math-block {
+  background: var(--ink);
+  border-radius: var(--radius-lg);
+  padding: 40px 40px;
+  margin-top: 48px;
+}
+.math-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #1a2030;
+}
+.math-row:last-child { border-bottom: none; }
+.math-label { font-size: 14px; color: #6A6F78; flex: 1; }
+.math-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: #FAFAF7;
+}
+.math-val .acc { color: var(--glacial); }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .workflow-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; gap: 32px; }
+  .math-block { padding: 24px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Dental offices · Automation built for you</div>
+    <h1 class="page-hero-headline">Every no-show is<br><span class="acc">a decision you made.</span></h1>
+    <p class="page-hero-sub">The average dental practice loses 4–6 appointments per week to no-shows. At $250 a chair, that's $4,000–$6,000/month walking out the door. A 2-touch reminder sequence changes that — and it takes us 10 days to build it.</p>
+    <div class="page-hero-actions">
+      <a href="contact.html" class="btn-accent">Book a free audit</a>
+      <a href="pricing.html" class="btn-ghost" style="color:#6A6F78;">See pricing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- THE MATH -->
+<section class="section-bone">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">The math</span>
+        <h2 class="section-title">What no-shows actually cost you</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:20px;">Most dentists know they have a no-show problem. Few have calculated exactly what it costs them — and almost none have fixed it systematically.</p>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:16px;">The fix is a 2-touch reminder sequence: 48 hours out and 2 hours out. One automated text to each patient. Reduction in no-shows: 30–40%. Setup time: 10 days.</p>
+      </div>
+      <div>
+        <div class="math-block">
+          <div class="math-row">
+            <div class="math-label">Average appointment value</div>
+            <div class="math-val">$<span class="acc">250</span></div>
+          </div>
+          <div class="math-row">
+            <div class="math-label">No-shows per week (conservative)</div>
+            <div class="math-val"><span class="acc">4</span></div>
+          </div>
+          <div class="math-row">
+            <div class="math-label">Monthly revenue loss</div>
+            <div class="math-val">$<span class="acc">4,000</span></div>
+          </div>
+          <div class="math-row">
+            <div class="math-label">Recovery at 35% reduction</div>
+            <div class="math-val">$<span class="acc">1,400</span>/mo</div>
+          </div>
+          <div class="math-row">
+            <div class="math-label">Starter tier cost</div>
+            <div class="math-val">$<span class="acc">500</span>/mo</div>
+          </div>
+          <div class="math-row">
+            <div class="math-label">Net gain from reminders alone</div>
+            <div class="math-val">$<span class="acc">900</span>/mo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STARTER WORKFLOWS -->
+<section class="section-ink">
+  <div class="section-inner">
+    <span class="section-eyebrow">Starter tier · Dental</span>
+    <h2 class="section-title light" style="margin-bottom:16px;">What goes live in the first 2 weeks</h2>
+    <p style="font-size:16px; line-height:1.7; color:#6A6F78; max-width:600px; margin-bottom:56px;">These are the workflows we deploy for every dental client on Starter. All of them run automatically — you review and approve before anything goes live.</p>
+    <div class="workflow-grid dark-wf">
+      <div class="wf-card">
+        <div class="wf-num">01</div>
+        <div class="wf-title">Appointment reminders (48h + 2h)</div>
+        <p class="wf-body">Two texts per appointment. First at 48 hours — enough time to fill the slot if they cancel. Second at 2 hours — catches day-of forgetters. One-tap confirm link included.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">02</div>
+        <div class="wf-title">Missed appointment follow-up</div>
+        <p class="wf-body">3-touch follow-up sequence when a patient no-shows. Day of, day after, day three. Reschedule link on every message. Recovers a meaningful percentage even after they missed.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">03</div>
+        <div class="wf-title">Post-visit review request</div>
+        <p class="wf-body">Timed text after a completed appointment with a direct link to your Google Business profile. The right moment, automatically. No staff action required.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">04</div>
+        <div class="wf-title">Missed call → auto SMS</div>
+        <p class="wf-body">Every missed call triggers an instant text back — business hours aware. New patients don't move on to the next dental office. They get a response before their car leaves your parking lot.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">05</div>
+        <div class="wf-title">New patient intake via text</div>
+        <p class="wf-body">New patient calls or fills out a form → automated text sequence collects basic intake info before they arrive. Saves front desk time and makes the first visit smoother.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">06</div>
+        <div class="wf-title">Monthly summary report</div>
+        <p class="wf-body">What ran, what it recovered, what it generated in reviews and patient responses. In appointment-value terms — not system execution counts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GROWTH ANCHOR -->
+<section class="section-bone">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">Growth tier · Dental</span>
+        <h2 class="section-title">Dormant patient reactivation</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:20px; margin-bottom:20px;">The average dental practice has hundreds of patients who haven't been in for 12+ months. They're not gone — they just haven't been asked.</p>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-bottom:32px;">The Growth tier adds a reactivation workflow: AI identifies patients past their recall window, sequences a warm outreach over 2–3 touches, and books them back in. No staff time involved.</p>
+        <ul class="feature-list">
+          <li>AI scans contact database for patients 12+ months inactive</li>
+          <li>Personalized reactivation sequence — sounds like your practice, not a blast</li>
+          <li>Booking link embedded in every message</li>
+          <li>Tracks who responds, books, and ignores — so the next round is smarter</li>
+          <li>Cross-sell opportunity: hygiene recall → complete exam → whitening conversation</li>
+        </ul>
+        <div style="margin-top: 32px;">
+          <a href="contact.html" class="btn-primary">Book a free audit</a>
+        </div>
+      </div>
+      <div style="padding-top: 8px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 36px 32px; margin-bottom: 12px;">
+          <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px;">Pro tier · Dental</div>
+          <div style="font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; margin-bottom: 12px;">Practice management integration</div>
+          <p style="font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin-bottom: 16px;">Open Dental, Dentrix, Eaglesoft — we connect to your PMS and build dashboards you actually use: production by provider, collections rate, AR aging, insurance claim pipeline.</p>
+          <ul class="feature-list">
+            <li>PMS data pipeline (Open Dental REST API or nightly CSV export for closed systems)</li>
+            <li>Production and collections dashboard</li>
+            <li>AR aging alerts — flags overdue claims before they expire</li>
+            <li>AI-assisted insurance claim appeal drafting</li>
+          </ul>
+        </div>
+        <div style="background: rgba(127,169,184,0.08); border: 1px solid rgba(127,169,184,0.2); border-radius: var(--radius-md); padding: 20px 24px;">
+          <p style="font-size: 13px; line-height: 1.65; color: var(--text-secondary);"><strong style="color: var(--ink); font-weight: 600;">Note on integrations:</strong> Open Dental has a fully open REST API. Dentrix is gated. Closed systems fall back to nightly CSV export — still fully automatable, just a slightly different pipeline. We'll confirm what's possible on the audit call.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <span class="cta-eyebrow">Dental offices · Free audit</span>
+    <h2 class="cta-headline">Find out what your<br>practice is <span class="acc">leaving in empty chairs.</span></h2>
+    <p class="cta-body">30 minutes. We calculate the no-show math for your practice, identify which workflows would have the biggest immediate impact, and scope the build. No obligation.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

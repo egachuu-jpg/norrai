@@ -1,0 +1,180 @@
+{
+  "name": "Real Estate Listing Description Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "studio@norrai.co",
+        "fromName": "Norr AI",
+        "toEmail": "={{ $node[\"Parse HTML\"].json.agent_email }}",
+        "subject": "=New listing copy ready — {{ $json.headline }}",
+        "contentValue": "=Hi, {{ $node[\"Parse HTML\"].json.agent_name }}, below are the headline/descriptions for your latest listing.\n\nHEADLINE: {{ $json.headline }}  \n\nMLS DESCRIPTION: {{ $json.mls_description }}  \n\nSOCIAL MEDIA POST: {{ $json.social_caption }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [1280, 0],
+      "id": "58681773-2780-4d79-b8f5-7d1abecfd071",
+      "name": "Send an email",
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text;\n\nconst headlineMatch = text.split('HEADLINE:')[1];\nconst mlsMatch = text.split('MLS_DESCRIPTION:')[1];\nconst socialMatch = text.split('SOCIAL_MEDIA_POST:')[1];\n\nconst headline = headlineMatch\n  ? headlineMatch.split('MLS_DESCRIPTION:')[0].trim()\n  : '';\n\nconst mls_description = mlsMatch\n  ? mlsMatch.split('SOCIAL_MEDIA_POST:')[0].trim()\n  : '';\n\nconst social_caption = socialMatch\n  ? socialMatch.trim()\n  : '';\n\nreturn [{\n  json: {\n    headline,\n    mls_description,\n    social_caption\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1072, 0],
+      "id": "7a55ce94-761d-42be-9a97-d4a2cf7922b7",
+      "name": "Parse Desc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.prompt }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [848, 0],
+      "id": "55e3e23c-0c05-43e5-98b6-27e9a6369b1e",
+      "name": "Generate Listing (Claude)",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d612203-db2a-48cc-babc-17e177cf58ad",
+              "name": "prompt",
+              "value": "=You are a real estate copywriter who writes in the style of a specific agent. Study these example listings carefully and match their voice, tone, and style exactly.\n\nEXAMPLE LISTINGS FROM THIS AGENT:\n{{ $node[\"Get Details\"].json.body.previous_listings }}\n\nNow generate a headline and two professional property descriptions in exactly the same style for this listing:\n\nAddress: {{ $node[\"Get Details\"].json.body.property_address }}\nBedrooms: {{ $node[\"Get Details\"].json.body.beds }}\nBathrooms: {{ $node[\"Get Details\"].json.body.baths }}\nSquare Feet: {{ $node[\"Get Details\"].json.body.sqft }}\nYear Built: {{ $node[\"Get Details\"].json.body.year_built }}\nBasement: {{ $node[\"Get Details\"].json.body.basement }}\nGarage: {{ $node[\"Get Details\"].json.body.garage }}\nPrice: ${{ $node[\"Get Details\"].json.body.price }}\nKey Features: {{ $node[\"Get Details\"].json.body.key_features }}\nNeighborhood Notes: {{ $node[\"Get Details\"].json.body.neighborhood_notes }}\nTone: {{ $node[\"Get Details\"].json.body.tone }}\nTarget Buyer: {{ $node[\"Get Details\"].json.body.target_buyer }}\n\nPlease provide:\n1. HEADLINE: A punchy property headline under 10 words\n2. MLS_DESCRIPTION: A detailed professional MLS listing description (150-200 words)\n3. SOCIAL_MEDIA_POST: An engaging social media post (50-75 words) with emojis\n\nFormat your response exactly as:\nHEADLINE: [your headline here]\n\nMLS_DESCRIPTION: [your MLS description here]\n\nSOCIAL_MEDIA_POST: [your social media post here]",
+              "type": "string"
+            },
+            {
+              "id": "73f13592-0617-498f-ac61-1fe319106875",
+              "name": "agent_name",
+              "value": "={{ $node[\"Get Details\"].json.body.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ece63fc6-53cc-4569-ae43-f4910dd0bd98",
+              "name": "agent_email",
+              "value": "={{ $node[\"Get Details\"].json.body.agent_email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [656, 0],
+      "id": "91ee3dcb-2d60-4ba9-8d31-9172004fb620",
+      "name": "Parse HTML"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "listing-description",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [288, 0],
+      "id": "e5bf2fd8-520f-4c6a-8da7-67289a92b6a8",
+      "name": "Get Details",
+      "webhookId": "51a77105-7762-4f29-8a87-cb981ea85e6e"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send an email": {
+      "main": [[]]
+    },
+    "Parse Desc": {
+      "main": [
+        [
+          {
+            "node": "Send an email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Listing (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Parse Desc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse HTML": {
+      "main": [
+        [
+          {
+            "node": "Generate Listing (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Details": {
+      "main": [
+        [
+          {
+            "node": "Parse HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "751bef94-0fef-4560-be30-9e12c09d70cf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "nkkl9KmX7zMGuhvE",
+  "tags": []
+}

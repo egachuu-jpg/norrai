@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Listing Description Generator — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--bone);
+    margin-bottom: 12px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Section cards ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-body { padding: 24px; }
+
+  /* ── Fields ── */
+  .row   { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field.no-gap { gap: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239EA3AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  textarea { resize: vertical; min-height: 96px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+
+  /* ── Checkbox row ── */
+  .check-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .check-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+    background: var(--bone);
+  }
+  .check-pill input[type="checkbox"] { display: none; }
+  .check-pill:hover { border-color: var(--glacial); }
+  .check-pill.active {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ── Submit area ── */
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 15px 24px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  /* ── Responsive ── */
+  @media (max-width: 580px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · tools.norrai.co</div>
+    <h1>Listing Description<br><span class="accent">Generator</span></h1>
+    <p>Fill in the details below. You'll get a headline, MLS description, and social post emailed back within a minute or two.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="listing-form" novalidate>
+
+    <!-- 01 Agent -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">Agent</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="agent_name">Your name <span class="req">*</span></label>
+            <input type="text" id="agent_name" name="agent_name" autocomplete="name" placeholder="Jane Smith" required>
+          </div>
+          <div class="field">
+            <label for="agent_email">Where to send results <span class="req">*</span></label>
+            <input type="email" id="agent_email" name="agent_email" autocomplete="email" placeholder="jane@yourbrokerage.com" required>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Property -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">Property</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="street_address">Street address <span class="req">*</span></label>
+          <input type="text" id="street_address" name="street_address" placeholder="123 Maple St" required>
+        </div>
+
+        <div class="row-3">
+          <div class="field">
+            <label for="city">City / Town <span class="req">*</span></label>
+            <input type="text" id="city" name="city" placeholder="Faribault" required>
+          </div>
+          <div class="field">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" placeholder="MN" value="MN" maxlength="2">
+          </div>
+          <div class="field">
+            <label for="zip">ZIP</label>
+            <input type="text" id="zip" name="zip" placeholder="55021" maxlength="10">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="county">County</label>
+            <input type="text" id="county" name="county" placeholder="Rice County">
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div class="field">
+            <label for="price">List price <span class="req">*</span></label>
+            <input type="text" id="price" name="price" placeholder="$349,900" pattern="^\$?[\d,]+(\.\d{1,2})?$" title="Enter a price like $349,900" required>
+          </div>
+          <div class="field">
+            <label for="beds">Beds <span class="req">*</span></label>
+            <input type="number" id="beds" name="beds" min="0" max="20" placeholder="3" required>
+          </div>
+          <div class="field">
+            <label for="baths">Baths <span class="req">*</span></label>
+            <input type="number" id="baths" name="baths" step="0.5" min="0" max="20" placeholder="2">
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div class="field">
+            <label for="sqft">Square feet</label>
+            <input type="number" id="sqft" name="sqft" min="0" placeholder="1,850">
+          </div>
+          <div class="field">
+            <label for="lot_size">Lot size</label>
+            <input type="number" id="lot_size" name="lot_size" step="0.01" min="0" placeholder="0.35">
+            <div class="hint">Acres</div>
+          </div>
+          <div class="field">
+            <label for="year_built">Year built</label>
+            <input type="number" id="year_built" name="year_built" min="1800" max="2030" placeholder="1998">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="property_type">Property type</label>
+            <select id="property_type" name="property_type">
+              <option>Single-family</option>
+              <option>Townhome</option>
+              <option>Condo</option>
+              <option>Multi-family</option>
+              <option>Land</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="garage">Garage</label>
+            <select id="garage" name="garage">
+              <option value="">None / unknown</option>
+              <option value="1-car attached">1-car attached</option>
+              <option value="2-car attached">2-car attached</option>
+              <option value="3-car attached">3-car attached</option>
+              <option value="1-car detached">1-car detached</option>
+              <option value="2-car detached">2-car detached</option>
+              <option value="heated garage">Heated garage</option>
+              <option value="tandem garage">Tandem garage</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Basement</label>
+          <div class="check-group" id="basement-group">
+            <label class="check-pill" data-val="full unfinished">
+              <input type="checkbox" name="basement[]" value="full unfinished"> Full unfinished
+            </label>
+            <label class="check-pill" data-val="full finished">
+              <input type="checkbox" name="basement[]" value="full finished"> Full finished
+            </label>
+            <label class="check-pill" data-val="walk-out">
+              <input type="checkbox" name="basement[]" value="walk-out"> Walk-out
+            </label>
+            <label class="check-pill" data-val="partial">
+              <input type="checkbox" name="basement[]" value="partial"> Partial
+            </label>
+            <label class="check-pill" data-val="none">
+              <input type="checkbox" name="basement[]" value="none"> None / slab
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 The Story -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">The Story</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="key_features">Key features &amp; upgrades <span class="req">*</span></label>
+          <textarea id="key_features" name="key_features" rows="4" placeholder="Remodeled kitchen with quartz counters, main-floor primary suite, new roof 2022, in-floor radiant heat, finished lower level..." required></textarea>
+        </div>
+        <div class="field">
+          <label for="neighborhood_notes">Neighborhood &amp; location</label>
+          <textarea id="neighborhood_notes" name="neighborhood_notes" rows="3" placeholder="Walk to Central Park, Lincoln Elementary, quiet cul-de-sac, 5 min to Hwy 35..."></textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="tone">Tone</label>
+            <select id="tone" name="tone">
+              <option value="warm_professional">Warm professional</option>
+              <option value="luxury">Luxury / high-end</option>
+              <option value="family_friendly">Family friendly</option>
+              <option value="casual">Casual / conversational</option>
+              <option value="investor">Investor / ROI-focused</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="target_buyer">Target buyer</label>
+            <select id="target_buyer" name="target_buyer">
+              <option>First-time buyer</option>
+              <option>Move-up buyer</option>
+              <option>Downsizer</option>
+              <option>Luxury buyer</option>
+              <option>Investor</option>
+              <option>General</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 Your Voice -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">04</span>
+        <span class="section-title">Your Voice</span>
+        <span id="voice-saved-badge" style="display:none; font-family:var(--font-mono); font-size:10px; color:var(--glacial); margin-left:auto; display:none; align-items:center; gap:6px;">
+          · saved
+          <button type="button" id="clear-profile" style="font-family:var(--font-mono); font-size:10px; color:var(--muted); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline;">clear</button>
+        </span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="previous_listings">Paste 3–5 of your previous listing descriptions <span class="req">*</span></label>
+          <textarea id="previous_listings" name="previous_listings" rows="10" placeholder="Paste your past listings here, separated by a line of ---
+
+This is where the magic is. The more examples you give, the more the output sounds like you." required></textarea>
+          <div class="hint">Claude uses these as style references — word choices, sentence rhythm, how you open and close. Saved automatically after your first submission — won't ask again next time.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <div id="status" class="status" role="alert"></div>
+      <button type="submit" id="submit-btn">Generate Listing Copy →</button>
+    </div>
+
+  </form>
+
+  <footer>
+    <p>Norr AI &nbsp;·&nbsp; <a href="mailto:hello@norrai.co">hello@norrai.co</a> &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+  </footer>
+</div>
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/listing-description';
+  const PROFILE_KEY = 'norrai_agent_profile';
+
+  // ─── Agent profile persistence ────────────────────────────────────────────
+  const voiceBadge = document.getElementById('voice-saved-badge');
+
+  function showVoiceSavedBadge() { voiceBadge.style.display = 'flex'; }
+  function hideVoiceSavedBadge() { voiceBadge.style.display = 'none'; }
+
+  function loadProfile() {
+    const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
+    if (!saved) return;
+    document.getElementById('agent_name').value        = saved.agent_name        || '';
+    document.getElementById('agent_email').value       = saved.agent_email       || '';
+    document.getElementById('previous_listings').value = saved.previous_listings || '';
+    if (saved.previous_listings) showVoiceSavedBadge();
+  }
+
+  function saveProfile(payload) {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify({
+      agent_name:        payload.agent_name,
+      agent_email:       payload.agent_email,
+      previous_listings: payload.previous_listings,
+    }));
+  }
+
+  document.getElementById('clear-profile').addEventListener('click', () => {
+    localStorage.removeItem(PROFILE_KEY);
+    document.getElementById('agent_name').value        = '';
+    document.getElementById('agent_email').value       = '';
+    document.getElementById('previous_listings').value = '';
+    hideVoiceSavedBadge();
+  });
+
+  loadProfile();
+
+  // ─── Price auto-format ────────────────────────────────────────────────────
+  document.getElementById('price').addEventListener('blur', function () {
+    const raw = this.value.replace(/[^0-9.]/g, '');
+    if (!raw) return;
+    const num = parseFloat(raw);
+    if (isNaN(num)) return;
+    this.value = '$' + Math.round(num).toLocaleString('en-US');
+  });
+
+  // ─── Pill checkboxes ──────────────────────────────────────────────────────
+  document.querySelectorAll('.check-pill').forEach(pill => {
+    const cb = pill.querySelector('input[type="checkbox"]');
+    pill.addEventListener('click', () => {
+      cb.checked = !cb.checked;
+      pill.classList.toggle('active', cb.checked);
+    });
+  });
+
+  // ─── Form submission ──────────────────────────────────────────────────────
+  const form   = document.getElementById('listing-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Basic HTML5 validation
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    // Build payload from FormData
+    const fd = new FormData(form);
+    const payload = {};
+
+    // Standard fields
+    const textFields = [
+      'agent_name','agent_email','price',
+      'street_address','city','state','zip','county',
+      'property_type','garage','key_features','neighborhood_notes',
+      'tone','target_buyer','previous_listings'
+    ];
+    textFields.forEach(k => { payload[k] = fd.get(k) || ''; });
+
+    // Construct combined address for the workflow prompt
+    const addrParts = [
+      payload.street_address,
+      payload.city,
+      [payload.state, payload.zip].filter(Boolean).join(' ')
+    ].filter(Boolean);
+    payload.property_address = addrParts.join(', ');
+
+    // Numeric fields
+    ['beds','baths','sqft','year_built','lot_size'].forEach(k => {
+      const v = fd.get(k);
+      payload[k] = v !== '' && v !== null ? Number(v) : null;
+    });
+
+    // Basement checkboxes → comma-separated string
+    const basementVals = fd.getAll('basement[]');
+    payload.basement = basementVals.join(', ');
+
+    // Metadata
+    payload.submitted_at = new Date().toISOString();
+    payload.source = 'listing_form_web';
+
+    // UI state
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': '8F68D963-7060-4033-BD04-7593E4B203CB',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      saveProfile(payload);
+
+      status.textContent = `✓ Got it — check ${payload.agent_email} in the next minute or two.`;
+      status.className = 'status success show';
+      form.reset();
+
+      // Reset pill states after form reset
+      document.querySelectorAll('.check-pill').forEach(p => p.classList.remove('active'));
+
+      // Re-populate saved profile fields so agent is ready for the next listing
+      loadProfile();
+
+      // Scroll to success message
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co.`;
+      status.className = 'status error show';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate Listing Copy →';
+    }
+  });
+</script>
+</body>
+</html>

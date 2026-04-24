@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norr AI — Quiet systems. Loud results.</title>
+<meta name="description" content="Norr AI builds automation systems for local businesses. Every lead answered. Every follow-up sent. Every no-show reminded — without you lifting a finger.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --bone:       #FAFAF7;
+  --ink:        #0A0F1A;
+  --glacial:    #7FA9B8;
+  --graphite:   #3A3F48;
+  --blush:      #E8D4C4;
+
+  --text-primary:   #0A0F1A;
+  --text-secondary: #6A6F78;
+  --text-muted:     #9EA3AA;
+  --border:         #E5E4DE;
+  --surface:        #FFFFFF;
+
+  --font-display: 'Inter Tight', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+
+  --max-width: 1080px;
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-body); background: var(--bone); color: var(--text-primary); }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; }
+
+/* ============================================================
+   NAV
+   ============================================================ */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10, 15, 26, 0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #1a2030;
+}
+.nav-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 48px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.04em;
+  color: #FAFAF7;
+}
+.nav-logo .acc { color: var(--glacial); }
+
+.nav-links {
+  display: flex; align-items: center; gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 13px; font-weight: 500;
+  color: #6A6F78;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: #FAFAF7; }
+
+.nav-cta {
+  background: var(--glacial);
+  color: var(--ink);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.nav-cta:hover { opacity: 0.88; }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero {
+  background: var(--bone);
+  padding: 120px 48px 100px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(127,169,184,0.10) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 20px;
+}
+.hero-headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 68px;
+  line-height: 0.93;
+  letter-spacing: -0.04em;
+  margin-bottom: 28px;
+}
+.hero-headline .acc { color: var(--glacial); }
+.hero-sub {
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 460px;
+  margin-bottom: 40px;
+}
+.hero-actions {
+  display: flex; align-items: center; gap: 16px;
+}
+.btn-primary {
+  background: var(--ink); color: var(--bone);
+  padding: 15px 28px; border-radius: var(--radius-md);
+  font-size: 15px; font-weight: 600;
+  transition: background 0.15s;
+  display: inline-block;
+}
+.btn-primary:hover { background: #161e33; }
+.btn-ghost {
+  font-size: 14px; font-weight: 500;
+  color: var(--text-secondary);
+  padding: 15px 4px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
+
+.hero-right {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.hero-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  display: flex; align-items: center; gap: 20px;
+}
+.hero-stat-card.featured {
+  background: var(--ink);
+  border-color: transparent;
+}
+.stat-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.hero-stat-card .stat-icon { background: var(--bone); }
+.hero-stat-card.featured .stat-icon { background: rgba(127,169,184,0.15); }
+.stat-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.hero-stat-card.featured .stat-num { color: var(--bone); }
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.hero-stat-card.featured .stat-label { color: #6A6F78; }
+
+/* ============================================================
+   PAIN STRIP
+   ============================================================ */
+.pain {
+  background: var(--ink);
+  padding: 96px 48px;
+}
+.pain-inner { max-width: var(--max-width); margin: 0 auto; }
+.pain-header { margin-bottom: 64px; }
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 42px;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: #FAFAF7;
+  max-width: 600px;
+}
+.section-title .acc { color: var(--glacial); }
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #1a2030;
+  border: 1px solid #1a2030;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.pain-card {
+  background: #0D1424;
+  padding: 40px 36px;
+}
+.pain-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--glacial);
+  margin-bottom: 20px;
+}
+.pain-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: #FAFAF7;
+  margin-bottom: 14px;
+}
+.pain-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #6A6F78;
+}
+.pain-body strong { color: #9EA3AA; font-weight: 500; }
+
+/* ============================================================
+   WHAT WE DO
+   ============================================================ */
+.what {
+  background: var(--bone);
+  padding: 112px 48px;
+}
+.what-inner { max-width: var(--max-width); margin: 0 auto; }
+.what-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+  margin-bottom: 72px;
+}
+.what-header .section-title { color: var(--ink); }
+.what-desc {
+  padding-top: 8px;
+}
+.what-desc p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+.what-desc p:last-child { margin-bottom: 0; }
+
+.flow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.flow-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  position: relative;
+}
+.flow-step-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--glacial);
+  margin-bottom: 16px;
+}
+.flow-step-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+.flow-step-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.flow-arrow {
+  position: absolute;
+  top: 50%;
+  right: -20px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--glacial);
+  z-index: 1;
+  background: var(--bone);
+  padding: 4px;
+  line-height: 1;
+}
+
+/* ============================================================
+   VERTICALS
+   ============================================================ */
+.verticals {
+  background: var(--blush);
+  padding: 96px 48px;
+  border-top: 1px solid #DDD0C0;
+  border-bottom: 1px solid #DDD0C0;
+}
+.verticals-inner { max-width: var(--max-width); margin: 0 auto; }
+.verticals-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: end;
+  margin-bottom: 56px;
+}
+.verticals-header .section-title { color: var(--ink); }
+.verticals-note {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--graphite);
+  padding-bottom: 4px;
+}
+
+.vertical-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.vtag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid #DDD0C0;
+  border-radius: var(--radius-xl);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--graphite);
+  backdrop-filter: blur(4px);
+  transition: background 0.15s, border-color 0.15s;
+}
+.vtag:hover { background: rgba(255,255,255,0.9); border-color: #C0B0A0; }
+.vtag-icon { font-size: 16px; }
+
+/* ============================================================
+   PRICING
+   ============================================================ */
+.pricing {
+  background: var(--bone);
+  padding: 112px 48px;
+}
+.pricing-inner { max-width: var(--max-width); margin: 0 auto; }
+.pricing-header { text-align: center; margin-bottom: 64px; }
+.pricing-header .section-eyebrow { justify-content: center; }
+.pricing-header .section-title {
+  color: var(--ink); max-width: none;
+  font-size: 42px; margin: 0 auto 16px;
+}
+.pricing-header p {
+  font-size: 16px; color: var(--text-secondary);
+  max-width: 520px; margin: 0 auto;
+  line-height: 1.65;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.pricing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+}
+.pricing-card.featured {
+  background: var(--ink);
+  border-color: transparent;
+  position: relative;
+}
+.featured-badge {
+  position: absolute;
+  top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--glacial);
+  color: var(--ink);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 999px;
+  white-space: nowrap;
+}
+.pricing-tier {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 12px;
+}
+.pricing-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.pricing-card.featured .pricing-name { color: #FAFAF7; }
+.pricing-tagline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.pricing-card.featured .pricing-tagline { color: #6A6F78; border-color: #1a2030; }
+
+.price-row { margin-bottom: 4px; }
+.price-amount {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 38px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.pricing-card.featured .price-amount { color: #FAFAF7; }
+.price-period {
+  font-size: 14px; color: var(--text-secondary); font-weight: 400;
+}
+.price-setup {
+  font-size: 12px; color: var(--text-muted);
+  margin-bottom: 32px;
+}
+.pricing-card.featured .price-setup { color: #4A5060; }
+
+.feature-list {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 40px;
+  flex: 1;
+}
+.feature-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; line-height: 1.5;
+  color: var(--text-secondary);
+}
+.pricing-card.featured .feature-list li { color: #9EA3AA; }
+.feature-list li::before {
+  content: '→';
+  color: var(--glacial);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.pricing-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600;
+  text-align: center;
+  display: block;
+  transition: all 0.15s;
+}
+.pricing-btn-outline {
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+.pricing-btn-outline:hover { border-color: var(--ink); }
+.pricing-btn-accent {
+  background: var(--glacial);
+  color: var(--ink);
+}
+.pricing-btn-accent:hover { opacity: 0.88; }
+
+/* ============================================================
+   PROOF STRIP
+   ============================================================ */
+.proof {
+  background: #0D1424;
+  padding: 72px 48px;
+  border-top: 1px solid #1a2030;
+  border-bottom: 1px solid #1a2030;
+}
+.proof-inner {
+  max-width: var(--max-width); margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: #1a2030;
+  border: 1px solid #1a2030; border-radius: var(--radius-lg); overflow: hidden;
+}
+.proof-stat {
+  background: #0D1424;
+  padding: 40px 32px;
+}
+.proof-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  letter-spacing: -0.04em;
+  color: #FAFAF7;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.proof-num .acc { color: var(--glacial); }
+.proof-label {
+  font-size: 14px; line-height: 1.55;
+  color: #6A6F78;
+}
+
+/* ============================================================
+   CTA
+   ============================================================ */
+.cta {
+  background: var(--ink);
+  padding: 120px 48px;
+  position: relative; overflow: hidden;
+}
+.cta::before {
+  content: '';
+  position: absolute;
+  bottom: -300px; left: -200px;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(127,169,184,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-inner {
+  max-width: 680px; margin: 0 auto;
+  text-align: center; position: relative;
+}
+.cta-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--glacial);
+  margin-bottom: 24px;
+}
+.cta-headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 52px;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: #FAFAF7;
+  margin-bottom: 24px;
+}
+.cta-headline .acc { color: var(--glacial); }
+.cta-body {
+  font-size: 17px; line-height: 1.65;
+  color: #6A6F78; margin-bottom: 48px;
+}
+
+.cta-form {
+  display: flex; gap: 10px;
+  max-width: 480px; margin: 0 auto 20px;
+}
+.cta-input {
+  flex: 1;
+  padding: 15px 18px;
+  border: 1px solid #2a3040;
+  border-radius: var(--radius-md);
+  background: #111825;
+  color: #FAFAF7;
+  font-size: 15px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.cta-input::placeholder { color: #4A5060; }
+.cta-input:focus { border-color: var(--glacial); }
+.cta-submit {
+  padding: 15px 24px;
+  background: var(--glacial);
+  color: var(--ink);
+  border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  cursor: pointer; border: none; font-family: inherit;
+}
+.cta-submit:hover { opacity: 0.88; }
+.cta-fine {
+  font-size: 12px; color: #4A5060;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  background: var(--ink);
+  border-top: 1px solid #1a2030;
+  padding: 48px;
+}
+.footer-inner {
+  max-width: var(--max-width); margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.04em;
+  color: #FAFAF7;
+}
+.footer-logo .acc { color: var(--glacial); }
+.footer-links {
+  display: flex; gap: 32px; list-style: none;
+}
+.footer-links a {
+  font-size: 13px; color: #4A5060;
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: #FAFAF7; }
+.footer-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #2a3040;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .nav-inner { padding: 0 24px; }
+
+  .hero { padding: 80px 24px 72px; }
+  .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+  .hero-headline { font-size: 48px; }
+  .hero-sub { font-size: 16px; }
+
+  .pain { padding: 72px 24px; }
+  .pain-grid { grid-template-columns: 1fr; }
+
+  .what { padding: 80px 24px; }
+  .what-header { grid-template-columns: 1fr; gap: 24px; }
+  .flow-steps { grid-template-columns: 1fr; }
+  .flow-arrow { display: none; }
+
+  .verticals { padding: 72px 24px; }
+  .verticals-header { grid-template-columns: 1fr; gap: 20px; }
+
+  .pricing { padding: 80px 24px; }
+  .pricing-grid { grid-template-columns: 1fr; }
+
+  .proof { padding: 48px 24px; }
+  .proof-inner { grid-template-columns: repeat(2, 1fr); }
+
+  .cta { padding: 80px 24px; }
+  .cta-headline { font-size: 38px; }
+  .cta-form { flex-direction: column; }
+
+  footer { padding: 40px 24px; }
+  .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+  .footer-links { flex-wrap: wrap; justify-content: center; }
+
+  .section-title { font-size: 32px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAV
+     ============================================================ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">NORR<span class="acc"> AI</span></div>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">AI Automation · Faribault, MN</div>
+      <h1 class="hero-headline">Quiet systems.<br><span class="acc">Loud results.</span></h1>
+      <p class="hero-sub">Norr AI builds automation systems for local businesses. Every lead answered. Every appointment reminded. Every follow-up sent — without you lifting a finger.</p>
+      <div class="hero-actions">
+        <a href="#cta" class="btn-primary">Book a free audit</a>
+        <a href="#what" class="btn-ghost">See how it works →</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stat-card featured">
+        <div class="stat-icon">⚡</div>
+        <div>
+          <div class="stat-num">&lt; 5 min</div>
+          <div class="stat-label">Average lead response time after going live with Norr AI</div>
+        </div>
+      </div>
+      <div class="hero-stat-card">
+        <div class="stat-icon">📞</div>
+        <div>
+          <div class="stat-num">0</div>
+          <div class="stat-label">Missed calls that go unanswered — every one gets an auto-text back</div>
+        </div>
+      </div>
+      <div class="hero-stat-card">
+        <div class="stat-icon">🗓️</div>
+        <div>
+          <div class="stat-num">30–40%</div>
+          <div class="stat-label">Typical reduction in no-shows after reminder sequences go live</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PAIN STRIP
+     ============================================================ -->
+<section class="pain">
+  <div class="pain-inner">
+    <div class="pain-header">
+      <div class="section-eyebrow">The problem</div>
+      <h2 class="section-title">Your business is losing money<br>to things that <span class="acc">shouldn't require you.</span></h2>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-num">01</div>
+        <div class="pain-title">The phone rings. You can't answer. They move on.</div>
+        <p class="pain-body">The average small business misses <strong>30–40% of incoming calls</strong>. Most of those callers don't leave a voicemail. They call your competitor instead. That's not a staffing problem — it's a systems problem.</p>
+      </div>
+      <div class="pain-card">
+        <div class="pain-num">02</div>
+        <div class="pain-title">Leads go cold because no one had time to follow up.</div>
+        <p class="pain-body">A new lead has a <strong>21× higher chance of converting</strong> if you respond within 5 minutes versus 30. But between running jobs, seeing clients, and managing your team, nobody has 5 minutes to spare. So the lead sits. Then goes cold.</p>
+      </div>
+      <div class="pain-card">
+        <div class="pain-num">03</div>
+        <div class="pain-title">You're doing $12/hour work with $100/hour time.</div>
+        <p class="pain-body">Sending appointment reminders. Following up on quotes. Asking for reviews. Reactivating old customers. <strong>Every one of these tasks is automatable</strong> — but nobody's built the system. Yet.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     WHAT WE DO
+     ============================================================ -->
+<section class="what" id="what">
+  <div class="what-inner">
+    <div class="what-header">
+      <div>
+        <div class="section-eyebrow">How it works</div>
+        <h2 class="section-title">We build the system.<br>You run your business.</h2>
+      </div>
+      <div class="what-desc">
+        <p>We connect your phone, email, CRM, and calendar — then put AI on top. The result: a system that responds to leads, reminds customers, follows up on quotes, and asks for reviews while you're busy doing the actual work.</p>
+        <p>No new software to learn. No ongoing management required. You tell us what a good outcome looks like. We build the pipes that make it happen automatically.</p>
+      </div>
+    </div>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-num">01 / Audit</div>
+        <div class="flow-step-title">We map your gaps</div>
+        <p class="flow-step-body">Free 30-minute call. We identify the 3 places your business is leaking revenue to missed follow-ups, slow response, or manual tasks. No obligation.</p>
+        <div class="flow-arrow">→</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">02 / Build</div>
+        <div class="flow-step-title">We build and connect everything</div>
+        <p class="flow-step-body">We configure your automations, connect your tools, set up your phone number, and run test scenarios. You don't write a single line of code or touch a single setting.</p>
+        <div class="flow-arrow">→</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">03 / Run</div>
+        <div class="flow-step-title">It runs. You watch the results.</div>
+        <p class="flow-step-body">Go live in 1–2 weeks. Monthly reporting shows exactly what the system did — leads answered, appointments saved, revenue recovered. We tune it as you grow.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     VERTICALS
+     ============================================================ -->
+<section class="verticals" id="verticals">
+  <div class="verticals-inner">
+    <div class="verticals-header">
+      <div>
+        <div class="section-eyebrow">Who we work with</div>
+        <h2 class="section-title">Built for local.<br>Works for everyone.</h2>
+      </div>
+      <p class="verticals-note">If your business runs on appointments, repeat customers, or inbound leads — we can build a system around it. We work with businesses across southern Minnesota and beyond.</p>
+    </div>
+    <div class="vertical-tags">
+      <span class="vtag"><span class="vtag-icon">🏡</span> Real estate agents</span>
+      <span class="vtag"><span class="vtag-icon">🦷</span> Dental offices</span>
+      <span class="vtag"><span class="vtag-icon">👁️</span> Eye clinics</span>
+      <span class="vtag"><span class="vtag-icon">✂️</span> Hair salons &amp; barbershops</span>
+      <span class="vtag"><span class="vtag-icon">⛳</span> Golf courses</span>
+      <span class="vtag"><span class="vtag-icon">🌿</span> Greenhouses &amp; nurseries</span>
+      <span class="vtag"><span class="vtag-icon">🔧</span> Plumbers &amp; electricians</span>
+      <span class="vtag"><span class="vtag-icon">🏗️</span> Construction companies</span>
+      <span class="vtag"><span class="vtag-icon">🛡️</span> Insurance brokers</span>
+      <span class="vtag"><span class="vtag-icon">💆</span> Spas &amp; wellness studios</span>
+      <span class="vtag"><span class="vtag-icon">🐾</span> Veterinary clinics</span>
+      <span class="vtag"><span class="vtag-icon">🚗</span> Auto repair shops</span>
+      <span class="vtag"><span class="vtag-icon">🏋️</span> Gyms &amp; fitness studios</span>
+      <span class="vtag"><span class="vtag-icon">🌄</span> Landscaping companies</span>
+      <span class="vtag"><span class="vtag-icon">+ More</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PROOF STRIP
+     ============================================================ -->
+<section class="proof">
+  <div class="proof-inner">
+    <div class="proof-stat">
+      <div class="proof-num">&lt; <span class="acc">5</span> min</div>
+      <div class="proof-label">Lead response time after Norr AI goes live</div>
+    </div>
+    <div class="proof-stat">
+      <div class="proof-num"><span class="acc">1–2</span> wk</div>
+      <div class="proof-label">Typical time from audit to live automation</div>
+    </div>
+    <div class="proof-stat">
+      <div class="proof-num"><span class="acc">3</span> hrs</div>
+      <div class="proof-label">Average time saved per week at the Starter tier</div>
+    </div>
+    <div class="proof-stat">
+      <div class="proof-num"><span class="acc">$0</span></div>
+      <div class="proof-label">Cost of the initial audit — no pitch, no pressure</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRICING
+     ============================================================ -->
+<section class="pricing" id="pricing">
+  <div class="pricing-inner">
+    <div class="pricing-header">
+      <div class="section-eyebrow">Pricing</div>
+      <h2 class="section-title">Simple tiers. No surprises.</h2>
+      <p>Every tier includes setup, onboarding, and ongoing support. Cancel after month 3 if it isn't working — though it will be.</p>
+    </div>
+    <div class="pricing-grid">
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Tier 01</div>
+        <div class="pricing-name">Starter</div>
+        <div class="pricing-tagline">The essentials. Missed calls answered, leads followed up, appointments reminded — all running automatically.</div>
+        <div class="price-row">
+          <span class="price-amount">$500</span><span class="price-period"> /mo</span>
+        </div>
+        <div class="price-setup">+ $500 one-time setup fee</div>
+        <ul class="feature-list">
+          <li>Missed call → auto-text back in under 60 seconds</li>
+          <li>Instant lead response (AI-personalized by context)</li>
+          <li>Appointment reminder sequences (48h + 2h)</li>
+          <li>Cold lead 7-touch nurture over 30 days</li>
+          <li>Post-visit review request automation</li>
+          <li>Monthly summary report</li>
+        </ul>
+        <a href="#cta" class="pricing-btn pricing-btn-outline">Get started</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="featured-badge">Most popular</div>
+        <div class="pricing-tier">Tier 02</div>
+        <div class="pricing-name">Growth</div>
+        <div class="pricing-tagline">Advanced sequences, AI-written outreach, and reporting that shows you exactly what the system is doing for your revenue.</div>
+        <div class="price-row">
+          <span class="price-amount">$1,000</span><span class="price-period" style="color:#6A6F78;"> /mo</span>
+        </div>
+        <div class="price-setup">+ $1,000 one-time setup fee</div>
+        <ul class="feature-list">
+          <li>Everything in Starter</li>
+          <li>Dormant customer reactivation sequences</li>
+          <li>AI-written personalized outreach at scale</li>
+          <li>Cross-sell and upsell campaign automation</li>
+          <li>Life event and behavior triggers</li>
+          <li>Full monthly performance dashboard</li>
+        </ul>
+        <a href="#cta" class="pricing-btn pricing-btn-accent">Get started</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Tier 03</div>
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-tagline">Custom data pipelines, dashboards, and white-labeled client portals. Built for businesses that want a real competitive edge.</div>
+        <div class="price-row">
+          <span class="price-amount">$2,000</span><span class="price-period"> /mo</span>
+        </div>
+        <div class="price-setup">+ $3,000–$6,000 one-time build fee</div>
+        <ul class="feature-list">
+          <li>Everything in Growth</li>
+          <li>Custom data pipelines from your business systems</li>
+          <li>Revenue and retention dashboards</li>
+          <li>AI scoring models (churn risk, lead quality)</li>
+          <li>White-labeled client-facing tools</li>
+          <li>Dedicated engineering support</li>
+        </ul>
+        <a href="#cta" class="pricing-btn pricing-btn-outline">Talk to us</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA
+     ============================================================ -->
+<section class="cta" id="cta">
+  <div class="cta-inner">
+    <div class="cta-eyebrow">Free audit · No pressure</div>
+    <h2 class="cta-headline">Find out what your<br>business is <span class="acc">leaving on the table.</span></h2>
+    <p class="cta-body">30 minutes. We map the 3 gaps costing you the most right now — missed calls, slow follow-up, or manual work eating your time. You leave with a clear picture of what automation would do for your revenue, whether you work with us or not.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">NORR<span class="acc"> AI</span></div>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

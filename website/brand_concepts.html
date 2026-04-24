@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norr AI — Brand Direction Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Zilla+Slab:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; color: #222; }
+
+  /* ===== Study shell ===== */
+  .shell {
+    background: #1a1a1a;
+    color: #ccc;
+    padding: 64px 48px 80px;
+    font-family: 'Inter', sans-serif;
+  }
+  .shell-inner { max-width: 1100px; margin: 0 auto; }
+  .shell .eyebrow {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #888; margin-bottom: 16px;
+  }
+  .shell h1 { font-size: 32px; font-weight: 600; color: #fff; margin-bottom: 12px; letter-spacing: -0.01em; }
+  .shell .lede { font-size: 16px; color: #aaa; max-width: 700px; line-height: 1.6; }
+
+  /* ===== Shared direction card structure ===== */
+  .direction { padding: 80px 48px; }
+  .dir-inner { max-width: 1100px; margin: 0 auto; }
+  .dir-meta {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+    align-items: start;
+  }
+  .dir-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .dir-name { font-size: 44px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .dir-summary { font-size: 17px; line-height: 1.55; max-width: 620px; }
+  .dir-section-title {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    margin-bottom: 14px; font-weight: 600;
+  }
+
+  .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 48px; }
+  .swatch { aspect-ratio: 1 / 1.2; display: flex; flex-direction: column; justify-content: flex-end; padding: 12px; border-radius: 4px; }
+  .swatch-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+  .swatch-hex { font-size: 10px; font-family: 'JetBrains Mono', monospace; opacity: 0.75; margin-top: 2px; }
+
+  .type-row { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-bottom: 56px; }
+
+  .mockup-card { border-radius: 8px; padding: 40px; }
+  .mockup-label { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px; opacity: 0.7; }
+
+  .references { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+  .ref-chip {
+    font-size: 11px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid currentColor; opacity: 0.6;
+  }
+
+  /* ===================================================== */
+  /* DIRECTION A — NORDIC ALMANAC                          */
+  /* ===================================================== */
+  .dir-a { background: #F5F1E8; color: #0E1628; }
+  .dir-a .dir-name { font-family: 'Fraunces', serif; font-weight: 500; font-style: italic; }
+  .dir-a .tagline-card {
+    background: #0E1628; color: #F5F1E8; padding: 80px 48px; text-align: center;
+    border-radius: 2px; margin-bottom: 48px;
+  }
+  .dir-a .tagline-card .coords {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+    color: #B8502A; margin-bottom: 32px;
+  }
+  .dir-a .tagline-card .tagline {
+    font-family: 'Fraunces', serif; font-weight: 400; font-size: 44px; line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .dir-a .tagline-card .tagline em { color: #B8502A; font-style: italic; }
+  .dir-a .tagline-card .rule { width: 40px; height: 1px; background: #B8502A; margin: 32px auto 0; }
+  .dir-a .display-sample {
+    font-family: 'Fraunces', serif; font-size: 56px; font-weight: 400; letter-spacing: -0.01em;
+    color: #0E1628; line-height: 1;
+  }
+  .dir-a .display-sample em { font-style: italic; color: #B8502A; }
+  .dir-a .body-sample {
+    font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.7;
+  }
+  .dir-a .body-sample .dropcap::first-letter {
+    font-family: 'Fraunces', serif; font-size: 48px; float: left;
+    line-height: 0.9; margin: 4px 8px 0 0; color: #B8502A; font-weight: 500;
+  }
+  .dir-a .mockup-card { background: #FFF; border: 1px solid #D9D0BE; }
+  .dir-a .mockup-card .section-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em;
+    color: #B8502A; margin-bottom: 8px;
+  }
+  .dir-a .mockup-card h3 {
+    font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500;
+    margin-bottom: 6px; letter-spacing: -0.01em;
+  }
+  .dir-a .mockup-card .sub { font-size: 14px; color: #5A5347; margin-bottom: 24px; }
+  .dir-a .mockup-card hr { border: none; border-top: 1px solid #D9D0BE; margin: 24px 0; }
+  .dir-a .mockup-card .field-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #5A5347; margin-bottom: 6px;
+  }
+  .dir-a .mockup-card input, .dir-a .mockup-card select {
+    width: 100%; border: none; border-bottom: 1px solid #0E1628; padding: 8px 0;
+    font-family: 'Inter', sans-serif; font-size: 15px; background: transparent;
+    color: #0E1628;
+  }
+  .dir-a .mockup-card .btn {
+    background: #0E1628; color: #F5F1E8; padding: 14px 28px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 13px; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600; margin-top: 8px; cursor: pointer;
+  }
+  .dir-a .swatch:nth-child(1) { background: #F5F1E8; color: #0E1628; border: 1px solid #D9D0BE; }
+  .dir-a .swatch:nth-child(2) { background: #0E1628; color: #F5F1E8; }
+  .dir-a .swatch:nth-child(3) { background: #B8502A; color: #F5F1E8; }
+  .dir-a .swatch:nth-child(4) { background: #A39E8F; color: #0E1628; }
+  .dir-a .swatch:nth-child(5) { background: #4A5D3E; color: #F5F1E8; }
+
+  /* ===================================================== */
+  /* DIRECTION B — POLAR MODERN                            */
+  /* ===================================================== */
+  .dir-b { background: #FAFAF7; color: #0A0F1A; font-family: 'Inter Tight', sans-serif; }
+  .dir-b .dir-name { font-family: 'Inter Tight', sans-serif; font-weight: 600; letter-spacing: -0.04em; }
+  .dir-b .tagline-card {
+    background: #0A0F1A; color: #FAFAF7; padding: 96px 48px;
+    border-radius: 2px; margin-bottom: 48px;
+    display: flex; flex-direction: column; gap: 48px;
+  }
+  .dir-b .tagline-card .top-rail {
+    display: flex; justify-content: space-between;
+    font-size: 11px; letter-spacing: 0.15em; color: #7FA9B8;
+    font-family: 'Inter Tight', sans-serif;
+  }
+  .dir-b .tagline-card .tagline {
+    font-family: 'Inter Tight', sans-serif; font-weight: 600;
+    font-size: 80px; line-height: 0.95; letter-spacing: -0.04em;
+  }
+  .dir-b .tagline-card .tagline .accent { color: #7FA9B8; }
+  .dir-b .display-sample {
+    font-family: 'Inter Tight', sans-serif; font-size: 64px; font-weight: 600;
+    letter-spacing: -0.04em; line-height: 0.95;
+  }
+  .dir-b .display-sample .accent { color: #7FA9B8; }
+  .dir-b .body-sample { font-size: 15px; line-height: 1.65; color: #3A3F48; }
+  .dir-b .mockup-card { background: #FFF; border: 1px solid #E5E4DE; }
+  .dir-b .mockup-card .eyebrow {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #7FA9B8; font-weight: 600; margin-bottom: 10px;
+  }
+  .dir-b .mockup-card h3 {
+    font-family: 'Inter Tight', sans-serif; font-weight: 600;
+    font-size: 32px; letter-spacing: -0.03em; margin-bottom: 6px;
+  }
+  .dir-b .mockup-card .sub { font-size: 14px; color: #6A6F78; margin-bottom: 28px; }
+  .dir-b .mockup-card .field-label {
+    font-size: 11px; font-weight: 500; color: #6A6F78; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .dir-b .mockup-card input {
+    width: 100%; border: 1px solid #E5E4DE; padding: 12px 14px;
+    font-family: 'Inter Tight', sans-serif; font-size: 15px; border-radius: 4px;
+    background: #FAFAF7;
+  }
+  .dir-b .mockup-card .btn {
+    background: #0A0F1A; color: #FAFAF7; padding: 14px 24px; border: none;
+    font-size: 14px; font-weight: 500; border-radius: 4px;
+    margin-top: 8px; cursor: pointer;
+  }
+  .dir-b .swatch:nth-child(1) { background: #FAFAF7; color: #0A0F1A; border: 1px solid #E5E4DE; }
+  .dir-b .swatch:nth-child(2) { background: #0A0F1A; color: #FAFAF7; }
+  .dir-b .swatch:nth-child(3) { background: #7FA9B8; color: #0A0F1A; }
+  .dir-b .swatch:nth-child(4) { background: #3A3F48; color: #FAFAF7; }
+  .dir-b .swatch:nth-child(5) { background: #E8D4C4; color: #0A0F1A; }
+
+  /* ===================================================== */
+  /* DIRECTION C — MIDWESTERN INFRASTRUCTURE               */
+  /* ===================================================== */
+  .dir-c { background: #EDE6D3; color: #1A1A1A; }
+  .dir-c .dir-name { font-family: 'Zilla Slab', serif; font-weight: 700; }
+  .dir-c .tagline-card {
+    background: #1A1A1A; color: #EDE6D3; padding: 72px 48px;
+    border: 1px solid #1A1A1A; margin-bottom: 48px; position: relative;
+    background-image:
+      linear-gradient(#1A1A1A, #1A1A1A),
+      repeating-linear-gradient(0deg, transparent, transparent 7px, rgba(237,230,211,0.04) 7px, rgba(237,230,211,0.04) 8px);
+    background-blend-mode: multiply;
+  }
+  .dir-c .tagline-card .spec {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #D96A2C;
+    letter-spacing: 0.1em; margin-bottom: 32px;
+  }
+  .dir-c .tagline-card .tagline {
+    font-family: 'Zilla Slab', serif; font-weight: 700;
+    font-size: 64px; line-height: 1; letter-spacing: -0.01em;
+  }
+  .dir-c .tagline-card .tagline .accent { color: #D96A2C; }
+  .dir-c .tagline-card .footer-spec {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: #8A8578; margin-top: 48px; display: flex; gap: 24px;
+  }
+  .dir-c .display-sample {
+    font-family: 'Zilla Slab', serif; font-size: 56px; font-weight: 700;
+    letter-spacing: -0.01em; line-height: 1;
+  }
+  .dir-c .display-sample .accent { color: #D96A2C; }
+  .dir-c .body-sample { font-size: 15px; line-height: 1.65; }
+  .dir-c .mono-sample {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    background: #1A1A1A; color: #EDE6D3; padding: 16px 20px; border-radius: 2px;
+    margin-top: 16px; line-height: 1.6;
+  }
+  .dir-c .mockup-card { background: #F7F2E1; border: 2px solid #1A1A1A; border-radius: 2px; }
+  .dir-c .mockup-card .spec-line {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; color: #D96A2C; margin-bottom: 10px;
+    border-bottom: 1px solid #1A1A1A; padding-bottom: 10px;
+  }
+  .dir-c .mockup-card h3 {
+    font-family: 'Zilla Slab', serif; font-weight: 700;
+    font-size: 30px; letter-spacing: -0.01em; margin-bottom: 6px;
+  }
+  .dir-c .mockup-card .sub { font-size: 14px; color: #4A4640; margin-bottom: 24px; }
+  .dir-c .mockup-card .field-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: #1A1A1A;
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .dir-c .mockup-card input {
+    width: 100%; border: 1px solid #1A1A1A; padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; border-radius: 0;
+    background: #FFF;
+  }
+  .dir-c .mockup-card .btn {
+    background: #D96A2C; color: #FFF; padding: 14px 28px; border: 2px solid #1A1A1A;
+    font-family: 'Zilla Slab', serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; margin-top: 8px;
+    cursor: pointer; border-radius: 0;
+  }
+  .dir-c .swatch:nth-child(1) { background: #EDE6D3; color: #1A1A1A; border: 1px solid #1A1A1A; }
+  .dir-c .swatch:nth-child(2) { background: #1A1A1A; color: #EDE6D3; }
+  .dir-c .swatch:nth-child(3) { background: #D96A2C; color: #1A1A1A; }
+  .dir-c .swatch:nth-child(4) { background: #4A5259; color: #EDE6D3; }
+  .dir-c .swatch:nth-child(5) { background: #C9BEA0; color: #1A1A1A; }
+
+  /* ===== Compare strip at bottom ===== */
+  .compare {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    background: #1a1a1a; color: #fff;
+    font-family: 'Inter', sans-serif;
+  }
+  .compare-cell { padding: 48px; border-right: 1px solid #333; }
+  .compare-cell:last-child { border-right: none; }
+  .compare-cell .cell-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #888; margin-bottom: 16px;
+  }
+  .compare-cell h4 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .compare-cell p { font-size: 13px; line-height: 1.6; color: #bbb; margin-bottom: 16px; }
+  .compare-cell .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .compare-cell .tag { font-size: 10px; padding: 4px 8px; background: #2a2a2a; border-radius: 2px; color: #ccc; }
+
+  @media (max-width: 900px) {
+    .direction { padding: 48px 24px; }
+    .dir-meta { grid-template-columns: 1fr; gap: 16px; }
+    .dir-name { font-size: 32px !important; }
+    .type-row { grid-template-columns: 1fr; gap: 32px; }
+    .swatches { grid-template-columns: repeat(3, 1fr); }
+    .compare { grid-template-columns: 1fr; }
+    .compare-cell { border-right: none; border-bottom: 1px solid #333; }
+    .dir-a .tagline-card .tagline,
+    .dir-b .tagline-card .tagline,
+    .dir-c .tagline-card .tagline { font-size: 36px !important; }
+    .display-sample { font-size: 36px !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= Intro ================= -->
+<section class="shell">
+  <div class="shell-inner">
+    <div class="eyebrow">Brand Direction Study · April 2026</div>
+    <h1>Three ways to make Norr AI look like something</h1>
+    <p class="lede">
+      Right now Norr AI looks like every other SaaS tool &mdash; dark slate background, one
+      accent blue, generic sans-serif. Below are three directions that actually commit to
+      a point of view. Each uses the same name and the same tagline slot, but with different
+      color, typography, and structural choices. Scroll through, see which one makes you feel
+      something.
+    </p>
+  </div>
+</section>
+
+<!-- ================= Direction A: Nordic Almanac ================= -->
+<section class="direction dir-a">
+  <div class="dir-inner">
+    <div class="dir-meta">
+      <div>
+        <div class="dir-label">Direction A</div>
+        <div class="dir-name">Nordic<br>Almanac</div>
+      </div>
+      <p class="dir-summary">
+        Editorial, quietly confident, with Scandinavian restraint and just enough warmth to feel
+        human. Thinks of itself as the trade journal of AI automation &mdash; substantive, crafted,
+        built to be kept on a shelf. The "Norr" in Norr AI does real work here.
+      </p>
+    </div>
+
+    <div class="tagline-card">
+      <div class="coords">44.2947° N &nbsp; · &nbsp; 93.2688° W &nbsp; · &nbsp; Faribault, MN</div>
+      <div class="tagline">Automation, <em>crafted in the north.</em></div>
+      <div class="rule"></div>
+    </div>
+
+    <div class="dir-section-title">Palette</div>
+    <div class="swatches">
+      <div class="swatch"><div><div class="swatch-name">Bone</div><div class="swatch-hex">#F5F1E8</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Ink</div><div class="swatch-hex">#0E1628</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Rust</div><div class="swatch-hex">#B8502A</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Stone</div><div class="swatch-hex">#A39E8F</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Moss</div><div class="swatch-hex">#4A5D3E</div></div></div>
+    </div>
+
+    <div class="dir-section-title">Typography</div>
+    <div class="type-row">
+      <div>
+        <div class="display-sample">The quiet <em>advantage</em><br>of working in<br>the north.</div>
+      </div>
+      <div>
+        <p class="body-sample dropcap">
+          Norr AI builds automation systems for dentists, realtors, and insurance brokers across
+          southern Minnesota. Every workflow we ship is measured in the only metric that matters
+          to our clients: revenue recovered, appointments kept, renewals retained. The technology
+          is incidental &mdash; craft is the point.
+        </p>
+      </div>
+    </div>
+
+    <div class="dir-section-title">Form Example</div>
+    <div class="mockup-card">
+      <div class="section-num">§ 03 · TOOLS</div>
+      <h3>Listing Description Generator</h3>
+      <div class="sub">Headline, MLS description, and social post delivered in under a minute.</div>
+      <hr>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        <div>
+          <div class="field-label">Property address</div>
+          <input type="text" value="123 Maple Street, Faribault">
+        </div>
+        <div>
+          <div class="field-label">List price</div>
+          <input type="text" value="$349,900">
+        </div>
+      </div>
+      <button class="btn">Generate</button>
+    </div>
+
+    <div class="references">
+      <div class="ref-chip">Field Notes</div>
+      <div class="ref-chip">Aesop</div>
+      <div class="ref-chip">Faribault Woolen Mill</div>
+      <div class="ref-chip">Old almanacs</div>
+      <div class="ref-chip">Monocle</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Direction B: Polar Modern ================= -->
+<section class="direction dir-b">
+  <div class="dir-inner">
+    <div class="dir-meta">
+      <div>
+        <div class="dir-label">Direction B</div>
+        <div class="dir-name">Polar<br>Modern</div>
+      </div>
+      <p class="dir-summary">
+        Minimal, precise, architectural. The restraint of Nordic contemporary design
+        crossed with modern SaaS clarity. Less "trade journal", more "quietly expensive".
+        Works hard in black, white, and a single cold accent. Scales well if the business
+        ever goes national.
+      </p>
+    </div>
+
+    <div class="tagline-card">
+      <div class="top-rail">
+        <span>NORR AI</span>
+        <span>01 / AUTOMATION</span>
+      </div>
+      <div class="tagline">Quiet systems.<br><span class="accent">Loud results.</span></div>
+    </div>
+
+    <div class="dir-section-title">Palette</div>
+    <div class="swatches">
+      <div class="swatch"><div><div class="swatch-name">Bone</div><div class="swatch-hex">#FAFAF7</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Ink</div><div class="swatch-hex">#0A0F1A</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Glacial</div><div class="swatch-hex">#7FA9B8</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Graphite</div><div class="swatch-hex">#3A3F48</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Blush</div><div class="swatch-hex">#E8D4C4</div></div></div>
+    </div>
+
+    <div class="dir-section-title">Typography</div>
+    <div class="type-row">
+      <div>
+        <div class="display-sample">Built for<br>people who<br><span class="accent">close deals.</span></div>
+      </div>
+      <div>
+        <p class="body-sample">
+          Norr AI designs automation systems for small businesses that have outgrown spreadsheets
+          but don't have an engineering team. We build the pipes, handle the integrations, and
+          give you back the hours you were spending on follow-up. You focus on the relationship
+          &mdash; we handle everything that happens around it.
+        </p>
+      </div>
+    </div>
+
+    <div class="dir-section-title">Form Example</div>
+    <div class="mockup-card" style="padding: 40px;">
+      <div class="eyebrow">Tools</div>
+      <h3>Listing Description Generator</h3>
+      <div class="sub">Headline, MLS description, and social post &mdash; emailed back in under a minute.</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <div class="field-label">Property address</div>
+          <input type="text" value="123 Maple Street, Faribault">
+        </div>
+        <div>
+          <div class="field-label">List price</div>
+          <input type="text" value="$349,900">
+        </div>
+      </div>
+      <button class="btn">Generate listing copy</button>
+    </div>
+
+    <div class="references">
+      <div class="ref-chip">Muji</div>
+      <div class="ref-chip">Another Country</div>
+      <div class="ref-chip">Linear</div>
+      <div class="ref-chip">Nordic architecture</div>
+      <div class="ref-chip">Norm Architects</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Direction C: Midwestern Infrastructure ================= -->
+<section class="direction dir-c">
+  <div class="dir-inner">
+    <div class="dir-meta">
+      <div>
+        <div class="dir-label">Direction C</div>
+        <div class="dir-name">Midwestern<br>Infrastructure</div>
+      </div>
+      <p class="dir-summary">
+        Substantive, honest, built-to-last. Trades the "north" theme for a harder read on
+        the "AI for local businesses" promise: this is plumbing, and good plumbing is
+        engineered. Slab serif + mono + industrial orange makes you feel like the thing
+        is actually going to work. Most distinctive of the three in the AI automation category.
+      </p>
+    </div>
+
+    <div class="tagline-card">
+      <div class="spec">SYSTEM · 01 &nbsp; / &nbsp; REVISION 2026.04 &nbsp; / &nbsp; FARIBAULT, MN</div>
+      <div class="tagline">Built in Faribault.<br><span class="accent">Wired everywhere.</span></div>
+      <div class="footer-spec">
+        <span>&#x2014; TIER 1</span>
+        <span>&#x2014; TIER 2</span>
+        <span>&#x2014; TIER 3</span>
+      </div>
+    </div>
+
+    <div class="dir-section-title">Palette</div>
+    <div class="swatches">
+      <div class="swatch"><div><div class="swatch-name">Cream</div><div class="swatch-hex">#EDE6D3</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Coal</div><div class="swatch-hex">#1A1A1A</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Signal</div><div class="swatch-hex">#D96A2C</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Steel</div><div class="swatch-hex">#4A5259</div></div></div>
+      <div class="swatch"><div><div class="swatch-name">Oat</div><div class="swatch-hex">#C9BEA0</div></div></div>
+    </div>
+
+    <div class="dir-section-title">Typography</div>
+    <div class="type-row">
+      <div>
+        <div class="display-sample">Automation<br>for people<br>who <span class="accent">ship.</span></div>
+      </div>
+      <div>
+        <p class="body-sample">
+          We build the data pipes that connect your CRM, your phone, your email, and your
+          calendar &mdash; then put Claude on top of them. You get every lead responded to in
+          under five minutes, every renewal reminded four times, and every missed call
+          answered by text before the caller's car pulls out of your lot.
+        </p>
+        <div class="mono-sample">
+&nbsp; → lead.intake &nbsp; → lead.cleanse &nbsp; → crm.upsert<br>
+&nbsp; → sequence.fire &nbsp; → outcome.log &nbsp; → dashboard.render
+        </div>
+      </div>
+    </div>
+
+    <div class="dir-section-title">Form Example</div>
+    <div class="mockup-card">
+      <div style="padding: 40px;">
+        <div class="spec-line">TOOL · 01 &nbsp; / &nbsp; LISTING DESCRIPTION GENERATOR</div>
+        <h3>Listing Description Generator</h3>
+        <div class="sub">Headline, MLS description, and social post. Emailed. Under 60 seconds.</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+          <div>
+            <div class="field-label">[01] Property address</div>
+            <input type="text" value="123 Maple Street, Faribault">
+          </div>
+          <div>
+            <div class="field-label">[02] List price</div>
+            <input type="text" value="$349,900">
+          </div>
+        </div>
+        <button class="btn">Generate &rarr;</button>
+      </div>
+    </div>
+
+    <div class="references">
+      <div class="ref-chip">Faribault Woolen Mill</div>
+      <div class="ref-chip">Filson</div>
+      <div class="ref-chip">Field Notes</div>
+      <div class="ref-chip">Stripe eng blog</div>
+      <div class="ref-chip">Best Made Co.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Side-by-side comparison ================= -->
+<section class="compare">
+  <div class="compare-cell">
+    <div class="cell-label">Direction A</div>
+    <h4>Nordic Almanac</h4>
+    <p>
+      Strongest on the name. Best for owning the "quiet craft" narrative. Might feel
+      a touch precious for insurance broker audiences &mdash; dentists and realtors
+      will love it.
+    </p>
+    <div class="tag-list">
+      <span class="tag">Editorial</span>
+      <span class="tag">Warm</span>
+      <span class="tag">Premium</span>
+      <span class="tag">Scandinavian</span>
+    </div>
+  </div>
+  <div class="compare-cell">
+    <div class="cell-label">Direction B</div>
+    <h4>Polar Modern</h4>
+    <p>
+      Safest &mdash; reads as "serious tech company" without being generic SaaS.
+      Scales best if you ever move beyond Faribault. Less distinctive than A or C,
+      but hardest to get wrong.
+    </p>
+    <div class="tag-list">
+      <span class="tag">Minimal</span>
+      <span class="tag">Scalable</span>
+      <span class="tag">Architectural</span>
+      <span class="tag">Premium</span>
+    </div>
+  </div>
+  <div class="compare-cell">
+    <div class="cell-label">Direction C</div>
+    <h4>Midwestern Infrastructure</h4>
+    <p>
+      Most distinctive in the AI automation category &mdash; zero competitors look
+      like this. Best match for your actual background (data engineer, builds pipes).
+      Harder to pull off if you ever hire designers who haven't seen the vision.
+    </p>
+    <div class="tag-list">
+      <span class="tag">Substantial</span>
+      <span class="tag">Honest</span>
+      <span class="tag">Engineered</span>
+      <span class="tag">Distinct</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

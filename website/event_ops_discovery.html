@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Operations Discovery — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 700px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    color: var(--bone);
+    margin-bottom: 14px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 520px;
+  }
+  .site-header p strong { color: #c8d0db; font-weight: 500; }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Section cards ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .section-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .section-body { padding: 24px; }
+
+  /* ── Fields ── */
+  .row   { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239EA3AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  textarea { resize: vertical; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Scale / rating ── */
+  .scale-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .scale-group input[type="radio"] { display: none; }
+  .scale-group label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    background: var(--bone);
+    letter-spacing: 0;
+  }
+  .scale-group input[type="radio"]:checked + label {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.15);
+    color: var(--ink);
+  }
+  .scale-group label:hover { border-color: var(--glacial); }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    padding: 0 2px;
+  }
+
+  /* ── Pill checkboxes ── */
+  .pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+    background: var(--bone);
+  }
+  .pill input[type="checkbox"] { display: none; }
+  .pill:hover { border-color: var(--glacial); }
+  .pill.active {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Submit ── */
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 15px 24px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .status.show { display: block; }
+  .status.success { background: #F0FAF4; border: 1px solid #A7F3C4; color: #2D7A4F; }
+  .status.error   { background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  /* ── Responsive ── */
+  @media (max-width: 580px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
+    .section-subtitle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · Discovery</div>
+    <h1>Event Operations<br><span class="accent">Automation Audit</span></h1>
+    <p>Takes about <strong>10 minutes</strong>. No right or wrong answers — we're just trying to understand where your time actually goes so we can show you where automation makes the most sense.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="discovery-form" novalidate>
+
+    <!-- 01 About You -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">About You</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="name">Your name <span class="req">*</span></label>
+            <input type="text" id="name" name="name" placeholder="Sarah Johnson" required>
+          </div>
+          <div class="field">
+            <label for="email">Best email to reach you <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="sarah@prepnetwork.com" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="role">Your title</label>
+            <input type="text" id="role" name="role" placeholder="Senior Event Operations Manager">
+          </div>
+          <div class="field">
+            <label for="company">Organization</label>
+            <input type="text" id="company" name="company" value="Prep Network">
+          </div>
+        </div>
+        <div class="field">
+          <label for="team_size">How many people are currently on your team (including you)?</label>
+          <select id="team_size" name="team_size">
+            <option value="">Select…</option>
+            <option>Just me</option>
+            <option>2–3 people</option>
+            <option>4–6 people</option>
+            <option>7–10 people</option>
+            <option>10+ people</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="capacity_gap">You recently lost two team members. How would you describe the current capacity gap?</label>
+          <textarea id="capacity_gap" name="capacity_gap" rows="3" placeholder="e.g. We're behind on registrant communications, event setup is falling on me, follow-up after events isn't happening…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Event Volume -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">Event Volume &amp; Types</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="events_per_year">How many events do you run per year?</label>
+            <select id="events_per_year" name="events_per_year">
+              <option value="">Select…</option>
+              <option>1–5</option>
+              <option>6–15</option>
+              <option>16–30</option>
+              <option>31–50</option>
+              <option>50+</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="avg_attendees">Average attendees per event?</label>
+            <select id="avg_attendees" name="avg_attendees">
+              <option value="">Select…</option>
+              <option>Under 50</option>
+              <option>50–200</option>
+              <option>200–500</option>
+              <option>500–1,000</option>
+              <option>1,000+</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>What types of events do you run? <em style="font-weight:400;font-style:normal;">(select all that apply)</em></label>
+          <div class="pill-group" id="event-types">
+            <label class="pill"><input type="checkbox" name="event_types[]" value="tournaments"> Tournaments / competitions</label>
+            <label class="pill"><input type="checkbox" name="event_types[]" value="showcases"> Showcases / camps</label>
+            <label class="pill"><input type="checkbox" name="event_types[]" value="clinics"> Clinics / training sessions</label>
+            <label class="pill"><input type="checkbox" name="event_types[]" value="college_exposure"> College exposure events</label>
+            <label class="pill"><input type="checkbox" name="event_types[]" value="conferences"> Conferences / summits</label>
+            <label class="pill"><input type="checkbox" name="event_types[]" value="virtual"> Virtual / hybrid events</label>
+            <label class="pill"><input type="checkbox" name="event_types[]" value="other"> Other</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="busiest_season">When is your busiest season?</label>
+          <select id="busiest_season" name="busiest_season">
+            <option value="">Select…</option>
+            <option>Spring (Mar–May)</option>
+            <option>Summer (Jun–Aug)</option>
+            <option>Fall (Sep–Nov)</option>
+            <option>Winter (Dec–Feb)</option>
+            <option>Year-round / no clear peak</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Where Your Time Goes -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">Where Your Time Goes</span>
+        <span class="section-subtitle">Most important section</span>
+      </div>
+      <div class="section-body">
+
+        <div class="field">
+          <label>Rate how much time each area consumes. <em style="font-weight:400;font-style:normal;">1 = barely any &nbsp;·&nbsp; 5 = consumes my week</em></label>
+        </div>
+
+        <!-- Registration / intake -->
+        <div class="field">
+          <label>Registration &amp; intake (collecting info, processing sign-ups)</label>
+          <div class="scale-group">
+            <input type="radio" id="reg-1" name="time_registration" value="1"><label for="reg-1">1</label>
+            <input type="radio" id="reg-2" name="time_registration" value="2"><label for="reg-2">2</label>
+            <input type="radio" id="reg-3" name="time_registration" value="3"><label for="reg-3">3</label>
+            <input type="radio" id="reg-4" name="time_registration" value="4"><label for="reg-4">4</label>
+            <input type="radio" id="reg-5" name="time_registration" value="5"><label for="reg-5">5</label>
+          </div>
+        </div>
+
+        <!-- Attendee communications -->
+        <div class="field">
+          <label>Attendee communications (confirmations, reminders, day-of logistics, updates)</label>
+          <div class="scale-group">
+            <input type="radio" id="comm-1" name="time_communications" value="1"><label for="comm-1">1</label>
+            <input type="radio" id="comm-2" name="time_communications" value="2"><label for="comm-2">2</label>
+            <input type="radio" id="comm-3" name="time_communications" value="3"><label for="comm-3">3</label>
+            <input type="radio" id="comm-4" name="time_communications" value="4"><label for="comm-4">4</label>
+            <input type="radio" id="comm-5" name="time_communications" value="5"><label for="comm-5">5</label>
+          </div>
+        </div>
+
+        <!-- Vendor / venue coordination -->
+        <div class="field">
+          <label>Vendor &amp; venue coordination (quotes, confirmations, follow-ups)</label>
+          <div class="scale-group">
+            <input type="radio" id="ven-1" name="time_vendor" value="1"><label for="ven-1">1</label>
+            <input type="radio" id="ven-2" name="time_vendor" value="2"><label for="ven-2">2</label>
+            <input type="radio" id="ven-3" name="time_vendor" value="3"><label for="ven-3">3</label>
+            <input type="radio" id="ven-4" name="time_vendor" value="4"><label for="ven-4">4</label>
+            <input type="radio" id="ven-5" name="time_vendor" value="5"><label for="ven-5">5</label>
+          </div>
+        </div>
+
+        <!-- Scheduling / logistics -->
+        <div class="field">
+          <label>Scheduling &amp; logistics (brackets, schedules, field/room assignments)</label>
+          <div class="scale-group">
+            <input type="radio" id="sched-1" name="time_scheduling" value="1"><label for="sched-1">1</label>
+            <input type="radio" id="sched-2" name="time_scheduling" value="2"><label for="sched-2">2</label>
+            <input type="radio" id="sched-3" name="time_scheduling" value="3"><label for="sched-3">3</label>
+            <input type="radio" id="sched-4" name="time_scheduling" value="4"><label for="sched-4">4</label>
+            <input type="radio" id="sched-5" name="time_scheduling" value="5"><label for="sched-5">5</label>
+          </div>
+        </div>
+
+        <!-- Post-event follow-up -->
+        <div class="field">
+          <label>Post-event follow-up (surveys, recaps, thank-yous, re-engagement)</label>
+          <div class="scale-group">
+            <input type="radio" id="post-1" name="time_post_event" value="1"><label for="post-1">1</label>
+            <input type="radio" id="post-2" name="time_post_event" value="2"><label for="post-2">2</label>
+            <input type="radio" id="post-3" name="time_post_event" value="3"><label for="post-3">3</label>
+            <input type="radio" id="post-4" name="time_post_event" value="4"><label for="post-4">4</label>
+            <input type="radio" id="post-5" name="time_post_event" value="5"><label for="post-5">5</label>
+          </div>
+        </div>
+
+        <!-- Reporting -->
+        <div class="field">
+          <label>Reporting &amp; data (attendance numbers, revenue, recap decks, internal updates)</label>
+          <div class="scale-group">
+            <input type="radio" id="rep-1" name="time_reporting" value="1"><label for="rep-1">1</label>
+            <input type="radio" id="rep-2" name="time_reporting" value="2"><label for="rep-2">2</label>
+            <input type="radio" id="rep-3" name="time_reporting" value="3"><label for="rep-3">3</label>
+            <input type="radio" id="rep-4" name="time_reporting" value="4"><label for="rep-4">4</label>
+            <input type="radio" id="rep-5" name="time_reporting" value="5"><label for="rep-5">5</label>
+          </div>
+        </div>
+
+        <!-- Social / marketing -->
+        <div class="field">
+          <label>Social media &amp; marketing (event promotion, content creation, posting)</label>
+          <div class="scale-group">
+            <input type="radio" id="soc-1" name="time_social" value="1"><label for="soc-1">1</label>
+            <input type="radio" id="soc-2" name="time_social" value="2"><label for="soc-2">2</label>
+            <input type="radio" id="soc-3" name="time_social" value="3"><label for="soc-3">3</label>
+            <input type="radio" id="soc-4" name="time_social" value="4"><label for="soc-4">4</label>
+            <input type="radio" id="soc-5" name="time_social" value="5"><label for="soc-5">5</label>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <label for="biggest_time_sink">In your own words — what task do you dread most because of how long it takes?</label>
+          <textarea id="biggest_time_sink" name="biggest_time_sink" rows="3" placeholder="e.g. Sending individual confirmation emails to every registrant, building the event schedule manually every time…"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="what_falls_through">Since losing team members, what's actually falling through the cracks?</label>
+          <textarea id="what_falls_through" name="what_falls_through" rows="3" placeholder="e.g. Post-event surveys aren't going out, vendor follow-ups are delayed, we're not sending reminders close to event day…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 Current Tools -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">04</span>
+        <span class="section-title">Current Tools &amp; Stack</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label>How do people register for your events? <em style="font-weight:400;font-style:normal;">(select all that apply)</em></label>
+          <div class="pill-group">
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="eventbrite"> Eventbrite</label>
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="rschooltoday"> rSchoolToday</label>
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="active_network"> Active Network</label>
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="jotform"> JotForm / Typeform</label>
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="custom_website"> Custom website form</label>
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="email_direct"> Direct email / manual</label>
+            <label class="pill"><input type="checkbox" name="registration_tools[]" value="other_reg"> Other</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>How do you communicate with attendees? <em style="font-weight:400;font-style:normal;">(select all that apply)</em></label>
+          <div class="pill-group">
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="email_manual"> Manual email (Gmail/Outlook)</label>
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="mailchimp"> Mailchimp</label>
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="constant_contact"> Constant Contact</label>
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="hubspot"> HubSpot</label>
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="sms"> SMS / text blasts</label>
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="slack_teams"> Slack / Teams</label>
+            <label class="pill"><input type="checkbox" name="comms_tools[]" value="other_comms"> Other</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Where does attendee and event data live?</label>
+          <div class="pill-group">
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="excel_sheets"> Excel / Google Sheets</label>
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="salesforce"> Salesforce</label>
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="hubspot_crm"> HubSpot CRM</label>
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="airtable"> Airtable</label>
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="notion"> Notion</label>
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="registration_platform"> Inside our registration platform</label>
+            <label class="pill"><input type="checkbox" name="data_tools[]" value="other_data"> Other</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="manual_steps">Walk me through what happens after someone registers. What do you or your team manually do next?</label>
+          <textarea id="manual_steps" name="manual_steps" rows="4" placeholder="e.g. We get an email notification, someone manually adds them to a spreadsheet, then we send a welcome email from our Gmail, then closer to the event we manually send a reminder…"></textarea>
+          <div class="hint">This is the most useful thing you can tell us. Be as detailed as you want — every manual step is a potential automation.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 Repetitive Work -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">05</span>
+        <span class="section-title">Repetitive Work</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="copy_paste">Is there anything you find yourself copy-pasting, reformatting, or re-entering into multiple systems?</label>
+          <textarea id="copy_paste" name="copy_paste" rows="3" placeholder="e.g. Exporting registrants from Eventbrite, pasting into a spreadsheet, then copying names into an email…"></textarea>
+        </div>
+        <div class="field">
+          <label for="emails_written">Do you write the same types of emails over and over? What are they?</label>
+          <textarea id="emails_written" name="emails_written" rows="3" placeholder="e.g. Registration confirmation, event reminder, schedule release, weather/cancellation notice, post-event thank you, survey request…"></textarea>
+        </div>
+        <div class="field">
+          <label for="reports_created">What reports or summaries do you put together regularly — and who do they go to?</label>
+          <textarea id="reports_created" name="reports_created" rows="3" placeholder="e.g. Post-event attendance summary to leadership, revenue recap to finance, participant list to venue…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 Priorities -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">06</span>
+        <span class="section-title">Priorities &amp; Goals</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="biggest_pain">If you could eliminate one thing from your plate tomorrow, what would it be?</label>
+          <textarea id="biggest_pain" name="biggest_pain" rows="3" placeholder="Be specific — what task, how often it happens, roughly how long it takes…"></textarea>
+        </div>
+
+        <div class="field">
+          <label>What would success look like in 90 days?</label>
+          <div class="pill-group">
+            <label class="pill"><input type="checkbox" name="success_looks_like[]" value="fewer_hours"> Working fewer hours</label>
+            <label class="pill"><input type="checkbox" name="success_looks_like[]" value="nothing_falls"> Nothing falling through the cracks</label>
+            <label class="pill"><input type="checkbox" name="success_looks_like[]" value="faster_comms"> Faster attendee communications</label>
+            <label class="pill"><input type="checkbox" name="success_looks_like[]" value="better_data"> Better data / reporting</label>
+            <label class="pill"><input type="checkbox" name="success_looks_like[]" value="run_more_events"> Ability to run more events</label>
+            <label class="pill"><input type="checkbox" name="success_looks_like[]" value="less_stress"> Just less stress</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="open_to_new_tools">Are you open to adding new tools if they save significant time, or do you need to work within your current stack?</label>
+          <select id="open_to_new_tools" name="open_to_new_tools">
+            <option value="">Select…</option>
+            <option value="open">Open to new tools if there's a clear ROI</option>
+            <option value="prefer_existing">Prefer to work within existing tools where possible</option>
+            <option value="locked_in">Locked into current tools — can't add new ones</option>
+            <option value="unsure">Not sure yet</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="anything_else">Anything else you'd want us to know before we talk?</label>
+          <textarea id="anything_else" name="anything_else" rows="3" placeholder="Constraints, things you've already tried, concerns, questions for us…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <div id="status" class="status" role="alert"></div>
+      <button type="submit" id="submit-btn">Submit &amp; We'll Be in Touch →</button>
+    </div>
+
+  </form>
+
+  <footer>
+    <p>Norr AI &nbsp;·&nbsp; <a href="mailto:hello@norrai.co">hello@norrai.co</a> &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+    <p style="margin-top:6px;">We'll review your answers and reach out within one business day.</p>
+  </footer>
+</div>
+
+<script>
+  // ─── Pill checkboxes ──────────────────────────────────────────────────────
+  document.querySelectorAll('.pill').forEach(pill => {
+    const cb = pill.querySelector('input[type="checkbox"]');
+    pill.addEventListener('click', () => {
+      cb.checked = !cb.checked;
+      pill.classList.toggle('active', cb.checked);
+    });
+  });
+
+  // ─── Form submission ──────────────────────────────────────────────────────
+  // Replace WEBHOOK_URL with your n8n webhook when ready to wire up
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/event-ops-discovery';
+
+  const form   = document.getElementById('discovery-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    const fd = new FormData(form);
+    const payload = {};
+
+    // Text / select fields
+    [
+      'name','email','role','company','team_size','capacity_gap',
+      'events_per_year','avg_attendees','busiest_season',
+      'biggest_time_sink','what_falls_through','manual_steps',
+      'copy_paste','emails_written','reports_created',
+      'biggest_pain','open_to_new_tools','anything_else'
+    ].forEach(k => { payload[k] = fd.get(k) || ''; });
+
+    // Rating scales
+    [
+      'time_registration','time_communications','time_vendor',
+      'time_scheduling','time_post_event','time_reporting','time_social'
+    ].forEach(k => { payload[k] = fd.get(k) || null; });
+
+    // Multi-select pill groups
+    ['event_types','registration_tools','comms_tools','data_tools','success_looks_like'].forEach(k => {
+      payload[k] = fd.getAll(k + '[]').join(', ');
+    });
+
+    payload.submitted_at = new Date().toISOString();
+    payload.source = 'event_ops_discovery_form';
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      status.textContent = '✓ Got it — we\'ll review your answers and be in touch within one business day.';
+      status.className = 'status success show';
+      form.reset();
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Email us directly at hello@norrai.co.`;
+      status.className = 'status error show';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit & We\'ll Be in Touch →';
+    }
+  });
+</script>
+</body>
+</html>
