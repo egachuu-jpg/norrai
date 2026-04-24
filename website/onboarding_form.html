@@ -3,396 +3,598 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Norr AI — Agent Onboarding</title>
+<title>Client Onboarding — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
 <style>
   :root {
-    --bg: #0f1419;
-    --panel: #1a1f2a;
-    --border: #2a3340;
-    --text: #e8ecf1;
-    --muted: #8b95a5;
-    --accent: #5b8def;
-    --accent-hover: #4577dc;
-    --success: #4ade80;
-    --error: #f87171;
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
   }
+  .site-header-inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--bone);
+    margin-bottom: 12px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  /* ── Layout ── */
   .wrap {
-    max-width: 760px;
+    max-width: 680px;
     margin: 0 auto;
     padding: 48px 24px 80px;
   }
-  header { margin-bottom: 40px; }
-  .brand { font-size: 13px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
-  h1 { font-size: 28px; margin: 8px 0 12px; font-weight: 600; letter-spacing: -0.01em; }
-  header p { color: var(--muted); margin: 0; max-width: 580px; }
-  form { display: flex; flex-direction: column; gap: 24px; }
-  fieldset {
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Section cards ── */
+  .section {
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px;
-    background: var(--panel);
-    margin: 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
   }
-  legend {
-    padding: 0 8px;
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-  }
-  .section-intro {
-    color: var(--muted);
-    font-size: 13px;
-    margin: -4px 0 18px;
-  }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
-  input, select, textarea {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-    transition: border-color 0.15s;
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  textarea { resize: vertical; min-height: 80px; }
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .checkbox-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px 16px;
-  }
-  .checkbox-grid label {
+  .section-head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: var(--text);
-    font-weight: 400;
-    cursor: pointer;
-    margin-bottom: 0;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
   }
-  .checkbox-grid input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-body { padding: 24px; }
+  .section-intro {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  /* ── Fields ── */
+  .row   { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239EA3AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  textarea { resize: vertical; min-height: 96px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Check pills ── */
+  .check-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .check-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+    background: var(--bone);
+  }
+  .check-pill input[type="checkbox"] { display: none; }
+  .check-pill:hover { border-color: var(--glacial); }
+  .check-pill.active {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ── Radio options ── */
   .radio-group { display: flex; flex-direction: column; gap: 8px; }
-  .radio-group label {
+  .radio-option {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 12px;
+    padding: 12px 14px;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    background: var(--bg);
-    font-weight: 400;
-    color: var(--text);
-    margin-bottom: 0;
+    background: var(--bone);
+    transition: border-color 0.15s, background 0.15s;
   }
-  .radio-group label:hover { border-color: var(--accent); }
-  .radio-group input[type="radio"] { width: auto; margin-top: 3px; accent-color: var(--accent); }
-  .radio-group strong { display: block; font-size: 14px; }
-  .radio-group span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
-  button {
-    background: var(--accent);
-    color: white;
+  .radio-option:hover { border-color: var(--glacial); }
+  .radio-option input[type="radio"] { margin-top: 3px; accent-color: var(--glacial); flex-shrink: 0; }
+  .radio-option:has(input:checked) {
+    border-color: var(--glacial);
+    background: rgba(127,169,184,0.08);
+  }
+  .radio-content strong { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .radio-content span  { display: block; font-size: 12px; color: var(--secondary); margin-top: 2px; }
+
+  /* ── Submit area ── */
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
     border: none;
-    padding: 14px 20px;
+    padding: 15px 24px;
+    font-family: var(--font-display);
     font-size: 15px;
     font-weight: 600;
-    border-radius: 6px;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.1s;
   }
-  button:hover:not(:disabled) { background: var(--accent-hover); }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .status { padding: 14px 16px; border-radius: 6px; font-size: 14px; display: none; }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
   .status.show { display: block; }
-  .status.success { background: rgba(74, 222, 128, 0.08); border: 1px solid var(--success); color: var(--success); }
-  .status.error { background: rgba(248, 113, 113, 0.08); border: 1px solid var(--error); color: var(--error); }
-  footer { margin-top: 40px; font-size: 12px; color: var(--muted); text-align: center; }
-  footer a { color: var(--muted); }
-  @media (max-width: 640px) {
-    .row, .row-3, .checkbox-grid { grid-template-columns: 1fr; }
-    .wrap { padding: 32px 18px 60px; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  @media (max-width: 580px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">Norr AI</div>
-    <h1>Agent Onboarding</h1>
-    <p>Takes about 15 minutes. The more specific you are, the more your automations will sound like you and not like a generic template.</p>
-  </header>
 
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · Client Setup</div>
+    <h1>Client<br><span class="accent">Onboarding</span></h1>
+    <p>You're in — let's get your system configured. Takes about 15 minutes. The more specific you are, the more your automations will sound like you — not a generic template.</p>
+  </div>
+</header>
+
+<div class="wrap">
   <form id="onboarding-form">
 
-    <fieldset>
-      <legend>About You</legend>
-      <div class="row">
-        <div class="field">
-          <label for="agent_name">Full name</label>
-          <input type="text" id="agent_name" name="agent_name" required>
+    <!-- 01 Your Business -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">Your Business</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="contact_name">Your name <span class="req">*</span></label>
+            <input type="text" id="contact_name" name="contact_name" autocomplete="name" placeholder="Jane Smith" required>
+          </div>
+          <div class="field">
+            <label for="contact_email">Business email <span class="req">*</span></label>
+            <input type="email" id="contact_email" name="contact_email" autocomplete="email" placeholder="jane@yourbusiness.com" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="contact_phone">Business phone <span class="req">*</span></label>
+            <input type="tel" id="contact_phone" name="contact_phone" autocomplete="tel" placeholder="507-555-1234" required>
+            <div class="hint">We'll set up a number here for missed-call SMS.</div>
+          </div>
+          <div class="field">
+            <label for="business_name">Business name <span class="req">*</span></label>
+            <input type="text" id="business_name" name="business_name" placeholder="Smith Plumbing, Northfield Dental..." required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="industry">Industry <span class="req">*</span></label>
+            <select id="industry" name="industry" required>
+              <option value="">Select...</option>
+              <option>Real Estate</option>
+              <option>Dental / Medical</option>
+              <option>Insurance</option>
+              <option>Legal</option>
+              <option>Home Services (Plumbing, Electrical, HVAC, etc.)</option>
+              <option>Construction / Contracting</option>
+              <option>Salon, Spa & Wellness</option>
+              <option>Fitness & Gym</option>
+              <option>Auto Repair</option>
+              <option>Landscaping / Lawn Care</option>
+              <option>Veterinary</option>
+              <option>Retail</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="service_area">Primary service area <span class="req">*</span></label>
+            <input type="text" id="service_area" name="service_area" placeholder="Faribault, Northfield, Owatonna" required>
+          </div>
         </div>
         <div class="field">
-          <label for="agent_email">Email</label>
-          <input type="email" id="agent_email" name="agent_email" required>
+          <label for="licenses">Professional licenses or certifications</label>
+          <input type="text" id="licenses" name="licenses" placeholder="e.g. MN Real Estate License, State Dental License, Bar Admission">
+          <div class="hint">Optional — helps us personalize compliance-sensitive messaging.</div>
         </div>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="agent_phone">Business phone</label>
-          <input type="tel" id="agent_phone" name="agent_phone" placeholder="507-555-1234" required>
-          <div class="hint">We'll set up a Twilio number that forwards here for missed-call SMS.</div>
-        </div>
-        <div class="field">
-          <label for="brokerage_name">Brokerage</label>
-          <input type="text" id="brokerage_name" name="brokerage_name" required>
-        </div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label for="license_state">License state(s)</label>
-          <input type="text" id="license_state" name="license_state" placeholder="MN" required>
-        </div>
-        <div class="field">
-          <label for="service_area">Primary service area</label>
-          <input type="text" id="service_area" name="service_area" placeholder="Faribault, Northfield, Owatonna" required>
-        </div>
-      </div>
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend>Tools You Already Use</legend>
-      <div class="row">
-        <div class="field">
-          <label for="primary_crm">CRM</label>
-          <select id="primary_crm" name="primary_crm" required>
-            <option value="">Select...</option>
-            <option>Follow Up Boss</option>
-            <option>HubSpot</option>
-            <option>LionDesk</option>
-            <option>kvCORE</option>
-            <option>Salesforce</option>
-            <option>Chime</option>
-            <option>Real Geeks</option>
-            <option>None / spreadsheet</option>
-            <option>Other</option>
-          </select>
+    <!-- 02 Tools You Use -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">Tools You Use</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="primary_crm">CRM <span class="req">*</span></label>
+            <select id="primary_crm" name="primary_crm" required>
+              <option value="">Select...</option>
+              <option>HubSpot</option>
+              <option>Salesforce</option>
+              <option>Follow Up Boss</option>
+              <option>LionDesk</option>
+              <option>kvCORE</option>
+              <option>Chime</option>
+              <option>Real Geeks</option>
+              <option>ServiceTitan</option>
+              <option>Jobber</option>
+              <option>Jane App</option>
+              <option>Mindbody</option>
+              <option>None / spreadsheet</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="other_crm">If "Other", which one?</label>
+            <input type="text" id="other_crm" name="other_crm" placeholder="e.g. Zoho, Pipedrive">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="booking_link">Scheduling / booking link</label>
+            <input type="url" id="booking_link" name="booking_link" placeholder="https://calendly.com/...">
+          </div>
+          <div class="field">
+            <label for="gbp_url">Google Business Profile URL</label>
+            <input type="url" id="gbp_url" name="gbp_url" placeholder="https://g.page/...">
+            <div class="hint">Used for review-request links.</div>
+          </div>
         </div>
         <div class="field">
-          <label for="other_crm">If "Other", which one?</label>
-          <input type="text" id="other_crm" name="other_crm">
+          <label>Where leads come from today</label>
+          <div class="check-group">
+            <label class="check-pill" data-group="lead_sources" data-val="website"><input type="checkbox"> My website</label>
+            <label class="check-pill" data-group="lead_sources" data-val="google_search"><input type="checkbox"> Google Search</label>
+            <label class="check-pill" data-group="lead_sources" data-val="google_ads"><input type="checkbox"> Google Ads</label>
+            <label class="check-pill" data-group="lead_sources" data-val="facebook_instagram"><input type="checkbox"> Facebook / Instagram</label>
+            <label class="check-pill" data-group="lead_sources" data-val="paid_ads"><input type="checkbox"> Other Paid Ads</label>
+            <label class="check-pill" data-group="lead_sources" data-val="referrals"><input type="checkbox"> Referrals</label>
+            <label class="check-pill" data-group="lead_sources" data-val="repeat_customers"><input type="checkbox"> Repeat customers</label>
+            <label class="check-pill" data-group="lead_sources" data-val="phone_walkin"><input type="checkbox"> Phone / walk-ins</label>
+            <label class="check-pill" data-group="lead_sources" data-val="networking"><input type="checkbox"> Networking / events</label>
+            <label class="check-pill" data-group="lead_sources" data-val="mailers_signage"><input type="checkbox"> Mailers / signage</label>
+            <label class="check-pill" data-group="lead_sources" data-val="other"><input type="checkbox"> Other</label>
+          </div>
         </div>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="idx_provider">IDX / listing feed provider</label>
-          <input type="text" id="idx_provider" name="idx_provider" placeholder="Showcase IDX, iHomefinder, Real Geeks, N/A">
-        </div>
-        <div class="field">
-          <label for="mls_name">MLS name</label>
-          <input type="text" id="mls_name" name="mls_name" placeholder="NorthstarMLS">
-        </div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label for="booking_link">Booking link (Calendly, etc.)</label>
-          <input type="url" id="booking_link" name="booking_link" placeholder="https://calendly.com/...">
-        </div>
-        <div class="field">
-          <label for="gbp_url">Google Business Profile URL</label>
-          <input type="url" id="gbp_url" name="gbp_url" placeholder="https://g.page/...">
-          <div class="hint">Used for review-request links.</div>
-        </div>
-      </div>
-      <div class="field">
-        <label for="lead_sources">Where leads come from today (check all)</label>
-        <div class="checkbox-grid">
-          <label><input type="checkbox" name="lead_sources" value="zillow"> Zillow</label>
-          <label><input type="checkbox" name="lead_sources" value="realtor_com"> Realtor.com</label>
-          <label><input type="checkbox" name="lead_sources" value="website"> My website</label>
-          <label><input type="checkbox" name="lead_sources" value="facebook_ads"> Facebook Ads</label>
-          <label><input type="checkbox" name="lead_sources" value="google_ads"> Google Ads</label>
-          <label><input type="checkbox" name="lead_sources" value="referrals"> Referrals / SOI</label>
-          <label><input type="checkbox" name="lead_sources" value="open_houses"> Open houses</label>
-          <label><input type="checkbox" name="lead_sources" value="door_knocking"> Door knocking</label>
-          <label><input type="checkbox" name="lead_sources" value="other"> Other</label>
-        </div>
-      </div>
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend>Writing Style</legend>
-      <p class="section-intro">This section is used as the system prompt for every Claude-generated message we send on your behalf.</p>
-      <div class="field">
-        <label for="listing_opener">How do you typically open a listing description?</label>
-        <textarea id="listing_opener" name="listing_opener" placeholder="'Welcome home to...', 'Nestled in...', 'Don't miss this...' — or just describe how you usually start." required></textarea>
+    <!-- 03 Your Voice -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">Your Voice</span>
       </div>
-      <div class="field">
-        <label for="favorite_phrases">Favorite phrases or words you reach for</label>
-        <textarea id="favorite_phrases" name="favorite_phrases" placeholder="'turnkey', 'one-of-a-kind', 'move-in ready'..."></textarea>
-      </div>
-      <div class="field">
-        <label for="phrases_to_avoid">Words or phrases to never use</label>
-        <textarea id="phrases_to_avoid" name="phrases_to_avoid" placeholder="'cozy' (code for small), 'charming' (code for old), exclamation points..."></textarea>
-      </div>
-      <div class="field">
-        <label>Voice characteristics (check up to 4)</label>
-        <div class="checkbox-grid">
-          <label><input type="checkbox" name="voice_tags" value="warm"> Warm</label>
-          <label><input type="checkbox" name="voice_tags" value="professional"> Professional</label>
-          <label><input type="checkbox" name="voice_tags" value="punchy"> Punchy</label>
-          <label><input type="checkbox" name="voice_tags" value="detailed"> Detailed</label>
-          <label><input type="checkbox" name="voice_tags" value="casual"> Casual</label>
-          <label><input type="checkbox" name="voice_tags" value="luxury"> Luxury</label>
-          <label><input type="checkbox" name="voice_tags" value="local_flavor"> Local flavor</label>
-          <label><input type="checkbox" name="voice_tags" value="data_driven"> Data-driven</label>
-          <label><input type="checkbox" name="voice_tags" value="storytelling"> Storytelling</label>
-        </div>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Previous Listings (Few-Shot Examples)</legend>
-      <p class="section-intro">Paste 3–5 listing descriptions you've written. Claude uses these as style references. Separate each with a line of <code>---</code>.</p>
-      <div class="field">
-        <label for="previous_listings">Previous listings</label>
-        <textarea id="previous_listings" name="previous_listings" rows="12" required placeholder="Listing 1 description here...&#10;&#10;---&#10;&#10;Listing 2 description here...&#10;&#10;---&#10;&#10;Listing 3 description here..."></textarea>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Follow-Up Style</legend>
-      <div class="field">
-        <label>When a cold lead comes in, your default approach is:</label>
-        <div class="radio-group">
-          <label>
-            <input type="radio" name="approach_style" value="value_first" required>
-            <span>
-              <strong>Value-first</strong>
-              <span>Lead with a piece of info about the area, market, or listing before any ask.</span>
-            </span>
-          </label>
-          <label>
-            <input type="radio" name="approach_style" value="direct_question">
-            <span>
-              <strong>Direct question</strong>
-              <span>Get them talking — ask what they're looking for, their timeline, their budget.</span>
-            </span>
-          </label>
-          <label>
-            <input type="radio" name="approach_style" value="warm_intro">
-            <span>
-              <strong>Warm intro</strong>
-              <span>Introduce yourself personally, mention something specific about their inquiry.</span>
-            </span>
-          </label>
-        </div>
-      </div>
-      <div class="field">
-        <label for="sms_opener">Your typical SMS opener to a new lead</label>
-        <textarea id="sms_opener" name="sms_opener" placeholder="'Hey {{first_name}}, this is {{agent_name}} with {{brokerage}} — saw you were looking at {{property}}...'" required></textarea>
-        <div class="hint">Use <code>{{first_name}}</code>, <code>{{agent_name}}</code>, <code>{{property}}</code> as placeholders. We'll substitute.</div>
-      </div>
-      <div class="row">
+      <div class="section-body">
+        <p class="section-intro">Used as the style guide for every message Claude writes on your behalf.</p>
         <div class="field">
-          <label for="business_hours_start">Business hours start</label>
-          <input type="time" id="business_hours_start" name="business_hours_start" value="08:00">
+          <label for="message_opener">How do you typically open a first message to a new client? <span class="req">*</span></label>
+          <textarea id="message_opener" name="message_opener" placeholder="'Hi {{first_name}}, thanks for reaching out — I wanted to personally follow up...', 'Hey, saw you submitted a request on our site...'" required></textarea>
         </div>
         <div class="field">
-          <label for="business_hours_end">Business hours end</label>
-          <input type="time" id="business_hours_end" name="business_hours_end" value="17:00">
-        </div>
-      </div>
-      <div class="field">
-        <label for="after_hours_message">After-hours auto-reply</label>
-        <textarea id="after_hours_message" name="after_hours_message" placeholder="'Hi, thanks for reaching out. I'm currently unavailable but will respond first thing in the morning.'"></textarea>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Goals</legend>
-      <div class="field">
-        <label for="biggest_gap">What's the biggest gap in your business today?</label>
-        <textarea id="biggest_gap" name="biggest_gap" placeholder="Leads slipping through the cracks, no time for follow-up, inconsistent listing copy..." required></textarea>
-      </div>
-      <div class="field">
-        <label for="twelve_month_vision">What does success look like 12 months from now?</label>
-        <textarea id="twelve_month_vision" name="twelve_month_vision" required></textarea>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label for="current_monthly_transactions">Transactions closed per month today</label>
-          <input type="number" id="current_monthly_transactions" name="current_monthly_transactions" min="0" step="0.5">
+          <label for="favorite_phrases">Phrases or words you reach for often</label>
+          <textarea id="favorite_phrases" name="favorite_phrases" placeholder="'no-pressure', 'straight shooter', 'we treat every job like it's our own home'..."></textarea>
         </div>
         <div class="field">
-          <label for="target_monthly_transactions">Target per month</label>
-          <input type="number" id="target_monthly_transactions" name="target_monthly_transactions" min="0" step="0.5">
+          <label for="phrases_to_avoid">Words or phrases to never use</label>
+          <textarea id="phrases_to_avoid" name="phrases_to_avoid" placeholder="'synergy', 'cutting-edge', exclamation points, anything that sounds like a corporate press release..."></textarea>
+        </div>
+        <div class="field">
+          <label>Voice characteristics <span style="font-weight:400;color:var(--muted)">(pick up to 4)</span></label>
+          <div class="check-group">
+            <label class="check-pill" data-group="voice_tags" data-val="warm"><input type="checkbox"> Warm</label>
+            <label class="check-pill" data-group="voice_tags" data-val="professional"><input type="checkbox"> Professional</label>
+            <label class="check-pill" data-group="voice_tags" data-val="punchy"><input type="checkbox"> Punchy</label>
+            <label class="check-pill" data-group="voice_tags" data-val="detailed"><input type="checkbox"> Detailed</label>
+            <label class="check-pill" data-group="voice_tags" data-val="casual"><input type="checkbox"> Casual</label>
+            <label class="check-pill" data-group="voice_tags" data-val="authoritative"><input type="checkbox"> Authoritative</label>
+            <label class="check-pill" data-group="voice_tags" data-val="local_flavor"><input type="checkbox"> Local flavor</label>
+            <label class="check-pill" data-group="voice_tags" data-val="data_driven"><input type="checkbox"> Data-driven</label>
+            <label class="check-pill" data-group="voice_tags" data-val="storytelling"><input type="checkbox"> Storytelling</label>
+          </div>
         </div>
       </div>
-    </fieldset>
+    </div>
 
-    <div id="status" class="status"></div>
-    <button type="submit" id="submit-btn">Submit &amp; Start Onboarding</button>
+    <!-- 04 Writing Samples -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">04</span>
+        <span class="section-title">Writing Samples</span>
+      </div>
+      <div class="section-body">
+        <p class="section-intro">Paste 2–3 messages you've actually sent to clients — emails, texts, follow-ups, anything written in your own voice. Claude uses these as style references. Separate each with a line of <code style="font-family:var(--font-mono);font-size:12px;background:var(--bone);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">---</code>.</p>
+        <div class="field">
+          <label for="writing_samples">Your writing samples <span class="req">*</span></label>
+          <textarea id="writing_samples" name="writing_samples" rows="12" required placeholder="Email or text to a new lead...&#10;&#10;---&#10;&#10;Follow-up after a first meeting or estimate...&#10;&#10;---&#10;&#10;Thank-you note after completing a job..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 Follow-Up Style -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">05</span>
+        <span class="section-title">Follow-Up Style</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label>When a new lead comes in, your default approach is: <span class="req">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="approach_style" value="value_first" required>
+              <div class="radio-content">
+                <strong>Value-first</strong>
+                <span>Lead with something useful — a tip, a relevant fact, or an observation about their situation — before any ask.</span>
+              </div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="approach_style" value="direct_question">
+              <div class="radio-content">
+                <strong>Direct question</strong>
+                <span>Get them talking — ask about their timeline, their problem, what they've already tried.</span>
+              </div>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="approach_style" value="warm_intro">
+              <div class="radio-content">
+                <strong>Warm intro</strong>
+                <span>Introduce yourself personally, reference something specific from their inquiry, make it feel like a real person reaching out.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="sms_opener">Your typical SMS opener to a new lead <span class="req">*</span></label>
+          <textarea id="sms_opener" name="sms_opener" placeholder="'Hey {{first_name}}, this is {{name}} from {{business}} — saw you reached out about {{service}}. What's a good time to connect?'" required></textarea>
+          <div class="hint">Use <code style="font-family:var(--font-mono);font-size:11px">{{first_name}}</code>, <code style="font-family:var(--font-mono);font-size:11px">{{name}}</code>, <code style="font-family:var(--font-mono);font-size:11px">{{business}}</code>, <code style="font-family:var(--font-mono);font-size:11px">{{service}}</code> as placeholders.</div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="business_hours_start">Business hours start</label>
+            <input type="time" id="business_hours_start" name="business_hours_start" value="08:00">
+          </div>
+          <div class="field">
+            <label for="business_hours_end">Business hours end</label>
+            <input type="time" id="business_hours_end" name="business_hours_end" value="17:00">
+          </div>
+        </div>
+        <div class="field">
+          <label for="after_hours_message">After-hours auto-reply</label>
+          <textarea id="after_hours_message" name="after_hours_message" placeholder="'Thanks for reaching out! We're currently closed but will get back to you first thing in the morning.'"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 Goals -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">06</span>
+        <span class="section-title">Goals</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="biggest_gap">What's the biggest gap in your business today? <span class="req">*</span></label>
+          <textarea id="biggest_gap" name="biggest_gap" placeholder="Leads going cold before I can follow up, too much time on admin, inconsistent communication with repeat customers..." required></textarea>
+        </div>
+        <div class="field">
+          <label for="twelve_month_vision">What does success look like 12 months from now? <span class="req">*</span></label>
+          <textarea id="twelve_month_vision" name="twelve_month_vision" placeholder="Double my monthly clients without adding headcount, never miss a follow-up, consistent 5-star reviews..." required></textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="current_monthly_clients">Clients or jobs per month today</label>
+            <input type="number" id="current_monthly_clients" name="current_monthly_clients" min="0" step="1" placeholder="10">
+          </div>
+          <div class="field">
+            <label for="target_monthly_clients">Target per month</label>
+            <input type="number" id="target_monthly_clients" name="target_monthly_clients" min="0" step="1" placeholder="20">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <div id="status" class="status"></div>
+      <button type="submit" id="submit-btn">Submit &amp; Start Onboarding</button>
+    </div>
+
   </form>
 
   <footer>Norr AI &middot; <a href="mailto:hello@norrai.co">hello@norrai.co</a></footer>
 </div>
 
 <script>
-  // Swap in the production n8n webhook URL once the onboarding workflow is built.
-  // Use /webhook/ (production), NOT /webhook-test/.
-  const WEBHOOK_URL = 'https://YOUR-N8N-INSTANCE.app.n8n.cloud/webhook/agent-onboarding';
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/client-onboarding';
+  const NORR_TOKEN  = '21FB348E-12B4-41EF-B164-43188A647E9C';
 
-  const form = document.getElementById('onboarding-form');
-  const btn = document.getElementById('submit-btn');
+  // ── Check pills ──────────────────────────────────────────────────────────────
+  document.querySelectorAll('.check-pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      const group = pill.dataset.group;
+      if (group === 'voice_tags' && !pill.classList.contains('active')) {
+        const active = document.querySelectorAll('[data-group="voice_tags"].active').length;
+        if (active >= 4) return;
+      }
+      pill.classList.toggle('active');
+      pill.querySelector('input[type="checkbox"]').checked = pill.classList.contains('active');
+    });
+  });
+
+  // ── Form submit ──────────────────────────────────────────────────────────────
+  const form   = document.getElementById('onboarding-form');
+  const btn    = document.getElementById('submit-btn');
   const status = document.getElementById('status');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
     status.className = 'status';
     btn.disabled = true;
-    btn.textContent = 'Submitting...';
+    btn.textContent = 'Submitting\u2026';
 
     const fd = new FormData(form);
     const payload = {};
-
-    // Fold multi-checkbox groups into arrays; everything else is a scalar.
-    const arrayFields = new Set(['lead_sources', 'voice_tags']);
     for (const [key, value] of fd.entries()) {
-      if (arrayFields.has(key)) {
-        if (!payload[key]) payload[key] = [];
-        payload[key].push(value);
-      } else {
-        payload[key] = value;
-      }
+      payload[key] = value;
     }
-    // Ensure array fields exist even if nothing was checked.
-    arrayFields.forEach(k => { if (!payload[k]) payload[k] = []; });
 
-    // Coerce numerics.
-    ['current_monthly_transactions', 'target_monthly_transactions'].forEach(k => {
-      if (payload[k] !== '' && payload[k] != null) payload[k] = Number(payload[k]);
+    // Multi-select pills → arrays
+    payload.lead_sources = [...document.querySelectorAll('[data-group="lead_sources"].active')].map(p => p.dataset.val);
+    payload.voice_tags   = [...document.querySelectorAll('[data-group="voice_tags"].active')].map(p => p.dataset.val);
+
+    // Numeric coercion
+    ['current_monthly_clients', 'target_monthly_clients'].forEach(k => {
+      payload[k] = (payload[k] !== '' && payload[k] != null) ? Number(payload[k]) : null;
     });
 
     payload.submitted_at = new Date().toISOString();
@@ -401,19 +603,26 @@
     try {
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': NORR_TOKEN,
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
-      status.textContent = `Got it. You'll hear back from ${payload.agent_name ? 'us' : 'Norr AI'} within one business day to schedule your kickoff call.`;
+      status.textContent = `Got it, ${payload.contact_name}. You'll hear from us within one business day to schedule your kickoff call.`;
       status.className = 'status success show';
       form.reset();
+      document.querySelectorAll('.check-pill.active').forEach(p => {
+        p.classList.remove('active');
+        p.querySelector('input[type="checkbox"]').checked = false;
+      });
     } catch (err) {
-      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co directly.`;
+      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co.`;
       status.className = 'status error show';
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Submit & Start Onboarding';
+      btn.textContent = 'Submit \u0026 Start Onboarding';
     }
   });
 </script>

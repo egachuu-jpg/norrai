@@ -1,0 +1,202 @@
+{
+  "name": "Client Discovery → Claude Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discovery",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000001",
+      "name": "Webhook — Discovery Form",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [1184, -336],
+      "webhookId": "a1b2c3d4-1111-4abc-b000-000000000011"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a1b2c3d4-1111-4abc-b000-000000000002",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=21FB348E-12B4-41EF-B164-43188A647E9C",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1408, -336],
+      "id": "a1b2c3d4-1111-4abc-b000-000000000003",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Build the Claude prompt from all discovery form fields ─────────────────\nconst d = $input.first().json.body;\n\n// Vertical playbooks for pitch suggestions\nconst VERTICAL_PLAYBOOKS = {\n  'Real Estate': {\n    starter: ['Instant lead response (speed-to-lead SMS)', 'Missed call → auto SMS', '7-touch cold nurture sequence'],\n    growth: ['SOI re-engagement campaign', 'Open house follow-up sequence'],\n    pro: ['MLS feed → lead scoring dashboard', 'Deal velocity reporting']\n  },\n  'Dental / Medical': {\n    starter: ['Appointment reminder sequence (48hr + 2hr)', 'Missed appointment follow-up', 'Post-visit review request'],\n    growth: ['Dormant patient reactivation', 'New patient welcome sequence'],\n    pro: ['Dentrix/Eaglesoft → production dashboard', 'No-show risk scoring']\n  },\n  'Insurance': {\n    starter: ['Renewal reminders (90/60/30/7 days)', 'Post-renewal thank you + review request', 'Quote request auto-response'],\n    growth: ['Cross-sell campaign', 'Lapsed policy win-back'],\n    pro: ['Book-of-business pipeline', 'Retention risk scoring']\n  },\n  'default': {\n    starter: ['Missed call → auto SMS', 'Lead response within 5 minutes', 'Post-service review request'],\n    growth: ['Client reactivation campaign', 'Referral follow-up sequence'],\n    pro: ['Custom intake pipeline', 'Client retention dashboard']\n  }\n};\n\nconst industry = d.industry || '';\nconst playbooks = VERTICAL_PLAYBOOKS[industry] || VERTICAL_PLAYBOOKS['default'];\n\n// Tier determination hints based on volume and hours\nconst leadsPerMonth = parseInt(d.leads_per_month) || 0;\nconst adminHours = d.admin_hours_per_week || '';\nconst timeline = d.timeline || '';\nconst revenue = d.revenue_range || '';\n\nconst prompt = `You are Egan's AI research assistant at Norr AI, an automation agency serving local businesses. A prospect just completed a discovery questionnaire. Your job is to analyze their situation and give Egan everything he needs to have an excellent first call — a clear tier recommendation, the right workflows to pitch, and a personalized opener.\n\nHere is the completed discovery form:\n\n## WHO THEY ARE\nName: ${d.contact_name || 'Not provided'}\nBusiness: ${d.business_name || 'Not specified'}\nIndustry: ${industry || 'Not specified'}\nTeam size: ${d.team_size || 'Not specified'}\nEmail: ${d.contact_email || 'Not provided'}\nPhone: ${d.contact_phone || 'Not provided'}\n\n## WHAT BROUGHT THEM HERE\n${d.what_brings_you || 'Not provided'}\n\n## PAIN RATINGS (1 = barely any · 5 = major pain)\nSpeed of response to new leads: ${d.pain_missed_leads !== null && d.pain_missed_leads !== undefined ? d.pain_missed_leads + '/5' : 'Not rated'}\nTime spent on manual follow-up: ${d.pain_manual_followup !== null && d.pain_manual_followup !== undefined ? d.pain_manual_followup + '/5' : 'Not rated'}\nNo-shows or missed appointments: ${d.pain_no_shows !== null && d.pain_no_shows !== undefined ? d.pain_no_shows + '/5' : 'Not rated'}\nAsking clients for reviews: ${d.pain_review_requests !== null && d.pain_review_requests !== undefined ? d.pain_review_requests + '/5' : 'Not rated'}\nRepetitive admin / data entry: ${d.pain_admin_time !== null && d.pain_admin_time !== undefined ? d.pain_admin_time + '/5' : 'Not rated'}\nInconsistent client communication: ${d.pain_inconsistent_comms !== null && d.pain_inconsistent_comms !== undefined ? d.pain_inconsistent_comms + '/5' : 'Not rated'}\n\nBiggest pain (in their words): ${d.biggest_pain || 'Not provided'}\n\n## CURRENT TOOLS\nCRM: ${d.current_crm || 'Not specified'}\nScheduling: ${d.scheduling_tool || 'Not specified'}\nCommunication channels: ${d.comms_channels || 'Not specified'}\nHas website: ${d.has_website || 'Not specified'}\n\n## VOLUME & SCALE\nLeads per month: ${d.leads_per_month || 'Not specified'}\nClients per month: ${d.clients_per_month || 'Not specified'}\nAdmin hours per week: ${adminHours || 'Not specified'}\nAnnual revenue: ${revenue || 'Not specified'}\n\n## PRIORITIES\nTimeline: ${timeline || 'Not specified'}\nTried automation before: ${d.tried_automation_before || 'Not specified'}\n${d.automation_experience ? 'Prior automation experience: ' + d.automation_experience : ''}\n\nWhat success looks like:\n${d.success_looks_like || 'Not provided'}\n\nAnything else:\n${d.anything_else || 'None'}\n\n---\n\nKnown workflow options for ${industry || 'this vertical'}:\n- Starter tier ($500–600/mo): ${playbooks.starter.join(', ')}\n- Growth tier ($1,000–1,200/mo): ${playbooks.growth.join(', ')}\n- Pro tier ($2,000–2,500/mo): ${playbooks.pro.join(', ')}\n\n---\n\nProduced a structured analysis with exactly these sections:\n\n**SITUATION SUMMARY**\n3 sentences. What's really going on for this prospect — the operational reality behind their pain ratings, what they're losing today by not having automation, and what the highest-stakes risk is if nothing changes. Make it feel like you've been listening, not just reading a form.\n\n**RECOMMENDED TIER**\nStarter, Growth, or Pro — with a one-sentence rationale. Base this on: their volume, admin hours, timeline urgency, and the complexity of their highest-rated pains. If they're borderline between tiers, say so and explain why.\n\n**TOP 2–3 WORKFLOWS TO PITCH**\nFor each, include:\n- Name of the workflow\n- The specific pain it addresses (cite their rating or their exact words)\n- What it does in plain language\n- Expected ROI framing in their industry's language (dentists think in appointment values, realtors in GCI, insurance in retained premium)\n\nRank them by impact-to-effort ratio for this specific prospect — not by what's generally most popular.\n\n**PERSONALIZED CALL OPENER FOR EGAN**\nA 2–3 sentence opener Egan can use at the top of the discovery call. It should reference something specific they said, acknowledge the real pain, and tee up the conversation without pitching anything yet. Sound like a human who read their form carefully, not an AI summary.\n\n**STACK NOTES**\nBrief. What will integrate easily given their current tools, what will need a workaround, and anything worth clarifying on the call.\n\nBe direct and specific. Use their exact words where it makes the point stronger.`;\n\nconst claude_request_body = JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2048,\n  messages: [{ role: 'user', content: prompt }]\n});\n\nreturn [{\n  json: {\n    prompt,\n    claude_request_body,\n    contact_name: d.contact_name || 'Unknown',\n    contact_email: d.contact_email || '',\n    business_name: d.business_name || 'Unknown Business',\n    industry: industry,\n    submitted_at: d.submitted_at || new Date().toISOString()\n  }\n}];"
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000004",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1632, -336]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $vars.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ $json.claude_request_body }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000005",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1856, -336]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Extract Claude's analysis and format email ─────────────────────────────\nconst claudeResponse = $input.first().json;\nconst analysis = claudeResponse.content?.[0]?.text ?? 'No response from Claude.';\n\nconst contactName  = $('Build Claude Prompt').first().json.contact_name;\nconst contactEmail = $('Build Claude Prompt').first().json.contact_email;\nconst businessName = $('Build Claude Prompt').first().json.business_name;\nconst industry     = $('Build Claude Prompt').first().json.industry;\nconst submittedAt  = $('Build Claude Prompt').first().json.submitted_at;\n\nconst formattedTime = new Date(submittedAt).toLocaleString('en-US', { timeZone: 'America/Chicago', hour12: true });\n\nconst htmlAnalysis = analysis\n  .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')\n  .replace(/\\n\\n/g, '</p><p style=\"margin:0 0 14px\">')\n  .replace(/\\n/g, '<br>');\n\nconst htmlBody = `\n<div style=\"font-family: 'Inter', -apple-system, sans-serif; max-width: 720px; margin: 0 auto; color: #0A0F1A;\">\n  <div style=\"background: #0A0F1A; padding: 32px; border-radius: 8px 8px 0 0;\">\n    <div style=\"font-family: monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #7FA9B8; margin-bottom: 8px;\">Norr AI · Discovery Analysis</div>\n    <div style=\"font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 22px; color: #FAFAF7; letter-spacing: -0.03em;\">${contactName} · ${businessName}</div>\n    <div style=\"font-size: 12px; color: #6A6F78; margin-top: 6px;\">${industry} · Submitted ${formattedTime} CT · <a href=\"mailto:${contactEmail}\" style=\"color:#7FA9B8;\">${contactEmail}</a></div>\n  </div>\n  <div style=\"background: #FAFAF7; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px; padding: 32px;\">\n    <p style=\"margin: 0 0 14px; font-size: 14px; line-height: 1.75; color: #3A3F48;\">${htmlAnalysis}</p>\n  </div>\n  <div style=\"text-align: center; padding: 24px; font-size: 11px; color: #9EA3AA; font-family: monospace; letter-spacing: 0.1em;\">NORR AI · FARIBAULT, MN · AUTOMATED DISCOVERY ANALYSIS</div>\n</div>\n`;\n\nreturn [{\n  json: {\n    analysis,\n    html_body: htmlBody,\n    contact_name: contactName,\n    contact_email: contactEmail,\n    business_name: businessName,\n    subject: `Discovery: ${contactName} — ${businessName} (${industry})`\n  }\n}];"
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000006",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2080, -336]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SENDGRID_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"studio@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000007",
+      "name": "Send Analysis via SendGrid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2304, -336]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"message\": \"Got it — I'll review your answers and reach out within one business day.\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000008",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2528, -336]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"unauthorized\" }",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "a1b2c3d4-1111-4abc-b000-000000000009",
+      "name": "Reject Invalid Token",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1632, -160]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook — Discovery Form": {
+      "main": [
+        [{ "node": "Token Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [{ "node": "Build Claude Prompt", "type": "main", "index": 0 }],
+        [{ "node": "Reject Invalid Token", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [{ "node": "Claude API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Claude API": {
+      "main": [
+        [{ "node": "Parse Claude Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [{ "node": "Send Analysis via SendGrid", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Analysis via SendGrid": {
+      "main": [
+        [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a1b2c3d4-1111-4abc-b000-000000000010",
+  "meta": {
+    "instanceId": "norrai"
+  },
+  "id": "discovery-claude-analysis",
+  "tags": []
+}
