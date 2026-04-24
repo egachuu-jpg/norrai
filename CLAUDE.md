@@ -124,18 +124,37 @@ parseInt(new Date().toLocaleString('en-US', {timeZone: 'America/Chicago', hour12
 
 ---
 
-## Files in This Project
+## Project Structure
 
-| File | What it is |
-|------|-----------|
-| `listing_form.html` | Client-facing intake form for the listing description generator. Branded Polar Modern style. Submits JSON to n8n webhook. Swap `WEBHOOK_URL` constant to go live. |
-| `event_ops_discovery.html` | Discovery questionnaire for event operations prospects (Prep Network warm lead). 6-section form: team context, event volume, time-sink ratings, current tools, repetitive work, priorities. Submits to n8n webhook. |
-| `onboarding_form.html` | Agent onboarding questionnaire — collects writing style, previous listings, follow-up tone, CRM, goals. |
-| `brand_concepts.html` | Brand exploration — Polar Modern design system. |
-| `norrai_style_guide.html` | Full Polar Modern style guide. Tokens: bone `#FAFAF7`, ink `#0A0F1A`, glacial `#7FA9B8`, graphite `#3A3F48`, blush `#E8D4C4`. Fonts: Inter Tight (display), Inter (body), JetBrains Mono (mono). |
-| `norrai_master_context.docx` | Full business context document — source of truth for positioning, verticals, workflows, and open threads. |
-
-> **Session note (2026-04-23):** Added `norr_ai_favicon.svg` to all 12 HTML pages that were missing it (services, how-it-works, real-estate, insurance, dental, contact, pricing, listing_form, event_ops_discovery, norrai_style_guide, brand_concepts, onboarding_form). `index.html` already had it.
+```
+norrai/
+├── website/                  # All HTML — deployed to Cloudflare Pages (build output dir: website)
+│   ├── index.html
+│   ├── services.html
+│   ├── how-it-works.html
+│   ├── pricing.html
+│   ├── contact.html
+│   ├── dental.html
+│   ├── real-estate.html
+│   ├── insurance.html
+│   ├── listing_form.html     # Listing description generator — live at tools.norrai.co
+│   ├── event_ops_discovery.html
+│   ├── onboarding_form.html
+│   ├── brand_concepts.html
+│   ├── norrai_style_guide.html
+│   ├── norr_ai_favicon.svg
+│   ├── norr_ai_emblem.svg
+│   └── css/
+│       └── norrai.css        # Shared Polar Modern styles for main site pages
+├── n8n/
+│   └── workflows/            # n8n workflow JSON exports — import directly into n8n
+├── tests/
+│   └── listing_form.spec.js  # Playwright tests for listing_form.html
+├── norrai_master_context.docx
+├── playwright.config.js
+├── package.json
+└── CLAUDE.md
+```
 
 ---
 
@@ -197,7 +216,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Design Postgres schema as connective tissue between Tier 1 and Tier 2
 - [ ] Build remaining Starter workflows: appointment reminders, open house follow-up, review request
 - [ ] Set up internal monitoring dashboard (red/green per client status) — needed at 10+ clients
-- [ ] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
+- [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
 
 ### First Client Targets
 - Insurance broker friend — Salesforce user, discovery call framework ready
@@ -211,6 +230,23 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - Never lead with n8n, Claude, or "automation."
 - Salesforce positioning for insurance: "we complete Salesforce, not compete with it."
 - Key insurance qualifying question: "If I told you there were clients about to leave at renewal and you don't know who they are — what would it be worth to find out in advance?"
+
+---
+
+## Session Log
+
+### 2026-04-23
+- Added `norr_ai_favicon.svg` to all 12 HTML pages
+- Connected `listing_form.html` to production webhook (`https://norrai.app.n8n.cloud/webhook/listing-description`)
+- Added localStorage agent profile persistence — saves `agent_name`, `agent_email`, `previous_listings` across sessions; "· saved / clear" badge in Your Voice section
+- Split single address field into `street_address`, `city`, `state` (default MN), `zip`, `county`; constructs `property_address` for workflow
+- Added price currency pattern validation + blur auto-format; changed `lot_size` to `type="number"` with decimal enforcement
+- Added `X-Norr-Token` shared secret header to form fetch + n8n IF node for basic auth
+- Fixed n8n workflow: removed hardcoded example listings, wired `previous_listings` from payload, fixed field name mismatches, added all new fields to Claude prompt, fixed `JSON.stringify` on prompt to prevent bad control character error, fixed double `$$` on price
+- n8n workflow now includes Token Check IF node + Valid Email Check against DataTable allowlist
+- Set up Playwright test suite — 41 tests, all passing (`npm test`)
+- Initialized git repo, pushed to `github.com/egachuu-jpg/norrai`
+- Deployed to Cloudflare Pages, custom domain `tools.norrai.co` live
 
 ---
 

@@ -3,35 +3,54 @@
   "nodes": [
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "studio@norrai.co",
-        "fromName": "Norr AI",
-        "toEmail": "={{ $node[\"Parse HTML\"].json.agent_email }}",
-        "subject": "=New listing copy ready — {{ $json.headline }}",
-        "contentValue": "=Hi, {{ $node[\"Parse HTML\"].json.agent_name }}, below are the headline/descriptions for your latest listing.\n\nHEADLINE: {{ $json.headline }}  \n\nMLS DESCRIPTION: {{ $json.mls_description }}  \n\nSOCIAL MEDIA POST: {{ $json.social_caption }}",
-        "additionalFields": {}
+        "httpMethod": "POST",
+        "path": "listing-description",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
-      "position": [1280, 0],
-      "id": "58681773-2780-4d79-b8f5-7d1abecfd071",
-      "name": "Send an email",
-      "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
-        }
-      }
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        144
+      ],
+      "id": "715a9fa9-5930-4a54-8b93-000ce26a9a76",
+      "name": "Get Listing Details",
+      "webhookId": "51a77105-7762-4f29-8a87-cb981ea85e6e"
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text;\n\nconst headlineMatch = text.split('HEADLINE:')[1];\nconst mlsMatch = text.split('MLS_DESCRIPTION:')[1];\nconst socialMatch = text.split('SOCIAL_MEDIA_POST:')[1];\n\nconst headline = headlineMatch\n  ? headlineMatch.split('MLS_DESCRIPTION:')[0].trim()\n  : '';\n\nconst mls_description = mlsMatch\n  ? mlsMatch.split('SOCIAL_MEDIA_POST:')[0].trim()\n  : '';\n\nconst social_caption = socialMatch\n  ? socialMatch.trim()\n  : '';\n\nreturn [{\n  json: {\n    headline,\n    mls_description,\n    social_caption\n  }\n}];"
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d612203-db2a-48cc-babc-17e177cf58ad",
+              "name": "prompt",
+              "value": "=You are a real estate copywriter who writes in the style of a specific agent. Study these example listings carefully and match their voice, tone, and style exactly.\n\nEXAMPLE LISTINGS FROM THIS AGENT:\n{{ $node[\"Get Listing Details\"].json.body.previous_listings }}\n\nNow generate a headline and two professional property descriptions in exactly the same style for this listing:\n\nAddress: {{ $node[\"Get Listing Details\"].json.body.property_address }}\nBedrooms: {{ $node[\"Get Listing Details\"].json.body.beds }}\nBathrooms: {{ $node[\"Get Listing Details\"].json.body.baths }}\nSquare Feet: {{ $node[\"Get Listing Details\"].json.body.sqft }}\nYear Built: {{ $node[\"Get Listing Details\"].json.body.year_built }}\nBasement: {{ $node[\"Get Listing Details\"].json.body.basement }}\nGarage: {{ $node[\"Get Listing Details\"].json.body.garage }}\nPrice: {{ $node[\"Get Listing Details\"].json.body.price }}\nKey Features: {{ $node[\"Get Listing Details\"].json.body.key_features }}\nNeighborhood Notes: {{ $node[\"Get Listing Details\"].json.body.neighborhood_notes }}\nTone: {{ $node[\"Get Listing Details\"].json.body.tone }}\nTarget Buyer: {{ $node[\"Get Listing Details\"].json.body.target_buyer }}\n\nPlease provide:\n1. HEADLINE: A punchy property headline under 10 words\n2. MLS_DESCRIPTION: A detailed professional MLS listing description (150-200 words)\n3. SOCIAL_MEDIA_POST: An engaging social media post (50-75 words) with emojis\n\nFormat your response exactly as:\nHEADLINE: [your headline here]\n\nMLS_DESCRIPTION: [your MLS description here]\n\nSOCIAL_MEDIA_POST: [your social media post here]",
+              "type": "string"
+            },
+            {
+              "id": "73f13592-0617-498f-ac61-1fe319106875",
+              "name": "agent_name",
+              "value": "={{ $node[\"Get Listing Details\"].json.body.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ece63fc6-53cc-4569-ae43-f4910dd0bd98",
+              "name": "agent_email",
+              "value": "={{ $node[\"Get Listing Details\"].json.body.agent_email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1072, 0],
-      "id": "7a55ce94-761d-42be-9a97-d4a2cf7922b7",
-      "name": "Parse Desc"
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        144
+      ],
+      "id": "2d69775e-d4f7-4010-a6ef-e72b0b581e3f",
+      "name": "Parse HTML"
     },
     {
       "parameters": {
@@ -54,13 +73,16 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.prompt }}\"\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [848, 0],
-      "id": "55e3e23c-0c05-43e5-98b6-27e9a6369b1e",
+      "position": [
+        1008,
+        144
+      ],
+      "id": "de7ea2b0-a8a7-4ddd-82a8-fc2de904972e",
       "name": "Generate Listing (Claude)",
       "credentials": {
         "anthropicApi": {
@@ -71,71 +93,182 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "7d612203-db2a-48cc-babc-17e177cf58ad",
-              "name": "prompt",
-              "value": "=You are a real estate copywriter who writes in the style of a specific agent. Study these example listings carefully and match their voice, tone, and style exactly.\n\nEXAMPLE LISTINGS FROM THIS AGENT:\n{{ $node[\"Get Details\"].json.body.previous_listings }}\n\nNow generate a headline and two professional property descriptions in exactly the same style for this listing:\n\nAddress: {{ $node[\"Get Details\"].json.body.property_address }}\nBedrooms: {{ $node[\"Get Details\"].json.body.beds }}\nBathrooms: {{ $node[\"Get Details\"].json.body.baths }}\nSquare Feet: {{ $node[\"Get Details\"].json.body.sqft }}\nYear Built: {{ $node[\"Get Details\"].json.body.year_built }}\nBasement: {{ $node[\"Get Details\"].json.body.basement }}\nGarage: {{ $node[\"Get Details\"].json.body.garage }}\nPrice: ${{ $node[\"Get Details\"].json.body.price }}\nKey Features: {{ $node[\"Get Details\"].json.body.key_features }}\nNeighborhood Notes: {{ $node[\"Get Details\"].json.body.neighborhood_notes }}\nTone: {{ $node[\"Get Details\"].json.body.tone }}\nTarget Buyer: {{ $node[\"Get Details\"].json.body.target_buyer }}\n\nPlease provide:\n1. HEADLINE: A punchy property headline under 10 words\n2. MLS_DESCRIPTION: A detailed professional MLS listing description (150-200 words)\n3. SOCIAL_MEDIA_POST: An engaging social media post (50-75 words) with emojis\n\nFormat your response exactly as:\nHEADLINE: [your headline here]\n\nMLS_DESCRIPTION: [your MLS description here]\n\nSOCIAL_MEDIA_POST: [your social media post here]",
-              "type": "string"
-            },
-            {
-              "id": "73f13592-0617-498f-ac61-1fe319106875",
-              "name": "agent_name",
-              "value": "={{ $node[\"Get Details\"].json.body.agent_name }}",
-              "type": "string"
-            },
-            {
-              "id": "ece63fc6-53cc-4569-ae43-f4910dd0bd98",
-              "name": "agent_email",
-              "value": "={{ $node[\"Get Details\"].json.body.agent_email }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text;\n\nconst headlineMatch = text.split('HEADLINE:')[1];\nconst mlsMatch = text.split('MLS_DESCRIPTION:')[1];\nconst socialMatch = text.split('SOCIAL_MEDIA_POST:')[1];\n\nconst headline = headlineMatch\n  ? headlineMatch.split('MLS_DESCRIPTION:')[0].trim()\n  : '';\n\nconst mls_description = mlsMatch\n  ? mlsMatch.split('SOCIAL_MEDIA_POST:')[0].trim()\n  : '';\n\nconst social_caption = socialMatch\n  ? socialMatch.trim()\n  : '';\n\nreturn [{\n  json: {\n    headline,\n    mls_description,\n    social_caption\n  }\n}];"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [656, 0],
-      "id": "91ee3dcb-2d60-4ba9-8d31-9172004fb620",
-      "name": "Parse HTML"
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        144
+      ],
+      "id": "9fba46b0-5dbf-45dc-ae93-138fb392f035",
+      "name": "Parse Desc"
     },
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "listing-description",
+        "resource": "mail",
+        "fromEmail": "studio@norrai.co",
+        "fromName": "Norr AI",
+        "toEmail": "={{ $node[\"Parse HTML\"].json.agent_email }}",
+        "subject": "=New listing copy ready — {{ $json.headline }}",
+        "contentValue": "=Hi, {{ $node[\"Parse HTML\"].json.agent_name }}, below are the headline/descriptions for your latest listing.\n\nHEADLINE: {{ $json.headline }}  \n\nMLS DESCRIPTION: {{ $json.mls_description }}  \n\nSOCIAL MEDIA POST: {{ $json.social_caption }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        144
+      ],
+      "id": "b0b4c4dd-fce1-4560-ac9a-0ea4791e15fd",
+      "name": "Send email",
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09c9c0dc-11bd-431f-93fe-eda5e92be7a6",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
         "options": {}
       },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [288, 0],
-      "id": "e5bf2fd8-520f-4c6a-8da7-67289a92b6a8",
-      "name": "Get Details",
-      "webhookId": "51a77105-7762-4f29-8a87-cb981ea85e6e"
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        224
+      ],
+      "id": "bbffd6cf-e6f6-4cb2-aceb-603e834c2f75",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "QOSX5Gv13oKFmcaW",
+          "mode": "list",
+          "cachedResultName": "valid_emails",
+          "cachedResultUrl": "/projects/dHMe2aoOwTztDaWE/datatables/QOSX5Gv13oKFmcaW"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email_address",
+              "keyValue": "={{ $node[\"Get Listing Details\"].json.body.agent_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        176
+      ],
+      "id": "1f89a793-3bbf-4307-8a34-b669a6fd295a",
+      "name": "Valid Email Check"
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Get Listing Details": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "content-length": "7641",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "152.117.90.20",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f122fdf637da1bb-MSP",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=1, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "152.117.90.20, 104.23.201.39",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-sqd8x",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "152.117.90.20"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": "issa boi",
+            "agent_email": "egachuu@gmail.com",
+            "price": "$3,289",
+            "street_address": "12314 big wee wee lane",
+            "city": "kenosha",
+            "state": "MN",
+            "zip": "59392",
+            "county": "Yeppers",
+            "property_type": "Single-family",
+            "garage": "1-car detached",
+            "key_features": "Great place, golf sim, big shed in backyard, fenced in, wood burning fireplace, granite countertops, new appliances",
+            "neighborhood_notes": "Great quiet neighborhood, close to schools, 5 min drive to downtown, lots of trails and parks nearby",
+            "tone": "casual",
+            "target_buyer": "Luxury buyer",
+            "previous_listings": "Nestled in a highly sought-after neighborhood just minutes from Waconia, this stunning home offers the perfect blend of peaceful small-town living and everyday convenience. Overlooking scenic Brand Lake and adjacent CRP land, you’ll feel like you’re tucked away in the countryside, yet still just a short drive to shopping, dining, and major routes. From the moment you arrive, the setting captures your heart. A private trail just beyond the backyard invites daily walks surrounded by wildlife, while the refinished deck with stairs to the backyard offers easy access to the features below. The stunning screened porch with vaulted ceilings and rich wood finishes creates a cozy, elevated space to take in the breathtaking views year-round. Inside, the home is a showcase of craftsmanship and character. Rustic yet refined, you’ll find beautiful stone accents, custom built-ins, hardwood floors, Cambria countertops, and warm, thoughtful woodwork throughout. The floorplan is anything but ordinary-designed with unique angles and intentional spaces that make this expansive home feel inviting, comfortable, and truly special. The main level offers nearly 1,900 square feet, featuring a luxurious primary suite complete with its own gas fireplace wrapped in elegant white stone, dual closets, and a spa-like bathroom with soaking tub and tiled walk-in shower. You’ll also find convenient main-floor laundry just off the garage, a half bath perfect for everyday living, and a stunning front office that could easily serve as a playroom or be converted into a fourth bedroom. The walkout lower level is equally impressive, featuring a cozy wood-burning fireplace (with a generous supply of firewood included), a bar area perfect for entertaining, two spacious bedrooms, a full bathroom, abundant storage, and even a dedicated safe room. There’s also a thoughtfully tucked-away secondary walkout for added functionality, along with a designated space ready for a future hot tub. Located in the Central Public Schools (Norwood Young America) district, with the option for open enrollment into Waconia Public Schools, this home offers flexibility and options. Beyond the home itself, the location is hard to beat. This gem is approximately 10 minutes to Waconia, about 20 minutes to Chaska, 25 minutes to Chanhassen, and under 45 minutes to Minneapolis, making it an ideal retreat without sacrificing accessibility. This is more than just a home...it’s a lifestyle. A rare opportunity to own a property that offers space, character, privacy, and connection to nature, all in one unforgettable package. *There are covenants for this neighborhood to maintain the quality standards, see seller disclosures for more information. The deck is being redone prior to the property going live on the market, and there will NOT be stairs off the primary bedroom suite, the main stairs going to backyard will remain. Updated photos coming soon.\n\nStep into a storybook setting where French Colonial charm meets coastal serenity and Southern grace, tucked along the banks of the Cannon River in the heart of Morristown. With two parcels included, the home plus an additional buildable lot with 165 feet of pristine shoreline, this property offers a level of privacy, beauty, and possibility that is rarely found. Inside, curated custom finishes and artisan craftsmanship create a home that feels both worldly and welcoming, from whitewashed cedar ceilings and layered textures to oversized windows that flood the open-concept main floor with natural light and frame the river like living artwork, where every window holds a river view and every detail tells a story. Designed for both gathering and quiet moments, you’ll enjoy morning coffee on one of two river-facing decks, evenings on the wraparound porch watching eagles soar, and days spent canoeing, fishing, or simply enjoying the peaceful rhythm of river life. The home features three generous bedrooms, including two spa-like ensuite retreats, blending comfort and luxury in perfect harmony. A four-stall tandem heated garage with large windows offers incredible space for vehicles, hobbies, kayaks, and more, feeling more like an extension of the home than a garage. This is more than a home, it’s a beautiful riverside lifestyle, where every detail was chosen with intention. And now, with a new price, it presents an incredible opportunity to own one of the most unique and special properties in the area. Located in the charming town of Morristown, just minutes from Faribault and with easy access to I-35 and Mankato, this home offers the rare combination of peaceful small-town living and convenient access to larger city amenities. Surrounded by lakes in every direction, this location is a dream for those who love the outdoors yet need accessibility...a perfect blend of convenience and rural beauty. Truly the best of both worlds!\n\nCheck out this prime mixed-use opportunity in the heart of downtown Faribault! Unlock the potential of this versatile downtown gem, perfectly positioned in one of Southern Minnesota’s most up-and-coming small towns-just 35 minutes south of the Twin Cities, right off Interstate 35. This mixed-use building offers two main-level commercial spaces. One unit is currently leased with a solid two-year agreement in place, providing immediate income. The second storefront is move-in ready: ideal for an owner-occupant or an easy addition to your investment portfolio. With great foot traffic and charming curb appeal, this space is perfect for a boutique, ice cream shop, yoga/exercise studio, or other small business ventures. Investors, Contractors, Entrepreneurs-this one's for you! Upstairs, the opportunities are endless. With some renovation, the upper level can be restored to its original residential layout, with potential for three studio or one-bedroom apartments, or reconfigured for larger units to meet growing rental demand in the area. The property is currently undergoing a parcel split, which will be completed prior to closing. A shared wall agreement and access to shared water/sewer lines with adjacent parcels will be included. Seller will also install a separation wall upstairs to define private apartment space on the west side. Location, Location, Location! Just steps from the exciting new Viaduct Park development: featuring splash pads, an ice rink, and future attractions & features aimed to increase tourism and local activity. Surrounded by popular restaurants, shops, and ongoing downtown revitalization, this is your chance to plant roots in a community on the rise. Whether you're expanding your business, growing your investment portfolio, or dreaming up your next big idea-this is the kind of opportunity that doesn’t come around often. Schedule your showing today and claim your piece of Faribault’s future!\n\n",
+            "property_address": "12314 big wee wee lane, kenosha, MN 59392",
+            "beds": 3,
+            "baths": 2,
+            "sqft": 21038,
+            "year_built": 2022,
+            "lot_size": 813.29,
+            "basement": "walk-out",
+            "submitted_at": "2026-04-24T03:57:58.809Z",
+            "source": "listing_form_web"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/listing-description",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
   "connections": {
-    "Send an email": {
-      "main": [[]]
-    },
-    "Parse Desc": {
+    "Get Listing Details": {
       "main": [
         [
           {
-            "node": "Send an email",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Generate Listing (Claude)": {
-      "main": [
-        [
-          {
-            "node": "Parse Desc",
+            "node": "Token Check",
             "type": "main",
             "index": 0
           }
@@ -153,7 +286,40 @@
         ]
       ]
     },
-    "Get Details": {
+    "Generate Listing (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Parse Desc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Desc": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Valid Email Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Email Check": {
       "main": [
         [
           {
@@ -170,7 +336,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "751bef94-0fef-4560-be30-9e12c09d70cf",
+  "versionId": "b0d2dfc3-db07-426a-8a2b-f9a79d6b3c80",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
