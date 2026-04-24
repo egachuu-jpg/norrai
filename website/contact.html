@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a Free Audit — Norr AI</title>
+<meta name="description" content="30 minutes. We map the 3 gaps costing you the most right now. You leave with a clear picture — whether you work with us or not.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+
+.contact-layout {
+  background: var(--bone);
+  padding: 96px 48px;
+}
+.contact-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 80px;
+  align-items: start;
+}
+
+/* Left column */
+.contact-left {}
+.contact-left .section-eyebrow { margin-bottom: 16px; }
+.contact-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 42px;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin-bottom: 24px;
+}
+.contact-title .acc { color: var(--glacial); }
+.contact-desc {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.what-to-expect {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+.expect-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.expect-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(127,169,184,0.12);
+  border: 1px solid rgba(127,169,184,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--glacial); letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.expect-content {}
+.expect-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.expect-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.contact-info {
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.contact-info-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.contact-info-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  width: 60px;
+  flex-shrink: 0;
+}
+.contact-info-val {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.contact-info-val a {
+  color: var(--glacial);
+  transition: opacity 0.15s;
+}
+.contact-info-val a:hover { opacity: 0.75; }
+
+/* Right column — form */
+.contact-form-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 40px;
+}
+.form-header {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.form-header-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 8px;
+}
+.form-header-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.form-header-sub {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.form-grid .field.full { grid-column: 1 / -1; }
+.form-field-single { margin-bottom: 20px; }
+
+.form-submit {
+  width: 100%;
+  padding: 16px;
+  background: var(--ink);
+  color: var(--bone);
+  border-radius: var(--radius-md);
+  font-size: 15px; font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer; border: none;
+  transition: background 0.15s;
+  margin-top: 8px;
+}
+.form-submit:hover { background: #161e33; }
+.form-fine {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 12px;
+  line-height: 1.55;
+}
+
+/* Verticals quick links */
+.verticals-links {
+  background: var(--blush);
+  padding: 64px 48px;
+  border-top: 1px solid #DDD0C0;
+}
+.verticals-links-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+.verticals-links-header { margin-bottom: 32px; }
+.verticals-links-header h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.verticals-links-header p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--graphite);
+}
+.vertical-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.vertical-card {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid #DDD0C0;
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  transition: background 0.15s, border-color 0.15s;
+  display: block;
+  backdrop-filter: blur(4px);
+}
+.vertical-card:hover { background: rgba(255,255,255,0.95); border-color: #C0B0A0; }
+.vertical-card-icon { font-size: 28px; margin-bottom: 12px; }
+.vertical-card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.vertical-card-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--graphite);
+}
+.vertical-card-link {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-top: 16px;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .contact-layout { padding: 64px 24px; }
+  .contact-inner { grid-template-columns: 1fr; gap: 48px; }
+  .contact-form-wrap { padding: 28px 24px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .verticals-links { padding: 56px 24px; }
+  .vertical-card-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Free audit · No pressure · 30 minutes</div>
+    <h1 class="page-hero-headline">Find out what your<br>business is <span class="acc">leaving on the table.</span></h1>
+    <p class="page-hero-sub">We map the 3 gaps costing you the most right now. You leave with a clear picture of what automation would do for your revenue — whether you work with us or not.</p>
+  </div>
+</section>
+
+<!-- CONTACT LAYOUT -->
+<section class="contact-layout">
+  <div class="contact-inner">
+
+    <!-- Left: What to expect -->
+    <div class="contact-left">
+      <span class="section-eyebrow">What to expect</span>
+      <h2 class="contact-title">30 minutes.<br>Zero <span class="acc">fluff.</span></h2>
+      <p class="contact-desc">This isn't a sales call disguised as a consultation. We ask about your business, find the gaps, and give you a straight answer about whether automation makes sense — and which workflows would move the needle fastest.</p>
+
+      <div class="what-to-expect">
+        <div class="expect-item">
+          <div class="expect-num">01</div>
+          <div class="expect-content">
+            <div class="expect-title">We ask about your current setup</div>
+            <p class="expect-body">CRM, phone, lead sources, booking process. What's working, what's falling through the cracks. No prep needed — we'll guide the questions.</p>
+          </div>
+        </div>
+        <div class="expect-item">
+          <div class="expect-num">02</div>
+          <div class="expect-content">
+            <div class="expect-title">We identify your 3 biggest gaps</div>
+            <p class="expect-body">Missed calls, slow lead response, no-shows, manual follow-up — we'll pinpoint where your business is leaking revenue and how much it's likely costing you.</p>
+          </div>
+        </div>
+        <div class="expect-item">
+          <div class="expect-num">03</div>
+          <div class="expect-content">
+            <div class="expect-title">We give you the math</div>
+            <p class="expect-body">We model the ROI in your language — GCI, appointment value, retained premium. You'll know exactly what automation would return before you spend a dollar.</p>
+          </div>
+        </div>
+        <div class="expect-item">
+          <div class="expect-num">04</div>
+          <div class="expect-content">
+            <div class="expect-title">We scope the build — or you walk away with the map</div>
+            <p class="expect-body">If you want to move forward, we scope the engagement and quote a setup fee. If not, you leave with a clear picture of what needs fixing — no obligation, no follow-up pressure.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-info">
+        <div class="contact-info-item">
+          <div class="contact-info-label">Email</div>
+          <div class="contact-info-val"><a href="mailto:hello@norrai.co">hello@norrai.co</a></div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-label">Location</div>
+          <div class="contact-info-val">Faribault, MN · Southern Minnesota · Remote-friendly</div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-label">Response</div>
+          <div class="contact-info-val">Same business day</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Form -->
+    <div class="contact-form-wrap">
+      <div class="form-header">
+        <div class="form-header-eyebrow">Free audit request</div>
+        <div class="form-header-title">Tell us about your business</div>
+        <div class="form-header-sub">Takes 3 minutes. We'll reach out within one business day to schedule the call.</div>
+      </div>
+
+      <form onsubmit="return false;">
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label">First name *</label>
+            <input class="field-input" type="text" placeholder="Sarah" required />
+          </div>
+          <div class="field">
+            <label class="field-label">Last name *</label>
+            <input class="field-input" type="text" placeholder="Johnson" required />
+          </div>
+          <div class="field">
+            <label class="field-label">Business email *</label>
+            <input class="field-input" type="email" placeholder="you@yourbusiness.com" required />
+          </div>
+          <div class="field">
+            <label class="field-label">Phone number</label>
+            <input class="field-input" type="tel" placeholder="(507) 555-0100" />
+          </div>
+          <div class="field">
+            <label class="field-label">Business name</label>
+            <input class="field-input" type="text" placeholder="Lakeland Realty" />
+          </div>
+          <div class="field">
+            <label class="field-label">Industry / vertical *</label>
+            <select class="field-input" required>
+              <option value="" disabled selected>Select your vertical</option>
+              <option>Real estate</option>
+              <option>Dental / medical</option>
+              <option>Insurance</option>
+              <option>Home services (plumbing, electrical, HVAC)</option>
+              <option>Landscaping / lawn care</option>
+              <option>Auto repair</option>
+              <option>Salon / barbershop / spa</option>
+              <option>Gym / fitness studio</option>
+              <option>Veterinary</option>
+              <option>Construction</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label class="field-label">What's the biggest gap in your business right now?</label>
+            <textarea class="field-textarea" placeholder="e.g. We miss a lot of calls during showings and leads go cold. Or: we have no system for following up after appointments."></textarea>
+            <span class="field-hint">Even a few words helps us prepare the most useful audit possible.</span>
+          </div>
+          <div class="field full">
+            <label class="field-label">What CRM do you use? (if any)</label>
+            <input class="field-input" type="text" placeholder="e.g. Follow Up Boss, Salesforce, HubSpot, or none" />
+          </div>
+        </div>
+
+        <button type="submit" class="form-submit">Request my free audit →</button>
+        <p class="form-fine">No sales pitch. No pressure. We'll reply within one business day to schedule a 30-minute call at a time that works for you.</p>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<!-- VERTICAL QUICK LINKS -->
+<section class="verticals-links">
+  <div class="verticals-links-inner">
+    <div class="verticals-links-header">
+      <h2>Working in a specific industry?</h2>
+      <p>We've built automation packages tailored to three verticals — the ROI math is different for each. Take a look at what we've put together for yours.</p>
+    </div>
+    <div class="vertical-card-grid">
+      <a href="dental.html" class="vertical-card">
+        <div class="vertical-card-icon">🦷</div>
+        <div class="vertical-card-title">Dental offices</div>
+        <p class="vertical-card-body">No-show reduction, dormant patient reactivation, and PMS integration. The math starts with what an empty chair costs you per week.</p>
+        <span class="vertical-card-link">See dental automation →</span>
+      </a>
+      <a href="real-estate.html" class="vertical-card">
+        <div class="vertical-card-icon">🏡</div>
+        <div class="vertical-card-title">Real estate agents</div>
+        <p class="vertical-card-body">Speed-to-lead response, sphere reactivation, and listing description automation. One extra close pays for the Starter tier many times over.</p>
+        <span class="vertical-card-link">See real estate automation →</span>
+      </a>
+      <a href="insurance.html" class="vertical-card">
+        <div class="vertical-card-icon">🛡️</div>
+        <div class="vertical-card-title">Insurance brokers</div>
+        <p class="vertical-card-body">Renewal sequences, cross-sell campaigns, and book-of-business pipelines. Every policy has a built-in renewal date — use it.</p>
+        <span class="vertical-card-link">See insurance automation →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

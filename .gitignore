@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Playwright
+test-results/
+playwright-report/
+.playwright/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/

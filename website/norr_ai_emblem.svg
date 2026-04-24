@@ -1,0 +1,86 @@
+<svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg" style="background:#0A0F1A;">
+
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Outer hex ring -->
+  <polygon
+    points="200,52 318,116 318,284 200,348 82,284 82,116"
+    fill="none"
+    stroke="#7FA9B8"
+    stroke-width="1.5"
+    opacity="0.3"
+  />
+
+  <!-- Main hex body -->
+  <polygon
+    points="200,62 308,122 308,278 200,338 92,278 92,122"
+    fill="#111827"
+    stroke="#7FA9B8"
+    stroke-width="1"
+    opacity="0.6"
+  />
+
+  <!-- Inner hex -->
+  <polygon
+    points="200,78 294,132 294,268 200,322 106,268 106,132"
+    fill="#141C2B"
+  />
+
+  <!-- Axis tick marks -->
+  <line x1="200" y1="110" x2="200" y2="130" stroke="#7FA9B8" stroke-width="1.2" opacity="0.4"/>
+  <line x1="200" y1="270" x2="200" y2="290" stroke="#7FA9B8" stroke-width="1.2" opacity="0.4"/>
+  <line x1="118" y1="200" x2="138" y2="200" stroke="#7FA9B8" stroke-width="1.2" opacity="0.4"/>
+  <line x1="262" y1="200" x2="282" y2="200" stroke="#7FA9B8" stroke-width="1.2" opacity="0.4"/>
+
+  <!-- North star — 4-point diamond star -->
+  <!-- North arm (tall, dominant — "N" for North/Norr) -->
+  <polygon points="200,138 207,188 200,196 193,188" fill="#7FA9B8" filter="url(#glow)" opacity="0.95"/>
+  <!-- South arm -->
+  <polygon points="200,262 207,212 200,204 193,212" fill="#7FA9B8" opacity="0.45"/>
+  <!-- East arm -->
+  <polygon points="262,200 212,207 204,200 212,193" fill="#7FA9B8" opacity="0.45"/>
+  <!-- West arm -->
+  <polygon points="138,200 188,207 196,200 188,193" fill="#7FA9B8" opacity="0.45"/>
+
+  <!-- Center dot -->
+  <circle cx="200" cy="200" r="9" fill="#0A0F1A" stroke="#7FA9B8" stroke-width="1.5"/>
+  <circle cx="200" cy="200" r="3.5" fill="#7FA9B8" filter="url(#glow)"/>
+
+  <!-- Arrow brand mark, inside hex bottom -->
+  <text
+    x="200" y="308"
+    text-anchor="middle"
+    font-family="monospace"
+    font-size="13"
+    fill="#7FA9B8"
+    opacity="0.55"
+    letter-spacing="4"
+  >&#x2192;</text>
+
+  <!-- Wordmark -->
+  <text
+    x="200" y="378"
+    text-anchor="middle"
+    font-family="'Inter Tight', 'Arial Narrow', sans-serif"
+    font-weight="700"
+    font-size="20"
+    fill="#FAFAF7"
+    letter-spacing="-1"
+  >NORR<tspan fill="#7FA9B8"> AI</tspan></text>
+
+  <!-- Sub tagline -->
+  <text
+    x="200" y="398"
+    text-anchor="middle"
+    font-family="monospace"
+    font-size="8"
+    fill="#3A3F48"
+    letter-spacing="3"
+  >AUTOMATION . norrai.co</text>
+
+</svg>

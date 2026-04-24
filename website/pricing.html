@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Norr AI</title>
+<meta name="description" content="Simple tiers. No surprises. Starter at $500/mo, Growth at $1,000/mo, Pro at $2,000/mo. Every tier includes setup and ongoing support.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+
+/* Pricing grid */
+.pricing-section {
+  background: var(--bone);
+  padding: 96px 48px;
+}
+.pricing-inner { max-width: var(--max-width); margin: 0 auto; }
+.pricing-header { text-align: center; margin-bottom: 64px; }
+.pricing-header .section-title { margin: 0 auto 16px; }
+.pricing-header p { font-size: 16px; color: var(--text-secondary); max-width: 520px; margin: 0 auto; line-height: 1.65; }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+.pricing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+}
+.pricing-card.featured {
+  background: var(--ink);
+  border-color: transparent;
+  position: relative;
+}
+.featured-badge {
+  position: absolute;
+  top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--glacial);
+  color: var(--ink);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 999px;
+  white-space: nowrap;
+}
+.pricing-tier {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 12px;
+}
+.pricing-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.pricing-card.featured .pricing-name { color: #FAFAF7; }
+.pricing-tagline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.pricing-card.featured .pricing-tagline { color: #6A6F78; border-color: #1a2030; }
+
+.price-row { margin-bottom: 4px; }
+.price-amount {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 38px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.pricing-card.featured .price-amount { color: #FAFAF7; }
+.price-period { font-size: 14px; color: var(--text-secondary); font-weight: 400; }
+.price-setup {
+  font-size: 12px; color: var(--text-muted);
+  margin-bottom: 32px;
+}
+.pricing-card.featured .price-setup { color: #4A5060; }
+
+.feature-list {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 40px;
+  flex: 1;
+}
+.feature-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; line-height: 1.5;
+  color: var(--text-secondary);
+}
+.pricing-card.featured .feature-list li { color: #9EA3AA; }
+.feature-list li::before {
+  content: '→';
+  color: var(--glacial);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.pricing-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600;
+  text-align: center;
+  display: block;
+  transition: all 0.15s;
+  font-family: inherit;
+  cursor: pointer;
+}
+.pricing-btn-outline {
+  border: 1px solid var(--border);
+  color: var(--ink);
+  background: transparent;
+}
+.pricing-btn-outline:hover { border-color: var(--ink); }
+.pricing-btn-accent {
+  background: var(--glacial);
+  color: var(--ink);
+  border: none;
+}
+.pricing-btn-accent:hover { opacity: 0.88; }
+
+/* What's included */
+.included {
+  background: var(--ink);
+  padding: 96px 48px;
+}
+.included-inner { max-width: var(--max-width); margin: 0 auto; }
+.included-header { margin-bottom: 56px; }
+.included-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.included-card {
+  background: #0D1424;
+  border: 1px solid #1a2030;
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+}
+.included-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--glacial);
+  margin-bottom: 12px;
+}
+.included-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: #FAFAF7;
+  margin-bottom: 10px;
+}
+.included-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #6A6F78;
+}
+
+/* ROI section */
+.roi {
+  background: var(--blush);
+  padding: 96px 48px;
+  border-top: 1px solid #DDD0C0;
+  border-bottom: 1px solid #DDD0C0;
+}
+.roi-inner { max-width: var(--max-width); margin: 0 auto; }
+.roi-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+.roi-examples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.roi-card {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid #DDD0C0;
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  backdrop-filter: blur(4px);
+}
+.roi-vertical {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--graphite);
+  margin-bottom: 16px;
+}
+.roi-scenario {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--graphite);
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #DDD0C0;
+}
+.roi-result {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.roi-result-label {
+  font-size: 12px;
+  color: var(--graphite);
+  opacity: 0.7;
+}
+
+/* FAQ */
+.faq {
+  background: var(--surface);
+  padding: 96px 48px;
+}
+.faq-inner { max-width: var(--max-width); margin: 0 auto; }
+.faq-header { margin-bottom: 56px; }
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  max-width: 800px;
+}
+.faq-item {
+  background: var(--surface);
+  padding: 32px 36px;
+}
+.faq-q {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.faq-a {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .pricing-section { padding: 64px 24px; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .included { padding: 64px 24px; }
+  .included-grid { grid-template-columns: 1fr; }
+  .roi { padding: 64px 24px; }
+  .roi-header { grid-template-columns: 1fr; gap: 24px; }
+  .roi-examples { grid-template-columns: 1fr; }
+  .faq { padding: 64px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html" class="active">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Pricing · Three tiers</div>
+    <h1 class="page-hero-headline">Simple tiers.<br><span class="acc">No surprises.</span></h1>
+    <p class="page-hero-sub">Every tier includes setup, onboarding, and ongoing support. Cancel after month 3 if it isn't working — though it will be.</p>
+  </div>
+</section>
+
+<!-- PRICING CARDS -->
+<section class="pricing-section">
+  <div class="pricing-inner">
+    <div class="pricing-header">
+      <span class="section-eyebrow" style="display:block;">Tiers</span>
+      <h2 class="section-title" style="margin: 0 auto 16px;">Pick your starting point</h2>
+      <p>Not sure which tier fits? The audit call is free — we'll tell you exactly which one makes sense for your business before you spend anything.</p>
+    </div>
+    <div class="pricing-grid">
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Tier 01</div>
+        <div class="pricing-name">Starter</div>
+        <div class="pricing-tagline">The essentials. Missed calls answered, leads followed up, appointments reminded — all running automatically.</div>
+        <div class="price-row">
+          <span class="price-amount">$500</span><span class="price-period"> /mo</span>
+        </div>
+        <div class="price-setup">+ $500 one-time setup fee</div>
+        <ul class="feature-list">
+          <li>Missed call → auto-text back in under 60 seconds</li>
+          <li>Instant lead response (AI-personalized by context)</li>
+          <li>Appointment reminder sequences (48h + 2h)</li>
+          <li>Cold lead 7-touch nurture over 30 days</li>
+          <li>Post-visit review request automation</li>
+          <li>Monthly summary report</li>
+          <li>Setup, onboarding, and ongoing support included</li>
+        </ul>
+        <a href="contact.html" class="pricing-btn pricing-btn-outline">Get started</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="featured-badge">Most popular</div>
+        <div class="pricing-tier">Tier 02</div>
+        <div class="pricing-name">Growth</div>
+        <div class="pricing-tagline">Advanced sequences, AI-written outreach, and reporting that shows exactly what the system is doing for your revenue.</div>
+        <div class="price-row">
+          <span class="price-amount">$1,000</span><span class="price-period" style="color:#6A6F78;"> /mo</span>
+        </div>
+        <div class="price-setup">+ $1,000 one-time setup fee</div>
+        <ul class="feature-list">
+          <li>Everything in Starter</li>
+          <li>Dormant customer reactivation sequences</li>
+          <li>AI-written personalized outreach at scale</li>
+          <li>Cross-sell and upsell campaign automation</li>
+          <li>Life event and behavior triggers</li>
+          <li>Full monthly performance dashboard</li>
+          <li>Setup, onboarding, and ongoing support included</li>
+        </ul>
+        <a href="contact.html" class="pricing-btn pricing-btn-accent">Get started</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Tier 03</div>
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-tagline">Custom data pipelines, dashboards, and white-labeled client portals. Built for businesses that want a real competitive edge.</div>
+        <div class="price-row">
+          <span class="price-amount">$2,000</span><span class="price-period"> /mo</span>
+        </div>
+        <div class="price-setup">+ $3,000–$6,000 one-time build fee</div>
+        <ul class="feature-list">
+          <li>Everything in Growth</li>
+          <li>Custom data pipelines from your business systems</li>
+          <li>Revenue and retention dashboards</li>
+          <li>AI scoring models (churn risk, lead quality)</li>
+          <li>White-labeled client-facing tools</li>
+          <li>Dedicated engineering support</li>
+          <li>Setup, onboarding, and ongoing support included</li>
+        </ul>
+        <a href="contact.html" class="pricing-btn pricing-btn-outline">Talk to us</a>
+      </div>
+
+    </div>
+
+    <!-- Proof strip -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+      <div style="background: var(--surface); padding: 32px 28px;">
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 36px; letter-spacing: -0.04em; color: var(--ink); margin-bottom: 6px;">&lt; <span style="color: var(--glacial);">5</span> min</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Lead response time after going live</div>
+      </div>
+      <div style="background: var(--surface); padding: 32px 28px;">
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 36px; letter-spacing: -0.04em; color: var(--ink); margin-bottom: 6px;"><span style="color: var(--glacial);">1–2</span> wk</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Audit to live automation</div>
+      </div>
+      <div style="background: var(--surface); padding: 32px 28px;">
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 36px; letter-spacing: -0.04em; color: var(--ink); margin-bottom: 6px;"><span style="color: var(--glacial);">30–40</span>%</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Reduction in no-shows with reminder sequences</div>
+      </div>
+      <div style="background: var(--surface); padding: 32px 28px;">
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 36px; letter-spacing: -0.04em; color: var(--ink); margin-bottom: 6px;"><span style="color: var(--glacial);">$0</span></div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Cost of the audit — no pitch, no pressure</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT'S ALWAYS INCLUDED -->
+<section class="included">
+  <div class="included-inner">
+    <div class="included-header">
+      <span class="section-eyebrow">Always included</span>
+      <h2 class="section-title light">Every tier comes with<br>the full service.</h2>
+    </div>
+    <div class="included-grid">
+      <div class="included-card">
+        <div class="included-num">01</div>
+        <div class="included-title">Setup and integration</div>
+        <p class="included-body">We set up your Twilio number, configure your workflows, connect your CRM and calendar, and build the sequences. You don't touch a single setting.</p>
+      </div>
+      <div class="included-card">
+        <div class="included-num">02</div>
+        <div class="included-title">Onboarding and handoff</div>
+        <p class="included-body">A 30-minute audit call to scope the build, and a handoff call when you go live. We walk through everything that's running and what to watch for.</p>
+      </div>
+      <div class="included-card">
+        <div class="included-num">03</div>
+        <div class="included-title">Ongoing support</div>
+        <p class="included-body">Changes, adjustments, and questions handled by us. New CRM? New phone number? New market? We update the system — you don't manage a ticket queue.</p>
+      </div>
+      <div class="included-card">
+        <div class="included-num">04</div>
+        <div class="included-title">Infrastructure ownership</div>
+        <p class="included-body">We own the stack — Twilio, the automation layer, the data. Which means when things need updating or scaling, it happens on our end. Not yours.</p>
+      </div>
+      <div class="included-card">
+        <div class="included-num">05</div>
+        <div class="included-title">Monthly reporting</div>
+        <p class="included-body">A clear summary of what the system did — leads responded to, appointments saved, sequences completed. In plain language, not execution logs.</p>
+      </div>
+      <div class="included-card">
+        <div class="included-num">06</div>
+        <div class="included-title">Clean upgrade path</div>
+        <p class="included-body">Starter logs data that Growth needs. Growth logs data that Pro needs. Moving tiers is an expansion — not a rebuild. Nothing breaks, nothing resets.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROI CONTEXT -->
+<section class="roi">
+  <div class="roi-inner">
+    <div class="roi-header">
+      <div>
+        <span class="section-eyebrow">The math</span>
+        <h2 class="section-title">How it pays for itself</h2>
+      </div>
+      <div style="padding-top: 8px;">
+        <p style="font-size: 16px; line-height: 1.7; color: var(--graphite); margin-bottom: 16px;">We don't lead with technology. We lead with the number — in your language. Here's how it works across three of the verticals we serve most.</p>
+        <p style="font-size: 14px; line-height: 1.65; color: var(--graphite); opacity: 0.7;">Figures are illustrative. Actual results depend on your volume, vertical, and average transaction value. We'll model yours on the audit call.</p>
+      </div>
+    </div>
+    <div class="roi-examples">
+      <div class="roi-card">
+        <div class="roi-vertical">Real estate agent</div>
+        <p class="roi-scenario">Agent gets 20 inbound leads per month. Currently responds within 2–3 hours on average. Speed-to-lead automation drops response to under 5 minutes.</p>
+        <div class="roi-result">1 extra close/year</div>
+        <div class="roi-result-label">pays for Starter tier many times over on median GCI</div>
+      </div>
+      <div class="roi-card">
+        <div class="roi-vertical">Dental practice</div>
+        <p class="roi-scenario">Practice averages 4 no-shows per week at $250 average appointment value. Reminder sequences reduce no-shows by 35%.</p>
+        <div class="roi-result">~$1,820 recovered/mo</div>
+        <div class="roi-result-label">from reminder sequences alone, before any other automation</div>
+      </div>
+      <div class="roi-card">
+        <div class="roi-vertical">Insurance broker</div>
+        <p class="roi-scenario">Broker has 400 policies with built-in renewal dates. Currently sends reminders manually — inconsistently. Automated renewal sequences run on every policy, every year.</p>
+        <div class="roi-result">Every renewal date</div>
+        <div class="roi-result-label">becomes a touchpoint instead of a gap. Retention compounds.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="faq-inner">
+    <div class="faq-header">
+      <span class="section-eyebrow">Pricing questions</span>
+      <h2 class="section-title">What people ask<br>before committing</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">What's the setup fee for?</div>
+        <p class="faq-a">The setup fee covers the build — configuring your automations, connecting your tools, setting up your Twilio number, writing and testing the sequences, and running the handoff call. It's a one-time cost. Monthly fees after that are for the running system plus ongoing support and tuning.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Are there per-message or per-contact fees?</div>
+        <p class="faq-a">No. Your monthly fee is flat. We absorb the cost of SMS delivery, email sending, and AI usage into our margins at Starter and Growth volumes. At Pro, we discuss infrastructure pass-through costs for unusually high-volume clients — but for most businesses, it's a flat fee.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I cancel anytime?</div>
+        <p class="faq-a">After month 3. We ask for a 3-month minimum because that's how long it takes to see the system working at full rhythm — sequences completing, leads nurturing through full cycles, review requests accumulating. If it isn't working after month 3, cancel without a conversation.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What does the upgrade from Starter to Growth cost?</div>
+        <p class="faq-a">The difference in monthly fees ($500/mo) plus a smaller setup fee for the new Growth workflows — typically $500–$600 depending on what needs to be built on top. Because Starter logs clean data from day one, there's no teardown or data migration.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do I pay for both Starter and Growth if I upgrade?</div>
+        <p class="faq-a">No. Growth replaces Starter's monthly fee — it's $1,000/mo total, not $1,500. The Starter workflows continue running; you're just paying for the expanded tier.</p>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is there a contract?</div>
+        <p class="faq-a">A simple service agreement — month-to-month after the initial 3-month period. No multi-year lock-in. No penalty for leaving after that window.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <span class="cta-eyebrow">Free audit · No pressure</span>
+    <h2 class="cta-headline">Not sure which tier<br>you <span class="acc">actually need?</span></h2>
+    <p class="cta-body">The audit call is free. We'll model the ROI for your specific business — your volume, your vertical, your average transaction — and tell you exactly which tier makes sense.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

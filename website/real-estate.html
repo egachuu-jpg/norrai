@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real Estate Agent Automation — Norr AI</title>
+<meta name="description" content="Respond to every lead in under 5 minutes. Nurture cold leads automatically. Reactivate your sphere of influence. Built for real estate agents.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<link rel="stylesheet" href="css/norrai.css">
+<style>
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.wf-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+}
+.wf-num { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px; }
+.wf-title { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; margin-bottom: 10px; }
+.wf-body { font-size: 13px; line-height: 1.65; color: var(--text-secondary); }
+.dark-wf .wf-card { background: #0D1424; border-color: #1a2030; }
+.dark-wf .wf-title { color: #FAFAF7; }
+.dark-wf .wf-body  { color: #6A6F78; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+.sources-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.source-tag {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 8px;
+}
+.source-icon { font-size: 15px; }
+
+@media (max-width: 900px) {
+  .workflow-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; gap: 32px; }
+  .sources-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="nav-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="index.html#verticals">Who we work with</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Book a free audit</a>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Real estate agents · Automation built for you</div>
+    <h1 class="page-hero-headline">Speed to lead.<br><span class="acc">Every time.</span></h1>
+    <p class="page-hero-sub">A lead that doesn't hear from you in 5 minutes has a 21× lower chance of converting than one you respond to immediately. You're showing houses. We handle the response — so you don't lose the lead before you know they exist.</p>
+    <div class="page-hero-actions">
+      <a href="contact.html" class="btn-accent">Book a free audit</a>
+      <a href="pricing.html" class="btn-ghost" style="color:#6A6F78;">See pricing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- THE MATH -->
+<section class="section-bone">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">Speed-to-lead</span>
+        <h2 class="section-title">One extra close pays for this many times over</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:20px; margin-bottom:20px;">The research is clear: responding within 5 minutes converts at dramatically higher rates than responding within 30 minutes or an hour. But between showings, calls, and client management — nobody has 5 minutes to spare when a lead comes in.</p>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary);">Starter sets up instant lead response — AI reads the lead source, the listing details, and the inquiry, and sends a personalized reply within 5 minutes. Every time. Whether you're in a showing or at dinner.</p>
+      </div>
+      <div>
+        <div style="background: var(--ink); border-radius: var(--radius-lg); padding: 40px;">
+          <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 24px;">The math — median Minnesota agent</div>
+          <div style="display: flex; flex-direction: column; gap: 0;">
+            <div style="display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #1a2030;">
+              <span style="font-size:14px; color:#6A6F78;">Inbound leads per month</span>
+              <span style="font-family: var(--font-display); font-weight:700; font-size:18px; color:#FAFAF7;">20</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #1a2030;">
+              <span style="font-size:14px; color:#6A6F78;">Response time, current</span>
+              <span style="font-family: var(--font-display); font-weight:700; font-size:18px; color:#FAFAF7;">2–3 hrs</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #1a2030;">
+              <span style="font-size:14px; color:#6A6F78;">Response time, with Norr AI</span>
+              <span style="font-family: var(--font-display); font-weight:700; font-size:18px; color:var(--glacial);">&lt; 5 min</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #1a2030;">
+              <span style="font-size:14px; color:#6A6F78;">Additional closes from better response</span>
+              <span style="font-family: var(--font-display); font-weight:700; font-size:18px; color:#FAFAF7;">1–2/yr</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 14px 0;">
+              <span style="font-size:14px; color:#6A6F78;">GCI per close vs. Starter tier cost</span>
+              <span style="font-family: var(--font-display); font-weight:700; font-size:18px; color:var(--glacial);">Many × ROI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STARTER WORKFLOWS -->
+<section class="section-ink">
+  <div class="section-inner">
+    <span class="section-eyebrow">Starter tier · Real estate</span>
+    <h2 class="section-title light" style="margin-bottom:16px;">What goes live in the first 2 weeks</h2>
+    <p style="font-size:16px; line-height:1.7; color:#6A6F78; max-width:600px; margin-bottom:56px;">Every workflow runs automatically. You approve the messages and logic before go-live — then the system handles it from there.</p>
+    <div class="workflow-grid dark-wf">
+      <div class="wf-card">
+        <div class="wf-num">01</div>
+        <div class="wf-title">Instant lead response</div>
+        <p class="wf-body">New lead in — from Zillow, your website, Facebook, or your CRM — AI reads the listing details and inquiry, sends a personalized reply within 5 minutes. Under 5, every time.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">02</div>
+        <div class="wf-title">Cold lead 7-touch nurture</div>
+        <p class="wf-body">Not every lead is ready on day one. A 30-day, 7-touch sequence keeps you top of mind — email and SMS — until they're ready to move. Drops off cleanly when they respond.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">03</div>
+        <div class="wf-title">Missed call → auto SMS</div>
+        <p class="wf-body">Every missed call gets an instant text: "Hey, it's [Your Name] — sorry I missed you. What's the best way to reach you?" Business hours aware. No after-hours blasts.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">04</div>
+        <div class="wf-title">Listing description generator</div>
+        <p class="wf-body">Fill out a short form with the property details. AI writes your headline, MLS description, and social media post — in your voice, matching your past listings. Done in under 3 minutes.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">05</div>
+        <div class="wf-title">Open house follow-up</div>
+        <p class="wf-body">3-touch sequence after every open house. Same-day text, 48-hour follow-up, 7-day check-in. Personalized by which listing they attended. None of this requires you to remember who came.</p>
+      </div>
+      <div class="wf-card">
+        <div class="wf-num">06</div>
+        <div class="wf-title">Post-close review request</div>
+        <p class="wf-body">Timed review request after a closed deal — when the client is happiest and most likely to write a glowing review. Direct link to Google Business. No manual follow-up needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEAD SOURCES -->
+<section class="section-bone">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">Lead sources</span>
+        <h2 class="section-title">We connect to wherever your leads come from</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--text-secondary); margin-top:20px;">Every source flows into one normalized pipeline — so the instant response fires regardless of where the lead originated. No duplicate handling. No manual sorting.</p>
+      </div>
+      <div>
+        <div class="sources-grid">
+          <div class="source-tag"><span class="source-icon">🏠</span> Zillow / Realtor.com</div>
+          <div class="source-tag"><span class="source-icon">🌐</span> Your website (webhook)</div>
+          <div class="source-tag"><span class="source-icon">📘</span> Facebook Lead Ads</div>
+          <div class="source-tag"><span class="source-icon">📋</span> CRM webhook (FUB, HubSpot)</div>
+          <div class="source-tag"><span class="source-icon">📞</span> Phone / missed call</div>
+          <div class="source-tag"><span class="source-icon">🤝</span> Manual referral trigger</div>
+        </div>
+        <p style="font-size:13px; line-height:1.65; color:var(--text-muted); margin-top:16px;">CRMs we support: Follow Up Boss, HubSpot, LionDesk, and most others with webhook or API access. We'll confirm yours on the audit call.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GROWTH ANCHOR -->
+<section class="section-blush">
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <span class="section-eyebrow">Growth tier · Real estate</span>
+        <h2 class="section-title">Sphere of influence re-engagement</h2>
+        <p style="font-size:16px; line-height:1.7; color:var(--graphite); margin-top:20px; margin-bottom:20px;">Most agents have a database full of past clients, referral sources, and sphere contacts who haven't heard from them in 6–18 months. That's not a dead database — it's an unmined one.</p>
+        <p style="font-size:16px; line-height:1.7; color:var(--graphite); margin-bottom:32px;">Growth adds an SOI reactivation workflow: AI identifies contacts 90+ days silent, sequences warm outreach in your voice, and surfaces the ones who respond.</p>
+        <ul class="feature-list">
+          <li>AI identifies contacts past their engagement threshold</li>
+          <li>Personalized outreach sequence — 3–5 touches over 30 days</li>
+          <li>Life event triggers: new home anniversary, market update hooks, check-ins</li>
+          <li>Full dashboard — who responded, who re-engaged, who converted</li>
+          <li>AI-written content that sounds like you, not a newsletter blast</li>
+        </ul>
+      </div>
+      <div style="padding-top: 8px;">
+        <div style="background: var(--surface); border: 1px solid #DDD0C0; border-radius: var(--radius-lg); padding: 36px 32px; margin-bottom: 12px;">
+          <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px;">Pro tier · Real estate</div>
+          <div style="font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; margin-bottom: 12px;">MLS pipeline + lead scoring</div>
+          <p style="font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin-bottom: 16px;">Full MLS feed integration, deal velocity dashboard, and AI lead scoring model that ranks your pipeline by close likelihood. Plus white-labeled buyer and seller portals.</p>
+          <ul class="feature-list">
+            <li>MLS feed integration → automated listing alerts and market reports</li>
+            <li>Deal velocity dashboard — where every lead is in the pipeline</li>
+            <li>Lead scoring model (close likelihood based on behavior signals)</li>
+            <li>White-labeled buyer portal with saved searches and activity tracking</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <span class="cta-eyebrow">Real estate agents · Free audit</span>
+    <h2 class="cta-headline">Find out how many leads<br>you're <span class="acc">losing to slow response.</span></h2>
+    <p class="cta-body">30 minutes. We calculate your speed-to-lead gap, identify which lead sources are leaking, and tell you exactly what a response-time improvement would mean for your GCI. Free. No obligation.</p>
+    <form class="cta-form" onsubmit="return false;">
+      <input class="cta-input" type="email" placeholder="your@email.com" />
+      <button class="cta-submit" type="submit">Book free audit</button>
+    </form>
+    <p class="cta-fine">Or email us directly at <span style="color:#4A6070;">hello@norrai.co</span></p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo">NORR<span class="acc"> AI</span></a>
+    <ul class="footer-links">
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="pricing.html">Pricing</a></li>
+      <li><a href="contact.html">Book an audit</a></li>
+      <li><a href="mailto:hello@norrai.co">hello@norrai.co</a></li>
+    </ul>
+    <div class="footer-meta">NORRAI.CO · FARIBAULT, MN · 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

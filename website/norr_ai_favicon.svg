@@ -1,0 +1,36 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Norr AI — favicon emblem
+    Transparent background. Works on light + dark Chrome tabs.
+    Glacial #7FA9B8 star on ink hex — readable at 16x16 and up.
+  -->
+
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Hex background — ink fill gives contrast on both light + dark tabs -->
+  <polygon
+    points="50,4 92,27 92,73 50,96 8,73 8,27"
+    fill="#0A0F1A"
+    stroke="#7FA9B8"
+    stroke-width="2"
+  />
+
+  <!-- North star — 4-point, north arm dominant -->
+  <!-- North (tall) -->
+  <polygon points="50,22 53.5,46 50,50 46.5,46" fill="#7FA9B8" filter="url(#glow)"/>
+  <!-- South -->
+  <polygon points="50,78 53.5,54 50,50 46.5,54" fill="#7FA9B8" opacity="0.5"/>
+  <!-- East -->
+  <polygon points="78,50 54,53.5 50,50 54,46.5" fill="#7FA9B8" opacity="0.5"/>
+  <!-- West -->
+  <polygon points="22,50 46,53.5 50,50 46,46.5" fill="#7FA9B8" opacity="0.5"/>
+
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="3" fill="#7FA9B8" filter="url(#glow)"/>
+
+</svg>
