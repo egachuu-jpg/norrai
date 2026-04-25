@@ -260,8 +260,8 @@
   .radio-option {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 12px 14px;
+    gap: 10px;
+    padding: 9px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -269,7 +269,18 @@
     transition: border-color 0.15s, background 0.15s;
   }
   .radio-option:hover { border-color: var(--glacial); }
-  .radio-option input[type="radio"] { margin-top: 3px; accent-color: var(--glacial); flex-shrink: 0; }
+  .radio-option input[type="radio"] {
+    appearance: auto;
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    accent-color: var(--glacial);
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
   .radio-option:has(input:checked) {
     border-color: var(--glacial);
     background: rgba(127,169,184,0.08);
