@@ -254,10 +254,11 @@
 
   // ─── Read URL params ───────────────────────────────────────────────────────
   const params = new URLSearchParams(window.location.search);
-  const propertyAddress = params.get('address')  || '';
-  const agentName       = params.get('agent')     || '';
+  const propertyAddress = params.get('address')     || '';
+  const agentName       = params.get('agent')       || '';
   const agentEmail      = params.get('agent_email') || '';
   const agentPhone      = params.get('agent_phone') || '';
+  const propertyNotes   = params.get('notes')       || '';
 
   if (!propertyAddress) {
     document.getElementById('missing-params').style.display = 'block';
@@ -287,6 +288,7 @@
       email:            fd.get('email')         || '',
       brought_you_in:   fd.get('brought_you_in') || '',
       property_address: propertyAddress,
+      property_notes:   propertyNotes,
       agent_name:       agentName,
       agent_email:      agentEmail,
       agent_phone:      agentPhone,
