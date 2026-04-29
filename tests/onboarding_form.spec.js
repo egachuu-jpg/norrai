@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { mockWebhook } = require('./helpers');
 
 const FORM_URL = '/onboarding_form.html';
 
@@ -20,12 +21,6 @@ async function fillRequired(page) {
   await page.fill('#twelve_month_vision', 'Double monthly clients without adding headcount.');
 }
 
-function mockWebhook(page, status = 200) {
-  return page.route('**/webhook/**', route =>
-    route.fulfill({ status, body: 'ok', contentType: 'text/plain' })
-  );
-}
-
 // ─── 1. Required field validation ─────────────────────────────────────────────
 
 test.describe('Required field validation', () => {
@@ -45,49 +40,37 @@ test.describe('Required field validation', () => {
   for (const field of textFields) {
     test(`blocks submit when ${field.id} is empty`, async ({ page }) => {
       await mockWebhook(page);
-      let fetched = false;
-      page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
       await page.goto(FORM_URL);
       await fillRequired(page);
       await page.fill(`#${field.id}`, '');
       await page.click('#submit-btn');
 
-      expect(fetched).toBe(false);
+      await expect(page.locator('#status.success')).not.toBeVisible();
     });
   }
 
   test('blocks submit when industry is not selected', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.evaluate(() => { document.getElementById('industry').value = ''; });
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('blocks submit when primary_crm is not selected', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.evaluate(() => { document.getElementById('primary_crm').value = ''; });
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('blocks submit when approach_style radio is not selected', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.evaluate(() => {
@@ -95,7 +78,7 @@ test.describe('Required field validation', () => {
     });
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 });
 
@@ -104,15 +87,12 @@ test.describe('Required field validation', () => {
 test.describe('Field type enforcement', () => {
   test('rejects invalid email format', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#contact_email', 'notanemail');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('voice_tags max 4 — 5th pill click is ignored', async ({ page }) => {
@@ -132,11 +112,9 @@ test.describe('Field type enforcement', () => {
     await page.goto(FORM_URL);
     const pills = page.locator('[data-group="voice_tags"]');
 
-    // Select 4
     for (let i = 0; i < 4; i++) await pills.nth(i).click();
     await expect(page.locator('[data-group="voice_tags"].active')).toHaveCount(4);
 
-    // Deselect one, then select the 5th
     await pills.nth(0).click(); // deselect
     await pills.nth(4).click(); // select new one
     await expect(page.locator('[data-group="voice_tags"].active')).toHaveCount(4);
@@ -310,7 +288,7 @@ test.describe('Submit UI states', () => {
     page.click('#submit-btn'); // don't await — check state while in-flight
 
     await expect(page.locator('#submit-btn')).toBeDisabled({ timeout: 2000 });
-    await expect(page.locator('#submit-btn')).toHaveText('Submitting\u2026');
+    await expect(page.locator('#submit-btn')).toHaveText('Submitting…');
 
     resolve();
     await expect(page.locator('#submit-btn')).toBeEnabled({ timeout: 5000 });
