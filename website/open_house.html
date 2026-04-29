@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open House Sign-In — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; min-height: 100dvh; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 40px 24px 36px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 480px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 12px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--bone);
+    margin-bottom: 10px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+
+  /* Property address badge */
+  .property-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 13px;
+    color: var(--glacial);
+    margin-top: 4px;
+  }
+  .property-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--glacial);
+    flex-shrink: 0;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 36px 24px 72px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── Fields ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+  label .opt {
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px; /* 16px prevents iOS zoom */
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+  }
+  textarea { resize: none; min-height: 88px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Submit ── */
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 16px 24px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 4px;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Error state — missing params ── */
+  .missing-params {
+    max-width: 480px;
+    margin: 60px auto;
+    padding: 0 24px;
+    text-align: center;
+    color: var(--secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .missing-params strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 8px; }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  @media (max-width: 480px) {
+    .site-header { padding: 32px 18px 28px; }
+    .wrap { padding: 28px 18px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="missing-params" class="missing-params" style="display:none;">
+  <strong>Link is missing property info.</strong>
+  If you scanned a QR code, try scanning it again. If the problem continues, ask the agent for help.
+</div>
+
+<div id="main-content" style="display:none;">
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="eyebrow">Open House Sign-In</div>
+      <h1>Welcome.<br><span class="accent">Glad you're here.</span></h1>
+      <div class="property-badge">
+        <div class="property-badge-dot"></div>
+        <span id="property-display"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <form id="signin-form" novalidate>
+
+      <div class="field">
+        <label for="attendee_name">Your name <span class="req">*</span></label>
+        <input type="text" id="attendee_name" name="attendee_name" autocomplete="name" placeholder="Sarah Johnson" required>
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone <span class="req">*</span></label>
+        <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="507-555-1234" required>
+        <div class="hint">You'll get a follow-up from the agent tomorrow morning — no spam, ever.</div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email <span class="opt">(optional)</span></label>
+        <input type="email" id="email" name="email" autocomplete="email" placeholder="sarah@gmail.com">
+      </div>
+
+      <div class="field">
+        <label for="brought_you_in">What brought you in today? <span class="opt">(optional)</span></label>
+        <textarea id="brought_you_in" name="brought_you_in" placeholder="Just browsing, curious about the neighborhood, looking for something in this price range..."></textarea>
+      </div>
+
+      <div id="status" class="status" role="alert"></div>
+
+      <button type="submit" id="submit-btn">Sign In →</button>
+
+    </form>
+
+    <footer>
+      <p>Norr AI &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+    </footer>
+  </div>
+</div>
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/open-house-signin';
+
+  // ─── Read URL params ───────────────────────────────────────────────────────
+  const params = new URLSearchParams(window.location.search);
+  const propertyAddress = params.get('address')  || '';
+  const agentName       = params.get('agent')     || '';
+  const agentEmail      = params.get('agent_email') || '';
+  const agentPhone      = params.get('agent_phone') || '';
+
+  if (!propertyAddress) {
+    document.getElementById('missing-params').style.display = 'block';
+  } else {
+    document.getElementById('main-content').style.display = 'block';
+    document.getElementById('property-display').textContent = propertyAddress;
+  }
+
+  // ─── Form submission ──────────────────────────────────────────────────────
+  const form   = document.getElementById('signin-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const fd = new FormData(form);
+
+    const payload = {
+      attendee_name:    fd.get('attendee_name') || '',
+      phone:            fd.get('phone')         || '',
+      email:            fd.get('email')         || '',
+      brought_you_in:   fd.get('brought_you_in') || '',
+      property_address: propertyAddress,
+      agent_name:       agentName,
+      agent_email:      agentEmail,
+      agent_phone:      agentPhone,
+      submitted_at:     new Date().toISOString(),
+      source_form:      'open_house_web',
+    };
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': '8F68D963-7060-4033-BD04-7593E4B203CB',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      status.textContent = `You're signed in — enjoy the tour. ${agentName ? agentName + ' will' : "The agent will"} follow up tomorrow morning.`;
+      status.className = 'status success show';
+      form.style.display = 'none';
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or ask the agent to add you manually.`;
+      status.className = 'status error show';
+      btn.disabled = false;
+      btn.textContent = 'Sign In →';
+    }
+  });
+</script>
+</body>
+</html>

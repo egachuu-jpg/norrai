@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instant Lead Response — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--bone);
+    margin-bottom: 12px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Section cards ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-body { padding: 24px; }
+
+  /* ── Fields ── */
+  .row   { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239EA3AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  textarea { resize: vertical; min-height: 96px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+
+  /* ── Submit area ── */
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 15px 24px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  /* ── Responsive ── */
+  @media (max-width: 580px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · tools.norrai.co</div>
+    <h1>Instant Lead<br><span class="accent">Response</span></h1>
+    <p>Paste a new lead. Claude drafts a personalized reply — referencing the property, matching your tone — sent to the lead within 60 seconds.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="lead-form" novalidate>
+
+    <!-- 01 Agent -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">Agent</span>
+        <span id="agent-saved-badge" style="display:none; font-family:var(--font-mono); font-size:10px; color:var(--glacial); margin-left:auto; align-items:center; gap:6px;">
+          · saved
+          <button type="button" id="clear-agent" style="font-family:var(--font-mono); font-size:10px; color:var(--muted); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline;">clear</button>
+        </span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="agent_name">Your name <span class="req">*</span></label>
+            <input type="text" id="agent_name" name="agent_name" autocomplete="name" placeholder="Jane Smith" required>
+          </div>
+          <div class="field">
+            <label for="agent_email">Your email <span class="req">*</span></label>
+            <input type="email" id="agent_email" name="agent_email" autocomplete="email" placeholder="jane@yourbrokerage.com" required>
+            <div class="hint">For preview — the live response goes directly to the lead.</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="agent_phone">Your phone number</label>
+          <input type="tel" id="agent_phone" name="agent_phone" autocomplete="tel" placeholder="5071234567">
+          <div class="hint">Included in the response so the lead can call or text you back.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 The Lead -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">The Lead</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="lead_name">Lead name <span class="req">*</span></label>
+            <input type="text" id="lead_name" name="lead_name" placeholder="Sarah Johnson" required>
+          </div>
+          <div class="field">
+            <label for="source">Source <span class="req">*</span></label>
+            <select id="source" name="source" required>
+              <option value="zillow">Zillow</option>
+              <option value="realtor_com">Realtor.com</option>
+              <option value="website">Your website</option>
+              <option value="referral">Referral</option>
+              <option value="phone">Phone call</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="email">Lead email</label>
+            <input type="email" id="email" name="email" placeholder="sarah@gmail.com">
+          </div>
+          <div class="field">
+            <label for="phone">Lead phone <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="5075551234" required>
+            <div class="hint">10-digit, no dashes or spaces.</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="lead_message">Their message <span class="req">*</span></label>
+          <textarea id="lead_message" name="lead_message" rows="4" placeholder="I'm interested in the property at 123 Maple St. Is it still available? We're looking for something with at least 3 bedrooms and a garage..." required></textarea>
+          <div class="hint">Paste exactly what they wrote. Claude uses this to personalize the reply.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Property -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">Property They're Asking About</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="property_address">Property address <span class="req">*</span></label>
+          <input type="text" id="property_address" name="property_address" placeholder="123 Maple St, Faribault, MN 55021" required>
+        </div>
+        <div class="row-3">
+          <div class="field">
+            <label for="price_range">List price / range</label>
+            <input type="text" id="price_range" name="price_range" placeholder="$299,900">
+            <div class="hint">e.g. $299,900 or $280k–$320k</div>
+          </div>
+          <div class="field">
+            <label for="beds">Beds</label>
+            <input type="number" id="beds" name="beds" min="0" max="20" placeholder="3">
+          </div>
+          <div class="field">
+            <label for="baths">Baths</label>
+            <input type="number" id="baths" name="baths" step="0.5" min="0" max="20" placeholder="2">
+          </div>
+        </div>
+        <div class="field">
+          <label for="key_details">Any details worth mentioning</label>
+          <textarea id="key_details" name="key_details" rows="3" placeholder="New roof, updated kitchen, large backyard — anything that's a strong selling point or directly relevant to what the lead asked about."></textarea>
+          <div class="hint">Optional. Helps Claude write a more specific, compelling reply.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <div id="status" class="status" role="alert"></div>
+      <button type="submit" id="submit-btn">Send Lead Response →</button>
+    </div>
+
+  </form>
+
+  <footer>
+    <p>Norr AI &nbsp;·&nbsp; <a href="mailto:hello@norrai.co">hello@norrai.co</a> &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+  </footer>
+</div>
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/lead-response';
+  const AGENT_KEY   = 'norrai_agent_profile_lead';
+
+  // ─── Agent persistence ────────────────────────────────────────────────────
+  const agentBadge = document.getElementById('agent-saved-badge');
+
+  function showAgentBadge() { agentBadge.style.display = 'flex'; }
+  function hideAgentBadge() { agentBadge.style.display = 'none'; }
+
+  function loadAgent() {
+    const saved = JSON.parse(localStorage.getItem(AGENT_KEY) || 'null');
+    if (!saved) return;
+    document.getElementById('agent_name').value  = saved.agent_name  || '';
+    document.getElementById('agent_email').value = saved.agent_email || '';
+    document.getElementById('agent_phone').value = saved.agent_phone || '';
+    if (saved.agent_name) showAgentBadge();
+  }
+
+  function saveAgent(payload) {
+    localStorage.setItem(AGENT_KEY, JSON.stringify({
+      agent_name:  payload.agent_name,
+      agent_email: payload.agent_email,
+      agent_phone: payload.agent_phone,
+    }));
+  }
+
+  document.getElementById('clear-agent').addEventListener('click', () => {
+    localStorage.removeItem(AGENT_KEY);
+    document.getElementById('agent_name').value  = '';
+    document.getElementById('agent_email').value = '';
+    document.getElementById('agent_phone').value = '';
+    hideAgentBadge();
+  });
+
+  loadAgent();
+
+  // ─── Form submission ──────────────────────────────────────────────────────
+  const form   = document.getElementById('lead-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const fd = new FormData(form);
+
+    const payload = {
+      // Agent
+      agent_name:       fd.get('agent_name')  || '',
+      agent_email:      fd.get('agent_email') || '',
+      agent_phone:      fd.get('agent_phone') || '',
+      // Lead
+      lead_name:        fd.get('lead_name')    || '',
+      email:            fd.get('email')        || '',
+      phone:            fd.get('phone')        || '',
+      source:           fd.get('source')       || '',
+      lead_message:     fd.get('lead_message') || '',
+      // Property
+      property_address: fd.get('property_address') || '',
+      price_range:      fd.get('price_range')       || '',
+      beds:             fd.get('beds')  ? Number(fd.get('beds'))  : null,
+      baths:            fd.get('baths') ? Number(fd.get('baths')) : null,
+      key_details:      fd.get('key_details') || '',
+      // Meta
+      submitted_at:     new Date().toISOString(),
+      source_form:      'lead_response_web',
+    };
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': '8F68D963-7060-4033-BD04-7593E4B203CB',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      saveAgent(payload);
+
+      status.textContent = `✓ Response sent to ${payload.lead_name} — preview landing in ${payload.agent_email} shortly.`;
+      status.className = 'status success show';
+
+      // Clear only the lead + property sections; keep agent fields
+      ['lead_name','email','phone','source','lead_message',
+       'property_address','price_range','beds','baths','key_details'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = el.tagName === 'SELECT' ? el.options[0].value : '';
+      });
+
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co.`;
+      status.className = 'status error show';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Lead Response →';
+    }
+  });
+</script>
+</body>
+</html>
