@@ -32,7 +32,7 @@ Norr AI is an AI automation agency targeting local businesses in Faribault and s
 | Claude API | Intelligence layer across all tiers |
 | Twilio | SMS delivery — one subaccount per client |
 | SendGrid | Email delivery via studio@norrai.co |
-| Postgres | Connective tissue between Tier 1 and Tier 2 |
+| Neon (Postgres) | Connective tissue between Tier 1 and Tier 2 — project: `norrai`, hosted on Neon (`gentle-hill-54285247`) |
 | Claude Code | Custom Tier 3 builds |
 | Hoppscotch | Webhook testing (dev only) |
 
@@ -138,6 +138,9 @@ norrai/
 │   ├── real-estate.html
 │   ├── insurance.html
 │   ├── listing_form.html     # Listing description generator — live at tools.norrai.co
+│   ├── lead_response.html    # Instant lead response — agent-facing, token protected
+│   ├── open_house.html       # Open house sign-in — public, QR code, reads URL params
+│   ├── nurture_enroll.html   # Cold nurture enrollment — agent-facing, token protected
 │   ├── event_ops_discovery.html
 │   ├── onboarding_form.html
 │   ├── brand_concepts.html
@@ -146,7 +149,12 @@ norrai/
 │   ├── norr_ai_emblem.svg
 │   └── css/
 │       └── norrai.css        # Shared Polar Modern styles for main site pages
+├── db/
+│   ├── schema.sql            # Canonical schema — apply with: psql <connection-string> -f db/schema.sql
+│   └── README.md             # Table overview, n8n connection instructions, smoke test queries
 ├── n8n/
+│   ├── TESTING_NOTES.md      # Gotchas, known gaps, production promotion checklist
+│   ├── TESTING_GUIDE.md      # Step-by-step testing instructions per workflow
 │   └── workflows/            # n8n workflow JSON exports — import directly into n8n
 ├── tests/
 │   └── listing_form.spec.js  # Playwright tests for listing_form.html
@@ -213,8 +221,12 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 
 ### Near Term
 - [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)
-- [ ] Design Postgres schema as connective tissue between Tier 1 and Tier 2
-- [ ] Build remaining Starter workflows: appointment reminders, open house follow-up, review request
+- [x] Design Postgres schema as connective tissue between Tier 1 and Tier 2
+- [x] Build real estate Starter workflows: instant lead response, open house follow-up, 7-touch cold nurture
+- [ ] Build real estate Starter: review request (last remaining piece)
+- [ ] Test and promote real estate workflows to production — see `n8n/TESTING_GUIDE.md`
+- [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
+- [ ] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
 - [ ] Set up internal monitoring dashboard (red/green per client status) — needed at 10+ clients
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
 
@@ -233,6 +245,34 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 
 ---
 
+## Database
+
+**Platform:** Neon — project `norrai` (ID: `gentle-hill-54285247`), Postgres 17, `us-east-1`
+**Database:** `neondb` | **Branch:** `main`
+**Connection string:** stored in `.env` as `DATABASE_URL` (pooled)
+
+| Table | Purpose |
+|-------|---------|
+| `clients` | NorrAI client businesses — tier, vertical, status, contact info |
+| `service_contracts` | Billing history per client |
+| `twilio_subaccounts` | One Twilio subaccount + phone number per client |
+| `norrai_meetings` | NorrAI's own discovery/onboarding/check-in calls |
+| `leads` | End-customer leads across all verticals; vertical-specific fields in `metadata` jsonb |
+| `appointments` | End-customer appointments; tracks reminder/follow-up/review-request timestamps |
+| `workflow_events` | Audit log of every n8n workflow trigger/completion/failure |
+
+**Vertical-specific lead fields** go in `leads.metadata` jsonb:
+```json
+// Real estate
+{ "property_address": "123 Maple St", "price_range": "$250k-$320k", "beds": 3 }
+// Insurance
+{ "policy_type": "auto", "renewal_date": "2026-09-01", "current_carrier": "State Farm" }
+// Dental
+{ "procedure_type": "cleaning", "insurance": "Delta Dental", "last_visit": "2024-11-01" }
+```
+
+---
+
 ## Session Log
 
 ### 2026-04-23
@@ -247,6 +287,22 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - Set up Playwright test suite — 41 tests, all passing (`npm test`)
 - Initialized git repo, pushed to `github.com/egachuu-jpg/norrai`
 - Deployed to Cloudflare Pages, custom domain `tools.norrai.co` live
+
+### 2026-04-24
+- Set up Neon Postgres — project `norrai` (`gentle-hill-54285247`), Postgres 17, `us-east-1`
+- Applied `db/schema.sql` to production database: 7 tables (`clients`, `service_contracts`, `twilio_subaccounts`, `norrai_meetings`, `leads`, `appointments`, `workflow_events`), `set_updated_at()` trigger, indexes
+- Added `DATABASE_URL` to `.env`, added `.env` to `.gitignore`
+- Loaded test data across all 7 tables — 5 clients (dental, real estate, insurance, auto, wellness), realistic leads with vertical metadata, appointments, workflow events
+
+### 2026-04-26
+- Built `website/lead_response.html` + `n8n/workflows/Real Estate Instant Lead Response.json` — agent pastes a new lead, Claude drafts personalized SMS + email reply within 60 seconds; agent gets a copy preview
+- Built `website/open_house.html` + `n8n/workflows/Real Estate Open House Follow-Up.json` — QR code on door, attendees sign in on their phone, Claude writes personalized follow-up sent at 9am CT next morning via SMS + email (if provided)
+- Built `website/nurture_enroll.html` + `n8n/workflows/Real Estate 7-Touch Cold Nurture.json` — agent enrolls a cold lead, 6 Claude-written touches over 21 days (Day 1 email, Day 3 SMS, Day 7 email, Day 10 SMS, Day 14 email, Day 21 SMS); includes disconnected Auto-Trigger webhook node for future automation
+- All 3 workflows use token check (`X-Norr-Token`), same Anthropic + SendGrid credentials as listing description workflow
+- Created `n8n/TESTING_NOTES.md` — known gotchas, gaps, and production promotion checklist
+- Created `n8n/TESTING_GUIDE.md` — step-by-step testing instructions per workflow
+- Discussed DB architecture: `appointments` table schema is fine to keep, but don't build calendar scraping/normalization layer until a real client forces it
+- Discussed agent-facing form auth: Cloudflare Access (Zero Trust) is the right answer — free up to 50 users, email OTP, protects specific paths; defer until first real agent client
 
 ---
 

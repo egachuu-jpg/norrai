@@ -1,0 +1,287 @@
+{
+  "name": "Real Estate Instant Lead Response",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-response",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        144
+      ],
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Receive Lead",
+      "webhookId": "lead-response-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "token-check-condition-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        224
+      ],
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-prompt-001",
+              "name": "prompt",
+              "value": "=You are {{ $node[\"Receive Lead\"].json.body.agent_name }}, a real estate agent. A new lead just came in and you need to respond immediately.\n\nLEAD DETAILS:\nName: {{ $node[\"Receive Lead\"].json.body.lead_name }}\nSource: {{ $node[\"Receive Lead\"].json.body.source }}\nTheir message: {{ $node[\"Receive Lead\"].json.body.lead_message }}\n\nPROPERTY THEY ARE ASKING ABOUT:\nAddress: {{ $node[\"Receive Lead\"].json.body.property_address }}\nPrice: {{ $node[\"Receive Lead\"].json.body.price_range }}\nBeds: {{ $node[\"Receive Lead\"].json.body.beds }}\nBaths: {{ $node[\"Receive Lead\"].json.body.baths }}\nKey details: {{ $node[\"Receive Lead\"].json.body.key_details }}\n\nWrite a short, warm, personal response from {{ $node[\"Receive Lead\"].json.body.agent_name }} to {{ $node[\"Receive Lead\"].json.body.lead_name }}. Requirements:\n- Address them by first name\n- Acknowledge what they asked about specifically\n- Confirm the property is something you can help with\n- Invite them to connect — suggest a quick call or showing\n- Sign off with your name and phone number: {{ $node[\"Receive Lead\"].json.body.agent_phone }}\n- Keep it under 120 words — this is going via SMS and email\n- Warm and human, not corporate or scripted\n\nReturn ONLY the message text. No labels, no subject line, no formatting markers.",
+              "type": "string"
+            },
+            {
+              "id": "set-lead-name-001",
+              "name": "lead_name",
+              "value": "={{ $node[\"Receive Lead\"].json.body.lead_name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-lead-phone-001",
+              "name": "lead_phone",
+              "value": "={{ $node[\"Receive Lead\"].json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "set-lead-email-001",
+              "name": "lead_email",
+              "value": "={{ $node[\"Receive Lead\"].json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "set-agent-name-001",
+              "name": "agent_name",
+              "value": "={{ $node[\"Receive Lead\"].json.body.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-agent-email-001",
+              "name": "agent_email",
+              "value": "={{ $node[\"Receive Lead\"].json.body.agent_email }}",
+              "type": "string"
+            },
+            {
+              "id": "set-property-001",
+              "name": "property_address",
+              "value": "={{ $node[\"Receive Lead\"].json.body.property_address }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        144
+      ],
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        848,
+        144
+      ],
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Draft Response (Claude)",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst message = response.content[0].text.trim();\n\n// Carry through fields from Build Prompt node\nconst prev = $('Build Prompt').first().json;\n\nreturn [{\n  json: {\n    message,\n    lead_name:        prev.lead_name,\n    lead_phone:       prev.lead_phone,\n    lead_email:       prev.lead_email,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    property_address: prev.property_address\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        144
+      ],
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Extract Message"
+    },
+    {
+      "parameters": {
+        "from": "+18XXXXXXXXXX",
+        "to": "=+1{{ $json.lead_phone.replace(/\\D/g, '') }}",
+        "message": "={{ $json.message }}"
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        60
+      ],
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "SMS to Lead",
+      "credentials": {
+        "twilioApi": {
+          "id": "TWILIO_CREDENTIAL_ID",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "studio@norrai.co",
+        "fromName": "Norr AI",
+        "toEmail": "={{ $json.agent_email }}",
+        "subject": "=Lead response sent — {{ $json.lead_name }} re: {{ $json.property_address }}",
+        "contentValue": "=Hi {{ $json.agent_name }},\n\nA lead response was just sent to {{ $json.lead_name }} via SMS. Here's a copy:\n\n---\n\n{{ $json.message }}\n\n---\n\nLead details:\n- Name: {{ $json.lead_name }}\n- Phone: {{ $json.lead_phone }}\n- Email: {{ $json.lead_email }}\n- Property: {{ $json.property_address }}\n\nNorr AI",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        228
+      ],
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Email Preview to Agent",
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Lead": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Draft Response (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Response (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Extract Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message": {
+      "main": [
+        [
+          {
+            "node": "SMS to Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Preview to Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "lead-response-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
