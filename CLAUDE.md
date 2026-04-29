@@ -229,10 +229,16 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
 - [ ] Set up internal monitoring dashboard (red/green per client status) — needed at 10+ clients
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
+- [x] Build B&B Manufacturing estimating demo — form + n8n workflow + tests (see 2026-04-29 session log)
+- [ ] Smoke test B&B workflow: import JSON into n8n, fire test payload, verify estimate email
+- [ ] Swap placeholder rates with real B&B rates once obtained
+- [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
+- [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
 
 ### First Client Targets
 - Insurance broker friend — Salesforce user, discovery call framework ready
 - Dental and real estate — easiest to template and repeat
+- **B&B Manufacturing** (Faribault, MN) — warm prospect, demo estimating workflow built; pending smoke test and import into n8n
 
 ---
 
@@ -303,6 +309,19 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - Created `n8n/TESTING_GUIDE.md` — step-by-step testing instructions per workflow
 - Discussed DB architecture: `appointments` table schema is fine to keep, but don't build calendar scraping/normalization layer until a real client forces it
 - Discussed agent-facing form auth: Cloudflare Access (Zero Trust) is the right answer — free up to 50 users, email OTP, protects specific paths; defer until first real agent client
+
+### 2026-04-29
+- Brainstormed and designed automated estimating workflow for **B&B Manufacturing and Assembly** (Faribault, MN) — 55,000 sq ft metal fab shop, 50+ employees, custom fabrication for OEMs across ag, aerospace, food processing, industrial markets
+- Design: web form → n8n → Claude API (line-item estimate with rate card) → SendGrid email to submitter within ~60 seconds; no human in the loop for demo
+- Built `website/bnb_estimate_form.html` — all 10 services (laser cutting, waterjet, CNC, press brake, welding, sandblasting, powder coating, plating, deburring, assembly), conditional detail fields per service, Polar Modern design
+- Built `n8n/workflows/B&B Manufacturing Estimate.json` — 6 nodes: Webhook (responds immediately) → Token Check → Build Claude Prompt (Code) → Claude API → Parse + Build Email (Code) → SendGrid
+- Rate card baked into Claude prompt as placeholder rates; designed for easy swap to Google Sheets in production
+- Claude outputs structured JSON; Code node builds full HTML email with line-item table, totals, lead time, disclaimer
+- Added 24 Playwright tests (`tests/bnb_estimate_form.spec.js`) — all passing; full suite 132/132
+- Added B&B testing section to `n8n/TESTING_NOTES.md` — import checklist, test payload, known gaps
+- Design spec: `docs/superpowers/specs/2026-04-28-bnb-estimating-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-04-28-bnb-estimating.md`
+- **Pending:** smoke test (import workflow into n8n, fire test payload, verify email) — deferred to after work
 
 ---
 
