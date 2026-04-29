@@ -143,7 +143,7 @@ test('payload contains all required top-level fields', async ({ page }) => {
   await page.goto(FORM_URL);
   await fillRequired(page);
   await Promise.all([
-    page.waitForRequest(req => req.url().includes('webhook')),
+    page.waitForResponse(res => res.url().includes('webhook')),
     page.click('#submit-btn'),
   ]);
 
