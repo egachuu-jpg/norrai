@@ -93,6 +93,67 @@ Don't try to test all 6 touches in one session — just verify that data persist
 
 ---
 
+---
+
+## B&B Manufacturing Estimate Workflow
+
+**Workflow file:** `n8n/workflows/B&B Manufacturing Estimate.json`
+**Form file:** `website/bnb_estimate_form.html`
+**Webhook path:** `/webhook/bnb-estimate`
+
+### Import checklist
+1. Go to n8n Cloud → Workflows → Import → upload `B&B Manufacturing Estimate.json`
+2. Open **Claude — Generate Estimate** node → verify "Anthropic account 2" credential is linked
+3. Open **Send Estimate Email** node → verify "SendGrid account" credential is linked
+4. Webhook is set to `responseMode: onReceived` — form gets immediate 200, estimate sends async
+
+### No placeholders to fix in the HTML
+The form already points to `https://norrai.app.n8n.cloud/webhook/bnb-estimate` (production path). No edits needed.
+
+### Test payload (Hoppscotch → POST to `/webhook-test/bnb-estimate`)
+Header: `X-Norr-Token: 8F68D963-7060-4033-BD04-7593E4B203CB`
+
+```json
+{
+  "name": "Test User",
+  "company": "Test OEM",
+  "email": "YOUR_EMAIL_HERE",
+  "phone": "5075550000",
+  "part_name": "Hydraulic Tank Bracket",
+  "material_type": "mild_steel",
+  "thickness": 0.25,
+  "length": 12,
+  "width": 8,
+  "height": 4,
+  "weight": null,
+  "quantity": 5,
+  "notes": "Needs to withstand 3000 PSI",
+  "services": [
+    { "name": "laser_cutting", "max_cut_length": 12, "holes": 4 },
+    { "name": "mig_welding", "weld_length_in": 24 },
+    { "name": "powder_coating", "finish_type": "standard", "surface_area_sqft": null }
+  ]
+}
+```
+
+**Expected:** estimate email arrives within ~60 seconds with line-item table, totals, and lead time.
+
+### Test checklist
+- [ ] Import workflow, verify both credentials link
+- [ ] Fire test payload to `/webhook-test/` URL, confirm estimate email arrives
+- [ ] Review email — check line items, total math, lead time, disclaimer
+- [ ] Test token rejection: submit with wrong token, confirm no email sent
+- [ ] Submit via the actual HTML form in browser (not Hoppscotch) — confirm success banner, then email
+- [ ] Switch workflow to `/webhook/` production path and activate
+
+### Known gaps / future work
+- **No Neon logging yet** — workflow does not write to `leads` or `workflow_events` tables. Add Postgres nodes when B&B becomes a real client and you have a Neon credential configured in n8n.
+- **Rate card is placeholder** — placeholder rates are in the `Build Claude Prompt` Code node as part of the prompt string. To update rates, edit that node directly. Production upgrade: move rate card to a Google Sheets tab and read it at runtime with n8n's Google Sheets node — B&B staff can then update rates without touching n8n.
+- **No file attachment handling** — the form accepts a file upload field, but the workflow ignores it. Attachments are not forwarded. For production, add a step to store the file (Cloudflare R2 or similar) and include a link in the estimator's notification.
+- **Claude uses placeholder rates** — estimates are directionally correct but not billable. Do not show to B&B until real rates are substituted.
+
+---
+
 ## Production Promotion Checklist
 
 - [ ] Twilio account upgraded from trial (trial blocks messages to unverified numbers)
