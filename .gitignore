@@ -12,3 +12,7 @@ playwright-report/
 # Editor
 .vscode/
 .idea/
+
+# Environment
+.env
+.env.local
