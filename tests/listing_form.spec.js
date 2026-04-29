@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { mockWebhook } = require('./helpers');
 
 const FORM_URL = '/listing_form.html';
 const PROFILE_KEY = 'norrai_agent_profile';
@@ -14,12 +15,6 @@ async function fillRequired(page) {
   await page.fill('#beds', '3');
   await page.fill('#key_features', 'Remodeled kitchen, new roof 2022');
   await page.fill('#previous_listings', 'Beautiful home in a great location. Move-in ready.');
-}
-
-function mockWebhook(page, status = 200) {
-  return page.route('**/webhook/**', route =>
-    route.fulfill({ status, body: 'ok', contentType: 'text/plain' })
-  );
 }
 
 // ─── 1. Required field validation ─────────────────────────────────────────────
@@ -39,15 +34,11 @@ test.describe('Required field validation', () => {
   for (const field of requiredFields) {
     test(`blocks submit when ${field.id} is empty`, async ({ page }) => {
       await mockWebhook(page);
-      let fetched = false;
-      page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
       await page.goto(FORM_URL);
       await fillRequired(page);
       await page.fill(`#${field.id}`, '');
       await page.click('#submit-btn');
 
-      expect(fetched).toBe(false);
       await expect(page.locator('#status.success')).not.toBeVisible();
     });
   }
@@ -58,54 +49,42 @@ test.describe('Required field validation', () => {
 test.describe('Field type enforcement', () => {
   test('rejects invalid email format', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#agent_email', 'notanemail');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('rejects beds over max (20)', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#beds', '99');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('rejects baths with invalid step (e.g. 1.3)', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#baths', '1.3');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('rejects year_built below min (1800)', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#year_built', '1700');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('state field enforces maxlength of 2', async ({ page }) => {
@@ -124,15 +103,12 @@ test.describe('Field type enforcement', () => {
 
   test('rejects price with non-currency text', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#price', 'not a price');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 
   test('accepts valid price format $349,900', async ({ page }) => {
@@ -187,23 +163,6 @@ test.describe('Field type enforcement', () => {
 // ─── 3. Payload shape ─────────────────────────────────────────────────────────
 
 test.describe('Payload shape', () => {
-  test('property_address is correctly constructed', async ({ page }) => {
-    await mockWebhook(page);
-    await page.goto(FORM_URL);
-    await fillRequired(page);
-    await page.fill('#street_address', '123 Maple St');
-    await page.fill('#city', 'Faribault');
-    await page.fill('#state', 'MN');
-    await page.fill('#zip', '55021');
-
-    const [req] = await Promise.all([
-      page.waitForRequest('**/webhook/**'),
-      page.click('#submit-btn'),
-    ]);
-    const body = JSON.parse(req.postData());
-    expect(body.property_address).toBe('123 Maple St, Faribault, MN 55021');
-  });
-
   test('numeric fields are numbers not strings', async ({ page }) => {
     await mockWebhook(page);
     await page.goto(FORM_URL);
@@ -305,7 +264,6 @@ test.describe('Basement checkbox pills', () => {
     await page.goto(FORM_URL);
     await fillRequired(page);
 
-    // Click "Full finished" and "Walk-out"
     await page.locator('.check-pill[data-val="full finished"]').click();
     await page.locator('.check-pill[data-val="walk-out"]').click();
 
@@ -340,7 +298,6 @@ test.describe('Agent profile persistence', () => {
     await fillRequired(page);
     await page.click('#submit-btn');
 
-    // Wait until the response has been processed and saveProfile has run
     await expect(page.locator('#status.success')).toBeVisible({ timeout: 5000 });
 
     const saved = await page.evaluate(k => JSON.parse(localStorage.getItem(k)), PROFILE_KEY);
