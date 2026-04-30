@@ -176,3 +176,76 @@ Header: `X-Norr-Token: 8F68D963-7060-4033-BD04-7593E4B203CB`
 | Winter CST timezone offset | Open House | Low — 10am is acceptable |
 | Auto-trigger node accumulating dead executions | Cold Nurture | Low — cosmetic |
 | No opt-out awareness in n8n | Cold Nurture | Low — Twilio handles it, n8n just logs errors |
+
+---
+
+## B&B Lead Generator
+
+**Workflow file:** `n8n/workflows/B&B Lead Generator.json`
+**Trigger:** Schedule — every Monday at 11am UTC (6am CDT / 7am CST in winter)
+**Review email recipient:** egachuu@gmail.com (placeholder — replace with B&B inbox before go-live)
+
+### Credentials to configure after import
+
+| Node | Credential type | What to set |
+|---|---|---|
+| Search Apollo | HTTP Header Auth | `X-Api-Key` = Apollo API key |
+| Read Exclusion Sheet | Google Sheets OAuth2 | Link Google account; update spreadsheet ID |
+| Score with Claude | Anthropic | `gXqu8TiqvDY4mUPZ` (Anthropic account 2) |
+| Draft Outreach | Anthropic | `gXqu8TiqvDY4mUPZ` (Anthropic account 2) |
+| Send Review Email | SendGrid | `A5ypmjiRLAUMUm9O` (SendGrid account) |
+| Log Lead to Neon | Postgres | Add Neon pooled connection string as Postgres credential |
+
+### Google Sheet setup
+
+Create a Google Sheet with two columns in row 1: `company_name` | `domain`
+
+Pre-populate with any companies already in B&B's customer list. Share the sheet with the Google account linked in n8n.
+
+Replace `YOUR_SPREADSHEET_ID` in the Read Exclusion Sheet node with the actual spreadsheet ID (found in the Google Sheet URL: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit`).
+
+### Apollo.io setup
+
+B&B must create an Apollo.io account and generate an API key (Settings → API → Create Key). In n8n, create an HTTP Header Auth credential with name `Apollo API Key`, header name `X-Api-Key`, and the key as the value. Link it to the Search Apollo node.
+
+**Required dependency:** The workflow cannot run until B&B provisions an Apollo account.
+
+### How to test without waiting until Monday
+
+1. Import workflow into n8n — configure all 6 credentials and update spreadsheet ID
+2. Open the workflow in n8n editor
+3. Click **Test workflow** to manually trigger a single execution
+4. Watch execution steps in n8n Executions view — each lead processes as a separate SplitInBatches iteration
+5. Confirm review emails arrive at egachuu@gmail.com with real lead data and Claude-written draft
+6. Confirm rows appear in Neon `leads` table: `SELECT * FROM leads WHERE source = 'bnb_lead_generator';`
+
+### Critical data reference to verify first
+
+The Parse Score and Parse Draft code nodes use `$('Split by Lead').item.json` and `$('Parse Score').item.json` to carry lead fields across node boundaries inside the SplitInBatches loop. **Verify these references resolve correctly on the first test run.** Check the output of Parse Score and Parse Draft in Executions — if `first_name`, `company`, `score`, etc. are blank or undefined, the `.item` reference broke. Fix: add a Set node before each Claude HTTP Request to explicitly copy `$json.*` fields, removing the need for back-references.
+
+### Test checklist
+
+- [ ] Import workflow, configure all 6 credentials
+- [ ] Update spreadsheet ID in Read Exclusion Sheet node
+- [ ] Add one test company to exclusion sheet (e.g., "B&B Manufacturing" / "bBmfg.com")
+- [ ] Manually trigger — confirm Apollo returns contacts in execution output
+- [ ] Confirm excluded company is filtered out in Filter and Dedup output
+- [ ] Check Parse Score output — confirm score and reason fields are populated with real lead data
+- [ ] Confirm leads scoring >= 8 produce a review email with name, company, score, reason, and draft
+- [ ] Confirm leads scoring < 8 are silently skipped (no email, no Neon row)
+- [ ] Confirm Neon `leads` table has a row for each qualified lead: `SELECT * FROM leads WHERE source = 'bnb_lead_generator';`
+- [ ] Replace egachuu@gmail.com with B&B inbox before activating for production
+- [ ] Activate workflow — fires automatically Monday 11am UTC
+
+### Known gaps / future work
+
+| Gap | Priority |
+|-----|----------|
+| Review email recipient is a placeholder (egachuu@gmail.com) | High — replace before go-live |
+| Spreadsheet ID is a placeholder (YOUR_SPREADSHEET_ID) | High — replace before go-live |
+| Apollo API key not provisioned — B&B must set up account | High — required dependency |
+| JobBOSS integration stubbed (comment in Filter and Dedup node) | Low — future |
+| No LinkedIn enrichment (Apify integration planned) | Low — future |
+| No workflow_events aggregate row in Neon (individual lead rows are logged) | Low — cosmetic |
+| Schedule fires at 6am CDT; becomes 7am in winter CST | Low — acceptable |
+| SQL uses string escaping not parameterized queries — adequate for demo scale | Low — upgrade for production |
