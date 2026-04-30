@@ -93,6 +93,98 @@ Don't try to test all 6 touches in one session — just verify that data persist
 
 ---
 
+---
+
+## B&B Manufacturing Estimate Workflow
+
+**Workflow file:** `n8n/workflows/B&B Manufacturing Estimate.json`
+**Form file:** `website/bnb_estimate_form.html`
+**Webhook path:** `/webhook/bnb-estimate`
+
+### Import checklist
+1. Go to n8n Cloud → Workflows → Import → upload `B&B Manufacturing Estimate.json`
+2. Open **Claude — Generate Estimate** node → verify "Anthropic account 2" credential is linked
+3. Open **Send Estimate Email** node → verify "SendGrid account" credential is linked
+4. Webhook is set to `responseMode: onReceived` — form gets immediate 200, estimate sends async
+
+### No placeholders to fix in the HTML
+The form already points to `https://norrai.app.n8n.cloud/webhook/bnb-estimate` (production path). No edits needed.
+
+### Test payload (Hoppscotch → POST to `/webhook-test/bnb-estimate`)
+Header: `X-Norr-Token: 8F68D963-7060-4033-BD04-7593E4B203CB`
+
+```json
+{
+  "name": "Test User",
+  "company": "Test OEM",
+  "email": "YOUR_EMAIL_HERE",
+  "phone": "5075550000",
+  "part_name": "Hydraulic Tank Bracket",
+  "material_type": "mild_steel",
+  "thickness": 0.25,
+  "length": 12,
+  "width": 8,
+  "height": 4,
+  "weight": null,
+  "quantity": 5,
+  "notes": "Needs to withstand 3000 PSI",
+  "services": [
+    { "name": "laser_cutting", "max_cut_length": 12, "holes": 4 },
+    { "name": "mig_welding", "weld_length_in": 24 },
+    { "name": "powder_coating", "finish_type": "standard", "surface_area_sqft": null }
+  ]
+}
+```
+
+**Expected:** estimate email arrives within ~60 seconds with line-item table, totals, and lead time.
+
+### Test checklist
+- [ ] Import workflow, verify both credentials link
+- [ ] Fire test payload to `/webhook-test/` URL, confirm estimate email arrives
+- [ ] Review email — check line items, total math, lead time, disclaimer
+- [ ] Test token rejection: submit with wrong token, confirm no email sent
+- [ ] Submit via the actual HTML form in browser (not Hoppscotch) — confirm success banner, then email
+- [ ] Switch workflow to `/webhook/` production path and activate
+
+### Known gaps / future work
+- **No Neon logging yet** — workflow does not write to `leads` or `workflow_events` tables. Add Postgres nodes when B&B becomes a real client and you have a Neon credential configured in n8n.
+- **Rate card is placeholder** — placeholder rates are in the `Build Claude Prompt` Code node as part of the prompt string. To update rates, edit that node directly. Production upgrade: move rate card to a Google Sheets tab and read it at runtime with n8n's Google Sheets node — B&B staff can then update rates without touching n8n.
+- **No file attachment handling** — the form accepts a file upload field, but the workflow ignores it. Attachments are not forwarded. For production, add a step to store the file (Cloudflare R2 or similar) and include a link in the estimator's notification.
+- **Claude uses placeholder rates** — estimates are directionally correct but not billable. Do not show to B&B until real rates are substituted.
+
+---
+
+## Real Estate Review Request
+
+**Workflow file:** `n8n/workflows/Real Estate Review Request.json`
+**Form file:** `website/review_request.html`
+**Webhook path:** `/webhook/review-request`
+
+### Before testing
+1. Open **Send SMS** node → select your Twilio credential, replace `+18XXXXXXXXXX` with your number.
+2. Open **Send Email** node → select "SendGrid Header Auth" credential. Create it in n8n Credentials if needed: type "Header Auth", Name: `Authorization`, Value: `Bearer SG.your-api-key`.
+3. Open **Claude API** node → verify "Anthropic account 2" credential is linked.
+4. Activate the workflow.
+
+### Wait node testing
+The Wait node pauses execution for 1, 3, or 7 days. To test without waiting: go to **Executions**, find the paused execution, click **Resume**. This fires the Claude → SMS → Email path immediately.
+
+### Test checklist
+- [ ] Submit as Buyer — verify Claude message says "new home" not "sale"
+- [ ] Submit as Seller — verify Claude message says "sale" not "new home"
+- [ ] Submit with no Zillow URL — verify only Google link appears in SMS and email
+- [ ] Submit with no client email — verify SMS fires, Has Email? node routes to false branch (no SendGrid error)
+- [ ] Submit with 1-day delay → manually resume → confirm messages arrive
+- [ ] Submit with 3-day delay (default) → manually resume → confirm messages arrive
+- [ ] Submit with 7-day delay → manually resume → confirm messages arrive
+- [ ] Submit with invalid token → confirm no execution runs (check Executions log)
+
+### Known gaps / edge cases
+- **Phone double-prefix** — Prep Fields strips non-digits and prepends `+1`. If client enters `15075551234`, you'll get `+115075551234` which Twilio rejects. Document this for agents: enter 10-digit numbers only.
+- **No unsubscribe handling** — Twilio honors STOP replies at the carrier level. n8n will log an error for opted-out numbers but won't halt.
+
+---
+
 ## Production Promotion Checklist
 
 - [ ] Twilio account upgraded from trial (trial blocks messages to unverified numbers)
@@ -115,3 +207,76 @@ Don't try to test all 6 touches in one session — just verify that data persist
 | Winter CST timezone offset | Open House | Low — 10am is acceptable |
 | Auto-trigger node accumulating dead executions | Cold Nurture | Low — cosmetic |
 | No opt-out awareness in n8n | Cold Nurture | Low — Twilio handles it, n8n just logs errors |
+
+---
+
+## B&B Lead Generator
+
+**Workflow file:** `n8n/workflows/B&B Lead Generator.json`
+**Trigger:** Schedule — every Monday at 11am UTC (6am CDT / 7am CST in winter)
+**Review email recipient:** egachuu@gmail.com (placeholder — replace with B&B inbox before go-live)
+
+### Credentials to configure after import
+
+| Node | Credential type | What to set |
+|---|---|---|
+| Search Apollo | HTTP Header Auth | `X-Api-Key` = Apollo API key |
+| Read Exclusion Sheet | Google Sheets OAuth2 | Link Google account; update spreadsheet ID |
+| Score with Claude | Anthropic | `gXqu8TiqvDY4mUPZ` (Anthropic account 2) |
+| Draft Outreach | Anthropic | `gXqu8TiqvDY4mUPZ` (Anthropic account 2) |
+| Send Review Email | SendGrid | `A5ypmjiRLAUMUm9O` (SendGrid account) |
+| Log Lead to Neon | Postgres | Add Neon pooled connection string as Postgres credential |
+
+### Google Sheet setup
+
+Create a Google Sheet with two columns in row 1: `company_name` | `domain`
+
+Pre-populate with any companies already in B&B's customer list. Share the sheet with the Google account linked in n8n.
+
+Replace `YOUR_SPREADSHEET_ID` in the Read Exclusion Sheet node with the actual spreadsheet ID (found in the Google Sheet URL: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit`).
+
+### Apollo.io setup
+
+B&B must create an Apollo.io account and generate an API key (Settings → API → Create Key). In n8n, create an HTTP Header Auth credential with name `Apollo API Key`, header name `X-Api-Key`, and the key as the value. Link it to the Search Apollo node.
+
+**Required dependency:** The workflow cannot run until B&B provisions an Apollo account.
+
+### How to test without waiting until Monday
+
+1. Import workflow into n8n — configure all 6 credentials and update spreadsheet ID
+2. Open the workflow in n8n editor
+3. Click **Test workflow** to manually trigger a single execution
+4. Watch execution steps in n8n Executions view — each lead processes as a separate SplitInBatches iteration
+5. Confirm review emails arrive at egachuu@gmail.com with real lead data and Claude-written draft
+6. Confirm rows appear in Neon `leads` table: `SELECT * FROM leads WHERE source = 'bnb_lead_generator';`
+
+### Critical data reference to verify first
+
+The Parse Score and Parse Draft code nodes use `$('Split by Lead').item.json` and `$('Parse Score').item.json` to carry lead fields across node boundaries inside the SplitInBatches loop. **Verify these references resolve correctly on the first test run.** Check the output of Parse Score and Parse Draft in Executions — if `first_name`, `company`, `score`, etc. are blank or undefined, the `.item` reference broke. Fix: add a Set node before each Claude HTTP Request to explicitly copy `$json.*` fields, removing the need for back-references.
+
+### Test checklist
+
+- [ ] Import workflow, configure all 6 credentials
+- [ ] Update spreadsheet ID in Read Exclusion Sheet node
+- [ ] Add one test company to exclusion sheet (e.g., "B&B Manufacturing" / "bBmfg.com")
+- [ ] Manually trigger — confirm Apollo returns contacts in execution output
+- [ ] Confirm excluded company is filtered out in Filter and Dedup output
+- [ ] Check Parse Score output — confirm score and reason fields are populated with real lead data
+- [ ] Confirm leads scoring >= 8 produce a review email with name, company, score, reason, and draft
+- [ ] Confirm leads scoring < 8 are silently skipped (no email, no Neon row)
+- [ ] Confirm Neon `leads` table has a row for each qualified lead: `SELECT * FROM leads WHERE source = 'bnb_lead_generator';`
+- [ ] Replace egachuu@gmail.com with B&B inbox before activating for production
+- [ ] Activate workflow — fires automatically Monday 11am UTC
+
+### Known gaps / future work
+
+| Gap | Priority |
+|-----|----------|
+| Review email recipient is a placeholder (egachuu@gmail.com) | High — replace before go-live |
+| Spreadsheet ID is a placeholder (YOUR_SPREADSHEET_ID) | High — replace before go-live |
+| Apollo API key not provisioned — B&B must set up account | High — required dependency |
+| JobBOSS integration stubbed (comment in Filter and Dedup node) | Low — future |
+| No LinkedIn enrichment (Apify integration planned) | Low — future |
+| No workflow_events aggregate row in Neon (individual lead rows are logged) | Low — cosmetic |
+| Schedule fires at 6am CDT; becomes 7am in winter CST | Low — acceptable |
+| SQL uses string escaping not parameterized queries — adequate for demo scale | Low — upgrade for production |

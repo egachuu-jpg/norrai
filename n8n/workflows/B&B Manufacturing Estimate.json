@@ -1,0 +1,200 @@
+{
+  "name": "B&B Manufacturing Estimate",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bnb-estimate",
+        "options": {
+          "responseMode": "onReceived",
+          "responseData": "noData"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 200],
+      "id": "bb000001-0000-4000-8000-000000000001",
+      "name": "Receive Estimate Request",
+      "webhookId": "bnb-estimate-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bnb-token-check-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [460, 200],
+      "id": "bb000001-0000-4000-8000-000000000002",
+      "name": "Valid Token?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst services = body.services || [];\n\nconst serviceLines = services.map(s => {\n  const extra = Object.entries(s)\n    .filter(([k]) => k !== 'name')\n    .filter(([, v]) => v !== null && v !== undefined)\n    .map(([k, v]) => `    ${k}: ${v}`)\n    .join('\\n');\n  return `  - ${s.name}${extra ? '\\n' + extra : ''}`;\n}).join('\\n');\n\nconst weightNote = body.weight\n  ? body.weight + ' lbs'\n  : 'not provided — estimate from dimensions × material density';\n\nconst prompt = `You are an estimating assistant for B&B Manufacturing and Assembly, a precision metal fabrication shop in Faribault, MN.\n\nUsing the rate card and part specifications below, calculate a detailed estimate for each selected service. Return ONLY valid JSON — no explanation, no markdown code fences, no surrounding text.\n\nRATE CARD:\nMaterial costs (per lb): mild_steel=$0.85, stainless_steel=$2.20, aluminum=$1.90, other=$1.50\nMachine rates (per hour): laser_cutting=$150, waterjet=$150, cnc_machining=$95, press_brake=$75, mig_welding=$85, tig_welding=$85, robotic_welding=$65, assembly=$45\nArea rates (per sq ft): sandblasting=$3.50, powder_coating=$4.00, zinc_plating=$2.50, nickel_plating=$4.50, deburring=$1.50\nMarkup: 20% applied to subtotal\n\nPART SPECIFICATIONS:\nPart name: ${body.part_name}\nMaterial: ${body.material_type}, ${body.thickness} inches thick\nDimensions: ${body.length}\" L x ${body.width}\" W x ${body.height}\" H\nWeight: ${weightNote}\nQuantity: ${body.quantity}\nNotes: ${body.notes || 'none'}\n\nSELECTED SERVICES:\n${serviceLines}\n\nInstructions:\n1. For material weight: if not provided, estimate — mild steel ~0.284 lb/cu in, stainless ~0.29 lb/cu in, aluminum ~0.098 lb/cu in. Use L x W x H x density for solid stock; reduce by 60% for sheet metal parts.\n2. For each service, estimate time (hours) or area (sq ft) from the specs and service details.\n3. Show your reasoning concisely in the detail field (e.g., \"4 holes + perimeter cut = 0.5 hrs\").\n4. cost = hours x rate OR sq_ft x rate.\n5. material_cost = estimated_weight x material_rate x quantity.\n6. subtotal = material_cost + sum of all service costs.\n7. markup = subtotal x 0.20.\n8. total = subtotal + markup.\n9. lead_time: estimate based on services and quantity — laser only: 2-3 days; add welding: 4-5 days; add powder coating or plating: +2 days.\n\nReturn ONLY this JSON structure, no other text:\n{\n  \"line_items\": [\n    { \"service\": \"Display Name\", \"detail\": \"reasoning here\", \"rate_label\": \"$150/hr\", \"cost\": 75.00 }\n  ],\n  \"material_cost\": 42.50,\n  \"subtotal\": 261.80,\n  \"markup\": 52.36,\n  \"total\": 314.16,\n  \"lead_time\": \"5-7 business days\",\n  \"notes\": \"Any assumptions or caveats about this estimate.\"\n}`;\n\nreturn [{ json: {\n  prompt,\n  submitter_name: body.name,\n  submitter_email: body.email,\n  part_name: body.part_name,\n  company: body.company || '',\n  quantity: body.quantity,\n  material_type: body.material_type\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 120],
+      "id": "bb000001-0000-4000-8000-000000000003",
+      "name": "Build Claude Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1500,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [900, 120],
+      "id": "bb000001-0000-4000-8000-000000000004",
+      "name": "Claude — Generate Estimate",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nconst prev = $('Build Claude Prompt').first().json;\n\nconst rawText = claudeResponse.content[0].text.trim();\nlet estimate;\ntry {\n  const cleaned = rawText.replace(/^```\\w*\\n?/, '').replace(/\\n?```$/, '');\n  estimate = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error('Claude returned invalid JSON: ' + rawText.slice(0, 300));\n}\n\nconst { submitter_name, submitter_email, part_name, company, quantity, material_type } = prev;\n\nconst matLabel = material_type.replace(/_/g, ' ');\n\nconst itemRows = estimate.line_items.map(item =>\n  `<tr>\n    <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:14px;'>${item.service}</td>\n    <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:13px;color:#6A6F78;'>${item.detail}</td>\n    <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:13px;color:#6A6F78;white-space:nowrap;'>${item.rate_label}</td>\n    <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:14px;text-align:right;white-space:nowrap;'>$${item.cost.toFixed(2)}</td>\n  </tr>`\n).join('\\n');\n\nconst notesRow = estimate.notes\n  ? `<p style='font-size:13px;color:#6A6F78;margin:0;'>${estimate.notes}</p>`\n  : '';\n\nconst companyBit = company ? ' &middot; ' + company : '';\n\nconst emailHtml = `<!DOCTYPE html>\n<html>\n<head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head>\n<body style='margin:0;padding:0;background:#FAFAF7;font-family:Arial,sans-serif;'>\n<table width='100%' cellpadding='0' cellspacing='0' style='background:#FAFAF7;padding:40px 20px;'>\n<tr><td>\n<table width='100%' cellpadding='0' cellspacing='0' style='max-width:620px;margin:0 auto;background:#FFFFFF;border:1px solid #E5E4DE;border-radius:12px;overflow:hidden;'>\n\n  <!-- Header -->\n  <tr><td style='background:#0A0F1A;padding:32px 36px;'>\n    <p style='font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7FA9B8;margin:0 0 10px;'>B&amp;B Manufacturing &amp; Assembly</p>\n    <h1 style='font-size:26px;font-weight:700;color:#FAFAF7;margin:0;letter-spacing:-0.02em;'>Your Estimate</h1>\n  </td></tr>\n\n  <!-- Greeting -->\n  <tr><td style='padding:28px 36px 0;'>\n    <p style='font-size:15px;color:#0A0F1A;margin:0 0 8px;'>Hi ${submitter_name},</p>\n    <p style='font-size:14px;color:#6A6F78;margin:0;'>Here is your estimate for <strong style='color:#0A0F1A;'>${part_name}</strong>${companyBit} (Qty: ${quantity}).</p>\n  </td></tr>\n\n  <!-- Line items -->\n  <tr><td style='padding:24px 36px 0;'>\n    <table width='100%' cellpadding='0' cellspacing='0' style='border:1px solid #E5E4DE;border-radius:8px;overflow:hidden;'>\n      <thead>\n        <tr style='background:#FAFAF7;'>\n          <th style='padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#3A3F48;letter-spacing:0.05em;text-transform:uppercase;'>Service</th>\n          <th style='padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#3A3F48;letter-spacing:0.05em;text-transform:uppercase;'>Detail</th>\n          <th style='padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#3A3F48;letter-spacing:0.05em;text-transform:uppercase;'>Rate</th>\n          <th style='padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#3A3F48;letter-spacing:0.05em;text-transform:uppercase;'>Cost</th>\n        </tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:14px;'>Material (${matLabel})</td>\n          <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:13px;color:#6A6F78;'>estimated weight x rate x qty</td>\n          <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:13px;color:#6A6F78;'>/lb</td>\n          <td style='padding:10px 14px;border-bottom:1px solid #E5E4DE;font-size:14px;text-align:right;'>$${estimate.material_cost.toFixed(2)}</td>\n        </tr>\n        ${itemRows}\n        <tr style='background:#FAFAF7;'>\n          <td colspan='3' style='padding:10px 14px;font-size:13px;color:#6A6F78;'>Subtotal</td>\n          <td style='padding:10px 14px;font-size:14px;text-align:right;'>$${estimate.subtotal.toFixed(2)}</td>\n        </tr>\n        <tr style='background:#FAFAF7;'>\n          <td colspan='3' style='padding:10px 14px;font-size:13px;color:#6A6F78;'>Markup (20%)</td>\n          <td style='padding:10px 14px;font-size:14px;text-align:right;'>$${estimate.markup.toFixed(2)}</td>\n        </tr>\n        <tr style='background:#0A0F1A;'>\n          <td colspan='3' style='padding:12px 14px;font-size:14px;font-weight:600;color:#FAFAF7;'>Total</td>\n          <td style='padding:12px 14px;font-size:16px;font-weight:700;color:#7FA9B8;text-align:right;'>$${estimate.total.toFixed(2)}</td>\n        </tr>\n      </tbody>\n    </table>\n  </td></tr>\n\n  <!-- Lead time -->\n  <tr><td style='padding:20px 36px 0;'>\n    <p style='font-size:14px;color:#0A0F1A;margin:0 0 6px;'><strong>Estimated lead time:</strong> ${estimate.lead_time}</p>\n    ${notesRow}\n  </td></tr>\n\n  <!-- Disclaimer -->\n  <tr><td style='padding:20px 36px 28px;'>\n    <p style='font-size:12px;color:#9EA3AA;margin:0 0 16px;line-height:1.6;'>This estimate is based on the specifications provided. Final pricing may vary upon drawing review. Quantities over 10 may qualify for volume pricing.</p>\n    <p style='font-size:14px;color:#0A0F1A;margin:0;'>Reply to this email to move forward or ask questions — we're happy to help.</p>\n  </td></tr>\n\n  <!-- Footer -->\n  <tr><td style='background:#FAFAF7;border-top:1px solid #E5E4DE;padding:18px 36px;'>\n    <p style='font-size:12px;color:#9EA3AA;margin:0;'>B&amp;B Manufacturing and Assembly &middot; Faribault, MN</p>\n  </td></tr>\n\n</table>\n</td></tr>\n</table>\n</body>\n</html>`;\n\nreturn [{ json: { emailHtml, submitter_name, submitter_email, part_name, estimate } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 120],
+      "id": "bb000001-0000-4000-8000-000000000005",
+      "name": "Parse + Build Email"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{ \"to\": [{ \"email\": \"{{ $json.submitter_email }}\" }] }],\n  \"from\": { \"email\": \"studio@norrai.co\", \"name\": \"B&B Manufacturing\" },\n  \"subject\": \"Estimate for {{ $json.part_name }} — B&B Manufacturing\",\n  \"content\": [{ \"type\": \"text/html\", \"value\": {{ JSON.stringify($json.emailHtml) }} }]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1340, 120],
+      "id": "bb000001-0000-4000-8000-000000000006",
+      "name": "Send Estimate Email",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SENDGRID_HEADER_AUTH",
+          "name": "SendGrid Header Auth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Estimate Request": {
+      "main": [
+        [
+          {
+            "node": "Valid Token?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Token?": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude — Generate Estimate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude — Generate Estimate": {
+      "main": [
+        [
+          {
+            "node": "Parse + Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse + Build Email": {
+      "main": [
+        [
+          {
+            "node": "Send Estimate Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bnb-estimate-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
