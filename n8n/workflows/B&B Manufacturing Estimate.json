@@ -106,27 +106,24 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "studio@norrai.co",
-        "fromName": "B&B Manufacturing",
-        "toEmail": "={{ $json.submitter_email }}",
-        "subject": "=Estimate for {{ $json.part_name }} — B&B Manufacturing",
-        "contentType": "html",
-        "contentValue": "={{ $json.emailHtml }}",
-        "additionalFields": {
-          "trackClicks": false,
-          "trackOpens": false
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{ \"to\": [{ \"email\": \"{{ $json.submitter_email }}\" }] }],\n  \"from\": { \"email\": \"studio@norrai.co\", \"name\": \"B&B Manufacturing\" },\n  \"subject\": \"Estimate for {{ $json.part_name }} — B&B Manufacturing\",\n  \"content\": [{ \"type\": \"text/html\", \"value\": {{ JSON.stringify($json.emailHtml) }} }]\n}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [1340, 120],
       "id": "bb000001-0000-4000-8000-000000000006",
       "name": "Send Estimate Email",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "SENDGRID_HEADER_AUTH",
+          "name": "SendGrid Header Auth"
         }
       }
     }
