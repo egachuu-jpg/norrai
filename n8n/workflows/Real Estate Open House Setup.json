@@ -113,7 +113,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst highlights = (response.content[0].text || '').trim();\n\nconst prev = $('Prep Fields').first().json;\n\nconst baseUrl = 'https://tools.norrai.co/open_house.html';\nconst qs = [\n  'address='     + encodeURIComponent(prev.property_address),\n  'agent='       + encodeURIComponent(prev.agent_name),\n  'agent_email=' + encodeURIComponent(prev.agent_email),\n  'agent_phone=' + encodeURIComponent(prev.agent_phone),\n  'notes='       + encodeURIComponent(highlights),\n].join('&');\nconst signinUrl = baseUrl + '?' + qs;\n\nconst qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(signinUrl);\n\nreturn [{\n  json: {\n    highlights,\n    signin_url:      signinUrl,\n    qr_url:          qrUrl,\n    agent_name:      prev.agent_name,\n    agent_email:     prev.agent_email,\n    property_address: prev.property_address,\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst highlights = (response.content[0].text || '').trim();\n\nconst prev = $('Prep Fields').first().json;\n\nconst baseUrl = 'https://tools.norrai.co/open_house.html';\nconst qs = [\n  'address='     + encodeURIComponent(prev.property_address),\n  'agent='       + encodeURIComponent(prev.agent_name),\n  'agent_email=' + encodeURIComponent(prev.agent_email),\n  'agent_phone=' + encodeURIComponent(prev.agent_phone),\n  'notes='       + encodeURIComponent(highlights),\n].join('&');\nconst signinUrl = baseUrl + '?' + qs;\nconst qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(signinUrl);\n\n// Escape & in URLs used inside HTML attributes\nconst qrUrlSafe     = qrUrl.replace(/&/g, '&amp;');\nconst signinUrlSafe = signinUrl.replace(/&/g, '&amp;');\n\nconst emailHtml = [\n  '<div style=\"font-family: \\'Inter\\', Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #0A0F1A;\">',\n  '  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Open House Setup</p>',\n  '    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">Your QR code is ready.</h1>',\n  '  </div>',\n  '  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 6px;\">Property</p>',\n  '    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 24px;\">' + prev.property_address + '</p>',\n  '    <p style=\"font-size: 14px; color: #6A6F78; margin: 0 0 16px;\">Print this and tape it to the front door. Attendees scan it to sign in \\u2014 you\\'ll get a personalized follow-up sent to each of them at 9am the next morning.</p>',\n  '    <div style=\"text-align: center; margin: 28px 0;\">',\n  '      <img src=\"' + qrUrlSafe + '\" width=\"300\" height=\"300\" alt=\"Open House Sign-In QR Code\" style=\"display: inline-block; border: 1px solid #E5E4DE; border-radius: 8px; padding: 12px; background: #fff;\">',\n  '    </div>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Property highlights Claude will reference in follow-ups:</p>',\n  '    <p style=\"font-size: 13px; color: #3A3F48; font-style: italic; margin: 0 0 24px; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE;\">' + highlights + '</p>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Direct link (if you need to share digitally):</p>',\n  '    <p style=\"font-size: 12px; margin: 0 0 28px; word-break: break-all;\"><a href=\"' + signinUrlSafe + '\" style=\"color: #7FA9B8;\">' + signinUrl + '</a></p>',\n  '    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;\\u00b7&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    highlights,\n    signin_url:       signinUrl,\n    qr_url:           qrUrl,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    property_address: prev.property_address,\n    email_html:       emailHtml,\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -123,24 +123,30 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "studio@norrai.co",
-        "fromName": "Norr AI",
-        "toEmail": "={{ $json.agent_email }}",
-        "subject": "=Your open house QR code — {{ $json.property_address }}",
-        "contentType": "html",
-        "contentValue": "=<div style=\"font-family: 'Inter', Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #0A0F1A;\">\n\n  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">\n    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Open House Setup</p>\n    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">Your QR code is ready.</h1>\n  </div>\n\n  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">\n\n    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 6px;\">Property</p>\n    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 24px;\">{{ $json.property_address }}</p>\n\n    <p style=\"font-size: 14px; color: #6A6F78; margin: 0 0 16px;\">Print this and tape it to the front door. Attendees scan it to sign in — you'll get a personalized follow-up sent to each of them at 9am the next morning.</p>\n\n    <div style=\"text-align: center; margin: 28px 0;\">\n      <img src=\"{{ $json.qr_url }}\" width=\"300\" height=\"300\" alt=\"Open House Sign-In QR Code\" style=\"display: inline-block; border: 1px solid #E5E4DE; border-radius: 8px; padding: 12px; background: #fff;\">\n    </div>\n\n    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Property highlights Claude will reference in follow-ups:</p>\n    <p style=\"font-size: 13px; color: #3A3F48; font-style: italic; margin: 0 0 24px; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE;\">{{ $json.highlights }}</p>\n\n    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Direct link (if you need to share digitally):</p>\n    <p style=\"font-size: 12px; margin: 0 0 28px; word-break: break-all;\"><a href=\"{{ $json.signin_url }}\" style=\"color: #7FA9B8;\">{{ $json.signin_url }}</a></p>\n\n    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">\n    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;·&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>\n\n  </div>\n</div>",
-        "additionalFields": {}
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": \"Your open house QR code \\u2014 {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}]\n}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [1472, 144],
       "id": "c3d4e5f6-0007-4000-8000-000000000007",
       "name": "Email QR to Agent",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "SENDGRID_HEADER_AUTH",
+          "name": "SendGrid Header Auth"
         }
       }
     }
