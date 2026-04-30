@@ -154,6 +154,37 @@ Header: `X-Norr-Token: 8F68D963-7060-4033-BD04-7593E4B203CB`
 
 ---
 
+## Real Estate Review Request
+
+**Workflow file:** `n8n/workflows/Real Estate Review Request.json`
+**Form file:** `website/review_request.html`
+**Webhook path:** `/webhook/review-request`
+
+### Before testing
+1. Open **Send SMS** node → select your Twilio credential, replace `+18XXXXXXXXXX` with your number.
+2. Open **Send Email** node → select "SendGrid Header Auth" credential. Create it in n8n Credentials if needed: type "Header Auth", Name: `Authorization`, Value: `Bearer SG.your-api-key`.
+3. Open **Claude API** node → verify "Anthropic account 2" credential is linked.
+4. Activate the workflow.
+
+### Wait node testing
+The Wait node pauses execution for 1, 3, or 7 days. To test without waiting: go to **Executions**, find the paused execution, click **Resume**. This fires the Claude → SMS → Email path immediately.
+
+### Test checklist
+- [ ] Submit as Buyer — verify Claude message says "new home" not "sale"
+- [ ] Submit as Seller — verify Claude message says "sale" not "new home"
+- [ ] Submit with no Zillow URL — verify only Google link appears in SMS and email
+- [ ] Submit with no client email — verify SMS fires, Has Email? node routes to false branch (no SendGrid error)
+- [ ] Submit with 1-day delay → manually resume → confirm messages arrive
+- [ ] Submit with 3-day delay (default) → manually resume → confirm messages arrive
+- [ ] Submit with 7-day delay → manually resume → confirm messages arrive
+- [ ] Submit with invalid token → confirm no execution runs (check Executions log)
+
+### Known gaps / edge cases
+- **Phone double-prefix** — Prep Fields strips non-digits and prepends `+1`. If client enters `15075551234`, you'll get `+115075551234` which Twilio rejects. Document this for agents: enter 10-digit numbers only.
+- **No unsubscribe handling** — Twilio honors STOP replies at the carrier level. n8n will log an error for opted-out numbers but won't halt.
+
+---
+
 ## Production Promotion Checklist
 
 - [ ] Twilio account upgraded from trial (trial blocks messages to unverified numbers)
