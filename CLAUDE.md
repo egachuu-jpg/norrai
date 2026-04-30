@@ -223,7 +223,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)
 - [x] Design Postgres schema as connective tissue between Tier 1 and Tier 2
 - [x] Build real estate Starter workflows: instant lead response, open house follow-up, 7-touch cold nurture
-- [ ] Build real estate Starter: review request (last remaining piece)
+- [x] Build real estate Starter: review request — form + workflow + tests complete (2026-04-30)
 - [x] Test and promote real estate workflows to production — open house setup + follow-up confirmed working
 - [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
 - [ ] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
