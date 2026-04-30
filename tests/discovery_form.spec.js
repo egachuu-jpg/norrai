@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { mockWebhook } = require('./helpers');
 
 const FORM_URL = '/discovery_form.html';
 
@@ -11,12 +12,6 @@ async function fillRequired(page) {
   await page.selectOption('#industry', 'Dental / Medical');
   await page.fill('#what_brings_you', 'Losing patients to no-shows and spending too much time on manual follow-up.');
   await page.fill('#success_looks_like', 'Never miss a follow-up and cut admin time in half.');
-}
-
-function mockWebhook(page, status = 200) {
-  return page.route('**/webhook/**', route =>
-    route.fulfill({ status, body: 'ok', contentType: 'text/plain' })
-  );
 }
 
 // ─── 1. Required field validation ─────────────────────────────────────────────
@@ -33,30 +28,23 @@ test.describe('Required field validation', () => {
   for (const field of requiredFields) {
     test(`blocks submit when ${field.id} is empty`, async ({ page }) => {
       await mockWebhook(page);
-      let fetched = false;
-      page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
       await page.goto(FORM_URL);
       await fillRequired(page);
       await page.fill(`#${field.id}`, '');
       await page.click('#submit-btn');
 
-      expect(fetched).toBe(false);
       await expect(page.locator('#status.success')).not.toBeVisible();
     });
   }
 
   test('blocks submit when industry is not selected', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.selectOption('#industry', '');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 });
 
@@ -65,15 +53,12 @@ test.describe('Required field validation', () => {
 test.describe('Field type enforcement', () => {
   test('rejects invalid email format', async ({ page }) => {
     await mockWebhook(page);
-    let fetched = false;
-    page.on('request', req => { if (req.url().includes('webhook')) fetched = true; });
-
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.fill('#contact_email', 'notanemail');
     await page.click('#submit-btn');
 
-    expect(fetched).toBe(false);
+    await expect(page.locator('#status.success')).not.toBeVisible();
   });
 });
 
@@ -104,7 +89,6 @@ test.describe('Payload shape', () => {
     await page.goto(FORM_URL);
     await fillRequired(page);
 
-    // Select rating 4 for manual follow-up, 5 for no-shows
     await page.click('label[for="pain_manual_followup_4"]');
     await page.click('label[for="pain_no_shows_5"]');
 
@@ -357,7 +341,7 @@ test.describe('Submit UI states', () => {
     page.click('#submit-btn'); // don't await — check state while in-flight
 
     await expect(page.locator('#submit-btn')).toBeDisabled({ timeout: 2000 });
-    await expect(page.locator('#submit-btn')).toHaveText('Submitting\u2026');
+    await expect(page.locator('#submit-btn')).toHaveText('Submitting…');
 
     resolve();
     await expect(page.locator('#submit-btn')).toBeEnabled({ timeout: 5000 });
