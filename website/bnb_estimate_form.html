@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get an Estimate — B&B Manufacturing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  .site-header { background: var(--ink); padding: 48px 24px 44px; border-bottom: 1px solid #1e2535; }
+  .site-header-inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--glacial); margin-bottom: 14px; }
+  .site-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 34px; letter-spacing: -0.03em; line-height: 1.05; color: var(--bone); margin-bottom: 12px; }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 480px; }
+
+  .wrap { max-width: 680px; margin: 0 auto; padding: 48px 24px 80px; }
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+  .section-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; color: var(--ink); padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .field label .opt { color: var(--muted); font-weight: 400; }
+  .field input, .field select, .field textarea {
+    font-family: var(--font-body); font-size: 14px; color: var(--ink);
+    background: var(--bone); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 10px 12px;
+    transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--glacial); box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field .hint { font-size: 12px; color: var(--muted); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* Services */
+  .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .svc-label { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bone); transition: border-color 0.15s, background 0.15s; }
+  .svc-label:has(input:checked) { border-color: var(--glacial); background: rgba(127,169,184,0.08); }
+  .svc-label input[type="checkbox"] { accent-color: var(--glacial); width: 16px; height: 16px; flex-shrink: 0; }
+
+  .service-details { margin-top: 12px; padding: 16px; background: var(--bone); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 14px; }
+  .service-details[hidden] { display: none; }
+  .service-details-title { font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--secondary); margin-bottom: 2px; }
+
+  /* Submit */
+  .submit-wrap { display: flex; flex-direction: column; gap: 12px; }
+  #submit-btn {
+    font-family: var(--font-display); font-size: 15px; font-weight: 600;
+    background: var(--ink); color: var(--bone);
+    border: none; border-radius: var(--radius-md);
+    padding: 14px 28px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  #submit-btn:hover:not(:disabled) { background: var(--graphite); }
+  #submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #status { font-size: 14px; padding: 12px 16px; border-radius: var(--radius-md); display: none; }
+  #status.success { display: block; background: var(--success-bg); color: var(--success); }
+  #status.error   { display: block; background: var(--error-bg);   color: var(--error); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <p class="eyebrow">B&amp;B Manufacturing &amp; Assembly</p>
+    <h1>Get an <span class="accent">Estimate</span></h1>
+    <p>Fill out your part specifications below. We'll email you a detailed quote within minutes.</p>
+  </div>
+</header>
+
+<div class="wrap">
+<form id="estimate-form" novalidate>
+
+  <!-- Contact Info -->
+  <div class="section-card">
+    <div class="section-title">Contact Information</div>
+    <div class="row-2">
+      <div class="field">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="company">Company <span class="opt">(optional)</span></label>
+        <input type="text" id="company" name="company" autocomplete="organization">
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="phone">Phone <span class="opt">(optional)</span></label>
+        <input type="tel" id="phone" name="phone" autocomplete="tel">
+      </div>
+    </div>
+  </div>
+
+  <!-- Part Specs -->
+  <div class="section-card">
+    <div class="section-title">Part Specifications</div>
+    <div class="field">
+      <label for="part_name">Part Name / Description</label>
+      <input type="text" id="part_name" name="part_name" required placeholder="e.g. Hydraulic Tank Bracket">
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="material_type">Material</label>
+        <select id="material_type" name="material_type" required>
+          <option value="">Select material…</option>
+          <option value="mild_steel">Mild Steel</option>
+          <option value="stainless_steel">Stainless Steel</option>
+          <option value="aluminum">Aluminum</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="thickness">Thickness (inches)</label>
+        <input type="number" id="thickness" name="thickness" required min="0.03" max="1.25" step="0.01" placeholder="0.25">
+      </div>
+    </div>
+    <div>
+      <div class="section-title" style="font-size:13px; border:none; padding-bottom:10px;">Dimensions (inches)</div>
+      <div class="row-3">
+        <div class="field">
+          <label for="length">Length</label>
+          <input type="number" id="length" name="length" required min="0.1" step="0.01" placeholder="12">
+        </div>
+        <div class="field">
+          <label for="width">Width</label>
+          <input type="number" id="width" name="width" required min="0.1" step="0.01" placeholder="8">
+        </div>
+        <div class="field">
+          <label for="height">Height</label>
+          <input type="number" id="height" name="height" required min="0.01" step="0.01" placeholder="4">
+        </div>
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="weight">Weight Estimate (lbs) <span class="opt">(optional)</span></label>
+        <input type="number" id="weight" name="weight" min="0" step="0.1" placeholder="Leave blank to auto-estimate">
+      </div>
+      <div class="field">
+        <label for="quantity">Quantity</label>
+        <input type="number" id="quantity" name="quantity" required min="1" step="1" placeholder="1">
+      </div>
+    </div>
+    <div class="field">
+      <label for="file_upload">Drawing / Sketch <span class="opt">(optional — PDF, JPG, PNG)</span></label>
+      <input type="file" id="file_upload" name="file_upload" accept=".pdf,.jpg,.jpeg,.png">
+      <span class="hint">Attach a reference file. Estimator will review before finalizing.</span>
+    </div>
+    <div class="field">
+      <label for="notes">Special Requirements <span class="opt">(optional)</span></label>
+      <textarea id="notes" name="notes" placeholder="Tolerances, surface finish, certifications, delivery requirements…"></textarea>
+    </div>
+  </div>
+
+  <!-- Services -->
+  <div class="section-card">
+    <div class="section-title">Services Needed</div>
+    <div class="services-grid">
+      <label class="svc-label"><input type="checkbox" id="svc_laser_cutting"   name="svc_laser_cutting">   Laser Cutting</label>
+      <label class="svc-label"><input type="checkbox" id="svc_waterjet"        name="svc_waterjet">        Waterjet Cutting</label>
+      <label class="svc-label"><input type="checkbox" id="svc_cnc_machining"   name="svc_cnc_machining">   CNC Machining</label>
+      <label class="svc-label"><input type="checkbox" id="svc_press_brake"     name="svc_press_brake">     Press Brake Forming</label>
+      <label class="svc-label"><input type="checkbox" id="svc_welding"         name="svc_welding">         Welding</label>
+      <label class="svc-label"><input type="checkbox" id="svc_sandblasting"    name="svc_sandblasting">    Sandblasting</label>
+      <label class="svc-label"><input type="checkbox" id="svc_powder_coating"  name="svc_powder_coating">  Powder Coating</label>
+      <label class="svc-label"><input type="checkbox" id="svc_plating"         name="svc_plating">         Plating</label>
+      <label class="svc-label"><input type="checkbox" id="svc_deburring"       name="svc_deburring">       Deburring</label>
+      <label class="svc-label"><input type="checkbox" id="svc_assembly"        name="svc_assembly">        Assembly / Kitting</label>
+    </div>
+
+    <!-- Laser Cutting details -->
+    <div id="details_laser_cutting" class="service-details" hidden>
+      <div class="service-details-title">Laser Cutting Details</div>
+      <div class="row-2">
+        <div class="field"><label for="laser_max_cut_length">Max cut length (in)</label><input type="number" id="laser_max_cut_length" name="laser_max_cut_length" min="0" step="0.1"></div>
+        <div class="field"><label for="laser_holes">Number of holes / features</label><input type="number" id="laser_holes" name="laser_holes" min="0" step="1"></div>
+      </div>
+    </div>
+
+    <!-- Waterjet details -->
+    <div id="details_waterjet" class="service-details" hidden>
+      <div class="service-details-title">Waterjet Details</div>
+      <div class="row-2">
+        <div class="field"><label for="waterjet_max_cut_length">Max cut length (in)</label><input type="number" id="waterjet_max_cut_length" name="waterjet_max_cut_length" min="0" step="0.1"></div>
+        <div class="field"><label for="waterjet_holes">Number of holes / features</label><input type="number" id="waterjet_holes" name="waterjet_holes" min="0" step="1"></div>
+      </div>
+    </div>
+
+    <!-- CNC Machining details -->
+    <div id="details_cnc_machining" class="service-details" hidden>
+      <div class="service-details-title">CNC Machining Details</div>
+      <div class="row-2">
+        <div class="field"><label for="cnc_setups">Number of setups</label><input type="number" id="cnc_setups" name="cnc_setups" min="1" step="1"></div>
+        <div class="field">
+          <label for="cnc_tolerance">Tolerance class</label>
+          <select id="cnc_tolerance" name="cnc_tolerance">
+            <option value="standard">Standard (±0.005")</option>
+            <option value="precision">Precision (±0.001")</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Press Brake details -->
+    <div id="details_press_brake" class="service-details" hidden>
+      <div class="service-details-title">Press Brake Details</div>
+      <div class="field"><label for="press_brake_bends">Number of bends</label><input type="number" id="press_brake_bends" name="press_brake_bends" min="1" step="1"></div>
+    </div>
+
+    <!-- Welding details -->
+    <div id="details_welding" class="service-details" hidden>
+      <div class="service-details-title">Welding Details</div>
+      <div class="row-2">
+        <div class="field">
+          <label for="weld_type">Weld type</label>
+          <select id="weld_type" name="weld_type">
+            <option value="mig">MIG</option>
+            <option value="tig">TIG</option>
+            <option value="robotic">Robotic</option>
+          </select>
+        </div>
+        <div class="field"><label for="weld_length">Estimated weld length (in)</label><input type="number" id="weld_length" name="weld_length" min="0" step="0.5"></div>
+      </div>
+    </div>
+
+    <!-- Sandblasting details -->
+    <div id="details_sandblasting" class="service-details" hidden>
+      <div class="service-details-title">Sandblasting Details</div>
+      <div class="field"><label for="sandblast_area">Surface area (sq ft) <span class="opt">(optional — auto-calculated from dimensions)</span></label><input type="number" id="sandblast_area" name="sandblast_area" min="0" step="0.1"></div>
+    </div>
+
+    <!-- Powder Coating details -->
+    <div id="details_powder_coating" class="service-details" hidden>
+      <div class="service-details-title">Powder Coating Details</div>
+      <div class="row-2">
+        <div class="field">
+          <label for="powder_finish">Finish type</label>
+          <select id="powder_finish" name="powder_finish">
+            <option value="standard">Standard</option>
+            <option value="custom">Custom color</option>
+          </select>
+        </div>
+        <div class="field"><label for="powder_area">Surface area (sq ft) <span class="opt">(optional)</span></label><input type="number" id="powder_area" name="powder_area" min="0" step="0.1"></div>
+      </div>
+    </div>
+
+    <!-- Plating details -->
+    <div id="details_plating" class="service-details" hidden>
+      <div class="service-details-title">Plating Details</div>
+      <div class="field">
+        <label for="plating_type">Plating type</label>
+        <select id="plating_type" name="plating_type">
+          <option value="zinc">Zinc</option>
+          <option value="nickel">Nickel</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Assembly details -->
+    <div id="details_assembly" class="service-details" hidden>
+      <div class="service-details-title">Assembly / Kitting Details</div>
+      <div class="row-2">
+        <div class="field"><label for="assembly_components">Number of components</label><input type="number" id="assembly_components" name="assembly_components" min="1" step="1"></div>
+        <div class="field"><label for="assembly_hours">Estimated assembly hours <span class="opt">(optional)</span></label><input type="number" id="assembly_hours" name="assembly_hours" min="0" step="0.5"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-wrap">
+    <button type="submit" id="submit-btn">Send Quote Request</button>
+    <div id="status" role="alert"></div>
+  </div>
+
+</form>
+</div>
+
+<script>
+const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/bnb-estimate';
+const NORR_TOKEN  = '8F68D963-7060-4033-BD04-7593E4B203CB';
+
+// ── Conditional service detail fields ─────────────────────────────────────────
+const SERVICE_DETAIL_MAP = {
+  svc_laser_cutting:  'details_laser_cutting',
+  svc_waterjet:       'details_waterjet',
+  svc_cnc_machining:  'details_cnc_machining',
+  svc_press_brake:    'details_press_brake',
+  svc_welding:        'details_welding',
+  svc_sandblasting:   'details_sandblasting',
+  svc_powder_coating: 'details_powder_coating',
+  svc_plating:        'details_plating',
+  svc_assembly:       'details_assembly',
+};
+
+Object.entries(SERVICE_DETAIL_MAP).forEach(([checkboxId, detailsId]) => {
+  const checkbox = document.getElementById(checkboxId);
+  const details  = document.getElementById(detailsId);
+  if (!checkbox || !details) return;
+  checkbox.addEventListener('change', () => {
+    details.hidden = !checkbox.checked;
+  });
+});
+
+// ── Form submission ────────────────────────────────────────────────────────────
+document.getElementById('estimate-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form   = e.target;
+  const status = document.getElementById('status');
+  const btn    = document.getElementById('submit-btn');
+
+  status.className = '';
+  status.style.display = '';
+  status.textContent = '';
+
+  // Required field validation
+  const required = ['name', 'email', 'part_name', 'material_type', 'thickness', 'length', 'width', 'height', 'quantity'];
+  for (const id of required) {
+    const el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      status.className = 'error';
+      status.textContent = 'Please fill in all required fields.';
+      el && el.focus();
+      return;
+    }
+  }
+
+  // Email format
+  const emailEl = document.getElementById('email');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim())) {
+    status.className = 'error';
+    status.textContent = 'Please enter a valid email address.';
+    emailEl.focus();
+    return;
+  }
+
+  // At least one service selected
+  const serviceCheckboxes = Object.keys(SERVICE_DETAIL_MAP);
+  const anySelected = serviceCheckboxes.some(id => document.getElementById(id)?.checked);
+  if (!anySelected) {
+    status.className = 'error';
+    status.textContent = 'Please select at least one service.';
+    return;
+  }
+
+  // Build services array
+  const services = [];
+  if (document.getElementById('svc_laser_cutting').checked) {
+    services.push({ name: 'laser_cutting', max_cut_length: parseFloat(document.getElementById('laser_max_cut_length').value) || null, holes: parseInt(document.getElementById('laser_holes').value) || null });
+  }
+  if (document.getElementById('svc_waterjet').checked) {
+    services.push({ name: 'waterjet', max_cut_length: parseFloat(document.getElementById('waterjet_max_cut_length').value) || null, holes: parseInt(document.getElementById('waterjet_holes').value) || null });
+  }
+  if (document.getElementById('svc_cnc_machining').checked) {
+    services.push({ name: 'cnc_machining', setups: parseInt(document.getElementById('cnc_setups').value) || null, tolerance: document.getElementById('cnc_tolerance').value });
+  }
+  if (document.getElementById('svc_press_brake').checked) {
+    services.push({ name: 'press_brake', bends: parseInt(document.getElementById('press_brake_bends').value) || null });
+  }
+  if (document.getElementById('svc_welding').checked) {
+    services.push({ name: document.getElementById('weld_type').value + '_welding', weld_length_in: parseFloat(document.getElementById('weld_length').value) || null });
+  }
+  if (document.getElementById('svc_sandblasting').checked) {
+    services.push({ name: 'sandblasting', surface_area_sqft: parseFloat(document.getElementById('sandblast_area').value) || null });
+  }
+  if (document.getElementById('svc_powder_coating').checked) {
+    services.push({ name: 'powder_coating', finish_type: document.getElementById('powder_finish').value, surface_area_sqft: parseFloat(document.getElementById('powder_area').value) || null });
+  }
+  if (document.getElementById('svc_plating').checked) {
+    services.push({ name: document.getElementById('plating_type').value + '_plating' });
+  }
+  if (document.getElementById('svc_deburring').checked) {
+    services.push({ name: 'deburring' });
+  }
+  if (document.getElementById('svc_assembly').checked) {
+    services.push({ name: 'assembly', components: parseInt(document.getElementById('assembly_components').value) || null, est_hours: parseFloat(document.getElementById('assembly_hours').value) || null });
+  }
+
+  const payload = {
+    name:          document.getElementById('name').value.trim(),
+    company:       document.getElementById('company').value.trim(),
+    email:         document.getElementById('email').value.trim(),
+    phone:         document.getElementById('phone').value.trim(),
+    part_name:     document.getElementById('part_name').value.trim(),
+    material_type: document.getElementById('material_type').value,
+    thickness:     parseFloat(document.getElementById('thickness').value),
+    length:        parseFloat(document.getElementById('length').value),
+    width:         parseFloat(document.getElementById('width').value),
+    height:        parseFloat(document.getElementById('height').value),
+    weight:        parseFloat(document.getElementById('weight').value) || null,
+    quantity:      parseInt(document.getElementById('quantity').value),
+    notes:         document.getElementById('notes').value.trim(),
+    services,
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Norr-Token': NORR_TOKEN },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    status.className = 'success';
+    status.textContent = 'Your quote request has been sent. Check your email — you\'ll have an estimate within minutes.';
+    form.reset();
+    Object.values(SERVICE_DETAIL_MAP).forEach(id => { document.getElementById(id).hidden = true; });
+  } catch (err) {
+    status.className = 'error';
+    status.textContent = 'Something went wrong. Please try again or email us directly.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Quote Request';
+  }
+});
+</script>
+</body>
+</html>

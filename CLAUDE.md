@@ -142,6 +142,7 @@ norrai/
 │   ├── open_house_setup.html   # Open house QR code generator — agent-facing, token protected
 │   ├── open_house.html         # Open house sign-in — public, QR code, reads URL params (address, agent, notes)
 │   ├── nurture_enroll.html     # Cold nurture enrollment — agent-facing, token protected
+│   ├── review_request.html     # Review request — agent-facing, token protected
 │   ├── event_ops_discovery.html
 │   ├── onboarding_form.html
 │   ├── brand_concepts.html
@@ -224,17 +225,24 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)
 - [x] Design Postgres schema as connective tissue between Tier 1 and Tier 2
 - [x] Build real estate Starter workflows: instant lead response, open house setup + follow-up, 7-touch cold nurture
-- [ ] Build real estate Starter: review request (last remaining piece)
-- [ ] Test and promote real estate workflows to production — see `n8n/TESTING_GUIDE.md`
+- [x] Build real estate Starter: review request — form + workflow + tests complete (2026-04-30)
+- [x] Test and promote real estate workflows to production — open house setup + follow-up confirmed working
 - [ ] Re-import Real Estate Open House Follow-Up workflow in n8n (prompt updated to use property highlights, fix hallucination)
 - [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
 - [ ] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
 - [ ] Set up internal monitoring dashboard (red/green per client status) — needed at 10+ clients
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
+- [x] Build B&B Manufacturing estimating demo — form + n8n workflow + tests (see 2026-04-29 session log)
+- [x] Build B&B lead generator workflow — n8n schedule + Apollo.io + Claude scoring + SendGrid review email + Neon logging
+- [ ] Smoke test B&B workflow: import JSON into n8n, fire test payload, verify estimate email
+- [ ] Swap placeholder rates with real B&B rates once obtained
+- [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
+- [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
 
 ### First Client Targets
 - Insurance broker friend — Salesforce user, discovery call framework ready
 - Dental and real estate — easiest to template and repeat
+- **B&B Manufacturing** (Faribault, MN) — warm prospect, demo estimating workflow built; lead generator workflow built; pending smoke tests and n8n import for both; Apollo.io account is a required dependency B&B must provision
 
 ---
 
@@ -306,11 +314,33 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - Discussed DB architecture: `appointments` table schema is fine to keep, but don't build calendar scraping/normalization layer until a real client forces it
 - Discussed agent-facing form auth: Cloudflare Access (Zero Trust) is the right answer — free up to 50 users, email OTP, protects specific paths; defer until first real agent client
 
+### 2026-04-30
+- Fixed Open House Setup workflow: HTML email was arriving as a file attachment in Gmail due to unescaped `&` in QR/signin URLs inside HTML attributes
+- Moved email HTML construction into the "Build QR URL" Code node with `&amp;`-escaped URLs
+- Replaced SendGrid node with HTTP Request node calling SendGrid v3 API directly (`text/html` content type, `JSON.stringify` for body value)
+- Requires "Header Auth" credential in n8n: Authorization: Bearer SG.xxx
+- Open House Setup + Open House Follow-Up both tested and confirmed working end to end
+- Built `website/review_request.html` + `n8n/workflows/Real Estate Review Request.json` — agent form triggers Claude-personalized SMS + email to closed client after 1/3/7-day delay; localStorage agent profile (name, Google URL, Zillow URL); 20 Playwright tests passing
+
+### 2026-04-29
+- Brainstormed and designed automated estimating workflow for **B&B Manufacturing and Assembly** (Faribault, MN) — 55,000 sq ft metal fab shop, 50+ employees, custom fabrication for OEMs across ag, aerospace, food processing, industrial markets
+- Design: web form → n8n → Claude API (line-item estimate with rate card) → SendGrid email to submitter within ~60 seconds; no human in the loop for demo
+- Built `website/bnb_estimate_form.html` — all 10 services (laser cutting, waterjet, CNC, press brake, welding, sandblasting, powder coating, plating, deburring, assembly), conditional detail fields per service, Polar Modern design
+- Built `n8n/workflows/B&B Manufacturing Estimate.json` — 6 nodes: Webhook (responds immediately) → Token Check → Build Claude Prompt (Code) → Claude API → Parse + Build Email (Code) → SendGrid
+- Rate card baked into Claude prompt as placeholder rates; designed for easy swap to Google Sheets in production
+- Claude outputs structured JSON; Code node builds full HTML email with line-item table, totals, lead time, disclaimer
+- Added 24 Playwright tests (`tests/bnb_estimate_form.spec.js`) — all passing; full suite 132/132
+- Added B&B testing section to `n8n/TESTING_NOTES.md` — import checklist, test payload, known gaps
+- Design spec: `docs/superpowers/specs/2026-04-28-bnb-estimating-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-04-28-bnb-estimating.md`
+- **Pending:** smoke test (import workflow into n8n, fire test payload, verify email) — deferred to after work
+- Brainstormed and designed automated lead generator for B&B Manufacturing — Monday 6am schedule, Apollo.io search (250-mile radius, OEM industries, decision-maker titles, verified emails), Google Sheet exclusion list with JobBOSS stub, Claude scoring (1-10, 8+ threshold), SendGrid review email to B&B inbox with drafted outreach copy, Neon logging per qualified lead
+- Design spec: `docs/superpowers/specs/2026-04-29-bnb-lead-generator-design.md`; Implementation plan: `docs/superpowers/plans/2026-04-29-bnb-lead-generator.md`
+
 ### 2026-04-28
 - Built `website/open_house_setup.html` + `n8n/workflows/Real Estate Open House Setup.json` — agent enters name/email/phone/address/MLS description; Claude extracts 3–5 property highlights; QR code generated via qrserver.com and emailed to agent; highlights encoded as `notes` param in the sign-in URL
 - Updated `website/open_house.html` to read `notes` URL param and pass it as `property_notes` in the form payload
-- Updated `Real Estate Open House Follow-Up.json`: threaded `property_notes` through all nodes (Prep Wait Time, Extract Message); updated Build Prompt to include a PROPERTY HIGHLIGHTS section and instruct Claude to only reference listed details — fixes hallucinated property features (e.g. "spacious backyard" on wrong houses)
-- **Open house QR code flow:** agent runs setup form → gets QR via email → prints and tapes to door → attendees scan and sign in → Claude uses real listing highlights in follow-up
+- Updated `Real Estate Open House Follow-Up.json`: threaded `property_notes` through all nodes; updated Build Prompt to include a PROPERTY HIGHLIGHTS section — fixes hallucinated property features
 - **Webhook URL (setup):** `https://norrai.app.n8n.cloud/webhook/open-house-setup`
 - **Re-import required:** Real Estate Open House Follow-Up workflow must be re-imported in n8n to pick up prompt changes
 

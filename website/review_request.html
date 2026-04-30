@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Request — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--bone);
+    margin-bottom: 12px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-body { padding: 24px; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+  label .opt { font-weight: 400; color: var(--muted); margin-left: 4px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239EA3AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 15px 24px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  @media (max-width: 580px) {
+    .row { grid-template-columns: 1fr; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · Real Estate</div>
+    <h1>Review<br><span class="accent">Request</span></h1>
+    <p>After closing, send a warm, personalized review request via SMS and email. Claude writes it — you just fill in the details.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="review-form" novalidate>
+
+    <!-- 01 Agent Profile -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">Your Profile</span>
+        <span id="agent-saved-badge" style="display:none; font-family:var(--font-mono); font-size:10px; color:var(--glacial); margin-left:auto; align-items:center; gap:6px;">
+          · saved
+          <button type="button" id="clear-agent" style="font-family:var(--font-mono); font-size:10px; color:var(--muted); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline;">clear</button>
+        </span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="agent_name">Your name <span class="req">*</span></label>
+          <input type="text" id="agent_name" name="agent_name" autocomplete="name" placeholder="Jane Smith" required>
+        </div>
+        <div class="field">
+          <label for="google_url">Google review link <span class="req">*</span></label>
+          <input type="url" id="google_url" name="google_url" placeholder="https://g.page/r/your-review-link" required>
+          <div class="hint">Find this in your Google Business Profile → Ask for reviews.</div>
+        </div>
+        <div class="field">
+          <label for="zillow_url">Zillow review link <span class="opt">(optional)</span></label>
+          <input type="url" id="zillow_url" name="zillow_url" placeholder="https://zillow.com/profile/your-name">
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Closed Client -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">Closed Client</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="client_name">Client first name <span class="req">*</span></label>
+          <input type="text" id="client_name" name="client_name" placeholder="Sarah" required>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="client_phone">Client phone <span class="req">*</span></label>
+            <input type="tel" id="client_phone" name="client_phone" placeholder="5075551234" required>
+          </div>
+          <div class="field">
+            <label for="client_email">Client email <span class="opt">(optional)</span></label>
+            <input type="email" id="client_email" name="client_email" placeholder="sarah@gmail.com">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Transaction -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">Transaction</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field">
+            <label for="transaction_type">Transaction type <span class="req">*</span></label>
+            <select id="transaction_type" name="transaction_type" required>
+              <option value="buyer">Buyer</option>
+              <option value="seller">Seller</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="delay_days">Send review request</label>
+            <select id="delay_days" name="delay_days">
+              <option value="1">In 1 day</option>
+              <option value="3" selected>In 3 days</option>
+              <option value="7">In 7 days</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="property_address">Property address <span class="req">*</span></label>
+          <input type="text" id="property_address" name="property_address" placeholder="123 Maple St, Faribault, MN 55021" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <div id="status" class="status" role="alert"></div>
+      <button type="submit" id="submit-btn">Send Review Request →</button>
+    </div>
+
+  </form>
+
+  <footer>
+    <p>Norr AI &nbsp;·&nbsp; <a href="mailto:hello@norrai.co">hello@norrai.co</a> &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+  </footer>
+</div>
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/review-request';
+  const AGENT_KEY   = 'norrai_agent_profile_review';
+
+  // ─── Agent persistence ────────────────────────────────────────────────────
+  const agentBadge = document.getElementById('agent-saved-badge');
+
+  function showAgentBadge() { agentBadge.style.display = 'flex'; }
+  function hideAgentBadge() { agentBadge.style.display = 'none'; }
+
+  function loadAgent() {
+    const saved = JSON.parse(localStorage.getItem(AGENT_KEY) || 'null');
+    if (!saved) return;
+    document.getElementById('agent_name').value = saved.agent_name || '';
+    document.getElementById('google_url').value  = saved.google_url  || '';
+    document.getElementById('zillow_url').value  = saved.zillow_url  || '';
+    if (saved.agent_name) showAgentBadge();
+  }
+
+  function saveAgent(payload) {
+    localStorage.setItem(AGENT_KEY, JSON.stringify({
+      agent_name: payload.agent_name,
+      google_url: payload.google_url,
+      zillow_url: payload.zillow_url,
+    }));
+  }
+
+  document.getElementById('clear-agent').addEventListener('click', () => {
+    localStorage.removeItem(AGENT_KEY);
+    ['agent_name', 'google_url', 'zillow_url'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    hideAgentBadge();
+  });
+
+  loadAgent();
+
+  // ─── Form submission ──────────────────────────────────────────────────────
+  const form   = document.getElementById('review-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const fd = new FormData(form);
+
+    const payload = {
+      agent_name:       fd.get('agent_name')       || '',
+      google_url:       fd.get('google_url')        || '',
+      zillow_url:       fd.get('zillow_url')        || '',
+      client_name:      fd.get('client_name')       || '',
+      client_phone:     fd.get('client_phone')      || '',
+      client_email:     fd.get('client_email')      || '',
+      transaction_type: fd.get('transaction_type')  || 'buyer',
+      property_address: fd.get('property_address')  || '',
+      delay_days:       Number(fd.get('delay_days') || 3),
+      submitted_at:     new Date().toISOString(),
+      source_form:      'review_request_web',
+    };
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': '8F68D963-7060-4033-BD04-7593E4B203CB',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      saveAgent(payload);
+      showAgentBadge();
+
+      const delayText = payload.delay_days === 1 ? 'tomorrow' : `in ${payload.delay_days} days`;
+      status.textContent = `✓ Review request for ${payload.client_name} is scheduled — it goes out ${delayText} via SMS${payload.client_email ? ' and email' : ''}.`;
+      status.className = 'status success show';
+
+      // Clear client + transaction fields, keep agent profile
+      ['client_name', 'client_phone', 'client_email', 'property_address'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('transaction_type').value = 'buyer';
+      document.getElementById('delay_days').value = '3';
+
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co.`;
+      status.className = 'status error show';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Review Request →';
+    }
+  });
+</script>
+</body>
+</html>
