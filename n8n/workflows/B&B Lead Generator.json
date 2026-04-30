@@ -141,7 +141,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const claudeResponse = $input.first().json;\nconst text = claudeResponse.content[0].text.trim();\nconst { score, reason } = JSON.parse(text);\n\n// Carry lead fields from Split by Lead through the Claude HTTP call\n// .item gives the current batch item (not the first item across all batches)\nconst lead = $('Split by Lead').item.json;\n\nreturn [{\n  json: {\n    first_name: lead.first_name,\n    last_name: lead.last_name,\n    full_name: lead.full_name,\n    title: lead.title,\n    email: lead.email,\n    company: lead.company,\n    website: lead.website,\n    city: lead.city,\n    state: lead.state,\n    score,\n    reason\n  }\n}];"
+        "jsCode": "const claudeResponse = $input.first().json;\nlet score = 0;\nlet reason = 'Claude returned malformed JSON — skipping this lead';\ntry {\n  const text = claudeResponse.content[0].text.trim();\n  const parsed = JSON.parse(text);\n  score = parsed.score;\n  reason = parsed.reason;\n} catch (e) {\n  // score stays 0, IF node routes to false branch and silently drops this lead\n}\n\n// Carry lead fields from Split by Lead through the Claude HTTP call\n// .item gives the current batch item (not the first item across all batches)\nconst lead = $('Split by Lead').item.json;\n\nreturn [{\n  json: {\n    first_name: lead.first_name,\n    last_name: lead.last_name,\n    full_name: lead.full_name,\n    title: lead.title,\n    email: lead.email,\n    company: lead.company,\n    website: lead.website,\n    city: lead.city,\n    state: lead.state,\n    score,\n    reason\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -253,7 +253,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO leads (lead_name, email, phone, source, metadata, created_at)\nVALUES (\n  '{{ $json.full_name }}',\n  '{{ $json.email }}',\n  NULL,\n  'bnb_lead_generator',\n  '{\"company\": \"{{ $json.company }}\", \"title\": \"{{ $json.title }}\", \"location\": \"{{ $json.city }}, {{ $json.state }}\", \"apollo_score\": {{ $json.score }}, \"score_reason\": \"{{ $json.reason }}\", \"draft_sent\": true}'::jsonb,\n  NOW()\n)"
+        "query": "=INSERT INTO leads (lead_name, email, phone, source, metadata, created_at)\nVALUES (\n  '{{ $json.full_name.replace(/'/g, \"''\") }}',\n  '{{ $json.email.replace(/'/g, \"''\") }}',\n  NULL,\n  'bnb_lead_generator',\n  '{{ JSON.stringify({company: $json.company, title: $json.title, location: $json.city + \", \" + $json.state, apollo_score: $json.score, score_reason: $json.reason, draft_sent: true}).replace(/'/g, \"''\") }}'::jsonb,\n  NOW()\n)"
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
