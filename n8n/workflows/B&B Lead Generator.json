@@ -99,7 +99,8 @@
       "typeVersion": 2,
       "position": [960, 300],
       "id": "b3b4c5d6-0004-4000-8000-000000000004",
-      "name": "Filter and Dedup"
+      "name": "Filter and Dedup",
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -229,13 +230,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const claudeResponse = $input.first().json;\nconst draft = claudeResponse.content[0].text.trim();\n\nconst lead = $('Parse Score').item.json;\n\nreturn [{\n  json: {\n    first_name: lead.first_name,\n    last_name: lead.last_name,\n    full_name: lead.full_name,\n    title: lead.title,\n    email: lead.email,\n    company: lead.company,\n    city: lead.city,\n    state: lead.state,\n    score: lead.score,\n    reason: lead.reason,\n    draft\n  }\n}];"
+        "jsCode": "const claudeResponse = $input.first().json;\nlet draft = '[Draft unavailable — Claude API error]';\ntry {\n  draft = claudeResponse.content[0].text.trim();\n} catch (e) {\n  // draft stays as fallback string\n}\n\nconst lead = $('Parse Score').item.json;\n\nreturn [{\n  json: {\n    first_name: lead.first_name,\n    last_name: lead.last_name,\n    full_name: lead.full_name,\n    title: lead.title,\n    email: lead.email,\n    company: lead.company,\n    city: lead.city,\n    state: lead.state,\n    score: lead.score,\n    reason: lead.reason,\n    draft\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [2220, 200],
       "id": "b3b4c5d6-0010-4000-8000-000000000010",
-      "name": "Parse Draft"
+      "name": "Parse Draft",
+      "continueOnFail": true
     },
     {
       "parameters": {
