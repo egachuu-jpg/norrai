@@ -64,7 +64,7 @@ Loop-back connections are unchanged: Accumulate Lead → Split by Lead (true bra
 
 ## Summary Email
 
-**From:** studio@norrai.co
+**From:** hello@norrai.co
 **To:** egachuu@gmail.com (placeholder — replace with B&B inbox before go-live)
 **Subject:** `B&B Lead Prospects — Week of {{date}} ({{n}} qualified)`
 

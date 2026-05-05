@@ -112,7 +112,7 @@
         "nodeCredentialType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{ \"to\": [{ \"email\": \"{{ $json.submitter_email }}\" }] }],\n  \"from\": { \"email\": \"studio@norrai.co\", \"name\": \"B&B Manufacturing\" },\n  \"subject\": \"Estimate for {{ $json.part_name }} — B&B Manufacturing\",\n  \"content\": [{ \"type\": \"text/html\", \"value\": {{ JSON.stringify($json.emailHtml) }} }]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{ \"to\": [{ \"email\": \"{{ $json.submitter_email }}\" }] }],\n  \"from\": { \"email\": \"hello@norrai.co\", \"name\": \"B&B Manufacturing\" },\n  \"subject\": \"Estimate for {{ $json.part_name }} — B&B Manufacturing\",\n  \"content\": [{ \"type\": \"text/html\", \"value\": {{ JSON.stringify($json.emailHtml) }} }]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",

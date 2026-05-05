@@ -135,7 +135,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": \"Your open house QR code \\u2014 {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": \"Your open house QR code \\u2014 {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",

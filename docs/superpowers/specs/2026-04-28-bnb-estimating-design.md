@@ -38,7 +38,7 @@ Submitter fills form
   → Neon: insert row into leads + workflow_events
 ```
 
-**Stack:** n8n Cloud + Claude API + SendGrid (studio@norrai.co) + Neon Postgres
+**Stack:** n8n Cloud + Claude API + SendGrid (hello@norrai.co) + Neon Postgres
 
 **Rate card — demo:** Stored in n8n Set node as structured JSON. Swappable to Google Sheets (n8n native node) for production so B&B staff can update rates without developer involvement.
 
@@ -132,7 +132,7 @@ Claude receives a single prompt containing: rate card + part specs + selected se
 
 ## Email Output
 
-**From:** studio@norrai.co (B&B branded address in production)
+**From:** hello@norrai.co (B&B branded address in production)
 **To:** Submitter email
 **Subject:** `Estimate for [Part Name] — B&B Manufacturing`
 
@@ -181,7 +181,7 @@ One row per workflow run — captures success/failure and full Claude response f
 | Component | Demo | Production |
 |---|---|---|
 | Rate card | n8n Set node | Google Sheets (n8n native node) |
-| Sender address | studio@norrai.co | B&B branded address |
+| Sender address | hello@norrai.co | B&B branded address |
 | Auth | None (demo) | Cloudflare Access (Zero Trust) |
 | File handling | Forwarded as attachment | Linked from submission |
 

@@ -107,7 +107,7 @@
     {
       "parameters": {
         "resource": "mail",
-        "fromEmail": "studio@norrai.co",
+        "fromEmail": "hello@norrai.co",
         "fromName": "Norr AI",
         "toEmail": "={{ $node[\"Parse HTML\"].json.agent_email }}",
         "subject": "=New listing copy ready — {{ $json.headline }}",

@@ -86,7 +86,7 @@
         },
         "sendBody": true,
         "specifyBody": "string",
-        "body": "={{ JSON.stringify({ personalizations: [{ to: [{ email: 'hello@norrai.co', name: 'Egan' }], subject: $json.subject }], from: { email: 'studio@norrai.co', name: 'Norr AI' }, content: [{ type: 'text/html', value: $json.html_body }] }) }}",
+        "body": "={{ JSON.stringify({ personalizations: [{ to: [{ email: 'hello@norrai.co', name: 'Egan' }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: 'Norr AI' }, content: [{ type: 'text/html', value: $json.html_body }] }) }}",
         "options": {}
       },
       "id": "e2b7a6f5-c8d9-8e00-3a2b-5c6d7e8f9a0b",

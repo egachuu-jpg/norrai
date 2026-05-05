@@ -1065,7 +1065,7 @@ return [{ json: { emailHtml, submitter_name, submitter_email, part_name, estimat
 - **Type:** SendGrid
 - **Name:** `Send Estimate Email`
 - **Operation:** Send email
-- **From:** `studio@norrai.co`
+- **From:** `hello@norrai.co`
 - **From Name:** `B&B Manufacturing`
 - **To:** `={{ $json.submitter_email }}`
 - **Subject:** `Estimate for {{ $json.part_name }} — B&B Manufacturing`

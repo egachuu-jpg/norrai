@@ -211,7 +211,7 @@
     {
       "parameters": {
         "resource": "mail",
-        "fromEmail": "studio@norrai.co",
+        "fromEmail": "hello@norrai.co",
         "fromName": "={{ $json.agent_name }}",
         "toEmail": "={{ $json.email }}",
         "subject": "=Thanks for stopping by {{ $json.property_address }}",
