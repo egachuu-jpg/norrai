@@ -117,7 +117,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"studio@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"hello@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
         "options": {}
       },
       "id": "a1b2c3d4-1111-4abc-b000-000000000007",

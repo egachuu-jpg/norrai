@@ -6,7 +6,7 @@ Norr AI is an AI automation agency targeting local businesses in Faribault and s
 
 - **Domain:** norrai.co
 - **Primary email:** hello@norrai.co
-- **Automation email:** studio@norrai.co (SendGrid verified sender)
+- **Automation email:** hello@norrai.co (SendGrid verified sender)
 - **LLC:** Filed with Minnesota SOS — pending approval
 - **EIN:** Obtained
 - **Banking:** Relay — pending approval
@@ -31,7 +31,7 @@ Norr AI is an AI automation agency targeting local businesses in Faribault and s
 | n8n Cloud | Workflow automation — Starter and Growth delivery |
 | Claude API | Intelligence layer across all tiers |
 | Twilio | SMS delivery — one subaccount per client |
-| SendGrid | Email delivery via studio@norrai.co |
+| SendGrid | Email delivery via hello@norrai.co |
 | Neon (Postgres) | Connective tissue between Tier 1 and Tier 2 — project: `norrai`, hosted on Neon (`gentle-hill-54285247`) |
 | Claude Code | Custom Tier 3 builds |
 | Hoppscotch | Webhook testing (dev only) |
@@ -109,7 +109,7 @@ parseInt(new Date().toLocaleString('en-US', {timeZone: 'America/Chicago', hour12
 - **Status:** Working end to end
 - **Stack:** Webhook → Set node (build prompt) → HTTP Request (Claude API) → Code node (parse response) → SendGrid
 - Claude returns plain text with `HEADLINE:` / `MLS_DESCRIPTION:` / `SOCIAL_MEDIA_POST:` labels — Code node splits on these
-- Email sends from studio@norrai.co via SendGrid native n8n node
+- Email sends from hello@norrai.co via SendGrid native n8n node
 - Agent voice personalization: few-shot prompting with 3–5 of agent's previous listings pasted into prompt
 - **Webhook URL:** `https://norrai.app.n8n.cloud/webhook/listing-description`
 
@@ -220,6 +220,16 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Upgrade Twilio account, buy local 507 number, replace toll-free 855
 - [x] Complete SendGrid domain authentication DNS records for norrai.co
 - [ ] Open Relay business bank account once MN LLC approval certificate arrives
+
+### Security (Pre-First Client)
+- [ ] Fix `innerHTML` → `textContent` in `open_house_setup.html` line 307 — XSS code smell, one-line fix
+- [ ] Add token check to `event_ops_discovery.html` n8n workflow — only form without webhook auth
+- [ ] Set up Cloudflare Access (Zero Trust) on all agent-facing forms (`/lead_response`, `/open_house_setup`, `/nurture_enroll`, `/review_request`) — replaces hardcoded token as real auth layer; free up to 50 users, email OTP
+- [ ] Add rate limiting to n8n webhook endpoints — prevent abuse before first live client
+- [ ] Add server-side input validation in n8n workflows — currently all validation is client-side only and can be bypassed via curl
+- [ ] Enforce exact match (not `startsWith`) on token check IF nodes across all workflows
+- [ ] Encrypt PII columns in Neon DB (phone, email, name) using pgcrypto — currently plaintext
+- [ ] Add explicit input escaping for user-supplied fields in n8n Claude prompt templates (lead_name, lead_message) — prompt injection hardening
 
 ### Near Term
 - [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)

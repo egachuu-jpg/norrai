@@ -186,7 +186,7 @@
     {
       "parameters": {
         "resource": "mail",
-        "fromEmail": "studio@norrai.co",
+        "fromEmail": "hello@norrai.co",
         "fromName": "Norr AI",
         "toEmail": "={{ $json.agent_email }}",
         "subject": "=Lead response sent — {{ $json.lead_name }} re: {{ $json.property_address }}",

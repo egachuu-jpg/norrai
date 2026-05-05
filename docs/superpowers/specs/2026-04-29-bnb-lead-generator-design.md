@@ -165,7 +165,7 @@ Return ONLY the email body. No subject line. No formatting markers.
 
 One email per qualified lead sent to `egachuu@gmail.com` (placeholder — replace with B&B inbox before go-live).
 
-**From:** studio@norrai.co
+**From:** hello@norrai.co
 **Subject:** `Lead Review — {{first_name}} {{last_name}}, {{company}} (Score: {{score}}/10)`
 
 **Body:**
@@ -242,7 +242,7 @@ To use: copy the draft above and send from your own email address.
 | Exclusion list | Google Sheet | JobBOSS API lookup |
 | Review email recipient | egachuu@gmail.com | B&B sales inbox |
 | LinkedIn enrichment | Stubbed (comment only) | Apify actor |
-| Sender address | studio@norrai.co | B&B branded address |
+| Sender address | hello@norrai.co | B&B branded address |
 | Apollo account | B&B provisions | B&B provisions |
 
 ---

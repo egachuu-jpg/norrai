@@ -110,7 +110,7 @@
       "name": "Extract T1"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "studio@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [1640, 300],
@@ -206,7 +206,7 @@
       "name": "Extract T3"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "studio@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [3640, 300],
@@ -302,7 +302,7 @@
       "name": "Extract T5"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "studio@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [5640, 300],

@@ -444,7 +444,7 @@ Replace `n8n/workflows/B&B Lead Generator.json` entirely with:
     {
       "parameters": {
         "resource": "mail",
-        "fromEmail": "studio@norrai.co",
+        "fromEmail": "hello@norrai.co",
         "fromName": "Norr AI",
         "toEmail": "egachuu@gmail.com",
         "subject": "={{ $json.subject }}",

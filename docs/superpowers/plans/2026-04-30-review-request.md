@@ -979,7 +979,7 @@ git commit -m "feat: add review request form and tests"
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $('Parse + Build Email').first().json.client_email }}\"}]}],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": {{ JSON.stringify($('Parse + Build Email').first().json.email_subject) }},\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($('Parse + Build Email').first().json.email_html) }}}]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $('Parse + Build Email').first().json.client_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": {{ JSON.stringify($('Parse + Build Email').first().json.email_subject) }},\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($('Parse + Build Email').first().json.email_html) }}}]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",

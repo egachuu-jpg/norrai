@@ -281,7 +281,7 @@ Create `n8n/workflows/B&B Lead Generator.json` with this exact content:
     {
       "parameters": {
         "resource": "mail",
-        "fromEmail": "studio@norrai.co",
+        "fromEmail": "hello@norrai.co",
         "fromName": "Norr AI",
         "toEmail": "egachuu@gmail.com",
         "subject": "=Lead Review \u2014 {{ $json.full_name }}, {{ $json.company }} (Score: {{ $json.score }}/10)",

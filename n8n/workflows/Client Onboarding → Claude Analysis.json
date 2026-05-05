@@ -98,7 +98,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"studio@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }] } }}",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"hello@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }] } }}",
         "options": {}
       },
       "id": "39cfb0f7-3b32-49b8-9c66-4870ba585572",
