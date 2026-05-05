@@ -254,19 +254,39 @@ B&B must create an Apollo.io account and generate an API key (Settings → API �
 
 The Parse Score and Parse Draft code nodes use `$('Split by Lead').item.json` and `$('Parse Score').item.json` to carry lead fields across node boundaries inside the SplitInBatches loop. **Verify these references resolve correctly on the first test run.** Check the output of Parse Score and Parse Draft in Executions — if `first_name`, `company`, `score`, etc. are blank or undefined, the `.item` reference broke. Fix: add a Set node before each Claude HTTP Request to explicitly copy `$json.*` fields, removing the need for back-references.
 
+### Credentials to re-link after import
+
+After importing the new JSON, re-link these credentials in n8n (node IDs changed):
+- Search Apollo → HTTP Header Auth (Apollo API Key)
+- Read Exclusion Sheet → Google Sheets OAuth2
+- Score with Claude → Anthropic account 2
+- Draft Outreach → Anthropic account 2
+- Send Review Email → SendGrid account
+- Log All to Neon → Postgres account (Neon)
+
 ### Test checklist
 
-- [ ] Import workflow, configure all 6 credentials
+- [ ] Import new workflow JSON, re-link all 6 credentials
 - [ ] Update spreadsheet ID in Read Exclusion Sheet node
-- [ ] Add one test company to exclusion sheet (e.g., "B&B Manufacturing" / "bBmfg.com")
-- [ ] Manually trigger — confirm Apollo returns contacts in execution output
-- [ ] Confirm excluded company is filtered out in Filter and Dedup output
-- [ ] Check Parse Score output — confirm score and reason fields are populated with real lead data
-- [ ] Confirm leads scoring >= 8 produce a review email with name, company, score, reason, and draft
-- [ ] Confirm leads scoring < 8 are silently skipped (no email, no Neon row)
-- [ ] Confirm Neon `leads` table has a row for each qualified lead: `SELECT * FROM leads WHERE source = 'bnb_lead_generator';`
+- [ ] Manually trigger — confirm Initialize Accumulator runs first (check execution output)
+- [ ] Confirm Filter and Dedup stores apolloReturned/afterDedup (check staticData in execution)
+- [ ] Confirm excluded companies are filtered out
+- [ ] Confirm Accumulate Lead pushes each qualified lead into staticData.qualifiedLeads
+- [ ] Confirm Build Summary Email fires after loop completes (done output)
+- [ ] Confirm one email arrives at egachuu@gmail.com with all leads in a single message
+- [ ] If 0 leads qualify: confirm "no leads" email arrives with correct subject
+- [ ] Confirm Neon `leads` table has one row per qualified lead: `SELECT * FROM leads WHERE source = 'bnb_lead_generator' ORDER BY created_at DESC;`
+- [ ] Confirm Neon `workflow_events` has one row per run: `SELECT * FROM workflow_events WHERE workflow_name = 'bnb_lead_generator' ORDER BY created_at DESC;`
 - [ ] Replace egachuu@gmail.com with B&B inbox before activating for production
 - [ ] Activate workflow — fires automatically Monday 11am UTC
+
+### Known bugs / fixes applied
+
+**SplitInBatches only processed one lead (2026-05-04):** The workflow JSON was missing loop-back connections. `SplitInBatches` requires every exit path to wire back to the `Split by Lead` node to advance to the next batch. Two connections were missing:
+- False branch of `Score 8 or Above?` was a dead end — needed `→ Split by Lead`
+- `Log Lead to Neon` had no outbound connection — needed `→ Split by Lead`
+
+Fix in n8n UI: drag connections from both nodes back to `Split by Lead`. Or in the JSON, add `[{"node": "Split by Lead", "type": "main", "index": 0}]` to both. Fixed in v2 JSON.
 
 ### Known gaps / future work
 
@@ -277,6 +297,6 @@ The Parse Score and Parse Draft code nodes use `$('Split by Lead').item.json` an
 | Apollo API key not provisioned — B&B must set up account | High — required dependency |
 | JobBOSS integration stubbed (comment in Filter and Dedup node) | Low — future |
 | No LinkedIn enrichment (Apify integration planned) | Low — future |
-| No workflow_events aggregate row in Neon (individual lead rows are logged) | Low — cosmetic |
+| Static data stale-lead risk on mid-run restart — qualifiedLeads not idempotent if workflow re-triggered before completion | Low — acceptable at weekly schedule |
 | Schedule fires at 6am CDT; becomes 7am in winter CST | Low — acceptable |
 | SQL uses string escaping not parameterized queries — adequate for demo scale | Low — upgrade for production |
