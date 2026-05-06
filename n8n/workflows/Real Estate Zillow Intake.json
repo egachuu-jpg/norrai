@@ -1,0 +1,58 @@
+{
+  "name": "Real Estate Zillow Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake-zillow",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "zi000001-0001-4000-8000-000000000001",
+      "name": "Receive Zillow Lead",
+      "webhookId": "zillow-intake-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body || $input.first().json;\nconst q = $input.first().json.query || {};\n\nconst firstName = b.firstName || b.first_name || '';\nconst lastName = b.lastName || b.last_name || '';\n\nreturn [{\n  json: {\n    client_token: q.token || '',\n    lead_name: `${firstName} ${lastName}`.trim() || b.name || b.lead_name || '',\n    email: b.email || '',\n    phone: b.phone || b.phoneNumber || '',\n    source: 'zillow',\n    property_address: b.propertyAddress || b.property_address || '',\n    price_range: b.priceRange || b.price_range || '',\n    beds: b.beds || b.bedrooms || null,\n    lead_message: b.message || b.lead_message || b.comments || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "id": "zi000001-0002-4000-8000-000000000002",
+      "name": "Normalize Zillow Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://norrai.app.n8n.cloud/webhook/lead-cleanser",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [640, 300],
+      "id": "zi000001-0003-4000-8000-000000000003",
+      "name": "Send to Lead Cleanser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Zillow Lead": {"main": [[{"node": "Normalize Zillow Payload", "type": "main", "index": 0}]]},
+    "Normalize Zillow Payload": {"main": [[{"node": "Send to Lead Cleanser", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "zillow-intake-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
