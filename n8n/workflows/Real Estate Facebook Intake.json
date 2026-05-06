@@ -1,0 +1,123 @@
+{
+  "name": "Real Estate Facebook Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "ALL",
+        "path": "intake-facebook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "fi000001-0001-4000-8000-000000000001",
+      "name": "Receive Facebook Event",
+      "webhookId": "facebook-intake-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "hub-mode-001",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [440, 300],
+      "id": "fi000001-0002-4000-8000-000000000002",
+      "name": "Is Verification Request?"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('Receive Facebook Event').first().json.query['hub.challenge'] }}",
+        "options": {"responseCode": 200}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, 220],
+      "id": "fi000001-0003-4000-8000-000000000003",
+      "name": "Echo Hub Challenge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Facebook sends a notification — extract leadgen_id and token from URL\nconst body = $input.first().json.body || {};\nconst q = $input.first().json.query || {};\n\nlet leadgenId = null;\ntry {\n  leadgenId = body.entry[0].changes[0].value.leadgen_id;\n} catch(e) {}\n\nreturn [{\n  json: {\n    leadgen_id: leadgenId,\n    client_token: q.token || '',\n    page_access_token: 'FACEBOOK_PAGE_ACCESS_TOKEN'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 380],
+      "id": "fi000001-0004-4000-8000-000000000004",
+      "name": "Extract Leadgen ID"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.leadgen_id }}?access_token={{ $json.page_access_token }}&fields=field_data,created_time",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [840, 380],
+      "id": "fi000001-0005-4000-8000-000000000005",
+      "name": "Fetch Lead from Graph API"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nconst ctx = $('Extract Leadgen ID').first().json;\n\n// Facebook field_data is an array: [{name: 'full_name', values: ['Sarah Johnson']}, ...]\nconst fields = {};\n(lead.field_data || []).forEach(f => {\n  fields[f.name] = f.values[0] || '';\n});\n\nreturn [{\n  json: {\n    client_token: ctx.client_token,\n    lead_name: fields.full_name || `${fields.first_name || ''} ${fields.last_name || ''}`.trim(),\n    email: fields.email || '',\n    phone: fields.phone_number || fields.phone || '',\n    source: 'facebook_ads',\n    property_address: fields.street_address || fields.property_address || '',\n    price_range: fields.price_range || '',\n    beds: fields.bedrooms || null,\n    lead_message: fields.message || fields.comments || 'Facebook Lead Ad inquiry'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 380],
+      "id": "fi000001-0006-4000-8000-000000000006",
+      "name": "Normalize Facebook Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://norrai.app.n8n.cloud/webhook/lead-cleanser",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1240, 380],
+      "id": "fi000001-0007-4000-8000-000000000007",
+      "name": "Send to Lead Cleanser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Facebook Event": {"main": [[{"node": "Is Verification Request?", "type": "main", "index": 0}]]},
+    "Is Verification Request?": {
+      "main": [
+        [{"node": "Echo Hub Challenge", "type": "main", "index": 0}],
+        [{"node": "Extract Leadgen ID", "type": "main", "index": 0}]
+      ]
+    },
+    "Extract Leadgen ID": {"main": [[{"node": "Fetch Lead from Graph API", "type": "main", "index": 0}]]},
+    "Fetch Lead from Graph API": {"main": [[{"node": "Normalize Facebook Payload", "type": "main", "index": 0}]]},
+    "Normalize Facebook Payload": {"main": [[{"node": "Send to Lead Cleanser", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "facebook-intake-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
