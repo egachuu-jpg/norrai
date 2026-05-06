@@ -1,0 +1,307 @@
+{
+  "name": "Real Estate Lead Action Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "lead-action",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "ah000001-0001-4000-8000-000000000001",
+      "name": "Receive Action Click",
+      "webhookId": "lead-action-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $input.first().json.query || {};\nconst token = (q.token || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT at.id, at.token, at.lead_id, at.client_id, at.sms_draft, at.email_draft, at.expires_at, at.used_at, l.phone, l.email, l.lead_name FROM approval_tokens at JOIN leads l ON l.id = at.lead_id WHERE at.token = '${token}' LIMIT 1`,\n    action: q.action || '',\n    custom_content: q.content || '',\n    token: q.token || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "id": "ah000001-0002-4000-8000-000000000002",
+      "name": "Build Token Lookup"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 300],
+      "id": "ah000001-0003-4000-8000-000000000003",
+      "name": "Lookup Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "valid-001",
+              "leftValue": "={{ $json.id && !$json.used_at && new Date($json.expires_at) > new Date() ? 'valid' : '' }}",
+              "rightValue": "valid",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [840, 300],
+      "id": "ah000001-0004-4000-8000-000000000004",
+      "name": "Token Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "html",
+        "responseBody": "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:500px;margin:80px auto;text-align:center;background:#FAFAF7\"><h2 style=\"color:#0A0F1A\">Link expired</h2><p style=\"color:#6A6F78\">This action link has already been used or has expired. Check your email for a fresh set of options.</p></body></html>",
+        "options": {"responseCode": 200}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1040, 420],
+      "id": "ah000001-0005-4000-8000-000000000005",
+      "name": "Respond Expired"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst ctx = $('Build Token Lookup').first().json;\nconst action = ctx.action;\n\n// Use custom content if provided (from edit form), else original draft\nconst smsContent = ctx.custom_content || row.sms_draft;\nconst emailContent = ctx.custom_content || row.email_draft;\n\n// Mark token used\nconst markUsed = `UPDATE approval_tokens SET used_at = now() WHERE id = '${row.id}'`;\n\n// Update lead last_contacted_at\nconst markContacted = `UPDATE leads SET last_contacted_at = now(), status = 'contacted', stage = 'nurturing' WHERE id = '${row.lead_id}'`;\n\n// Bump next_action_due for skip\nconst bumpDue = `UPDATE leads SET next_action_due = CURRENT_DATE + INTERVAL '3 days' WHERE id = '${row.lead_id}'`;\n\nreturn [{\n  json: {\n    action,\n    lead_id: row.lead_id,\n    lead_phone: row.phone,\n    lead_email: row.email,\n    lead_name: row.lead_name,\n    sms_content: smsContent,\n    email_content: emailContent,\n    mark_used_query: markUsed,\n    mark_contacted_query: markContacted,\n    bump_due_query: bumpDue\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 220],
+      "id": "ah000001-0006-4000-8000-000000000006",
+      "name": "Route Action"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "is-sms-001",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "send_sms",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1240, 220],
+      "id": "ah000001-0007-4000-8000-000000000007",
+      "name": "Send SMS?"
+    },
+    {
+      "parameters": {
+        "from": "+18XXXXXXXXXX",
+        "to": "=+1{{ $json.lead_phone.replace(/\\D/g, '') }}",
+        "message": "={{ $json.sms_content }}"
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1440, 140],
+      "id": "ah000001-0008-4000-8000-000000000008",
+      "name": "Send SMS",
+      "credentials": {
+        "twilioApi": {
+          "id": "TWILIO_CREDENTIAL_ID",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $('Route Action').first().json.mark_used_query + '; ' + $('Route Action').first().json.mark_contacted_query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1640, 140],
+      "id": "ah000001-0009-4000-8000-000000000009",
+      "name": "Mark Sent + Update Lead",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "html",
+        "responseBody": "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:500px;margin:80px auto;text-align:center;background:#FAFAF7\"><h2 style=\"color:#0A0F1A\">Sent!</h2><p style=\"color:#6A6F78\">Your message to <strong>{{ $('Route Action').first().json.lead_name }}</strong> has been sent. You're done here.</p></body></html>",
+        "options": {"responseCode": 200}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1840, 140],
+      "id": "ah000001-0010-4000-8000-000000000010",
+      "name": "Respond SMS Sent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "is-email-001",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "send_email",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1440, 300],
+      "id": "ah000001-0011-4000-8000-000000000011",
+      "name": "Send Email?"
+    },
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "Norr AI",
+        "toEmail": "={{ $json.lead_email }}",
+        "subject": "=Re: Your inquiry",
+        "contentValue": "={{ $json.email_content }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [1640, 300],
+      "id": "ah000001-0012-4000-8000-000000000012",
+      "name": "Send Email to Lead",
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $('Route Action').first().json.mark_used_query + '; ' + $('Route Action').first().json.mark_contacted_query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1840, 300],
+      "id": "ah000001-0013-4000-8000-000000000013",
+      "name": "Mark Email Sent",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "html",
+        "responseBody": "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:500px;margin:80px auto;text-align:center;background:#FAFAF7\"><h2 style=\"color:#0A0F1A\">Email Sent!</h2><p style=\"color:#6A6F78\">Your email to <strong>{{ $('Route Action').first().json.lead_name }}</strong> has been sent.</p></body></html>",
+        "options": {"responseCode": 200}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2040, 300],
+      "id": "ah000001-0014-4000-8000-000000000014",
+      "name": "Respond Email Sent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.bump_due_query + '; ' + $json.mark_used_query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1640, 460],
+      "id": "ah000001-0015-4000-8000-000000000015",
+      "name": "Bump Next Action Due",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "html",
+        "responseBody": "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:500px;margin:80px auto;text-align:center;background:#FAFAF7\"><h2 style=\"color:#0A0F1A\">Skipped</h2><p style=\"color:#6A6F78\">Got it. <strong>{{ $('Route Action').first().json.lead_name }}</strong> will reappear in your queue in 3 days.</p></body></html>",
+        "options": {"responseCode": 200}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1840, 460],
+      "id": "ah000001-0016-4000-8000-000000000016",
+      "name": "Respond Skipped"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Action Click": {"main": [[{"node": "Build Token Lookup", "type": "main", "index": 0}]]},
+    "Build Token Lookup": {"main": [[{"node": "Lookup Token", "type": "main", "index": 0}]]},
+    "Lookup Token": {"main": [[{"node": "Token Valid?", "type": "main", "index": 0}]]},
+    "Token Valid?": {
+      "main": [
+        [{"node": "Route Action", "type": "main", "index": 0}],
+        [{"node": "Respond Expired", "type": "main", "index": 0}]
+      ]
+    },
+    "Route Action": {"main": [[{"node": "Send SMS?", "type": "main", "index": 0}]]},
+    "Send SMS?": {
+      "main": [
+        [{"node": "Send SMS", "type": "main", "index": 0}],
+        [{"node": "Send Email?", "type": "main", "index": 0}]
+      ]
+    },
+    "Send SMS": {"main": [[{"node": "Mark Sent + Update Lead", "type": "main", "index": 0}]]},
+    "Mark Sent + Update Lead": {"main": [[{"node": "Respond SMS Sent", "type": "main", "index": 0}]]},
+    "Send Email?": {
+      "main": [
+        [{"node": "Send Email to Lead", "type": "main", "index": 0}],
+        [{"node": "Bump Next Action Due", "type": "main", "index": 0}]
+      ]
+    },
+    "Send Email to Lead": {"main": [[{"node": "Mark Email Sent", "type": "main", "index": 0}]]},
+    "Mark Email Sent": {"main": [[{"node": "Respond Email Sent", "type": "main", "index": 0}]]},
+    "Bump Next Action Due": {"main": [[{"node": "Respond Skipped", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "lead-action-handler-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
