@@ -1,0 +1,235 @@
+{
+  "name": "Real Estate Lead Cleanser",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-cleanser",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "lc000001-0001-4000-8000-000000000001",
+      "name": "Receive Lead",
+      "webhookId": "lead-cleanser-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body;\nconst token = b.client_token || '';\nreturn [{\n  json: {\n    query: `SELECT id, primary_contact_email, primary_contact_name FROM clients WHERE token = '${token.replace(/'/g, \"''\")}'`,\n    payload: b\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "id": "lc000001-0002-4000-8000-000000000002",
+      "name": "Build Token Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 300],
+      "id": "lc000001-0003-4000-8000-000000000003",
+      "name": "Resolve Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "token-found-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "notEmpty"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [840, 300],
+      "id": "lc000001-0004-4000-8000-000000000004",
+      "name": "Token Found?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').replace(/'/g, \"''\");\nconst phone = (prev.phone || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${row.id}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    payload: prev\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 220],
+      "id": "lc000001-0005-4000-8000-000000000005",
+      "name": "Build Dedupe Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1240, 220],
+      "id": "lc000001-0006-4000-8000-000000000006",
+      "name": "Dedupe Check",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "lead-exists-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "notEmpty"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1440, 220],
+      "id": "lc000001-0007-4000-8000-000000000007",
+      "name": "Lead Exists?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lead already exists — update lead_message and stop\nconst existing_id = $input.first().json.id;\nconst ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\nconst msg = (p.lead_message || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `UPDATE leads SET lead_message = '${msg}', updated_at = now() WHERE id = '${existing_id}'`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 140],
+      "id": "lc000001-0008-4000-8000-000000000008",
+      "name": "Build Update Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1840, 140],
+      "id": "lc000001-0009-4000-8000-000000000009",
+      "name": "Update Existing Lead",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\n\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  property_address: p.property_address || null,\n  price_range: p.price_range || null,\n  beds: p.beds || null\n}).replace(/'/g, \"''\");\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, stage, next_action_due, metadata) VALUES ('${ctx.client_id}', '${esc(p.lead_name)}', '${esc(p.email)}', '${esc(p.phone)}', '${esc(p.source)}', '${esc(p.lead_message)}', 'new', 'new', '${today}', '${metadata}') RETURNING id`,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    payload: p\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 300],
+      "id": "lc000001-0010-4000-8000-000000000010",
+      "name": "Build Insert Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1840, 300],
+      "id": "lc000001-0011-4000-8000-000000000011",
+      "name": "Insert New Lead",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine lead_id from INSERT RETURNING with context fields\nconst insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    payload: ctx.payload\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2040, 300],
+      "id": "lc000001-0012-4000-8000-000000000012",
+      "name": "Prepare Handoff"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://norrai.app.n8n.cloud/webhook/lead-response-auto",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2240, 300],
+      "id": "lc000001-0013-4000-8000-000000000013",
+      "name": "Trigger Lead Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Lead": {"main": [[{"node": "Build Token Query", "type": "main", "index": 0}]]},
+    "Build Token Query": {"main": [[{"node": "Resolve Token", "type": "main", "index": 0}]]},
+    "Resolve Token": {"main": [[{"node": "Token Found?", "type": "main", "index": 0}]]},
+    "Token Found?": {
+      "main": [
+        [{"node": "Build Dedupe Query", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Build Dedupe Query": {"main": [[{"node": "Dedupe Check", "type": "main", "index": 0}]]},
+    "Dedupe Check": {"main": [[{"node": "Lead Exists?", "type": "main", "index": 0}]]},
+    "Lead Exists?": {
+      "main": [
+        [{"node": "Build Update Query", "type": "main", "index": 0}],
+        [{"node": "Build Insert Query", "type": "main", "index": 0}]
+      ]
+    },
+    "Build Update Query": {"main": [[{"node": "Update Existing Lead", "type": "main", "index": 0}]]},
+    "Build Insert Query": {"main": [[{"node": "Insert New Lead", "type": "main", "index": 0}]]},
+    "Insert New Lead": {"main": [[{"node": "Prepare Handoff", "type": "main", "index": 0}]]},
+    "Prepare Handoff": {"main": [[{"node": "Trigger Lead Response", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "lead-cleanser-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
