@@ -300,3 +300,95 @@ Fix in n8n UI: drag connections from both nodes back to `Split by Lead`. Or in t
 | Static data stale-lead risk on mid-run restart — qualifiedLeads not idempotent if workflow re-triggered before completion | Low — acceptable at weekly schedule |
 | Schedule fires at 6am CDT; becomes 7am in winter CST | Low — acceptable |
 | SQL uses string escaping not parameterized queries — adequate for demo scale | Low — upgrade for production |
+
+---
+
+## Lead Cleanser Pipeline (Zillow / Realtor / Facebook / Custom Form)
+
+**Workflows:**
+- `n8n/workflows/Real Estate Zillow Intake.json` → `/webhook/intake-zillow`
+- `n8n/workflows/Real Estate Realtor Intake.json` → `/webhook/intake-realtor`
+- `n8n/workflows/Real Estate Facebook Intake.json` → `/webhook/intake-facebook`
+- `n8n/workflows/Real Estate Custom Form Intake.json` → `/webhook/intake-custom`
+- `n8n/workflows/Real Estate Lead Cleanser.json` → `/webhook/lead-cleanser`
+- `n8n/workflows/Real Estate Lead Response Auto.json` → `/webhook/lead-response-auto`
+- `n8n/workflows/Real Estate Lead Action Handler.json` → `/webhook/lead-action` (GET)
+
+**Edit page:** `website/lead_action_edit.html` (deployed to tools.norrai.co)
+
+### Credentials to configure after import
+
+| Node | Credential type | What to set |
+|------|----------------|-------------|
+| All Postgres nodes | Postgres | Neon pooled connection string (`DATABASE_URL` from `.env`) |
+| Lead Response Auto → Draft Responses | Anthropic | `gXqu8TiqvDY4mUPZ` (Anthropic account 2) |
+| Action Handler → Send SMS | Twilio | Your Twilio credential; replace `+18XXXXXXXXXX` |
+| Action Handler → Send Email + Lead Response | SendGrid | `A5ypmjiRLAUMUm9O` (SendGrid account) |
+| Facebook Intake → Extract Leadgen ID | (none — edit Code node) | Replace `FACEBOOK_PAGE_ACCESS_TOKEN` with actual Page Access Token |
+
+### Seed a client token before testing
+
+```sql
+UPDATE clients SET token = 'test-token-realestate-001'
+WHERE vertical = 'real_estate' AND token IS NULL
+  AND id = (SELECT id FROM clients WHERE vertical = 'real_estate' AND token IS NULL LIMIT 1);
+```
+
+Confirm: `SELECT id, primary_contact_email, token FROM clients WHERE token = 'test-token-realestate-001';`
+
+### Test the full pipeline end-to-end (Hoppscotch)
+
+**POST** `https://norrai.app.n8n.cloud/webhook-test/intake-zillow?token=test-token-realestate-001`
+
+```json
+{
+  "firstName": "Sarah",
+  "lastName": "Johnson",
+  "email": "sarah@example.com",
+  "phone": "5075551234",
+  "propertyAddress": "123 Maple St, Faribault MN 55021",
+  "priceRange": "$250k-$320k",
+  "beds": 3,
+  "message": "I am very interested in this property. Can we schedule a showing this weekend?"
+}
+```
+
+Expected sequence:
+1. Zillow Intake normalizes → POSTs to Lead Cleanser
+2. Lead Cleanser resolves token → no dedupe match → inserts lead → POSTs to Lead Response Auto
+3. Lead Response Auto calls Claude → stores approval token → sends approval email to agent
+4. Check agent email: approval email arrives with SMS + Email drafts and action buttons
+5. Check Neon: `SELECT * FROM leads WHERE email = 'sarah@example.com';` — one row
+6. Check Neon: `SELECT * FROM approval_tokens ORDER BY created_at DESC LIMIT 1;` — one row, `used_at` is null
+
+### Test dedupe
+
+Re-submit the same payload. Expected: Lead Cleanser finds existing email match → updates `lead_message` → stops. No second approval email. Confirm: `SELECT COUNT(*) FROM leads WHERE email = 'sarah@example.com';` returns 1.
+
+### Test action handler
+
+Copy the `token` UUID from `approval_tokens`. Open in browser:
+
+`https://norrai.app.n8n.cloud/webhook-test/lead-action?token=TOKEN_HERE&action=send_sms`
+
+Expected: browser shows "Sent!" page. SMS arrives on lead phone. Neon: `approval_tokens.used_at` is now set, `leads.last_contacted_at` is set, `leads.status = 'contacted'`.
+
+Repeat with `action=skip` (different token): browser shows "Skipped". Neon: `leads.next_action_due` = today + 3 days.
+
+Test expired link: manually update `approval_tokens SET expires_at = now() - interval '1 day'`, then click link → browser shows "Link expired".
+
+### Test Facebook verification
+
+**GET** `https://norrai.app.n8n.cloud/webhook-test/intake-facebook?hub.mode=subscribe&hub.challenge=TESTCHALLENGE123&hub.verify_token=any`
+
+Expected: response body is `TESTCHALLENGE123` (plain text, 200).
+
+### Known gaps / post-deploy
+
+| Gap | Priority |
+|-----|----------|
+| Facebook Page Access Token is hardcoded in Code node — must be replaced per agent | High |
+| String escaping in Postgres queries (single-quote doubling) is adequate for demo; use parameterized queries for production | Medium |
+| Edit page submits via GET (appends content to URL) — fine for SMS; long emails may hit URL length limits in some browsers | Low |
+| No workflow_events logging in new workflows yet — add Postgres insert nodes when needed for audit trail | Low |
+| Token in Zillow/Realtor/Facebook URLs is not validated at intake — invalid tokens fail silently in cleanser | Low |
