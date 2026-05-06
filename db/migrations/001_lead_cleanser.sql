@@ -29,3 +29,11 @@ CREATE TABLE IF NOT EXISTS approval_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_approval_tokens_token ON approval_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_approval_tokens_lead ON approval_tokens(lead_id);
+
+-- TEST DATA: seed a real estate client token for local/dev testing
+-- Safe to re-run (UPDATE only touches rows with vertical = 'real_estate' and no existing token)
+UPDATE clients
+SET token = 'test-token-realestate-001'
+WHERE vertical = 'real_estate'
+  AND token IS NULL
+  AND id = (SELECT id FROM clients WHERE vertical = 'real_estate' AND token IS NULL LIMIT 1);
