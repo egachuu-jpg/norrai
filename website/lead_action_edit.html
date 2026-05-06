@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Message — Norr AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+  <style>
+    :root {
+      --bone: #FAFAF7; --ink: #0A0F1A; --glacial: #7FA9B8;
+      --graphite: #3A3F48; --surface: #FFFFFF; --border: #E5E4DE;
+      --muted: #9EA3AA; --secondary: #6A6F78;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bone); color: var(--ink); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: var(--ink); padding: 16px 24px; }
+    header h1 { color: white; font-family: 'Inter Tight', sans-serif; font-size: 18px; font-weight: 600; }
+    main { flex: 1; max-width: 600px; margin: 48px auto; padding: 0 24px; width: 100%; }
+    h2 { font-family: 'Inter Tight', sans-serif; font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    .lead-name { color: var(--secondary); font-size: 14px; margin-bottom: 32px; }
+    label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--graphite); }
+    textarea { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 14px; font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; background: var(--surface); color: var(--ink); resize: vertical; min-height: 140px; outline: none; }
+    textarea:focus { border-color: var(--glacial); }
+    .char-count { font-size: 12px; color: var(--muted); text-align: right; margin-top: 6px; }
+    .char-count.over { color: #c0392b; }
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+    button[type="submit"] { background: var(--ink); color: white; border: none; padding: 12px 28px; font-family: 'Inter Tight', sans-serif; font-size: 15px; font-weight: 500; border-radius: 4px; cursor: pointer; flex: 1; }
+    button[type="submit"]:hover { background: var(--graphite); }
+    button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+    .cancel { color: var(--muted); font-size: 14px; padding: 12px 0; cursor: pointer; background: none; border: none; }
+    .status { margin-top: 16px; padding: 12px 16px; border-radius: 4px; font-size: 14px; display: none; }
+    .status.success { background: #e8f5e9; color: #2e7d32; display: block; }
+    .status.error { background: #fdecea; color: #c62828; display: block; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Norr AI</h1>
+  </header>
+  <main>
+    <h2 id="page-title">Edit Message</h2>
+    <p class="lead-name" id="lead-label"></p>
+    <form id="edit-form">
+      <label for="message-text" id="message-label">Your message</label>
+      <textarea id="message-text" name="content" required></textarea>
+      <p class="char-count" id="char-count"></p>
+      <div class="actions">
+        <button type="submit" id="send-btn">Send</button>
+        <button type="button" class="cancel" onclick="window.close()">Cancel</button>
+      </div>
+    </form>
+    <div class="status" id="status-msg"></div>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token') || '';
+    const action = params.get('action') || 'send_sms';
+    const draft = params.get('draft') || '';
+    const leadName = params.get('lead_name') || 'this lead';
+    const isSms = action === 'send_sms';
+    const SMS_LIMIT = 155;
+
+    document.getElementById('page-title').textContent = isSms ? 'Edit SMS' : 'Edit Email';
+    document.getElementById('message-label').textContent = isSms ? `SMS to ${leadName}` : `Email to ${leadName}`;
+    document.getElementById('lead-label').textContent = isSms
+      ? 'Keep it under 155 characters for a single SMS segment.'
+      : '';
+    document.getElementById('send-btn').textContent = isSms ? 'Send SMS' : 'Send Email';
+
+    const textarea = document.getElementById('message-text');
+    const charCount = document.getElementById('char-count');
+    textarea.value = draft;
+
+    function updateCount() {
+      if (!isSms) { charCount.textContent = ''; return; }
+      const len = textarea.value.length;
+      charCount.textContent = `${len} / ${SMS_LIMIT} characters`;
+      charCount.className = 'char-count' + (len > SMS_LIMIT ? ' over' : '');
+    }
+    textarea.addEventListener('input', updateCount);
+    updateCount();
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('send-btn');
+      const status = document.getElementById('status-msg');
+      btn.disabled = true;
+      btn.textContent = 'Sending\u2026';
+      status.className = 'status';
+
+      try {
+        const res = await fetch(
+          `https://norrai.app.n8n.cloud/webhook/lead-action?token=${encodeURIComponent(token)}&action=${action}&content=${encodeURIComponent(textarea.value.trim())}`,
+          { method: 'GET' }
+        );
+        if (res.ok) {
+          document.getElementById('edit-form').style.display = 'none';
+          status.textContent = isSms ? 'SMS sent successfully.' : 'Email sent successfully.';
+          status.className = 'status success';
+        } else {
+          throw new Error('Request failed');
+        }
+      } catch (err) {
+        status.textContent = 'Something went wrong. Please try again or contact support.';
+        status.className = 'status error';
+        btn.disabled = false;
+        btn.textContent = isSms ? 'Send SMS' : 'Send Email';
+      }
+    });
+  </script>
+</body>
+</html>
