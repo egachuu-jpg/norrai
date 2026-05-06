@@ -1,0 +1,206 @@
+{
+  "name": "Real Estate Lead Response Auto",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-response-auto",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "lr000001-0001-4000-8000-000000000001",
+      "name": "Receive Handoff",
+      "webhookId": "lead-response-auto-webhook-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt-001",
+              "name": "prompt",
+              "value": "=A new real estate lead just came in. Draft two short personalized responses for the agent to send.\n\nAGENT: {{ $json.agent_name }}\nLEAD NAME: {{ $json.payload.lead_name }}\nLEAD SOURCE: {{ $json.payload.source }}\nPROPERTY: {{ $json.payload.property_address || 'not specified' }}\nPRICE RANGE: {{ $json.payload.price_range || 'not specified' }}\nBEDS: {{ $json.payload.beds || 'not specified' }}\nLEAD MESSAGE: {{ $json.payload.lead_message || 'No message provided' }}\n\nWrite two responses — a SHORT SMS (under 155 characters, conversational) and an EMAIL (2–3 sentences, warm). Both should:\n- Address the lead by first name\n- Acknowledge the specific property or inquiry\n- Invite them to connect\n- Sign off with the agent name\n\nFormat your response EXACTLY like this:\nSMS: [your sms text here]\nEMAIL: [your email text here]",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-001",
+              "name": "lead_id",
+              "value": "={{ $json.lead_id }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-002",
+              "name": "client_id",
+              "value": "={{ $json.client_id }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-003",
+              "name": "agent_email",
+              "value": "={{ $json.agent_email }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-004",
+              "name": "agent_name",
+              "value": "={{ $json.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-005",
+              "name": "lead_name",
+              "value": "={{ $json.payload.lead_name }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-006",
+              "name": "lead_phone",
+              "value": "={{ $json.payload.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-007",
+              "name": "lead_email",
+              "value": "={{ $json.payload.email }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-008",
+              "name": "source",
+              "value": "={{ $json.payload.source }}",
+              "type": "string"
+            },
+            {
+              "id": "passthrough-009",
+              "name": "lead_message",
+              "value": "={{ $json.payload.lead_message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 300],
+      "id": "lr000001-0002-4000-8000-000000000002",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 400,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }}}]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [640, 300],
+      "id": "lr000001-0003-4000-8000-000000000003",
+      "name": "Draft Responses (Claude)",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text.trim();\nconst prev = $('Build Prompt').first().json;\n\n// Parse SMS: and EMAIL: labels\nconst smsMatch = text.match(/^SMS:\\s*(.+?)(?=\\nEMAIL:|$)/ms);\nconst emailMatch = text.match(/EMAIL:\\s*(.+)$/ms);\n\nconst sms_draft = smsMatch ? smsMatch[1].trim() : text.split('\\n')[0];\nconst email_draft = emailMatch ? emailMatch[1].trim() : text;\n\n// Generate session token\nconst token = crypto.randomUUID();\n\n// Token expires in 24 hours\nconst expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();\n\nconst esc = v => (v || '').replace(/'/g, \"''\");\n\nreturn [{\n  json: {\n    sms_draft,\n    email_draft,\n    token,\n    expires,\n    insert_query: `INSERT INTO approval_tokens (token, lead_id, client_id, sms_draft, email_draft, expires_at) VALUES ('${token}', '${prev.lead_id}', '${prev.client_id}', '${esc(sms_draft)}', '${esc(email_draft)}', '${expires}')`,\n    lead_id: prev.lead_id,\n    client_id: prev.client_id,\n    agent_email: prev.agent_email,\n    agent_name: prev.agent_name,\n    lead_name: prev.lead_name,\n    lead_phone: prev.lead_phone,\n    lead_email: prev.lead_email,\n    source: prev.source,\n    lead_message: prev.lead_message\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300],
+      "id": "lr000001-0004-4000-8000-000000000004",
+      "name": "Parse Drafts + Generate Token"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.insert_query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1040, 300],
+      "id": "lr000001-0005-4000-8000-000000000005",
+      "name": "Store Approval Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Parse Drafts + Generate Token').first().json;\nconst base = 'https://norrai.app.n8n.cloud/webhook/lead-action';\nconst editBase = 'https://tools.norrai.co/lead_action_edit.html';\nconst t = encodeURIComponent(ctx.token);\nconst smsDraft = encodeURIComponent(ctx.sms_draft);\nconst emailDraft = encodeURIComponent(ctx.email_draft);\nconst leadName = encodeURIComponent(ctx.lead_name);\n\nconst sendSmsUrl = `${base}?token=${t}&action=send_sms`;\nconst sendEmailUrl = `${base}?token=${t}&action=send_email`;\nconst skipUrl = `${base}?token=${t}&action=skip`;\nconst editSmsUrl = `${editBase}?token=${t}&action=send_sms&draft=${smsDraft}&lead_name=${leadName}`;\nconst editEmailUrl = `${editBase}?token=${t}&action=send_email&draft=${emailDraft}&lead_name=${leadName}`;\n\nconst sourceLabel = (ctx.source || 'unknown').replace(/_/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());\n\nconst html = `<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#FAFAF7\">\n<h2 style=\"color:#0A0F1A\">New lead from ${sourceLabel}</h2>\n<p style=\"color:#3A3F48\"><strong>${ctx.lead_name}</strong> reached out${ctx.lead_message ? ':' : '.'}</p>\n${ctx.lead_message ? `<blockquote style=\"border-left:3px solid #7FA9B8;padding:8px 16px;color:#6A6F78;margin:16px 0\">${ctx.lead_message}</blockquote>` : ''}\n<hr style=\"border:1px solid #E5E4DE;margin:24px 0\">\n<h3 style=\"color:#0A0F1A\">SMS Draft <span style=\"font-size:12px;color:#9EA3AA\">(${ctx.sms_draft.length} chars)</span></h3>\n<div style=\"background:#fff;border:1px solid #E5E4DE;border-radius:6px;padding:16px;margin-bottom:12px\">\n<p style=\"color:#0A0F1A;margin:0\">${ctx.sms_draft}</p>\n</div>\n<table><tr>\n<td><a href=\"${sendSmsUrl}\" style=\"background:#0A0F1A;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block\">Send SMS</a></td>\n<td style=\"padding-left:8px\"><a href=\"${editSmsUrl}\" style=\"background:#fff;color:#0A0F1A;padding:10px 20px;text-decoration:none;border-radius:4px;border:1px solid #E5E4DE;display:inline-block\">Edit</a></td>\n</tr></table>\n<br>\n<h3 style=\"color:#0A0F1A\">Email Draft</h3>\n<div style=\"background:#fff;border:1px solid #E5E4DE;border-radius:6px;padding:16px;margin-bottom:12px\">\n<p style=\"color:#0A0F1A;margin:0\">${ctx.email_draft}</p>\n</div>\n<table><tr>\n<td><a href=\"${sendEmailUrl}\" style=\"background:#0A0F1A;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block\">Send Email</a></td>\n<td style=\"padding-left:8px\"><a href=\"${editEmailUrl}\" style=\"background:#fff;color:#0A0F1A;padding:10px 20px;text-decoration:none;border-radius:4px;border:1px solid #E5E4DE;display:inline-block\">Edit</a></td>\n</tr></table>\n<br>\n<a href=\"${skipUrl}\" style=\"color:#9EA3AA;font-size:13px\">Skip this lead for now</a>\n<hr style=\"border:1px solid #E5E4DE;margin:24px 0\">\n<p style=\"font-size:11px;color:#9EA3AA\">These links expire in 24 hours. Norr AI</p>\n</body></html>`;\n\nreturn [{ json: { html, agent_email: ctx.agent_email, agent_name: ctx.agent_name, lead_name: ctx.lead_name, source_label: sourceLabel } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1240, 300],
+      "id": "lr000001-0006-4000-8000-000000000006",
+      "name": "Build Approval Email"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "sendGridApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": {{ JSON.stringify($json.agent_email) }}}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": {{ JSON.stringify(`New lead from ${$json.source_label}: ${$json.lead_name}`) }},\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1440, 300],
+      "id": "lr000001-0007-4000-8000-000000000007",
+      "name": "Send Approval Email",
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Handoff": {"main": [[{"node": "Build Prompt", "type": "main", "index": 0}]]},
+    "Build Prompt": {"main": [[{"node": "Draft Responses (Claude)", "type": "main", "index": 0}]]},
+    "Draft Responses (Claude)": {"main": [[{"node": "Parse Drafts + Generate Token", "type": "main", "index": 0}]]},
+    "Parse Drafts + Generate Token": {"main": [[{"node": "Store Approval Token", "type": "main", "index": 0}]]},
+    "Store Approval Token": {"main": [[{"node": "Build Approval Email", "type": "main", "index": 0}]]},
+    "Build Approval Email": {"main": [[{"node": "Send Approval Email", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "lead-response-auto-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
