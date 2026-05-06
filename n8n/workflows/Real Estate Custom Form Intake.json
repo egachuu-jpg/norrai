@@ -1,0 +1,58 @@
+{
+  "name": "Real Estate Custom Form Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake-custom",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "cf000001-0001-4000-8000-000000000001",
+      "name": "Receive Custom Form Lead",
+      "webhookId": "custom-intake-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body || $input.first().json;\nconst q = $input.first().json.query || {};\n\n// Custom forms already use the standard shape — just normalize variations\nconst property = [\n  b.property_address,\n  b.street_address ? `${b.street_address}, ${b.city || ''}, ${b.state || 'MN'} ${b.zip || ''}`.trim() : null\n].find(Boolean) || '';\n\nreturn [{\n  json: {\n    client_token: q.token || b.client_token || '',\n    lead_name: b.lead_name || b.name || b.contact_name || '',\n    email: b.email || b.lead_email || '',\n    phone: b.phone || b.lead_phone || '',\n    source: b.source || 'custom_form',\n    property_address: property,\n    price_range: b.price_range || '',\n    beds: b.beds || null,\n    lead_message: b.lead_message || b.message || b.notes || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "id": "cf000001-0002-4000-8000-000000000002",
+      "name": "Normalize Custom Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://norrai.app.n8n.cloud/webhook/lead-cleanser",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [640, 300],
+      "id": "cf000001-0003-4000-8000-000000000003",
+      "name": "Send to Lead Cleanser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Custom Form Lead": {"main": [[{"node": "Normalize Custom Payload", "type": "main", "index": 0}]]},
+    "Normalize Custom Payload": {"main": [[{"node": "Send to Lead Cleanser", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "custom-intake-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
