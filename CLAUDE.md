@@ -137,16 +137,23 @@ norrai/
 │   ├── dental.html
 │   ├── real-estate.html
 │   ├── insurance.html
-│   ├── listing_form.html       # Listing description generator — live at tools.norrai.co
-│   ├── lead_response.html      # Instant lead response — agent-facing, token protected
-│   ├── open_house_setup.html   # Open house QR code generator — agent-facing, token protected
+│   ├── privacy.html            # Public legal page
+│   ├── terms.html              # Public legal page
 │   ├── open_house.html         # Open house sign-in — public, QR code, reads URL params (address, agent, notes)
-│   ├── nurture_enroll.html     # Cold nurture enrollment — agent-facing, token protected
-│   ├── review_request.html     # Review request — agent-facing, token protected
+│   ├── discovery_form.html     # General prospect discovery form — public
 │   ├── event_ops_discovery.html
 │   ├── onboarding_form.html
-│   ├── brand_concepts.html
-│   ├── norrai_style_guide.html
+│   ├── clients/                # Cloudflare Access: clients group (7-day session)
+│   │   ├── listing_form.html       # Listing description generator
+│   │   ├── lead_response.html      # Instant lead response
+│   │   ├── open_house_setup.html   # Open house QR code generator
+│   │   ├── nurture_enroll.html     # Cold nurture enrollment
+│   │   ├── review_request.html     # Review request
+│   │   ├── lead_action_edit.html   # Edit SMS/email drafts before sending to leads
+│   │   └── bnb_estimate_form.html  # B&B Manufacturing estimate form (B&B employees)
+│   ├── internal/               # Cloudflare Access: internal group (1-day session)
+│   │   ├── brand_concepts.html
+│   │   └── norrai_style_guide.html
 │   ├── norr_ai_favicon.svg
 │   ├── norr_ai_emblem.svg
 │   └── css/
@@ -193,7 +200,20 @@ font-mono:    'JetBrains Mono'
 ## Testing
 
 **Test stack:** Playwright (`npm test`)
-**Test file:** `tests/listing_form.spec.js` — 41 tests covering `listing_form.html`
+**248 tests across 10 spec files — all must pass before pushing.**
+
+| Spec file | Page covered |
+|---|---|
+| `tests/listing_form.spec.js` | `clients/listing_form.html` |
+| `tests/lead_response.spec.js` | `clients/lead_response.html` |
+| `tests/open_house_setup.spec.js` | `clients/open_house_setup.html` |
+| `tests/nurture_enroll.spec.js` | `clients/nurture_enroll.html` |
+| `tests/review_request.spec.js` | `clients/review_request.html` |
+| `tests/bnb_estimate_form.spec.js` | `clients/bnb_estimate_form.html` |
+| `tests/open_house.spec.js` | `open_house.html` |
+| `tests/discovery_form.spec.js` | `discovery_form.html` |
+| `tests/event_ops_discovery.spec.js` | `event_ops_discovery.html` |
+| `tests/onboarding_form.spec.js` | `onboarding_form.html` |
 
 ### Rules
 - **Run `npm test` before pushing any code changes.** All tests must pass.
@@ -224,7 +244,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 ### Security (Pre-First Client)
 - [ ] Fix `innerHTML` → `textContent` in `open_house_setup.html` line 307 — XSS code smell, one-line fix
 - [ ] Add token check to `event_ops_discovery.html` n8n workflow — only form without webhook auth
-- [ ] Set up Cloudflare Access (Zero Trust) on all agent-facing forms (`/lead_response`, `/open_house_setup`, `/nurture_enroll`, `/review_request`) — replaces hardcoded token as real auth layer; free up to 50 users, email OTP
+- [x] Set up Cloudflare Access (Zero Trust) on all agent-facing forms — restructured website/ into clients/ and internal/ subfolders; two Access Groups (clients, internal) + two Applications protect /clients/* and /internal/* with email OTP (7-day and 1-day sessions)
 - [ ] Add rate limiting to n8n webhook endpoints — prevent abuse before first live client
 - [ ] Add server-side input validation in n8n workflows — currently all validation is client-side only and can be bypassed via curl
 - [ ] Enforce exact match (not `startsWith`) on token check IF nodes across all workflows
@@ -239,7 +259,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [x] Test and promote real estate workflows to production — open house setup + follow-up confirmed working
 - [ ] Re-import Real Estate Open House Follow-Up workflow in n8n (prompt updated to use property highlights, fix hallucination)
 - [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
-- [ ] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
+- [x] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
 - [ ] Set up internal monitoring dashboard (red/green per client status) — needed at 10+ clients
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
 - [x] Build B&B Manufacturing estimating demo — form + n8n workflow + tests (see 2026-04-29 session log)
@@ -346,6 +366,16 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - **Pending:** smoke test (import workflow into n8n, fire test payload, verify email) — deferred to after work
 - Brainstormed and designed automated lead generator for B&B Manufacturing — Monday 6am schedule, Apollo.io search (250-mile radius, OEM industries, decision-maker titles, verified emails), Google Sheet exclusion list with JobBOSS stub, Claude scoring (1-10, 8+ threshold), SendGrid review email to B&B inbox with drafted outreach copy, Neon logging per qualified lead
 - Design spec: `docs/superpowers/specs/2026-04-29-bnb-lead-generator-design.md`; Implementation plan: `docs/superpowers/plans/2026-04-29-bnb-lead-generator.md`
+
+### 2026-05-06
+- Audited all HTML pages in website/ — found pages missing from CLAUDE.md: `discovery_form.html`, `lead_action_edit.html`, `privacy.html`, `terms.html`
+- Brainstormed and implemented Cloudflare Zero Trust Access for all non-public pages
+- Restructured `website/` folder: 7 client-facing pages moved to `website/clients/`, 2 internal pages to `website/internal/`; public pages stay at root
+- Cloudflare Access Groups: `clients` (all client/prospect tool users + Egan, 7-day session), `internal` (Egan only, 1-day session)
+- Cloudflare Access Applications: one for `/clients/*`, one for `/internal/*` — email OTP, free tier, up to 50 users
+- Updated 6 Playwright test files to reference new `/clients/` paths; 248 tests passing
+- To add a new client: Zero Trust → Access Groups → `clients` → add their email — automatically grants access to all `/clients/*` pages
+- n8n workflows unchanged — only workflow referencing a page URL points to `open_house.html` which stays public at root
 
 ### 2026-04-28
 - Built `website/open_house_setup.html` + `n8n/workflows/Real Estate Open House Setup.json` — agent enters name/email/phone/address/MLS description; Claude extracts 3–5 property highlights; QR code generated via qrserver.com and emailed to agent; highlights encoded as `notes` param in the sign-in URL
