@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { mockWebhook } = require('./helpers');
 
-const FORM_URL = '/nurture_enroll.html';
+const FORM_URL = '/clients/nurture_enroll.html';
 const AGENT_KEY = 'norrai_agent_profile_nurture';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

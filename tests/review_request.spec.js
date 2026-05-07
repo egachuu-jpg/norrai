@@ -1,7 +1,7 @@
 // tests/review_request.spec.js
 const { test, expect } = require('@playwright/test');
 
-const FORM_URL  = '/review_request.html';
+const FORM_URL  = '/clients/review_request.html';
 const AGENT_KEY = 'norrai_agent_profile_review';
 
 async function fillRequired(page) {

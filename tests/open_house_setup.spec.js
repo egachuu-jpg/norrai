@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { mockWebhook } = require('./helpers');
 
-const FORM_URL = '/open_house_setup.html';
+const FORM_URL = '/clients/open_house_setup.html';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
