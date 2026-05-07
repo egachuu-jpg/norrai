@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const FORM_URL = '/bnb_estimate_form.html';
+const FORM_URL = '/clients/bnb_estimate_form.html';
 
 async function fillRequired(page) {
   await page.fill('#name', 'John Smith');
