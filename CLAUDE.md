@@ -233,6 +233,13 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 
 ---
 
+## Ideas / Parking Lot
+
+### Real Estate — Slack-mediated SMS send (agent-in-the-loop)
+Instead of the workflow sending the automated text directly to the lead, route it through Slack first. The agent receives the pre-drafted SMS in Slack, formatted exactly as it would be sent. Tapping the message opens it in iMessage (or the native Android Messages app) with the lead's number and message body pre-filled — agent just hits send. Technical mechanism: generate an `sms:` deep link (`sms:+15075551234?body=Hey%20Sarah...`) and post it to Slack as a button or linked message. This works on mobile — iOS and Android both honor the `sms:` URI scheme natively with no app install required; tapping the link opens the default messaging app with the number and body pre-filled. The main implementation detail in n8n is URL-encoding the message body correctly before constructing the link — use a Code node to run `encodeURIComponent(message)` on the Claude-generated SMS draft before building the `sms:` URL. Benefit: agent stays in the loop for the actual send (trust, compliance, personal touch) without having to draft anything. Tradeoff: adds one manual step vs. full automation. Could be an opt-in mode per agent — "auto-send" vs. "review in Slack first." Applies to: instant lead response, open house follow-up, any outbound SMS in the nurture sequence.
+
+---
+
 ## Open Tasks
 
 ### Immediate
@@ -251,6 +258,10 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Encrypt PII columns in Neon DB (phone, email, name) using pgcrypto — currently plaintext
 - [ ] Add explicit input escaping for user-supplied fields in n8n Claude prompt templates (lead_name, lead_message) — prompt injection hardening
 
+### Research / Product Decisions
+- [ ] **Real estate email inbox lead ingestion — design and build email-to-lead pipeline:** Many agents receive leads via email from lead companies (Zillow, Realtor.com, Homes.com, BoomTown, Opcity, etc.). Build a pipeline that monitors an agent's inbox, detects emails from known lead providers, parses the lead data out of the email body, normalizes it to the standard payload shape, runs it through the existing lead cleansing/dedupe layer, and auto-enrolls in the instant lead response + cold nurture workflows. Key design decisions: (a) **Email access method** — Gmail API via n8n Gmail Trigger node (cleanest, OAuth, real-time push) vs. IMAP polling (works for any inbox, slightly more setup); Gmail Trigger is the right default for agents on Google Workspace. (b) **Parsing approach** — each lead company sends a different email format; options are n8n Code node with per-provider regex/string extraction, a managed email parsing service (Mailparser.io, Parseur) that normalizes to JSON before hitting n8n, or Claude itself to extract structured lead data from raw email HTML (most flexible, handles format drift). Claude extraction is the strongest long-term choice — pass raw email body, get back normalized JSON. (c) **Provider detection** — use sender domain (`@zillow.com`, `@realtor.com`, etc.) or subject line patterns to identify lead emails and ignore everything else. (d) **Normalization** — all parsed leads must conform to the existing normalized payload shape before hitting the cleansing workflow (`lead_name`, `email`, `phone`, `source`, `property_address`, `price_range`, `beds`, `lead_message`). Dedupe check against Neon `leads` table by email + phone before firing any sequence. This is an intake source addition, not a new workflow — it plugs into the existing architecture upstream of everything that already works.
+- [ ] **Real estate lead reply handling — decide on conversation architecture:** When a lead replies to an AI-sent SMS or email, should the workflow (a) let the AI continue the conversation autonomously (bidirectional AI ↔ lead loop), or (b) capture the reply, stop automation, and route it directly to the agent to pick up manually? Key tradeoffs: option (a) is faster and scales infinitely but risks the AI going off-script or losing trust on a high-value transaction; option (b) is safer and keeps the agent in control but adds latency and defeats part of the value prop. Consider a hybrid: AI handles first 1–2 reply turns (answers basic questions, re-qualifies interest), then hands off to agent with full context. Research how other real estate AI tools (Follow Up Boss, Sierra, Ylopo) handle this boundary. Applies to: instant lead response, 7-touch cold nurture, open house follow-up.
+
 ### Near Term
 - [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)
 - [x] Design Postgres schema as connective tissue between Tier 1 and Tier 2
@@ -268,6 +279,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Swap placeholder rates with real B&B rates once obtained
 - [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
 - [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
+- [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
 
 ### First Client Targets
 - Insurance broker friend — Salesforce user, discovery call framework ready
