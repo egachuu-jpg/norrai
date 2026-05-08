@@ -96,6 +96,67 @@ Timezone expression used in Missed Call workflow:
 parseInt(new Date().toLocaleString('en-US', {timeZone: 'America/Chicago', hour12: false}).split(', ')[1].split(':')[0])
 ```
 
+### Workflow Logging Standard
+
+Every n8n workflow must log `triggered`, `completed`, and `failed` events to `workflow_events` in Neon. This powers the monitoring dashboard health logic (red/yellow/green per client).
+
+**Node pattern (add to every workflow):**
+
+1. **Lookup Client** (Postgres, `continueOnFail: true`) — resolves `client_id` based on workflow group:
+   - Real estate webhooks: `SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}'`
+   - B&B workflows: hardcode `86a01b94-ddab-4594-8afc-8212fb18fdd0`
+   - Internal/system workflows: hardcode `e2f9934c-4d28-4bb4-ac90-4284c1123517` (norrai_internal)
+   - Lead Cleanser pipeline + misc: use norrai_internal until per-client routing is built
+
+2. **Log Triggered** (Postgres, `continueOnFail: true`) — fires right after Token Check:
+   ```sql
+   INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)
+   VALUES ($client_id, '$workflow_name', 'triggered',
+     '{"execution_id": "{{ $execution.id }}", "agent_email": "{{ $json.body.agent_email }}"}'::jsonb)
+   ```
+
+3. **Log Completed** (Postgres, `continueOnFail: true`) — fires at the successful end of the workflow:
+   ```sql
+   INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)
+   VALUES ($client_id, '$workflow_name', 'completed',
+     '{"execution_id": "{{ $execution.id }}"}'::jsonb)
+   ```
+
+4. **Error Workflow setting** — every workflow's Settings → Error Workflow must point to `Norr AI Workflow Error Logger`. This handles `failed` event logging automatically.
+
+**`workflow_name` registry (snake_case values stored in Neon):**
+
+| Workflow | `workflow_name` |
+|---|---|
+| Real Estate Instant Lead Response | `instant_lead_response` |
+| Real Estate Open House Follow-Up | `open_house_follow_up` |
+| Real Estate Open House Setup | `open_house_setup` |
+| Real Estate Listing Description Generator | `listing_description` |
+| Real Estate Review Request | `review_request` |
+| Real Estate 7-Touch Cold Nurture | `cold_nurture` |
+| B&B Lead Generator | `bnb_lead_generator` |
+| B&B Manufacturing Estimate | `bnb_estimate` |
+| Norr AI Chief of Staff | `norrai_chief_of_staff` |
+| Norr AI Client Health Query | `client_health_query` |
+| Norr AI Red Alert Scheduler | `red_alert_scheduler` |
+| Real Estate Lead Cleanser | `lead_cleanser` |
+| Real Estate Zillow Intake | `zillow_intake` |
+| Real Estate Realtor Intake | `realtor_intake` |
+| Real Estate Facebook Intake | `facebook_intake` |
+| Real Estate Custom Form Intake | `custom_form_intake` |
+| Real Estate Lead Response Auto | `lead_response_auto` |
+| Real Estate Lead Action Handler | `lead_action_handler` |
+| Real Estate Lead Cleanser | `lead_cleanser` |
+| Real Estate Zillow Intake | `zillow_intake` |
+| Real Estate Realtor Intake | `realtor_intake` |
+| Real Estate Facebook Intake | `facebook_intake` |
+| Real Estate Custom Form Intake | `custom_form_intake` |
+| Client Discovery → Claude Analysis | `client_discovery` |
+| Client Onboarding → Claude Analysis | `client_onboarding` |
+| Event Ops Discovery | `event_ops_discovery` |
+
+**All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.**
+
 ---
 
 ## Workflows Built
