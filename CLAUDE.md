@@ -251,6 +251,9 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Encrypt PII columns in Neon DB (phone, email, name) using pgcrypto — currently plaintext
 - [ ] Add explicit input escaping for user-supplied fields in n8n Claude prompt templates (lead_name, lead_message) — prompt injection hardening
 
+### Research / Product Decisions
+- [ ] **Real estate lead reply handling — decide on conversation architecture:** When a lead replies to an AI-sent SMS or email, should the workflow (a) let the AI continue the conversation autonomously (bidirectional AI ↔ lead loop), or (b) capture the reply, stop automation, and route it directly to the agent to pick up manually? Key tradeoffs: option (a) is faster and scales infinitely but risks the AI going off-script or losing trust on a high-value transaction; option (b) is safer and keeps the agent in control but adds latency and defeats part of the value prop. Consider a hybrid: AI handles first 1–2 reply turns (answers basic questions, re-qualifies interest), then hands off to agent with full context. Research how other real estate AI tools (Follow Up Boss, Sierra, Ylopo) handle this boundary. Applies to: instant lead response, 7-touch cold nurture, open house follow-up.
+
 ### Near Term
 - [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)
 - [x] Design Postgres schema as connective tissue between Tier 1 and Tier 2
@@ -268,6 +271,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 - [ ] Swap placeholder rates with real B&B rates once obtained
 - [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
 - [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
+- [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
 
 ### First Client Targets
 - Insurance broker friend — Salesforce user, discovery call framework ready
