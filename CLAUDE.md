@@ -153,7 +153,8 @@ norrai/
 │   │   └── bnb_estimate_form.html  # B&B Manufacturing estimate form (B&B employees)
 │   ├── internal/               # Cloudflare Access: internal group (1-day session)
 │   │   ├── brand_concepts.html
-│   │   └── norrai_style_guide.html
+│   │   ├── norrai_style_guide.html
+│   │   └── dashboard.html
 │   ├── norr_ai_favicon.svg
 │   ├── norr_ai_emblem.svg
 │   └── css/
@@ -200,7 +201,7 @@ font-mono:    'JetBrains Mono'
 ## Testing
 
 **Test stack:** Playwright (`npm test`)
-**248 tests across 10 spec files — all must pass before pushing.**
+**260 tests across 11 spec files — all must pass before pushing.**
 
 | Spec file | Page covered |
 |---|---|
@@ -214,6 +215,7 @@ font-mono:    'JetBrains Mono'
 | `tests/discovery_form.spec.js` | `discovery_form.html` |
 | `tests/event_ops_discovery.spec.js` | `event_ops_discovery.html` |
 | `tests/onboarding_form.spec.js` | `onboarding_form.html` |
+| `tests/dashboard.spec.js` | `internal/dashboard.html` |
 
 ### Rules
 - **Run `npm test` before pushing any code changes.** All tests must pass.
@@ -269,13 +271,14 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [ ] Re-import Real Estate Open House Follow-Up workflow in n8n (prompt updated to use property highlights, fix hallucination)
 - [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
 - [x] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
-- [ ] Set up internal monitoring dashboard (red/green per client status) — needed at 10+ clients
+- [x] Set up internal monitoring dashboard (red/green per client status) — built 2026-05-08: dashboard.html + Health Query webhook + Red Alert Scheduler (6am/6pm CT Slack)
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
 - [x] Build B&B Manufacturing estimating demo — form + n8n workflow + tests (see 2026-04-29 session log)
 - [x] Build B&B lead generator workflow — n8n schedule + Apollo.io + Claude scoring + SendGrid review email + Neon logging
 - [ ] Smoke test B&B workflow: import JSON into n8n, fire test payload, verify estimate email
 - [ ] Swap placeholder rates with real B&B rates once obtained
 - [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
+- [ ] Audit workflow_events logging coverage — only B&B Lead Generator currently logs to Neon; all real estate workflows (Instant Lead Response, Open House Follow-Up, Open House Setup, Listing Description, 7-Touch Nurture, Review Request, Lead Cleanser pipeline) need `workflow_events` INSERT nodes added before the monitoring dashboard can work
 - [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
 - [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
 
@@ -386,6 +389,12 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Updated 6 Playwright test files to reference new `/clients/` paths; 248 tests passing
 - To add a new client: Zero Trust → Access Groups → `clients` → add their email — automatically grants access to all `/clients/*` pages
 - n8n workflows unchanged — only workflow referencing a page URL points to `open_house.html` which stays public at root
+
+### 2026-05-08
+- Built internal client health monitoring dashboard (`website/internal/dashboard.html`) — Polar Modern card grid, red/yellow/green status per client, manual refresh, loading/error/empty states; 10 Playwright tests
+- Built `n8n/workflows/Norr AI Client Health Query.json` — GET webhook at `/webhook/client-health` queries Neon, applies health logic (red=failures in 7d, yellow=silence, green=healthy), returns JSON
+- Built `n8n/workflows/Norr AI Red Alert Scheduler.json` — Cron at 6am + 6pm CT, queries Neon, posts Slack alert when any client is red
+- Re-imported Real Estate Instant Lead Response + Open House Follow-Up workflows in n8n with security enhancements (Validate Input node, [DATA] prompt injection delimiters)
 
 ### 2026-04-28
 - Built `website/open_house_setup.html` + `n8n/workflows/Real Estate Open House Setup.json` — agent enters name/email/phone/address/MLS description; Claude extracts 3–5 property highlights; QR code generated via qrserver.com and emailed to agent; highlights encoded as `notes` param in the sign-in URL
