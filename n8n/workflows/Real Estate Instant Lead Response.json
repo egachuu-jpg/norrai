@@ -164,18 +164,23 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.lead_email }}",
-        "subject": "=Re: {{ $json.property_address }}",
-        "contentValue": "={{ $json.message }}",
-        "additionalFields": {
-          "replyTo": "={{ $json.agent_email }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.lead_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Re: {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/plain\", \"value\": {{ JSON.stringify($json.message) }}}]\n}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         1264,
         60
@@ -183,9 +188,9 @@
       "id": "a1b2c3d4-0006-4000-8000-000000000006",
       "name": "Email to Lead",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "SENDGRID_HEADER_AUTH",
+          "name": "SendGrid Header Auth"
         }
       }
     },
