@@ -216,7 +216,9 @@
         "toEmail": "={{ $json.email }}",
         "subject": "=Thanks for stopping by {{ $json.property_address }}",
         "contentValue": "={{ $json.message }}",
-        "additionalFields": {}
+        "additionalFields": {
+          "replyTo": "={{ $json.agent_email }}"
+        }
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
