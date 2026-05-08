@@ -392,3 +392,35 @@ Expected: response body is `TESTCHALLENGE123` (plain text, 200).
 | Edit page submits via GET (appends content to URL) — fine for SMS; long emails may hit URL length limits in some browsers | Low |
 | No workflow_events logging in new workflows yet — add Postgres insert nodes when needed for audit trail | Low |
 | Token in Zillow/Realtor/Facebook URLs is not validated at intake — invalid tokens fail silently in cleanser | Low |
+
+---
+
+## Norr AI Chief of Staff
+
+**Workflow:** `Norr AI Chief of Staff.json`
+**Trigger:** Schedule — Mon + Thu 8am CT (`0 13 * * 1,4` UTC)
+
+### Import Checklist
+- [ ] Import `n8n/workflows/Norr AI Chief of Staff.json`
+- [ ] Open **Fetch CLAUDE.md** node → Credential → select "GitHub PAT" (created in setup)
+- [ ] Open **Post to Slack** node → URL field → replace `SLACK_WEBHOOK_URL` with the actual Slack Incoming Webhook URL
+- [ ] Save the workflow
+
+### Smoke Test
+1. In n8n, open the workflow and click **Test workflow** (manual trigger)
+2. Watch execution flow through all 5 nodes — all should show green
+3. Open the Slack channel — message should arrive within a few seconds
+4. Verify message structure:
+   - Header shows "Norr AI — Open Tasks | [today's date]"
+   - Each subsection (Immediate, Security, Near Term, etc.) appears as a bold label
+   - Tasks listed as bullet points
+   - Sections with >5 items show "+ N more"
+   - No `- [x]` completed items appear
+
+### Activate for Production
+- [ ] Toggle workflow to **Active** — n8n will fire on the cron schedule going forward
+- [ ] Confirm first scheduled run arrives the next Mon or Thu at 8am CT
+
+### Known Gaps
+- Cron `0 13 * * 1,4` fires at 8am CST (winter) / 7am CDT (summer) — one hour drift in summer due to DST. Acceptable for internal reminders.
+- No retry logic if GitHub API or Slack is temporarily unavailable.
