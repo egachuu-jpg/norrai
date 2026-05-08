@@ -304,7 +304,12 @@
 
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
-      status.innerHTML = `<strong>QR code on its way.</strong> Check your email at <strong>${payload.agent_email}</strong> — it should arrive within a minute. Print it and tape it to the door before the open house.`;
+      const _s1 = document.createElement('strong');
+      _s1.textContent = 'QR code on its way.';
+      const _s2 = document.createElement('strong');
+      _s2.textContent = payload.agent_email;
+      status.textContent = '';
+      status.append(_s1, ' Check your email at ', _s2, ' — it should arrive within a minute. Print it and tape it to the door before the open house.');
       status.className = 'status success show';
       form.style.display = 'none';
 
