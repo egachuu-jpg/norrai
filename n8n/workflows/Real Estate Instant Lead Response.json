@@ -58,7 +58,7 @@
             {
               "id": "set-prompt-001",
               "name": "prompt",
-              "value": "=You are {{ $node[\"Receive Lead\"].json.body.agent_name }}, a real estate agent. A new lead just came in and you need to respond immediately.\n\nLEAD DETAILS:\nName: {{ $node[\"Receive Lead\"].json.body.lead_name }}\nSource: {{ $node[\"Receive Lead\"].json.body.source }}\nTheir message: {{ $node[\"Receive Lead\"].json.body.lead_message }}\n\nPROPERTY THEY ARE ASKING ABOUT:\nAddress: {{ $node[\"Receive Lead\"].json.body.property_address }}\nPrice: {{ $node[\"Receive Lead\"].json.body.price_range }}\nBeds: {{ $node[\"Receive Lead\"].json.body.beds }}\nBaths: {{ $node[\"Receive Lead\"].json.body.baths }}\nKey details: {{ $node[\"Receive Lead\"].json.body.key_details }}\n\nWrite a short, warm, personal response from {{ $node[\"Receive Lead\"].json.body.agent_name }} to {{ $node[\"Receive Lead\"].json.body.lead_name }}. Requirements:\n- Address them by first name\n- Acknowledge what they asked about specifically\n- Confirm the property is something you can help with\n- Invite them to connect — suggest a quick call or showing\n- Sign off with your name and phone number: {{ $node[\"Receive Lead\"].json.body.agent_phone }}\n- Keep it under 120 words — this is going via SMS and email\n- Warm and human, not corporate or scripted\n\nReturn ONLY the message text. No labels, no subject line, no formatting markers.",
+              "value": "=You are {{ $node[\"Receive Lead\"].json.body.agent_name }}, a real estate agent. A new lead just came in and you need to respond immediately.\n\nLEAD DETAILS:\nName: {{ $node[\"Receive Lead\"].json.body.lead_name }}\nSource: {{ $node[\"Receive Lead\"].json.body.source }}\nTheir message: {{ $node[\"Receive Lead\"].json.body.lead_message }}\n\nPROPERTY THEY ARE ASKING ABOUT:\nAddress: {{ $node[\"Receive Lead\"].json.body.property_address }}\nPrice: {{ $node[\"Receive Lead\"].json.body.price_range }}\nBeds: {{ $node[\"Receive Lead\"].json.body.beds }}\nBaths: {{ $node[\"Receive Lead\"].json.body.baths }}\nKey details: {{ $node[\"Receive Lead\"].json.body.key_details }}\n\nWrite a short, warm, personal response from {{ $node[\"Receive Lead\"].json.body.agent_name }} to {{ $node[\"Receive Lead\"].json.body.lead_name }}. Requirements:\n- Address them by first name\n- Acknowledge what they asked about specifically\n- Confirm the property is something you can help with\n- Invite them to connect — suggest a quick call or showing\n- Sign off with your name and phone number: {{ $node[\"Receive Lead\"].json.body.agent_phone }}\n- Keep it under 120 words — this is going via email\n- Warm and human, not corporate or scripted\n\nReturn ONLY the message text. No labels, no subject line, no formatting markers.",
               "type": "string"
             },
             {
@@ -164,22 +164,26 @@
     },
     {
       "parameters": {
-        "from": "+18XXXXXXXXXX",
-        "to": "=+1{{ $json.lead_phone.replace(/\\D/g, '') }}",
-        "message": "={{ $json.message }}"
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.lead_email }}",
+        "subject": "=Re: {{ $json.property_address }}",
+        "contentValue": "={{ $json.message }}",
+        "additionalFields": {}
       },
-      "type": "n8n-nodes-base.twilio",
+      "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [
         1264,
         60
       ],
       "id": "a1b2c3d4-0006-4000-8000-000000000006",
-      "name": "SMS to Lead",
+      "name": "Email to Lead",
       "credentials": {
-        "twilioApi": {
-          "id": "TWILIO_CREDENTIAL_ID",
-          "name": "Twilio account"
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
         }
       }
     },
@@ -190,7 +194,7 @@
         "fromName": "Norr AI",
         "toEmail": "={{ $json.agent_email }}",
         "subject": "=Lead response sent — {{ $json.lead_name }} re: {{ $json.property_address }}",
-        "contentValue": "=Hi {{ $json.agent_name }},\n\nA lead response was just sent to {{ $json.lead_name }} via SMS. Here's a copy:\n\n---\n\n{{ $json.message }}\n\n---\n\nLead details:\n- Name: {{ $json.lead_name }}\n- Phone: {{ $json.lead_phone }}\n- Email: {{ $json.lead_email }}\n- Property: {{ $json.property_address }}\n\nNorr AI",
+        "contentValue": "=Hi {{ $json.agent_name }},\n\nA lead response was just sent to {{ $json.lead_name }} via email. Here's a copy:\n\n---\n\n{{ $json.message }}\n\n---\n\nLead details:\n- Name: {{ $json.lead_name }}\n- Phone: {{ $json.lead_phone }}\n- Email: {{ $json.lead_email }}\n- Property: {{ $json.property_address }}\n\nNorr AI",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.sendGrid",
@@ -259,7 +263,7 @@
       "main": [
         [
           {
-            "node": "SMS to Lead",
+            "node": "Email to Lead",
             "type": "main",
             "index": 0
           },
