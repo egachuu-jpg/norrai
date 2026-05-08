@@ -22,6 +22,7 @@ async function gotoWithParams(page) {
 async function fillRequired(page) {
   await page.fill('#attendee_name', 'Sarah Johnson');
   await page.fill('#phone', '5075551234');
+  await page.fill('#email', 'sarah@gmail.com');
 }
 
 // ─── 1. URL param handling ─────────────────────────────────────────────────────
@@ -96,6 +97,16 @@ test.describe('Required field validation', () => {
 
     await expect(page.locator('#status.success')).not.toBeVisible();
   });
+
+  test('blocks submit when email is empty', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.fill('#email', '');
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
 });
 
 // ─── 3. Payload shape ─────────────────────────────────────────────────────────
@@ -130,7 +141,7 @@ test.describe('Payload shape', () => {
     expect(new Date(body.submitted_at).toISOString()).toBe(body.submitted_at);
   });
 
-  test('optional email is empty string when not filled', async ({ page }) => {
+  test('email is present in payload', async ({ page }) => {
     await mockWebhook(page);
     await gotoWithParams(page);
     await fillRequired(page);
@@ -140,7 +151,7 @@ test.describe('Payload shape', () => {
       page.click('#submit-btn'),
     ]);
     const body = JSON.parse(req.postData());
-    expect(body.email).toBe('');
+    expect(body.email).toBe('sarah@gmail.com');
   });
 
   test('X-Norr-Token header is present', async ({ page }) => {
