@@ -10,6 +10,7 @@ async function fillRequired(page) {
   await page.fill('#agent_name', 'Jane Smith');
   await page.fill('#agent_email', 'jane@brokerage.com');
   await page.fill('#lead_name', 'Sarah Johnson');
+  await page.fill('#email', 'sarah@gmail.com');
   await page.fill('#phone', '5075551234');
   await page.fill('#lead_message', 'I saw the listing on Zillow and I am interested. Is it still available?');
   await page.fill('#property_address', '123 Maple St, Faribault, MN 55021');
@@ -22,6 +23,7 @@ test.describe('Required field validation', () => {
     { id: 'agent_name',        fill: 'Jane Smith' },
     { id: 'agent_email',       fill: 'jane@brokerage.com' },
     { id: 'lead_name',         fill: 'Sarah Johnson' },
+    { id: 'email',             fill: 'sarah@gmail.com' },
     { id: 'phone',             fill: '5075551234' },
     { id: 'lead_message',      fill: 'Interested in your listing.' },
     { id: 'property_address',  fill: '123 Maple St, Faribault, MN 55021' },
@@ -71,6 +73,7 @@ test.describe('Payload shape', () => {
     expect(body.agent_name).toBe('Jane Smith');
     expect(body.agent_email).toBe('jane@brokerage.com');
     expect(body.lead_name).toBe('Sarah Johnson');
+    expect(body.email).toBe('sarah@gmail.com');
     expect(body.phone).toBe('5075551234');
     expect(body.property_address).toBe('123 Maple St, Faribault, MN 55021');
     expect(body.source_form).toBe('lead_response_web');
