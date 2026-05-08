@@ -1,0 +1,108 @@
+{
+  "name": "Norr AI Chief of Staff",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 13 * * 1,4"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule-001",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/egachuu-jpg/norrai/contents/CLAUDE.md",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-github-001",
+      "name": "Fetch CLAUDE.md",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GITHUB_CREDENTIAL_ID",
+          "name": "GitHub PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawContent = Buffer.from($json.content, 'base64').toString('utf-8');\n\nconst openTasksMatch = rawContent.match(/## Open Tasks([\\s\\S]*?)(?=\\n## |\\n---\\n|\\n# |$)/);\nif (!openTasksMatch) {\n  return [{ json: { sections: {} } }];\n}\n\nconst openTasksContent = openTasksMatch[1];\nconst sections = {};\nlet currentSection = 'General';\n\nfor (const line of openTasksContent.split('\\n')) {\n  const trimmed = line.trim();\n  if (trimmed.startsWith('### ')) {\n    currentSection = trimmed.replace('### ', '');\n  } else if (trimmed.startsWith('- [ ]')) {\n    const task = trimmed.replace(/^- \\[ \\] /, '');\n    if (!sections[currentSection]) sections[currentSection] = [];\n    sections[currentSection].push(task);\n  }\n}\n\nreturn [{ json: { sections } }];"
+      },
+      "id": "node-parse-001",
+      "name": "Parse Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const sections = $json.sections;\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'short',\n  year: 'numeric',\n  month: 'short',\n  day: 'numeric',\n  timeZone: 'America/Chicago'\n});\n\nconst MAX_ITEMS = 5;\n\nconst blocks = [\n  {\n    type: 'header',\n    text: { type: 'plain_text', text: `Norr AI — Open Tasks  |  ${today}`, emoji: false }\n  },\n  { type: 'divider' }\n];\n\nfor (const [sectionName, tasks] of Object.entries(sections)) {\n  if (!tasks || tasks.length === 0) continue;\n  const displayed = tasks.slice(0, MAX_ITEMS);\n  const remaining = tasks.length - MAX_ITEMS;\n  let text = `*${sectionName}*\\n`;\n  text += displayed.map(t => `• ${t}`).join('\\n');\n  if (remaining > 0) text += `\\n_+ ${remaining} more_`;\n  blocks.push({\n    type: 'section',\n    text: { type: 'mrkdwn', text }\n  });\n}\n\nreturn [{ json: { blocks } }];"
+      },
+      "id": "node-slack-build-001",
+      "name": "Build Slack Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "SLACK_WEBHOOK_URL",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ blocks: $json.blocks }) }}",
+        "options": {}
+      },
+      "id": "node-slack-post-001",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [[{"node": "Fetch CLAUDE.md", "type": "main", "index": 0}]]
+    },
+    "Fetch CLAUDE.md": {
+      "main": [[{"node": "Parse Tasks", "type": "main", "index": 0}]]
+    },
+    "Parse Tasks": {
+      "main": [[{"node": "Build Slack Message", "type": "main", "index": 0}]]
+    },
+    "Build Slack Message": {
+      "main": [[{"node": "Post to Slack", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
