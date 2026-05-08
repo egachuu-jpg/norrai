@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Health — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone: #FAFAF7; --ink: #0A0F1A; --glacial: #7FA9B8; --graphite: #3A3F48;
+    --surface: #FFFFFF; --border: #E5E4DE; --muted: #9EA3AA; --secondary: #6A6F78;
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; min-height: 100dvh; }
+
+  .site-header { background: var(--ink); padding: 40px 24px 36px; border-bottom: 1px solid #1e2535; }
+  .site-header-inner { max-width: 960px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px; }
+  .site-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.03em; line-height: 1.1; color: var(--bone); }
+  .site-header h1 .accent { color: var(--glacial); }
+  .header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  #last-updated { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
+  #refresh-btn { background: transparent; border: 1px solid #3a4555; color: var(--muted); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  #refresh-btn:hover { border-color: var(--glacial); color: var(--glacial); }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 36px 24px 72px; }
+
+  #loading { text-align: center; padding: 80px 0; color: var(--muted); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--glacial); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #error { display: none; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-md); padding: 20px 24px; color: #B91C1C; font-size: 14px; }
+  #error button { background: none; border: 1px solid currentColor; color: inherit; font-size: 13px; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; margin-top: 12px; display: block; }
+
+  .client-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .client-grid.visible { display: grid; }
+
+  .client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .client-card.status-red    { border-left: 3px solid #B91C1C; }
+  .client-card.status-yellow { border-left: 3px solid #F59E0B; }
+  .client-card.status-green  { border-left: 3px solid #22C55E; }
+
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .card-name { font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; line-height: 1.2; }
+  .status-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .status-dot[data-status="red"]    { background: #B91C1C; }
+  .status-dot[data-status="yellow"] { background: #F59E0B; }
+  .status-dot[data-status="green"]  { background: #22C55E; }
+
+  .card-meta { font-size: 11px; color: var(--muted); text-transform: capitalize; margin-bottom: 14px; }
+
+  .workflow-list { list-style: none; }
+  .workflow-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); }
+  .workflow-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .workflow-dot[data-status="red"]    { background: #B91C1C; }
+  .workflow-dot[data-status="yellow"] { background: #F59E0B; }
+  .workflow-dot[data-status="green"]  { background: #22C55E; }
+  .workflow-name { font-family: var(--font-mono); font-size: 11px; color: var(--secondary); }
+
+  .empty-state { color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 540px) {
+    .site-header { padding: 32px 18px 28px; }
+    .wrap { padding: 28px 18px 60px; }
+    .client-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div>
+      <div class="eyebrow">Internal</div>
+      <h1>Client <span class="accent">Health</span></h1>
+    </div>
+    <div class="header-actions">
+      <span id="last-updated"></span>
+      <button id="refresh-btn">Refresh</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="loading"><div class="spinner"></div><div>Loading health data&hellip;</div></div>
+  <div id="error"></div>
+  <div id="grid" class="client-grid"></div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/client-health';
+  const TOKEN = '8F68D963-7060-4033-BD04-7593E4B203CB';
+
+  const loadingEl     = document.getElementById('loading');
+  const errorEl       = document.getElementById('error');
+  const gridEl        = document.getElementById('grid');
+  const lastUpdatedEl = document.getElementById('last-updated');
+
+  function formatTime(iso) {
+    return new Date(iso).toLocaleString('en-US', {
+      timeZone: 'America/Chicago', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    });
+  }
+
+  function renderClients(data) {
+    gridEl.innerHTML = '';
+
+    if (!data.clients || data.clients.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'empty-state';
+      empty.textContent = 'No active clients.';
+      gridEl.appendChild(empty);
+    } else {
+      for (const client of data.clients) {
+        const card = document.createElement('div');
+        card.className = 'client-card status-' + client.status;
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'card-name';
+        nameEl.textContent = client.business_name;
+
+        const dot = document.createElement('div');
+        dot.className = 'status-dot';
+        dot.setAttribute('data-status', client.status);
+
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'card-header';
+        cardHeader.append(nameEl, dot);
+
+        const tier = client.tier.charAt(0).toUpperCase() + client.tier.slice(1);
+        const vertical = client.vertical.replace(/_/g, ' ');
+        const meta = document.createElement('div');
+        meta.className = 'card-meta';
+        meta.textContent = vertical + ' \u00b7 ' + tier;
+
+        const wfList = document.createElement('ul');
+        wfList.className = 'workflow-list';
+        for (const wf of client.workflows) {
+          const li = document.createElement('li');
+          li.className = 'workflow-item';
+          const wfDot = document.createElement('div');
+          wfDot.className = 'workflow-dot';
+          wfDot.setAttribute('data-status', wf.status);
+          const wfName = document.createElement('span');
+          wfName.className = 'workflow-name';
+          wfName.textContent = wf.workflow_name;
+          li.append(wfDot, wfName);
+          wfList.appendChild(li);
+        }
+
+        card.append(cardHeader, meta, wfList);
+        gridEl.appendChild(card);
+      }
+    }
+
+    if (data.generated_at) {
+      lastUpdatedEl.textContent = 'Last updated ' + formatTime(data.generated_at);
+    }
+
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    gridEl.classList.add('visible');
+  }
+
+  async function loadHealth() {
+    loadingEl.style.display = 'block';
+    errorEl.style.display = 'none';
+    gridEl.classList.remove('visible');
+
+    try {
+      const res = await fetch(WEBHOOK_URL, { headers: { 'X-Norr-Token': TOKEN } });
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      const data = await res.json();
+      renderClients(data);
+    } catch (err) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      errorEl.innerHTML = '';
+      const msg = document.createElement('div');
+      msg.textContent = 'Failed to load health data: ' + err.message;
+      const retryBtn = document.createElement('button');
+      retryBtn.textContent = 'Retry';
+      retryBtn.addEventListener('click', loadHealth);
+      errorEl.append(msg, retryBtn);
+    }
+  }
+
+  document.getElementById('refresh-btn').addEventListener('click', loadHealth);
+  loadHealth();
+</script>
+</body>
+</html>
