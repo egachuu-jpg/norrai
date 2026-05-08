@@ -244,6 +244,41 @@ Beyond calendar events, the briefing should eventually pull from: leads currentl
 
 **Calendar write-back:** The same Google Calendar OAuth credential used to read events for the briefing also supports creating events — n8n's Google Calendar node handles both directions. When an agent tells the chief of staff "add the Johnson closing to my calendar for Thursday at 10am" or "remind me about the inspection Friday at 2pm at 412 Oak St," Claude parses the natural language into a structured event (title, date/time, location, description) and n8n creates it directly in their Google Calendar. Confirmation sent back to the agent via SMS or Slack. This makes the reminder log and calendar fully bidirectional — agent can read their schedule through the briefing and write to it through the chief of staff, all without opening a calendar app. Applies to: appointments, inspections, closings, open houses, follow-up calls, any time-bound task.
 
+### Norr AI — Owner chief of staff (conversational business assistant)
+A Slack-based conversational assistant for Egan — knowledgeable about the full Norr AI business, able to answer questions about the roadmap, client pipeline, and open tasks, and able to execute workflows by dispatching to n8n sub-agents. Distinct from the real estate agent chief of staff (narrow domain, specific tasks) — this one covers the whole business and acts as a thinking partner, not just a task dispatcher.
+
+**Architecture — three layers:**
+
+**Layer 1 — Static context (system prompt + prompt caching)**
+CLAUDE.md, the 6-month roadmap, and client docs all fit in a single Claude context window today. Inject them as the system prompt on every call. Use Anthropic prompt caching — the business context tokens are cached between calls, so only the user's message and Claude's response cost full price. Fast, cheap, no new infrastructure. As the knowledge base grows, this layer gets refreshed on a schedule (daily re-read of source docs).
+
+**Layer 2 — Live data (Claude tool use → Neon)**
+For live operational questions ("how many active clients?", "what fired last in the B&B workflow?"), Claude calls tools that query Neon directly — `clients`, `workflow_events`, `leads` tables. Claude receives structured data back and narrates it. Keeps the live picture accurate without baking volatile data into the static prompt.
+
+**Layer 3 — Task execution (Claude tool use → n8n webhooks)**
+Claude classifies each message as "answer a question" or "do something." When it's the latter, it calls a named tool that fires an n8n webhook. Define a small set of actions upfront:
+- `add_todo` — writes a new task to CLAUDE.md or Neon
+- `trigger_workflow` — fires a named n8n workflow (lead enrollment, listing description, etc.)
+- `create_calendar_event` — writes to Google Calendar via the existing OAuth credential
+- `get_client_status` — queries Neon for a named client's workflow activity
+- `log_meeting_note` — appends to the session log in CLAUDE.md or a dedicated notes doc
+
+**Slack integration:**
+n8n Slack Trigger node listens for DMs or `@mentions`. Message passes to Claude with full context (Layer 1 system prompt). Claude responds and optionally calls tools (Layers 2–3). n8n posts response back in-thread. 4–5 nodes total. Requires a Slack app with bot permissions + Events API pointed at the n8n webhook URL.
+
+**What it can answer on day one:**
+- "What should I focus on this week?" → synthesizes open tasks + roadmap milestone
+- "Where are we with B&B?" → reads client doc + `workflow_events` table
+- "What's left before I can onboard a first client?" → reads open tasks, flags blockers
+
+**What task execution looks like:**
+- "Add a to-do to fix the Twilio number" → `add_todo` tool → written to CLAUDE.md or Neon
+- "Enroll the Trnka lead in the nurture sequence" → `trigger_workflow` → n8n fires the sequence
+- "Remind me to follow up with the insurance broker Monday" → `create_calendar_event` → Google Calendar
+
+**Future — RAG layer:**
+Once the knowledge base outgrows a single context window (client histories, meeting notes, workflow logs), add a pgvector retrieval layer. Neon already supports pgvector — no new infrastructure. At query time, embed the user's message, retrieve the most relevant chunks, inject into the prompt. This scales the assistant without changing the Slack or n8n layer at all.
+
 ### Real Estate — Transaction coordination checklist (per-client deal pipeline)
 When a lead converts to a client, agents work through a standard checklist of tasks that varies by deal type — seller listing vs. buyer representation. Example seller sequence: schedule inspection → notify homeowner of inspection date → remind agent day-of → schedule closing → notify all parties → etc. This is a well-known real estate problem (whole SaaS products exist around it: Dotloop, SkySlope, Paperless Pipeline). Norr AI's angle is to make the checklist drive automation rather than just track status.
 
