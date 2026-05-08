@@ -119,5 +119,5 @@ test('sends X-Norr-Token header', async ({ page }) => {
 test('shows empty state when no active clients', async ({ page }) => {
   await mockHealth(page, { generated_at: '2026-05-08T12:00:00Z', clients: [] });
   await page.goto('/internal/dashboard.html');
-  await expect(page.locator('.client-grid')).toContainText('No active clients');
+  await expect(page.locator('.client-grid')).toContainText('No active clients.');
 });
