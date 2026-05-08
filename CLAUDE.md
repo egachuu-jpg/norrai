@@ -392,8 +392,8 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ### 2026-05-08
 - Built internal client health monitoring dashboard (`website/internal/dashboard.html`) — Polar Modern card grid, red/yellow/green status per client, manual refresh, loading/error/empty states; 10 Playwright tests
-- Built `n8n/workflows/Norr AI Client Health Query.json` — GET webhook at `/webhook/client-health` queries Neon, applies health logic (red=failures in 7d, yellow=silence, green=healthy), returns JSON
-- Built `n8n/workflows/Norr AI Red Alert Scheduler.json` — Cron at 6am + 6pm CT, queries Neon, posts Slack alert when any client is red
+- Built `n8n/workflows/Norr AI Client Health Query.json` — GET webhook at `/webhook/client-health` queries Neon, applies health logic (red=failures in 7d, yellow=silence, green=healthy), returns JSON; **smoke tested and confirmed working**
+- Built `n8n/workflows/Norr AI Red Alert Scheduler.json` — Cron at 6am + 6pm CT, queries Neon, posts Slack alert when any client is red; **smoke tested and confirmed working**
 - Re-imported Real Estate Instant Lead Response + Open House Follow-Up workflows in n8n with security enhancements (Validate Input node, [DATA] prompt injection delimiters)
 
 ### 2026-04-28
