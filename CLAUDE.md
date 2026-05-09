@@ -235,6 +235,26 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 
 ## Ideas / Parking Lot
 
+### Real Estate — Agent chief of staff (conversational Slack assistant)
+A Slack-based conversational assistant for real estate agents — handles task dispatch, answers questions about their pipeline, and maintains conversation state across turns. The core product insight: state is what makes it feel like an assistant rather than a command line. An agent should be able to say "generate a listing description for 123 Maple" and have the assistant ask for missing details, remember mid-conversation corrections ("actually make that Friday at 3pm"), and confirm before firing irreversible actions — all without the agent repeating themselves.
+
+**Orchestration: LangGraph (not n8n).** Conversational state management is a core product requirement, not a nice-to-have. n8n handles one-shot webhook workflows well but multi-turn conversation state is awkward — each Slack message is a separate trigger and correlating replies to open conversations requires duct-taped state management in Neon. LangGraph handles this natively: each conversation is a stateful graph that accumulates context across turns, pauses for missing information, and resumes when the agent responds. n8n stays as the execution layer — when LangGraph decides to act, it fires an n8n webhook. LangGraph is the brain, n8n is the hands.
+
+**Handling underspecified commands:**
+When an agent types something like "generate a listing description for 123 Maple" without providing beds, baths, sq ft, or features, LangGraph handles the follow-up conversation naturally — Claude asks for what's missing, the agent replies in-thread, LangGraph accumulates the answers into state, then fires the listing description webhook once it has everything. No duct-taped reply correlation needed.
+
+**Stack:** FastAPI + Slack Bolt for Python + LangGraph + Anthropic SDK + asyncpg. Hosted on Railway (~$5–10/mo). LangGraph checkpoints conversation state to Neon via `PostgresSaver` — same `DATABASE_URL`, no new infrastructure. Voice interface (Twilio or Vapi) is a thin adapter over the same task-dispatch layer.
+
+**Task set (v1):**
+- Enroll a lead in a nurture sequence
+- Generate a listing description
+- Add a calendar event or reminder
+- Check today's schedule and open tasks
+- Mark a transaction checklist item complete
+- Send a review request
+
+**n8n relationship:** All client-facing workflows (SMS, email, Google Calendar writes, nurture sequences) still run in n8n. LangGraph only replaces the Slack conversation layer — intent parsing, state management, confirmation flows. Task execution fires n8n webhooks exactly as before.
+
 ### Real Estate — Daily and weekly agent briefing
 Send each agent a personalized morning summary of what's on their plate for the day (and a weekly preview on Monday morning). Primary data source is Google Calendar via the n8n Google Calendar node (OAuth, real-time). Agents on Google Workspace are the obvious first target; Outlook/Microsoft Calendar is a secondary option if an agent isn't on Google. Claude synthesizes the raw calendar data into a briefing — not just a list of events, but prioritized and framed as "here's your day" with anything time-sensitive called out. Delivery: SMS at 7am CT daily and/or email — agent's choice at onboarding. Weekly preview fires Sunday evening or Monday morning.
 
