@@ -263,6 +263,17 @@ Claude classifies each message as "answer a question" or "do something." When it
 - `get_client_status` — queries Neon for a named client's workflow activity
 - `log_meeting_note` — appends to the session log in CLAUDE.md or a dedicated notes doc
 
+**Design goal — full queryability:**
+Everything about the Norr AI business should be answerable through this assistant. That means the data layer needs to cover all sources:
+- **CLAUDE.md + roadmap + client docs** — static context, injected via system prompt (Layer 1)
+- **Neon tables** — live operational data: `clients`, `leads`, `workflow_events`, `appointments`, `service_contracts` — queried via tool use (Layer 2)
+- **n8n workflow state** — what ran, when, what failed — via `workflow_events` log in Neon
+- **GitHub** — open issues, recent commits, branch status — queryable via GitHub API tool
+- **Google Calendar** — what's scheduled — via Google Calendar OAuth credential
+- **Session logs** — the CLAUDE.md session log is the memory of what was built and when
+
+The abstraction to build toward: every data source has a corresponding tool Claude can call. The assistant doesn't need to know upfront which source has the answer — it calls the right tool based on the question, same way a person would open the right doc.
+
 **Slack integration:**
 n8n Slack Trigger node listens for DMs or `@mentions`. Message passes to Claude with full context (Layer 1 system prompt). Claude responds and optionally calls tools (Layers 2–3). n8n posts response back in-thread. 4–5 nodes total. Requires a Slack app with bot permissions + Events API pointed at the n8n webhook URL.
 
