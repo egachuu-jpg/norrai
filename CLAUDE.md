@@ -255,6 +255,15 @@ When an agent types something like "generate a listing description for 123 Maple
 
 **n8n relationship:** All client-facing workflows (SMS, email, Google Calendar writes, nurture sequences) still run in n8n. LangGraph only replaces the Slack conversation layer — intent parsing, state management, confirmation flows. Task execution fires n8n webhooks exactly as before.
 
+**Multi-tenancy — one service, N agents:**
+Five agents is not five deployments. The LangGraph service is multi-tenant by design. Each conversation is keyed by agent ID — when a Slack message arrives, the service identifies the agent from the workspace, loads their config, retrieves their isolated conversation state from Neon, runs the graph with their context, and posts back. Agent A's state never touches Agent B's.
+
+What's shared: one Railway service, one FastAPI app, one Neon database, one LangGraph graph definition. What's per-agent in Neon: their Slack workspace bot token, Google Calendar OAuth credential, Twilio subaccount reference (already in `twilio_subaccounts`), agent profile (name, voice preferences), n8n webhook URLs.
+
+Slack multi-workspace: each agent installs the Slack bot into their own workspace via a standard OAuth flow. Each installation generates a bot token stored per-agent in Neon. Incoming messages are identified by workspace ID and routed to the right agent config.
+
+Cost scales only on Claude API token usage (cents per day per agent at normal conversation volume) — Railway and Neon costs stay flat. This is the business model working as intended: infrastructure built once, marginal cost of adding a new agent is a config row in Neon and a Slack app installation.
+
 ### Real Estate — Daily and weekly agent briefing
 Send each agent a personalized morning summary of what's on their plate for the day (and a weekly preview on Monday morning). Primary data source is Google Calendar via the n8n Google Calendar node (OAuth, real-time). Agents on Google Workspace are the obvious first target; Outlook/Microsoft Calendar is a secondary option if an agent isn't on Google. Claude synthesizes the raw calendar data into a briefing — not just a list of events, but prioritized and framed as "here's your day" with anything time-sensitive called out. Delivery: SMS at 7am CT daily and/or email — agent's choice at onboarding. Weekly preview fires Sunday evening or Monday morning.
 
