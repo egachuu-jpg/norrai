@@ -290,6 +290,24 @@ n8n Slack Trigger node listens for DMs or `@mentions`. Message passes to Claude 
 **Future — RAG layer:**
 Once the knowledge base outgrows a single context window (client histories, meeting notes, workflow logs), add a pgvector retrieval layer. Neon already supports pgvector — no new infrastructure. At query time, embed the user's message, retrieve the most relevant chunks, inject into the prompt. This scales the assistant without changing the Slack or n8n layer at all.
 
+**Build notes — hosting as a Python service:**
+LangGraph requires a hosted Python service (not just n8n nodes). The service receives Slack webhook events, runs the LangGraph agent, and posts the response back. Roughly 200–300 lines of real code.
+
+Stack:
+- **FastAPI** — lightweight Python web framework
+- **Slack Bolt for Python** — Slack's official SDK; handles OAuth, event routing, and the 3-second timeout problem (Slack requires a 200 ACK within 3 seconds — Bolt acknowledges immediately and processes async)
+- **LangGraph** — agent orchestration (state, tool routing, parallel fan-out, human-in-the-loop interrupts)
+- **Anthropic SDK** — Claude API calls
+- **asyncpg** — Postgres connection to Neon for checkpointing and tool queries
+
+Hosting: **Railway** is the right call — connect GitHub repo, set env vars (`ANTHROPIC_API_KEY`, `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `DATABASE_URL`), auto-deploys on push. ~$5–10/mo, always-on, no server management.
+
+LangGraph checkpoint storage: `PostgresSaver` points at the existing Neon `DATABASE_URL` and stores conversation state between Slack messages automatically — no new tables to design.
+
+n8n relationship: LangGraph replaces only the thin "receive Slack message → call Claude → post response" portion of the chief of staff. All client-facing workflows (nurture sequences, SMS, SendGrid, Google Calendar writes) still run in n8n. When the agent decides to execute a task, it fires an n8n webhook — n8n takes it from there. LangGraph is the brain, n8n is the hands.
+
+Could live as an `/agent` subdirectory in the existing norrai repo.
+
 ### Real Estate — Transaction coordination checklist (per-client deal pipeline)
 When a lead converts to a client, agents work through a standard checklist of tasks that varies by deal type — seller listing vs. buyer representation. Example seller sequence: schedule inspection → notify homeowner of inspection date → remind agent day-of → schedule closing → notify all parties → etc. This is a well-known real estate problem (whole SaaS products exist around it: Dotloop, SkySlope, Paperless Pipeline). Norr AI's angle is to make the checklist drive automation rather than just track status.
 
