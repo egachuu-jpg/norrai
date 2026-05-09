@@ -255,6 +255,56 @@ When an agent types something like "generate a listing description for 123 Maple
 
 **n8n relationship:** All client-facing workflows (SMS, email, Google Calendar writes, nurture sequences) still run in n8n. LangGraph only replaces the Slack conversation layer — intent parsing, state management, confirmation flows. Task execution fires n8n webhooks exactly as before.
 
+**What LangGraph does vs. what n8n does:**
+
+LangGraph handles reasoning, conversation, and decisions. n8n handles execution. Neither crosses into the other's lane.
+
+| LangGraph | n8n |
+|-----------|-----|
+| Receives Slack message | Sends SMS via Twilio |
+| Maintains conversation state across turns | Sends email via SendGrid |
+| Parses intent — what is the agent asking for? | Writes to / reads from Neon |
+| Detects missing info, asks follow-up questions | Creates Google Calendar events |
+| Decides which tool to call and with what params | Manages nurture sequence timing and delays |
+| Handles confirmation before irreversible actions | Generates listing descriptions via Claude API |
+| Narrates tool results back to the agent | Personalizes SMS drafts, scores leads, parses emails |
+| Posts response to Slack | Handles open house, review request, lead cleansing workflows |
+
+Both layers use Claude, but for different things:
+
+| Layer | Uses Claude for |
+|-------|----------------|
+| LangGraph | Conversation — intent parsing, follow-up questions, tool routing, result narration. Short prompts, fast, cheap. |
+| n8n | Content generation — listing descriptions, personalized SMS copy, lead scoring, email body parsing. Heavier prompts, longer outputs. |
+
+**Worked example — "generate listing description for 123 Maple":**
+```
+Agent: "generate a listing description for my new listing at 123 Maple"
+
+LangGraph → Claude parses intent: listing description
+           → missing: beds, baths, sqft, features
+           → posts to Slack: "I need a few details — beds, baths,
+             sqft, and any features to highlight?"
+
+Agent: "3 bed 2 bath 1400 sqft, updated kitchen, attached garage"
+
+LangGraph → accumulates details into conversation state
+           → calls tool: generate_listing_description({
+               address: "123 Maple", beds: 3, baths: 2,
+               sqft: 1400, features: "updated kitchen, attached garage",
+               agent_id: "agent_001"
+             })
+           → fires n8n webhook
+
+n8n        → builds prompt with details + agent's previous listings
+           → calls Claude API → headline, MLS description, social post
+           → sends email to agent via SendGrid
+           → returns {"status": "sent"}
+
+LangGraph → posts to Slack: "Done — description sent to your email."
+```
+LangGraph touched Claude once (short conversation turn). n8n touched Claude once (heavy content generation). Neither knew about the other's call.
+
 **Multi-tenancy — one service, N agents:**
 Five agents is not five deployments. The LangGraph service is multi-tenant by design. Each conversation is keyed by agent ID — when a Slack message arrives, the service identifies the agent from the workspace, loads their config, retrieves their isolated conversation state from Neon, runs the graph with their context, and posts back. Agent A's state never touches Agent B's.
 
