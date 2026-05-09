@@ -110,16 +110,32 @@
       "name": "Extract T1"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst mailtoLink = 'mailto:' + p.email + '?subject=' + encodeURIComponent(p.subject) + '&body=' + encodeURIComponent(p.body);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\u2709\\ufe0f Touch 1 Email Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 1 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Subject:* ' + p.subject }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Body:*\\n>' + p.body.replace(/\\n/g, '\\n>') }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\u2709\\ufe0f *<' + mailtoLink + '|Tap to send from your email>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, mailtoLink, slackPayload } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [1640, 300],
-      "id": "e4f5a6b7-0009-4000-8000-000000000009",
-      "name": "Email T1",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "id": "e4f5a6b7-0038-4000-8000-000000000038",
+      "name": "Build Slack Email T1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slackPayload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1840, 300],
+      "id": "e4f5a6b7-0039-4000-8000-000000000039",
+      "name": "Slack Email T1"
     },
 
-    { "parameters": { "resume": "timeInterval", "amount": 2, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1840, 300], "id": "e4f5a6b7-0010-4000-8000-000000000010", "name": "Wait Day 3" },
+    { "parameters": { "resume": "timeInterval", "amount": 2, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [2040, 300], "id": "e4f5a6b7-0010-4000-8000-000000000010", "name": "Wait Day 3" },
     {
       "parameters": {
         "assignments": {
@@ -136,7 +152,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [2040, 300],
+      "position": [2240, 300],
       "id": "e4f5a6b7-0011-4000-8000-000000000011",
       "name": "Build Prompt T2"
     },
@@ -144,7 +160,7 @@
       "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2240, 300],
+      "position": [2440, 300],
       "id": "e4f5a6b7-0012-4000-8000-000000000012",
       "name": "Claude T2",
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
@@ -153,17 +169,17 @@
       "parameters": { "jsCode": "const message = $input.first().json.content[0].text.trim();\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { message, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2440, 300],
+      "position": [2640, 300],
       "id": "e4f5a6b7-0013-4000-8000-000000000013",
       "name": "Extract T2"
     },
     {
       "parameters": {
-        "jsCode": "const p = $input.first().json;\nconst phone = '+1' + p.phone.replace(/\\D/g, '');\nconst smsLink = 'https://tools.norrai.co/sms.html?to=' + p.phone.replace(/\\D/g, '') + '&body=' + encodeURIComponent(p.message);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\ud83d\\udcf1 Touch 2 SMS Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 3 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Message preview:*\\n>' + p.message }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\ud83d\\udcf2 *<' + smsLink + '|Tap to send from your phone>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, smsLink, slackPayload } }];"
+        "jsCode": "const p = $input.first().json;\nconst smsLink = 'https://tools.norrai.co/sms.html?to=' + p.phone.replace(/\\D/g, '') + '&body=' + encodeURIComponent(p.message);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\ud83d\\udcf1 Touch 2 SMS Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 3 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Message preview:*\\n>' + p.message }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\ud83d\\udcf2 *<' + smsLink + '|Tap to send from your phone>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, smsLink, slackPayload } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2640, 300],
+      "position": [2840, 300],
       "id": "e4f5a6b7-0014-4000-8000-000000000014",
       "name": "Build Slack T2"
     },
@@ -178,12 +194,12 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2840, 300],
+      "position": [3040, 300],
       "id": "e4f5a6b7-0015-4000-8000-000000000015",
       "name": "Slack Preview T2"
     },
 
-    { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [3040, 300], "id": "e4f5a6b7-0016-4000-8000-000000000016", "name": "Wait Day 7" },
+    { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [3240, 300], "id": "e4f5a6b7-0016-4000-8000-000000000016", "name": "Wait Day 7" },
     {
       "parameters": {
         "assignments": {
@@ -200,7 +216,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [3240, 300],
+      "position": [3440, 300],
       "id": "e4f5a6b7-0017-4000-8000-000000000017",
       "name": "Build Prompt T3"
     },
@@ -208,7 +224,7 @@
       "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [3440, 300],
+      "position": [3640, 300],
       "id": "e4f5a6b7-0018-4000-8000-000000000018",
       "name": "Claude T3",
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
@@ -217,21 +233,37 @@
       "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Market update';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3640, 300],
+      "position": [3840, 300],
       "id": "e4f5a6b7-0019-4000-8000-000000000019",
       "name": "Extract T3"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
-      "position": [3840, 300],
-      "id": "e4f5a6b7-0020-4000-8000-000000000020",
-      "name": "Email T3",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst mailtoLink = 'mailto:' + p.email + '?subject=' + encodeURIComponent(p.subject) + '&body=' + encodeURIComponent(p.body);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\u2709\\ufe0f Touch 3 Email Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 7 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Subject:* ' + p.subject }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Body:*\\n>' + p.body.replace(/\\n/g, '\\n>') }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\u2709\\ufe0f *<' + mailtoLink + '|Tap to send from your email>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, mailtoLink, slackPayload } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4040, 300],
+      "id": "e4f5a6b7-0040-4000-8000-000000000040",
+      "name": "Build Slack Email T3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slackPayload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [4240, 300],
+      "id": "e4f5a6b7-0041-4000-8000-000000000041",
+      "name": "Slack Email T3"
     },
 
-    { "parameters": { "resume": "timeInterval", "amount": 3, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [4040, 300], "id": "e4f5a6b7-0021-4000-8000-000000000021", "name": "Wait Day 10" },
+    { "parameters": { "resume": "timeInterval", "amount": 3, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [4440, 300], "id": "e4f5a6b7-0021-4000-8000-000000000021", "name": "Wait Day 10" },
     {
       "parameters": {
         "assignments": {
@@ -248,7 +280,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [4240, 300],
+      "position": [4640, 300],
       "id": "e4f5a6b7-0022-4000-8000-000000000022",
       "name": "Build Prompt T4"
     },
@@ -256,7 +288,7 @@
       "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [4440, 300],
+      "position": [4840, 300],
       "id": "e4f5a6b7-0023-4000-8000-000000000023",
       "name": "Claude T4",
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
@@ -265,17 +297,17 @@
       "parameters": { "jsCode": "const message = $input.first().json.content[0].text.trim();\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { message, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4640, 300],
+      "position": [5040, 300],
       "id": "e4f5a6b7-0024-4000-8000-000000000024",
       "name": "Extract T4"
     },
     {
       "parameters": {
-        "jsCode": "const p = $input.first().json;\nconst phone = '+1' + p.phone.replace(/\\D/g, '');\nconst smsLink = 'https://tools.norrai.co/sms.html?to=' + p.phone.replace(/\\D/g, '') + '&body=' + encodeURIComponent(p.message);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\ud83d\\udcf1 Touch 4 SMS Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 10 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Message preview:*\\n>' + p.message }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\ud83d\\udcf2 *<' + smsLink + '|Tap to send from your phone>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, smsLink, slackPayload } }];"
+        "jsCode": "const p = $input.first().json;\nconst smsLink = 'https://tools.norrai.co/sms.html?to=' + p.phone.replace(/\\D/g, '') + '&body=' + encodeURIComponent(p.message);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\ud83d\\udcf1 Touch 4 SMS Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 10 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Message preview:*\\n>' + p.message }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\ud83d\\udcf2 *<' + smsLink + '|Tap to send from your phone>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, smsLink, slackPayload } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4840, 300],
+      "position": [5240, 300],
       "id": "e4f5a6b7-0025-4000-8000-000000000025",
       "name": "Build Slack T4"
     },
@@ -290,12 +322,12 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [5040, 300],
+      "position": [5440, 300],
       "id": "e4f5a6b7-0026-4000-8000-000000000026",
       "name": "Slack Preview T4"
     },
 
-    { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [5240, 300], "id": "e4f5a6b7-0027-4000-8000-000000000027", "name": "Wait Day 14" },
+    { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [5640, 300], "id": "e4f5a6b7-0027-4000-8000-000000000027", "name": "Wait Day 14" },
     {
       "parameters": {
         "assignments": {
@@ -312,7 +344,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [5440, 300],
+      "position": [5840, 300],
       "id": "e4f5a6b7-0028-4000-8000-000000000028",
       "name": "Build Prompt T5"
     },
@@ -320,7 +352,7 @@
       "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [5640, 300],
+      "position": [6040, 300],
       "id": "e4f5a6b7-0029-4000-8000-000000000029",
       "name": "Claude T5",
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
@@ -329,21 +361,37 @@
       "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'No rush';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [5840, 300],
+      "position": [6240, 300],
       "id": "e4f5a6b7-0030-4000-8000-000000000030",
       "name": "Extract T5"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
-      "position": [6040, 300],
-      "id": "e4f5a6b7-0031-4000-8000-000000000031",
-      "name": "Email T5",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst mailtoLink = 'mailto:' + p.email + '?subject=' + encodeURIComponent(p.subject) + '&body=' + encodeURIComponent(p.body);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\u2709\\ufe0f Touch 5 Email Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 14 \\u00b7 Cold nurture \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Subject:* ' + p.subject }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Body:*\\n>' + p.body.replace(/\\n/g, '\\n>') }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\u2709\\ufe0f *<' + mailtoLink + '|Tap to send from your email>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, mailtoLink, slackPayload } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [6440, 300],
+      "id": "e4f5a6b7-0042-4000-8000-000000000042",
+      "name": "Build Slack Email T5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slackPayload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [6640, 300],
+      "id": "e4f5a6b7-0043-4000-8000-000000000043",
+      "name": "Slack Email T5"
     },
 
-    { "parameters": { "resume": "timeInterval", "amount": 7, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [6240, 300], "id": "e4f5a6b7-0032-4000-8000-000000000032", "name": "Wait Day 21" },
+    { "parameters": { "resume": "timeInterval", "amount": 7, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [6840, 300], "id": "e4f5a6b7-0032-4000-8000-000000000032", "name": "Wait Day 21" },
     {
       "parameters": {
         "assignments": {
@@ -360,7 +408,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [6440, 300],
+      "position": [7040, 300],
       "id": "e4f5a6b7-0033-4000-8000-000000000033",
       "name": "Build Prompt T6"
     },
@@ -368,7 +416,7 @@
       "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [6640, 300],
+      "position": [7240, 300],
       "id": "e4f5a6b7-0034-4000-8000-000000000034",
       "name": "Claude T6",
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
@@ -377,17 +425,17 @@
       "parameters": { "jsCode": "const message = $input.first().json.content[0].text.trim();\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { message, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [6840, 300],
+      "position": [7440, 300],
       "id": "e4f5a6b7-0035-4000-8000-000000000035",
       "name": "Extract T6"
     },
     {
       "parameters": {
-        "jsCode": "const p = $input.first().json;\nconst phone = '+1' + p.phone.replace(/\\D/g, '');\nconst smsLink = 'https://tools.norrai.co/sms.html?to=' + p.phone.replace(/\\D/g, '') + '&body=' + encodeURIComponent(p.message);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\ud83d\\udcf1 Touch 6 SMS Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 21 \\u00b7 Cold nurture \\u00b7 Final touch \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Message preview:*\\n>' + p.message }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\ud83d\\udcf2 *<' + smsLink + '|Tap to send from your phone>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, smsLink, slackPayload } }];"
+        "jsCode": "const p = $input.first().json;\nconst smsLink = 'https://tools.norrai.co/sms.html?to=' + p.phone.replace(/\\D/g, '') + '&body=' + encodeURIComponent(p.message);\nconst slackPayload = {\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '\\ud83d\\udcf1 Touch 6 SMS Ready \\u2014 ' + p.lead_name, emoji: true }\n    },\n    {\n      type: 'context',\n      elements: [{ type: 'mrkdwn', text: 'Day 21 \\u00b7 Cold nurture \\u00b7 Final touch \\u00b7 ' + p.property_address }]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Message preview:*\\n>' + p.message }\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '\\ud83d\\udcf2 *<' + smsLink + '|Tap to send from your phone>*' }\n    }\n  ]\n};\nreturn [{ json: { ...p, smsLink, slackPayload } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [7040, 300],
+      "position": [7640, 300],
       "id": "e4f5a6b7-0036-4000-8000-000000000036",
       "name": "Build Slack T6"
     },
@@ -402,7 +450,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [7240, 300],
+      "position": [7840, 300],
       "id": "e4f5a6b7-0037-4000-8000-000000000037",
       "name": "Slack Preview T6"
     }
@@ -418,45 +466,48 @@
     "Prep Fields": {
       "main": [[ { "node": "Wait Day 1", "type": "main", "index": 0 } ]]
     },
-    "Wait Day 1":       { "main": [[ { "node": "Build Prompt T1",  "type": "main", "index": 0 } ]] },
-    "Build Prompt T1":  { "main": [[ { "node": "Claude T1",        "type": "main", "index": 0 } ]] },
-    "Claude T1":        { "main": [[ { "node": "Extract T1",       "type": "main", "index": 0 } ]] },
-    "Extract T1":       { "main": [[ { "node": "Email T1",         "type": "main", "index": 0 } ]] },
-    "Email T1":         { "main": [[ { "node": "Wait Day 3",       "type": "main", "index": 0 } ]] },
-    "Wait Day 3":       { "main": [[ { "node": "Build Prompt T2",  "type": "main", "index": 0 } ]] },
-    "Build Prompt T2":  { "main": [[ { "node": "Claude T2",        "type": "main", "index": 0 } ]] },
-    "Claude T2":        { "main": [[ { "node": "Extract T2",       "type": "main", "index": 0 } ]] },
-    "Extract T2":       { "main": [[ { "node": "Build Slack T2",   "type": "main", "index": 0 } ]] },
-    "Build Slack T2":   { "main": [[ { "node": "Slack Preview T2", "type": "main", "index": 0 } ]] },
-    "Slack Preview T2": { "main": [[ { "node": "Wait Day 7",       "type": "main", "index": 0 } ]] },
-    "Wait Day 7":       { "main": [[ { "node": "Build Prompt T3",  "type": "main", "index": 0 } ]] },
-    "Build Prompt T3":  { "main": [[ { "node": "Claude T3",        "type": "main", "index": 0 } ]] },
-    "Claude T3":        { "main": [[ { "node": "Extract T3",       "type": "main", "index": 0 } ]] },
-    "Extract T3":       { "main": [[ { "node": "Email T3",         "type": "main", "index": 0 } ]] },
-    "Email T3":         { "main": [[ { "node": "Wait Day 10",      "type": "main", "index": 0 } ]] },
-    "Wait Day 10":      { "main": [[ { "node": "Build Prompt T4",  "type": "main", "index": 0 } ]] },
-    "Build Prompt T4":  { "main": [[ { "node": "Claude T4",        "type": "main", "index": 0 } ]] },
-    "Claude T4":        { "main": [[ { "node": "Extract T4",       "type": "main", "index": 0 } ]] },
-    "Extract T4":       { "main": [[ { "node": "Build Slack T4",   "type": "main", "index": 0 } ]] },
-    "Build Slack T4":   { "main": [[ { "node": "Slack Preview T4", "type": "main", "index": 0 } ]] },
-    "Slack Preview T4": { "main": [[ { "node": "Wait Day 14",      "type": "main", "index": 0 } ]] },
-    "Wait Day 14":      { "main": [[ { "node": "Build Prompt T5",  "type": "main", "index": 0 } ]] },
-    "Build Prompt T5":  { "main": [[ { "node": "Claude T5",        "type": "main", "index": 0 } ]] },
-    "Claude T5":        { "main": [[ { "node": "Extract T5",       "type": "main", "index": 0 } ]] },
-    "Extract T5":       { "main": [[ { "node": "Email T5",         "type": "main", "index": 0 } ]] },
-    "Email T5":         { "main": [[ { "node": "Wait Day 21",      "type": "main", "index": 0 } ]] },
-    "Wait Day 21":      { "main": [[ { "node": "Build Prompt T6",  "type": "main", "index": 0 } ]] },
-    "Build Prompt T6":  { "main": [[ { "node": "Claude T6",        "type": "main", "index": 0 } ]] },
-    "Claude T6":        { "main": [[ { "node": "Extract T6",       "type": "main", "index": 0 } ]] },
-    "Extract T6":       { "main": [[ { "node": "Build Slack T6",   "type": "main", "index": 0 } ]] },
-    "Build Slack T6":   { "main": [[ { "node": "Slack Preview T6", "type": "main", "index": 0 } ]] }
+    "Wait Day 1":           { "main": [[ { "node": "Build Prompt T1",      "type": "main", "index": 0 } ]] },
+    "Build Prompt T1":      { "main": [[ { "node": "Claude T1",            "type": "main", "index": 0 } ]] },
+    "Claude T1":            { "main": [[ { "node": "Extract T1",           "type": "main", "index": 0 } ]] },
+    "Extract T1":           { "main": [[ { "node": "Build Slack Email T1", "type": "main", "index": 0 } ]] },
+    "Build Slack Email T1": { "main": [[ { "node": "Slack Email T1",       "type": "main", "index": 0 } ]] },
+    "Slack Email T1":       { "main": [[ { "node": "Wait Day 3",           "type": "main", "index": 0 } ]] },
+    "Wait Day 3":           { "main": [[ { "node": "Build Prompt T2",      "type": "main", "index": 0 } ]] },
+    "Build Prompt T2":      { "main": [[ { "node": "Claude T2",            "type": "main", "index": 0 } ]] },
+    "Claude T2":            { "main": [[ { "node": "Extract T2",           "type": "main", "index": 0 } ]] },
+    "Extract T2":           { "main": [[ { "node": "Build Slack T2",       "type": "main", "index": 0 } ]] },
+    "Build Slack T2":       { "main": [[ { "node": "Slack Preview T2",     "type": "main", "index": 0 } ]] },
+    "Slack Preview T2":     { "main": [[ { "node": "Wait Day 7",           "type": "main", "index": 0 } ]] },
+    "Wait Day 7":           { "main": [[ { "node": "Build Prompt T3",      "type": "main", "index": 0 } ]] },
+    "Build Prompt T3":      { "main": [[ { "node": "Claude T3",            "type": "main", "index": 0 } ]] },
+    "Claude T3":            { "main": [[ { "node": "Extract T3",           "type": "main", "index": 0 } ]] },
+    "Extract T3":           { "main": [[ { "node": "Build Slack Email T3", "type": "main", "index": 0 } ]] },
+    "Build Slack Email T3": { "main": [[ { "node": "Slack Email T3",       "type": "main", "index": 0 } ]] },
+    "Slack Email T3":       { "main": [[ { "node": "Wait Day 10",          "type": "main", "index": 0 } ]] },
+    "Wait Day 10":          { "main": [[ { "node": "Build Prompt T4",      "type": "main", "index": 0 } ]] },
+    "Build Prompt T4":      { "main": [[ { "node": "Claude T4",            "type": "main", "index": 0 } ]] },
+    "Claude T4":            { "main": [[ { "node": "Extract T4",           "type": "main", "index": 0 } ]] },
+    "Extract T4":           { "main": [[ { "node": "Build Slack T4",       "type": "main", "index": 0 } ]] },
+    "Build Slack T4":       { "main": [[ { "node": "Slack Preview T4",     "type": "main", "index": 0 } ]] },
+    "Slack Preview T4":     { "main": [[ { "node": "Wait Day 14",          "type": "main", "index": 0 } ]] },
+    "Wait Day 14":          { "main": [[ { "node": "Build Prompt T5",      "type": "main", "index": 0 } ]] },
+    "Build Prompt T5":      { "main": [[ { "node": "Claude T5",            "type": "main", "index": 0 } ]] },
+    "Claude T5":            { "main": [[ { "node": "Extract T5",           "type": "main", "index": 0 } ]] },
+    "Extract T5":           { "main": [[ { "node": "Build Slack Email T5", "type": "main", "index": 0 } ]] },
+    "Build Slack Email T5": { "main": [[ { "node": "Slack Email T5",       "type": "main", "index": 0 } ]] },
+    "Slack Email T5":       { "main": [[ { "node": "Wait Day 21",          "type": "main", "index": 0 } ]] },
+    "Wait Day 21":          { "main": [[ { "node": "Build Prompt T6",      "type": "main", "index": 0 } ]] },
+    "Build Prompt T6":      { "main": [[ { "node": "Claude T6",            "type": "main", "index": 0 } ]] },
+    "Claude T6":            { "main": [[ { "node": "Extract T6",           "type": "main", "index": 0 } ]] },
+    "Extract T6":           { "main": [[ { "node": "Build Slack T6",       "type": "main", "index": 0 } ]] },
+    "Build Slack T6":       { "main": [[ { "node": "Slack Preview T6",     "type": "main", "index": 0 } ]] }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "cold-nurture-slack-v1-001",
+  "versionId": "cold-nurture-slack-v2-001",
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
