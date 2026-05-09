@@ -305,6 +305,40 @@ LangGraph → posts to Slack: "Done — description sent to your email."
 ```
 LangGraph touched Claude once (short conversation turn). n8n touched Claude once (heavy content generation). Neither knew about the other's call.
 
+**Input channel abstraction — what if the agent won't use Slack:**
+Slack is the richest interface (buttons, modals, threading, formatted responses) but a real adoption risk with real estate agents who live on their phones texting. The solution is to design the input layer as a swappable adapter from the start — LangGraph doesn't care what channel the message came from:
+
+```
+Slack message   ─┐
+SMS (Twilio)    ─┤→ normalize to {agent_id, message, channel, thread_id} → LangGraph → format for channel → response
+Web chat        ─┤
+Voice transcript─┘
+```
+
+Channel is a per-agent config in Neon set at onboarding. Available options:
+
+| Channel | Best for | What you gain | What you lose |
+|---------|----------|---------------|---------------|
+| Slack | Tech-comfortable agents, owner COS | Rich UI, buttons, threading, formatting | Requires Slack account, OAuth per workspace |
+| SMS (Twilio) | Real estate agents, any phone | Zero install, agents already texting, Twilio already in stack | Plain text only, no buttons, "reply YES" confirmations |
+| Web chat | Agents who prefer browser | Formatted text, no app needed | Another surface to maintain |
+| Voice | Agents who are always driving | Hands-free, most natural | Slower, STT errors, no async |
+
+**Impact of dropping Slack Bolt and using SMS only:**
+Slack Bolt handles OAuth installation per workspace, event routing, the 3-second ACK pattern, and rich UI components. Replacing it with a Twilio webhook handler is significantly simpler:
+
+```python
+@app.post("/sms")
+async def handle_sms(request: Request):
+    form = await request.form()
+    from_number = form.get("From")   # identifies the agent
+    body = form.get("Body")
+    # load agent config from Neon by phone number → LangGraph → respond
+    return Response(content="", media_type="text/xml")  # ACK immediately
+```
+
+No OAuth flow, no workspace management, no app installation per agent — just a phone number already in `twilio_subaccounts`. Twilio doesn't have a 3-second hard deadline like Slack; ACK the webhook immediately and send the response as a separate outbound message when LangGraph finishes. What you give up: rich formatting, buttons (confirmations become "reply YES/NO"), visual threading, inline link previews. For real estate agents doing task dispatch, none of that matters much. **SMS-first is probably the right v1 decision for the agent COS** — ship SMS, offer Slack as a premium option for agents who want richer UI.
+
 **Multi-tenancy — one service, N agents:**
 Five agents is not five deployments. The LangGraph service is multi-tenant by design. Each conversation is keyed by agent ID — when a Slack message arrives, the service identifies the agent from the workspace, loads their config, retrieves their isolated conversation state from Neon, runs the graph with their context, and posts back. Agent A's state never touches Agent B's.
 
