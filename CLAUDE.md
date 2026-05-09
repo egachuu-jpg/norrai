@@ -440,6 +440,21 @@ n8n relationship: LangGraph replaces only the thin "receive Slack message → ca
 
 Could live as an `/agent` subdirectory in the existing norrai repo.
 
+### Norr AI — Owner inbox monitoring (classify → route → act)
+Monitor hello@norrai.co for inbound emails and take automatic action based on what arrives — extends the owner chief of staff from reactive (you ask it things) to proactive (it acts on things happening in the background). Entry point: Gmail Trigger node in n8n, real-time push via Gmail API OAuth. Every inbound email passes through Claude for classification first, then n8n routes to the right action.
+
+**Classification → action routing:**
+- **Prospect inquiry** — new business inquiry hitting hello@norrai.co → Claude drafts a reply in Egan's voice, logs the contact to `norrai_meetings` in Neon, posts draft to Slack for review and one-tap send
+- **Client question** — existing client asks something → Claude drafts a response with context from their client doc, notifies in Slack
+- **Lead email** — a lead provider email hitting the owner inbox rather than an agent inbox → parse and route through the existing lead cleansing workflow
+- **Payment / invoice confirmation** — update billing record in Neon, log to `service_contracts`
+- **Meeting request** — parse the proposed time, check Google Calendar for conflicts, confirm or suggest alternatives
+- **Other** — label and archive, no action taken
+
+**Design principle:** draft-and-notify rather than auto-send for anything going out under Egan's name. Claude writes the response, posts it to Slack with context ("prospect Sarah Johnson, inquired about real estate automation"), one tap to approve and send. Fully automated only for low-stakes internal actions (logging to Neon, labeling, calendar reads).
+
+**Relationship to owner chief of staff:** the inbox monitor is the proactive layer — it acts without being asked. The Slack COS is the reactive layer — it responds when asked. Together they cover the full loop: you ask it things AND it alerts you to things that need attention.
+
 ### Real Estate — Transaction coordination checklist (per-client deal pipeline)
 When a lead converts to a client, agents work through a standard checklist of tasks that varies by deal type — seller listing vs. buyer representation. Example seller sequence: schedule inspection → notify homeowner of inspection date → remind agent day-of → schedule closing → notify all parties → etc. This is a well-known real estate problem (whole SaaS products exist around it: Dotloop, SkySlope, Paperless Pipeline). Norr AI's angle is to make the checklist drive automation rather than just track status.
 
