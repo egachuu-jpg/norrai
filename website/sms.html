@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opening Messages…</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #FAFAF7;
+      color: #0A0F1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .card { max-width: 400px; }
+    p { color: #6A6F78; font-size: 15px; margin: 8px 0 0; }
+    a { color: #7FA9B8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Opening Messages…</h2>
+    <p id="msg">Redirecting to your Messages app.</p>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const to = (params.get('to') || '').replace(/\D/g, '');
+    const body = params.get('body') || '';
+
+    if (!to) {
+      document.getElementById('msg').textContent = 'Missing phone number. Close this tab and try again.';
+    } else {
+      const smsUrl = 'sms:+1' + to + '?body=' + encodeURIComponent(body);
+      window.location.href = smsUrl;
+      setTimeout(() => {
+        document.getElementById('msg').innerHTML =
+          'If Messages didn\'t open, <a href="' + smsUrl + '">tap here</a>.';
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
