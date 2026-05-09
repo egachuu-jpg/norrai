@@ -264,6 +264,25 @@ Slack multi-workspace: each agent installs the Slack bot into their own workspac
 
 Cost scales only on Claude API token usage (cents per day per agent at normal conversation volume) — Railway and Neon costs stay flat. This is the business model working as intended: infrastructure built once, marginal cost of adding a new agent is a config row in Neon and a Slack app installation.
 
+**Schema drift — keeping LangGraph tool definitions in sync with n8n webhooks:**
+As the workflow library grows, the schemas that LangGraph tools send to n8n webhooks can silently fall out of sync when either side is updated. The danger isn't crashes — it's silent misbehavior (missing fields produce blank outputs, personalization breaks, wrong leads enrolled). Three-layer defense:
+
+1. **Validation in n8n (do this now)** — add a Code node at the top of every webhook workflow that checks for required fields and throws a descriptive error if any are missing. Makes drift failures loud and immediate instead of silent:
+```js
+const required = ['lead_name', 'email', 'phone', 'agent_id'];
+const missing = required.filter(f => !$json[f]);
+if (missing.length) throw new Error(`Missing required fields: ${missing.join(', ')}`);
+```
+
+2. **FastAPI wrapper layer (emerges naturally when building the Python service)** — instead of LangGraph tools calling n8n webhooks directly, they call FastAPI endpoints in the same Python service. Each endpoint owns the Pydantic schema, validates the payload, then forwards to n8n. Schema drift between tool definition and validation layer becomes impossible — they're the same Pydantic model. The only seam is FastAPI → n8n, not N tools → N webhooks:
+```
+LangGraph tool → FastAPI endpoint (Pydantic) → n8n webhook
+```
+
+3. **Contract tests (once workflow library grows)** — one integration test per workflow that sends the exact payload a LangGraph tool would send to the actual n8n webhook and asserts the response is correct. Runs in CI before deploying the Python service. Catches n8n changes that weren't reflected in the tool schema before they hit production.
+
+Start with option 1 on every n8n webhook being built now. Option 2 emerges naturally when building the Python service — route through FastAPI instead of calling n8n directly. Option 3 when the workflow count makes confident refactoring hard.
+
 ### Real Estate — Daily and weekly agent briefing
 Send each agent a personalized morning summary of what's on their plate for the day (and a weekly preview on Monday morning). Primary data source is Google Calendar via the n8n Google Calendar node (OAuth, real-time). Agents on Google Workspace are the obvious first target; Outlook/Microsoft Calendar is a secondary option if an agent isn't on Google. Claude synthesizes the raw calendar data into a briefing — not just a list of events, but prioritized and framed as "here's your day" with anything time-sensitive called out. Delivery: SMS at 7am CT daily and/or email — agent's choice at onboarding. Weekly preview fires Sunday evening or Monday morning.
 
