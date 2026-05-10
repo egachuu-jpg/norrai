@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const b = $input.first().json.body;\nconst token = b.client_token || '';\nreturn [{\n  json: {\n    query: `SELECT id, primary_contact_email, primary_contact_name FROM clients WHERE token = '${token.replace(/'/g, \"''\")}'`,\n    payload: b\n  }\n}];"
+        "jsCode": "const b = $input.first().json.body;\nconst token = b.client_token || '';\nconst key = ($env.PII_ENCRYPTION_KEY || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id,\n  pii_decrypt(primary_contact_email, '${key}') AS primary_contact_email,\n  pii_decrypt(primary_contact_name,  '${key}') AS primary_contact_name\nFROM clients\nWHERE token = '${token.replace(/'/g, \"''\")}'`,\n    payload: b\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -88,7 +88,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').replace(/'/g, \"''\");\nconst phone = (prev.phone || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${row.id}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    payload: prev\n  }\n}];"
+        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').replace(/'/g, \"''\");\nconst phone = (prev.phone || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads\nWHERE client_id = '${row.id}'\n  AND (email_hash = pii_hash('${email}') OR phone_hash = pii_hash('${phone}'))\nLIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    payload: prev\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -190,7 +190,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\n\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  property_address: p.property_address || null,\n  price_range: p.price_range || null,\n  beds: p.beds || null\n}).replace(/'/g, \"''\");\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, stage, next_action_due, metadata) VALUES ('${ctx.client_id}', '${esc(p.lead_name)}', '${esc(p.email)}', '${esc(p.phone)}', '${esc(p.source)}', '${esc(p.lead_message)}', 'new', 'new', '${today}', '${metadata}') RETURNING id`,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    payload: p\n  }\n}];"
+        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\nconst key = ($env.PII_ENCRYPTION_KEY || '').replace(/'/g, \"''\");\n\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  property_address: p.property_address || null,\n  price_range: p.price_range || null,\n  beds: p.beds || null\n}).replace(/'/g, \"''\");\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads\n  (client_id, lead_name, email, email_hash, phone, phone_hash, source, lead_message, status, metadata)\nVALUES (\n  '${ctx.client_id}',\n  pii_encrypt('${esc(p.lead_name)}', '${key}'),\n  pii_encrypt('${esc(p.email)}',     '${key}'),\n  pii_hash('${esc(p.email)}'),\n  pii_encrypt('${esc(p.phone)}',     '${key}'),\n  pii_hash('${esc(p.phone)}'),\n  '${esc(p.source)}',\n  '${esc(p.lead_message)}',\n  'new',\n  '${metadata}'\n) RETURNING id`,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    payload: p\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

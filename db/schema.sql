@@ -2,8 +2,13 @@
 -- Hosted on Neon
 -- Run: psql <neon-connection-string> -f db/schema.sql
 
--- Enable pgcrypto for gen_random_uuid()
+-- Enable pgcrypto for gen_random_uuid() and PII encryption
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- ─── PII helpers (created by migration 001_encrypt_pii.sql) ──────────────────
+-- pii_encrypt(text, key)  → bytea   — pgp_sym_encrypt wrapper; NULL-safe
+-- pii_decrypt(bytea, key) → text    — pgp_sym_decrypt wrapper; NULL-safe
+-- pii_hash(text)          → text    — SHA-256 hex for equality lookups; NULL-safe
 
 -- ============================================================
 -- UTILITY: auto-update updated_at on row change
@@ -27,9 +32,10 @@ CREATE TABLE clients (
   vertical              text NOT NULL,   -- dental | real_estate | insurance | salon | etc.
   tier                  text NOT NULL,   -- starter | growth | pro
   status                text NOT NULL,   -- prospect | active | paused | churned
-  primary_contact_name  text,
-  primary_contact_email text,
-  primary_contact_phone text,
+  primary_contact_name       bytea,                -- pii_encrypt'd
+  primary_contact_email      bytea,                -- pii_encrypt'd
+  primary_contact_email_hash text,                 -- pii_hash'd; used for lookups
+  primary_contact_phone      bytea,                -- pii_encrypt'd
   website               text,
   notes                 text,
   created_at            timestamptz NOT NULL DEFAULT now(),
@@ -40,7 +46,8 @@ CREATE TRIGGER clients_updated_at
   BEFORE UPDATE ON clients
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-CREATE INDEX idx_clients_status ON clients(status);
+CREATE INDEX idx_clients_status     ON clients(status);
+CREATE INDEX idx_clients_email_hash ON clients(primary_contact_email_hash);
 
 
 CREATE TABLE service_contracts (
@@ -84,9 +91,11 @@ CREATE TABLE norrai_meetings (
 CREATE TABLE leads (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id    uuid NOT NULL REFERENCES clients(id),
-  lead_name    text,
-  email        text,
-  phone        text,
+  lead_name   bytea,                -- pii_encrypt'd
+  email       bytea,                -- pii_encrypt'd
+  email_hash  text,                 -- pii_hash'd; used for dedupe lookups
+  phone       bytea,                -- pii_encrypt'd
+  phone_hash  text,                 -- pii_hash'd; used for dedupe lookups
   source       text,                     -- zillow | website | referral | form | phone | etc.
   lead_message text,
   status       text NOT NULL DEFAULT 'new', -- new | contacted | nurturing | converted | dead
@@ -100,14 +109,16 @@ CREATE TRIGGER leads_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX idx_leads_client_status ON leads(client_id, status);
+CREATE INDEX idx_leads_email_hash    ON leads(email_hash);
+CREATE INDEX idx_leads_phone_hash    ON leads(phone_hash);
 
 
 CREATE TABLE appointments (
   id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id               uuid NOT NULL REFERENCES clients(id),
-  customer_name           text,
-  customer_email          text,
-  customer_phone          text,
+  customer_name           bytea,                -- pii_encrypt'd
+  customer_email          bytea,                -- pii_encrypt'd
+  customer_phone          bytea,                -- pii_encrypt'd
   appointment_type        text,          -- cleaning | exam | showing | haircut | etc.
   scheduled_at            timestamptz NOT NULL,
   duration_minutes        int,
