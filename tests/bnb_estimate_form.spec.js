@@ -162,18 +162,15 @@ test('payload contains all required top-level fields', async ({ page }) => {
 });
 
 test('payload services array contains selected service with name field', async ({ page }) => {
-  let payload;
-  await page.route('**/webhook/**', async route => {
-    payload = JSON.parse(route.request().postData());
-    await route.fulfill({ status: 200, body: 'ok', contentType: 'text/plain' });
-  });
-
+  await mockWebhook(page);
   await page.goto(FORM_URL);
   await fillRequired(page);
-  await Promise.all([
-    page.waitForRequest(req => req.url().includes('webhook')),
+
+  const [req] = await Promise.all([
+    page.waitForRequest('**/webhook/**'),
     page.click('#submit-btn'),
   ]);
+  const payload = JSON.parse(req.postData());
 
   const laserService = payload.services.find(s => s.name === 'laser_cutting');
   expect(laserService).toBeDefined();
