@@ -36,7 +36,7 @@
     if (!to) {
       document.getElementById('msg').textContent = 'Missing phone number. Close this tab and try again.';
     } else {
-      const smsUrl = 'sms:+1' + to + '?body=' + encodeURIComponent(body);
+      const smsUrl = 'sms:+1' + to + '?body=' + encodeURIComponent(body.replace(/\r?\n/g, '\r\n'));
       window.location.href = smsUrl;
       setTimeout(() => {
         document.getElementById('msg').innerHTML =
