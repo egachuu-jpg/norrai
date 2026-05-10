@@ -330,7 +330,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [x] Build real estate Starter: review request — form + workflow + tests complete (2026-04-30)
 - [x] Test and promote real estate workflows to production — open house setup + follow-up confirmed working
 - [ ] Re-import Real Estate Open House Follow-Up workflow in n8n (prompt updated to use property highlights, fix hallucination)
-- [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
+- [x] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard) — email field had `required` from initial commit; task was stale
 - [x] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
 - [x] Set up internal monitoring dashboard (red/green per client status) — built 2026-05-08: dashboard.html + Health Query webhook + Red Alert Scheduler (6am/6pm CT Slack)
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
