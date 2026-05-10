@@ -25,7 +25,9 @@ Use this any time you need listing copy. Fill in the property details and your p
 
 **URL:** `/clients/lead_response.html`
 
-Use this when a new lead comes in and you want to respond fast with something personal, not a template. Paste the lead's name, contact info, and their message — Claude drafts a personalized SMS and email reply within 60 seconds. You see the drafts before anything sends.
+Use this the moment a new lead comes in. Paste their name, contact info, and message — Claude drafts a personalized SMS and email reply within 60 seconds. You see the drafts before anything sends.
+
+This is **step 1** of the new lead flow. Cold Nurture (below) is step 2 — they work in sequence, not as alternatives.
 
 **When to use:**
 - New Zillow / Realtor.com / Facebook lead just came in
@@ -58,12 +60,14 @@ Use this before an open house. Enter the address and paste your MLS description 
 
 **URL:** `/clients/nurture_enroll.html`
 
-Use this for leads who are real and interested but not ready to transact for another 6–18 months. Enrolls them in a 21-day, 6-touch sequence (Day 1 email → Day 3 SMS → Day 7 email → Day 10 SMS → Day 14 email → Day 21 SMS). Claude writes each message fresh based on their details — not a generic drip.
+Use this for leads who didn't convert after the initial response — they're real and interested but not ready to transact for another 6–18 months. Enrolls them in a 21-day, 6-touch sequence (Day 1 email → Day 3 SMS → Day 7 email → Day 10 SMS → Day 14 email → Day 21 SMS). Claude writes each message fresh based on their details — not a generic drip.
+
+This is **step 2** of the new lead flow, after Instant Lead Response. The typical sequence: lead comes in → respond immediately with Instant Lead Response → if they go quiet or say they're not ready yet → enroll in Cold Nurture.
 
 **When to use:**
-- Lead came in, had a real conversation, but said "we're not ready until spring"
-- Lead went quiet after 1–2 exchanges but didn't say no
-- New lead from a portal that you're not ready to call yet but don't want to lose
+- You sent the initial response and the lead went quiet after 1–2 exchanges
+- Lead came in, you had a real conversation, but they said "we're not ready until spring"
+- New lead from a portal you haven't called yet — enroll to stay top of mind while you work your active pipeline
 
 **When NOT to use — cold nurture vs. reactivation:**
 
