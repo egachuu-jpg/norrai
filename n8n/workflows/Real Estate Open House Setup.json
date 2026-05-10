@@ -177,7 +177,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(\n    (SELECT id FROM clients\n     WHERE primary_contact_email = '{{ $json.body.agent_email }}'\n     LIMIT 1),\n    'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid\n  ),\n  'open_house_setup',\n  'triggered',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(\n    (SELECT id FROM clients\n     WHERE primary_contact_email_hash = pii_hash('{{ $json.body.agent_email }}')\n     LIMIT 1),\n    'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid\n  ),\n  'open_house_setup',\n  'triggered',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -198,7 +198,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(\n    (SELECT id FROM clients\n     WHERE primary_contact_email = '{{ $node[\"Receive Setup\"].json.body.agent_email }}'\n     LIMIT 1),\n    'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid\n  ),\n  'open_house_setup',\n  'completed',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(\n    (SELECT id FROM clients\n     WHERE primary_contact_email_hash = pii_hash('{{ $node[\"Receive Setup\"].json.body.agent_email }}')\n     LIMIT 1),\n    'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid\n  ),\n  'open_house_setup',\n  'completed',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,

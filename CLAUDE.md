@@ -316,7 +316,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [x] Set up Cloudflare Access (Zero Trust) on all agent-facing forms — restructured website/ into clients/ and internal/ subfolders; two Access Groups (clients, internal) + two Applications protect /clients/* and /internal/* with email OTP (7-day and 1-day sessions)
 - [ ] Add rate limiting to n8n webhook endpoints — prevent abuse before first live client
 - [x] Add server-side input validation in n8n workflows — added to Instant Lead Response (Validate Input node) and Open House Follow-Up (Prep Wait Time node)
-- [ ] Encrypt PII columns in Neon DB (phone, email, name) using pgcrypto — currently plaintext
+- [x] Encrypt PII columns in Neon DB (phone, email, name) using pgcrypto — migration at `db/migrations/001_encrypt_pii.sql`; hash columns added for equality lookups; Lead Cleanser + all logging nodes updated; key stored in n8n env as `PII_ENCRYPTION_KEY`
 - [x] Add explicit input escaping for user-supplied fields in n8n Claude prompt templates (lead_name, lead_message) — [DATA][/DATA] delimiter wrapping added to Instant Lead Response and Open House Follow-Up prompts
 
 ### Research / Product Decisions
