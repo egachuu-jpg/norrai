@@ -10,7 +10,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "id": "lc000001-0001-4000-8000-000000000001",
       "name": "Receive Lead",
       "webhookId": "lead-cleanser-webhook-001"
@@ -21,7 +24,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 300],
+      "position": [
+        440,
+        300
+      ],
       "id": "lc000001-0002-4000-8000-000000000002",
       "name": "Build Token Query"
     },
@@ -32,7 +38,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [640, 300],
+      "position": [
+        640,
+        300
+      ],
       "id": "lc000001-0003-4000-8000-000000000003",
       "name": "Resolve Token",
       "continueOnFail": true,
@@ -46,13 +55,21 @@
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
           "conditions": [
             {
               "id": "token-found-001",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
-              "operator": {"type": "string", "operation": "notEmpty"}
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -62,7 +79,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [840, 300],
+      "position": [
+        840,
+        300
+      ],
       "id": "lc000001-0004-4000-8000-000000000004",
       "name": "Token Found?"
     },
@@ -72,7 +92,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1040, 220],
+      "position": [
+        1040,
+        220
+      ],
       "id": "lc000001-0005-4000-8000-000000000005",
       "name": "Build Dedupe Query"
     },
@@ -83,7 +106,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1240, 220],
+      "position": [
+        1240,
+        220
+      ],
       "id": "lc000001-0006-4000-8000-000000000006",
       "name": "Dedupe Check",
       "continueOnFail": true,
@@ -97,13 +123,21 @@
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
           "conditions": [
             {
               "id": "lead-exists-001",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
-              "operator": {"type": "string", "operation": "notEmpty"}
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -113,7 +147,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1440, 220],
+      "position": [
+        1440,
+        220
+      ],
       "id": "lc000001-0007-4000-8000-000000000007",
       "name": "Lead Exists?"
     },
@@ -123,7 +160,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1640, 140],
+      "position": [
+        1640,
+        140
+      ],
       "id": "lc000001-0008-4000-8000-000000000008",
       "name": "Build Update Query"
     },
@@ -134,7 +174,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1840, 140],
+      "position": [
+        1840,
+        140
+      ],
       "id": "lc000001-0009-4000-8000-000000000009",
       "name": "Update Existing Lead",
       "continueOnFail": true,
@@ -151,7 +194,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1640, 300],
+      "position": [
+        1640,
+        300
+      ],
       "id": "lc000001-0010-4000-8000-000000000010",
       "name": "Build Insert Query"
     },
@@ -162,7 +208,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1840, 300],
+      "position": [
+        1840,
+        300
+      ],
       "id": "lc000001-0011-4000-8000-000000000011",
       "name": "Insert New Lead",
       "continueOnFail": true,
@@ -179,7 +228,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2040, 300],
+      "position": [
+        2040,
+        300
+      ],
       "id": "lc000001-0012-4000-8000-000000000012",
       "name": "Prepare Handoff"
     },
@@ -194,37 +246,225 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2240, 300],
+      "position": [
+        2240,
+        300
+      ],
       "id": "lc000001-0013-4000-8000-000000000013",
       "name": "Trigger Lead Response"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid,\n  'lead_cleanser',\n  'triggered',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        840,
+        560
+      ],
+      "id": "aabb0007-0001-4000-8000-000000000001",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid,\n  'lead_cleanser',\n  'completed',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2460,
+        220
+      ],
+      "id": "aabb0007-0002-4000-8000-000000000002",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Receive Lead": {"main": [[{"node": "Build Token Query", "type": "main", "index": 0}]]},
-    "Build Token Query": {"main": [[{"node": "Resolve Token", "type": "main", "index": 0}]]},
-    "Resolve Token": {"main": [[{"node": "Token Found?", "type": "main", "index": 0}]]},
+    "Receive Lead": {
+      "main": [
+        [
+          {
+            "node": "Build Token Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Token Query": {
+      "main": [
+        [
+          {
+            "node": "Resolve Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Token": {
+      "main": [
+        [
+          {
+            "node": "Token Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Token Found?": {
       "main": [
-        [{"node": "Build Dedupe Query", "type": "main", "index": 0}],
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
-    "Build Dedupe Query": {"main": [[{"node": "Dedupe Check", "type": "main", "index": 0}]]},
-    "Dedupe Check": {"main": [[{"node": "Lead Exists?", "type": "main", "index": 0}]]},
-    "Lead Exists?": {
+    "Build Dedupe Query": {
       "main": [
-        [{"node": "Build Update Query", "type": "main", "index": 0}],
-        [{"node": "Build Insert Query", "type": "main", "index": 0}]
+        [
+          {
+            "node": "Dedupe Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Build Update Query": {"main": [[{"node": "Update Existing Lead", "type": "main", "index": 0}]]},
-    "Build Insert Query": {"main": [[{"node": "Insert New Lead", "type": "main", "index": 0}]]},
-    "Insert New Lead": {"main": [[{"node": "Prepare Handoff", "type": "main", "index": 0}]]},
-    "Prepare Handoff": {"main": [[{"node": "Trigger Lead Response", "type": "main", "index": 0}]]}
+    "Dedupe Check": {
+      "main": [
+        [
+          {
+            "node": "Lead Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Exists?": {
+      "main": [
+        [
+          {
+            "node": "Build Update Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Insert Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Update Query": {
+      "main": [
+        [
+          {
+            "node": "Update Existing Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Insert Query": {
+      "main": [
+        [
+          {
+            "node": "Insert New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert New Lead": {
+      "main": [
+        [
+          {
+            "node": "Prepare Handoff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Handoff": {
+      "main": [
+        [
+          {
+            "node": "Trigger Lead Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Build Dedupe Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Lead Response": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "active": false,
-  "settings": {"executionOrder": "v1"},
+  "settings": {
+    "executionOrder": "v1"
+  },
   "versionId": "lead-cleanser-v1-001",
   "meta": {
     "templateCredsSetupCompleted": false,

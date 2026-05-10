@@ -9,7 +9,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
+      "position": [
+        240,
+        144
+      ],
       "id": "a1b2c3d4-0001-4000-8000-000000000001",
       "name": "Receive Lead",
       "webhookId": "lead-response-webhook-001"
@@ -41,7 +44,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [432, 224],
+      "position": [
+        432,
+        224
+      ],
       "id": "a1b2c3d4-0002-4000-8000-000000000002",
       "name": "Token Check"
     },
@@ -51,7 +57,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [536, 144],
+      "position": [
+        536,
+        144
+      ],
       "id": "a1b2c3d4-00v1-4000-8000-000000000099",
       "name": "Validate Input"
     },
@@ -107,7 +116,10 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [736, 144],
+      "position": [
+        736,
+        144
+      ],
       "id": "a1b2c3d4-0003-4000-8000-000000000003",
       "name": "Build Prompt"
     },
@@ -137,7 +149,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [944, 144],
+      "position": [
+        944,
+        144
+      ],
       "id": "a1b2c3d4-0004-4000-8000-000000000004",
       "name": "Draft Response (Claude)",
       "credentials": {
@@ -153,7 +168,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1152, 144],
+      "position": [
+        1152,
+        144
+      ],
       "id": "a1b2c3d4-0005-4000-8000-000000000005",
       "name": "Extract Message"
     },
@@ -166,7 +184,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -176,7 +197,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1360, 60],
+      "position": [
+        1360,
+        60
+      ],
       "id": "a1b2c3d4-0006-4000-8000-000000000006",
       "name": "Email to Lead",
       "credentials": {
@@ -198,13 +222,58 @@
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [1360, 228],
+      "position": [
+        1360,
+        228
+      ],
       "id": "a1b2c3d4-0007-4000-8000-000000000007",
       "name": "Email Preview to Agent",
       "credentials": {
         "sendGridApi": {
           "id": "A5ypmjiRLAUMUm9O",
           "name": "SendGrid account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(\n    (SELECT id FROM clients\n     WHERE primary_contact_email = '{{ $json.body.agent_email }}'\n     LIMIT 1),\n    'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid\n  ),\n  'instant_lead_response',\n  'triggered',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        432,
+        484
+      ],
+      "id": "aabb0001-0001-4000-8000-000000000001",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(\n    (SELECT id FROM clients\n     WHERE primary_contact_email = '{{ $node[\"Receive Lead\"].json.body.agent_email }}'\n     LIMIT 1),\n    'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid\n  ),\n  'instant_lead_response',\n  'completed',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1580,
+        228
+      ],
+      "id": "aabb0001-0002-4000-8000-000000000002",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
         }
       }
     }
@@ -226,7 +295,7 @@
       "main": [
         [
           {
-            "node": "Validate Input",
+            "node": "Log Triggered",
             "type": "main",
             "index": 0
           }
@@ -276,6 +345,28 @@
           },
           {
             "node": "Email Preview to Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Preview to Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
             "type": "main",
             "index": 0
           }

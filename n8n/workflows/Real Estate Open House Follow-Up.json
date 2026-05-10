@@ -217,7 +217,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -239,6 +242,48 @@
           "name": "SendGrid Header Auth"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid,\n  'open_house_follow_up',\n  'triggered',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        432,
+        484
+      ],
+      "id": "aabb0004-0001-4000-8000-000000000001",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid,\n  'open_house_follow_up',\n  'completed',\n  jsonb_build_object('execution_id', '{{ $execution.id }}')\n)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1900,
+        60
+      ],
+      "id": "aabb0004-0002-4000-8000-000000000002",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -258,7 +303,7 @@
       "main": [
         [
           {
-            "node": "Prep Wait Time",
+            "node": "Log Triggered",
             "type": "main",
             "index": 0
           }
@@ -330,6 +375,28 @@
         [
           {
             "node": "Email to Attendee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Prep Wait Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS to Attendee": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
             "type": "main",
             "index": 0
           }
