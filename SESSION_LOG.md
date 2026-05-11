@@ -101,3 +101,14 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Restructured CLAUDE.md: replaced Session Log with Lessons Learned section (domain-organized gotchas); moved session history to `SESSION_LOG.md`
 - Created `/session-end` skill at `.claude/commands/session-end.md`
 - Added "donezo" and "wrap up" trigger phrases for session wrap-up
+- Discussed Claude managed agents vs LangGraph for COS — decided managed agents replace the orchestrator layer only; n8n workflows stay as tool targets underneath
+- Decided: Norr AI COS = Claude Sonnet, Real Estate COS (future, per-agent) = Claude Opus
+- Decided: Norr AI COS pilot tools = `check_client_health` + `get_workflow_errors` only; expand when needed
+- Decided: host COS on Railway (~$5/mo, always-on); Render free tier ruled out (sleeps on idle, breaks webhooks)
+- Built `cos/` — FastAPI server with Slack Events API + Twilio SMS inbound endpoints, Claude Sonnet tool loop, Neon session storage
+  - `cos/main.py` — FastAPI app; Slack signature verification; Twilio RequestValidator; BackgroundTasks for async Slack handling
+  - `cos/agent.py` — `run_turn(history, message)` tool loop; MAX_HISTORY=20 cap; handles `tool_use` stop reason
+  - `cos/tools.py` — `check_client_health()` (mirrors n8n health logic) + `get_workflow_errors(days, client_name)`
+  - `cos/db.py` — `load_session` / `save_session` upsert against `cos_sessions`
+  - `cos/Procfile`, `cos/requirements.txt`, `cos/.env.example`, `cos/README.md`
+- Added `cos_sessions` table to `db/schema.sql` and `db/migrations/003_cos_sessions.sql`

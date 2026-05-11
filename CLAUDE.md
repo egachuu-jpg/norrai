@@ -459,6 +459,14 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
 - Research Agent caches by address with 7-day TTL — call once per workflow run, not per touch; the cache covers the full cold nurture run
 - Dashboard health logic: red = any failures in last 7 days, yellow = no events in 7 days (silence), green = healthy
+- Claude managed agents replace the orchestration layer (LangGraph / n8n intent dispatch) but not the tools underneath — Norr AI's value is domain-specific integrations and workflows, not the orchestrator
+- COS model split: Sonnet for Norr AI internal COS (simple tool dispatch), Opus for Real Estate COS (multi-step agentic chains with decision logic)
+- Webhook receivers must be always-on — Railway (~$5/mo) stays live; Render free tier sleeps after 15 min idle and will timeout Slack/Twilio signature verification
+
+### Python / FastAPI
+- Slack Events API requires a 200 response within 3 seconds — use FastAPI `BackgroundTasks` to run the agent turn after returning `{"ok": true}`
+- psycopg2 interval with a parameter: use `interval '1 day' * %s` — `interval '%s days'` does not accept a placeholder and will error
+- Slack URL verification challenge fires once on app setup — handle `payload["type"] == "url_verification"` before any other event logic or the app won't verify
 
 ## About the Owner
 
