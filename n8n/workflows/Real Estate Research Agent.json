@@ -1,0 +1,649 @@
+{
+  "name": "Real Estate Research Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "research-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        32
+      ],
+      "id": "5ce25e80-9771-49eb-90d7-8677b6c09331",
+      "name": "Receive Request",
+      "webhookId": "research-agent-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ra-token-check-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -864,
+        32
+      ],
+      "id": "1012e219-17cb-4744-b27f-b4427521d0e3",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "jsCode": "//const body = $('Receive Request').first().json.body;\nconst body = $input.first().json.body;\n\n// Required fields\nconst required = ['address', 'city', 'state', 'zip'];\nfor (const f of required) {\n  if (!body[f] || !String(body[f]).trim()) throw new Error(`Missing required field: ${f}`);\n}\n\nconst full_address = `${body.address}, ${body.city}, ${body.state} ${body.zip}`;\n\nreturn [{ json: {\n  address:      body.address,\n  city:         body.city,\n  state:        body.state,\n  zip:          body.zip,\n  full_address,\n  price_range:  body.price_range  || '',\n  beds:         body.beds         || null,\n  baths:        body.baths        || null,\n  sqft:         body.sqft         || null,\n  year_built:   body.year_built   || null,\n  caller:       body.caller       || 'unknown',\n  client_id:    body.client_id    || 'e2f9934c-4d28-4bb4-ac90-4284c1123517'\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        32
+      ],
+      "id": "230b42b4-dc13-48fc-b6bc-0a504edabc35",
+      "name": "Prep Input"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "  INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\n  VALUES (\n    '{{ $('Prep Input').first().json.client_id }}'::uuid,\n    'research_agent',                                                           \n    'triggered',\n    '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb                            \n  ) ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -448,
+        32
+      ],
+      "id": "30af1de5-efdd-482b-9fda-09ae52d17370",
+      "name": "Log Triggered",
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, address, zip, result, created_at, expires_at\nFROM research_cache\nWHERE address = '{{ $('Prep Input').first().json.full_address }}'\n  AND expires_at > now()\nORDER BY created_at DESC\nLIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        32
+      ],
+      "id": "e57046cd-cf94-4387-8fc8-a2c9bc0bb76f",
+      "name": "Cache Lookup",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst input = $('Prep Input').first().json;\n\n// Check if Postgres returned a valid cached row with a result field\nif (\n  items.length > 0 &&\n  items[0].json &&\n  items[0].json.result &&\n  !items[0].json.error\n) {\n  const cached = typeof items[0].json.result === 'string'\n    ? JSON.parse(items[0].json.result)\n    : items[0].json.result;\n  return [{ json: { cache_hit: true, ...cached, _cached: true } }];\n}\n\n// Cache miss — pass input forward\nreturn [{ json: { cache_hit: false, ...input } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        32
+      ],
+      "id": "71bc5e40-7a30-4651-ae47-848e4560fb42",
+      "name": "Evaluate Cache"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ra-cache-hit-001",
+              "leftValue": "={{ $json.cache_hit }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        32
+      ],
+      "id": "f0ff4ce1-3846-422e-b9dd-9b95c34a67e6",
+      "name": "Cache Hit?"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        -128
+      ],
+      "id": "3f190446-9c87-444a-9066-4dbe9eddcdd3",
+      "name": "Respond Cached"
+    },
+    {
+      "parameters": {
+        "url": "https://geocoding.geo.census.gov/geocoder/locations/address",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "street",
+              "value": "={{ $json.address }}"
+            },
+            {
+              "name": "city",
+              "value": "={{ $json.city }}"
+            },
+            {
+              "name": "state",
+              "value": "={{ $json.state }}"
+            },
+            {
+              "name": "zip",
+              "value": "={{ $json.zip }}"
+            },
+            {
+              "name": "benchmark",
+              "value": "2020"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        384,
+        192
+      ],
+      "id": "d6962df5-4831-47c2-a772-fa15f98cc23d",
+      "name": "Census Geocoder"
+    },
+    {
+      "parameters": {
+        "jsCode": "const geocoder = $input.first().json;\nconst input = $('Prep Input').first().json;\n\n// Check if address validated\nconst matches = geocoder?.result?.addressMatches || [];\nconst address_verified = matches.length > 0;\nconst coords = address_verified ? matches[0].coordinates : null;\n\nconst prompt = `Research the following property and local market. Return ONLY information you find from search results — do not estimate or invent any numbers.\n\nPROPERTY: ${input.full_address}\nPRICE RANGE: ${input.price_range || 'not specified'}\nBEDS: ${input.beds || 'unknown'} | BATHS: ${input.baths || 'unknown'}\n\nReturn a JSON object with these exact fields:\n- walkability: { description: string } — source from Walk Score or similar, describe in one sentence\n- schools: [ { name: string, grades: string, rating: number|null, source: string, distance_miles: number|null } ] — nearest 2-3 public schools from GreatSchools or school district sites\n- market: { median_sale_price: number|null, median_days_on_market: number|null, inventory_level: \"low\"|\"balanced\"|\"high\"|null, yoy_price_trend: string|null, data_source: string, data_date: string } — source from Zillow, Redfin, or Realtor.com\n- recent_comps: [ { address: string, sold_price: number, sold_date: string, beds: number|null, baths: number|null, sqft: number|null } ] — up to 4 comparable recently sold homes from public listings\n- data_confidence: { market: \"high\"|\"medium\"|\"low\", comps: \"high\"|\"medium\"|\"low\", schools: \"high\"|\"medium\"|\"low\" }\n\nCRITICAL: Do not include demographic data, crime statistics, or any information about the racial or ethnic composition of the area. Do not invent or estimate any data — if you cannot find it, return null.`;\n\nconst geminiBody = {\n  contents: [{ parts: [{ text: prompt }] }],\n  tools: [{ google_search: {} }],\n  generation_config: {}\n};\n\nreturn [{ json: { ...input, address_verified, coords, geminiBody } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        192
+      ],
+      "id": "d4ff8aee-1896-4cb8-84e1-4c9605057578",
+      "name": "Build Gemini Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.geminiBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        800,
+        192
+      ],
+      "id": "cd255207-5a15-4bba-96c6-25979521dc89",
+      "name": "Gemini Research",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "6udcvJp0fcscvxSL",
+          "name": "Gemini API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.first().json;\nconst input = $('Build Gemini Prompt').first().json;\n\n// Parse Gemini response\nlet research = {};\ntry {\n  const candidates = geminiResponse.candidates;\n  if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {\n    const text = candidates[0].content.parts[0].text;\n    research = JSON.parse(text);\n  }\n} catch(e) {\n  research = { parse_error: String(e.message) };\n}\n\n// Compliance filter — strip any field containing blocked keywords\nconst BLOCKED = ['demographic', 'crime', 'race', 'racial', 'ethnicity', 'religion', 'national_origin', 'segregat'];\nfunction stripBlocked(obj) {\n  if (typeof obj !== 'object' || obj === null) return obj;\n  if (Array.isArray(obj)) return obj.map(stripBlocked);\n  const clean = {};\n  for (const [k, v] of Object.entries(obj)) {\n    if (BLOCKED.some(b => k.toLowerCase().includes(b))) continue;\n    if (typeof v === 'string' && BLOCKED.some(b => v.toLowerCase().includes(b))) continue;\n    clean[k] = stripBlocked(v);\n  }\n  return clean;\n}\n\nconst cleaned = stripBlocked(research);\n\nreturn [{ json: { ...input, research: cleaned } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        192
+      ],
+      "id": "b37a6d97-0495-4b61-a2c2-526a7e4247ff",
+      "name": "Parse + Compliance Filter"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(`You are formatting verified real estate research into factual summaries.\\nRules:\\n- Only use facts from the data provided. Never add, estimate, or invent.\\n- Never mention neighborhood demographics, race, religion, national origin, or crime.\\n- School data is public record — present it neutrally as a fact, never as a quality judgment.\\n- If confidence is \"low\" for a category, omit it from the insight_block entirely.\\n- Always hedge comps: \"based on publicly available sales data.\"\\n\\nReturn a JSON object with exactly one key: \"insight_block\" — a 2-3 sentence plain-text summary of the most useful market facts for a real estate agent composing an outreach message. No markdown.\\n\\nResearch data:\\n[DATA]\\n${JSON.stringify($json.research, null, 2)}\\n[/DATA]`) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1216,
+        192
+      ],
+      "id": "6aa1aad6-b636-4086-ac5d-e59605cbeea5",
+      "name": "Claude Formatter",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nconst prev = $('Parse + Compliance Filter').first().json;\nconst research = prev.research || {};\n\n// Extract insight_block from Claude JSON response\nlet insight_block = '';\ntry {\n  const parsed = JSON.parse(claudeResponse.content[0].text.trim());\n  insight_block = parsed.insight_block || '';\n} catch(e) {\n  // Claude returned plain text instead of JSON — use as-is\n  insight_block = (claudeResponse.content[0].text || '').trim();\n}\n\nconst hasComps = Array.isArray(research.recent_comps) && research.recent_comps.length > 0;\n\nconst output = {\n  status: 'ok',\n  address_verified: prev.address_verified || false,\n  walkability:      research.walkability      || null,\n  schools:          research.schools          || [],\n  market:           research.market           || null,\n  recent_comps:     research.recent_comps     || [],\n  data_confidence:  research.data_confidence  || { market: 'low', comps: 'low', schools: 'low' },\n  insight_block,\n  comps_disclaimer: hasComps\n    ? 'Comparable sales sourced from publicly available listings. For a complete market analysis, see your agent\\'s formal CMA.'\n    : undefined\n};\n\n// Remove undefined keys so the response JSON is clean\nObject.keys(output).forEach(k => { if (output[k] === undefined) delete output[k]; });\n\nreturn [{ json: output }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        192
+      ],
+      "id": "6aaa4dd5-7954-45de-8ca1-0646d5c3c0bb",
+      "name": "Build Final Output"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO research_cache (address, zip, result)\nVALUES (\n  '{{ $('Prep Input').first().json.full_address }}',\n  '{{ $('Prep Input').first().json.zip }}',\n  '{{ JSON.stringify($json).replace(/'/g, \"''\") }}'::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1632,
+        192
+      ],
+      "id": "e65f59d8-8a40-4a74-a995-aa8e79282ae0",
+      "name": "Save to Cache",
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Prep Input').first().json.client_id }}'::uuid,\n  'research_agent',\n  'completed',\n  '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1840,
+        192
+      ],
+      "id": "5b49018e-8273-475b-ae1f-6c520ed7c91e",
+      "name": "Log Completed",
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2048,
+        192
+      ],
+      "id": "f63abd2c-96c4-4935-8e6e-dedca1631cc6",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents",
+              "value": "={{ $json.geminiBody.contents }}"
+            },
+            {
+              "name": "tools",
+              "value": "={{ $json.geminiBody.tools }}"
+            },
+            {
+              "name": "generation_config",
+              "value": "={{ $json.geminiBody.generation_config }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        432
+      ],
+      "id": "071b2db7-797c-4783-8e37-72598566dd29",
+      "name": "Gemini Research1",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "6udcvJp0fcscvxSL",
+          "name": "Gemini API Key"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Receive Request": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "curl/8.7.1",
+            "content-length": "143",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "72.58.83.86",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f9b1aec1e76a1cf-MSP",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "72.58.83.86, 104.23.201.228",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-hwvz7",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "72.58.83.86"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "address": "198 Cuylle Ct",
+            "city": "Lakeville",
+            "state": "MN",
+            "zip": "55044",
+            "price_range": "$280k-$320k",
+            "beds": 4,
+            "baths": 2,
+            "caller": "smoke_test"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/research-agent",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Receive Request": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Prep Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Input": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Cache Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cache Lookup": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Cache": {
+      "main": [
+        [
+          {
+            "node": "Cache Hit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cache Hit?": {
+      "main": [
+        [
+          {
+            "node": "Respond Cached",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Census Geocoder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Census Geocoder": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Research": {
+      "main": [
+        [
+          {
+            "node": "Parse + Compliance Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse + Compliance Filter": {
+      "main": [
+        [
+          {
+            "node": "Claude Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Formatter": {
+      "main": [
+        [
+          {
+            "node": "Build Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Output": {
+      "main": [
+        [
+          {
+            "node": "Save to Cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Cache": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Completed": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e6b69b1e-7c39-4249-91aa-6c002da410fa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "AV5MgyHlfCYKzQVk",
+  "tags": []
+}
