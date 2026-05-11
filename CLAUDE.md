@@ -154,6 +154,7 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Client Discovery → Claude Analysis | `client_discovery` |
 | Client Onboarding → Claude Analysis | `client_onboarding` |
 | Event Ops Discovery | `event_ops_discovery` |
+| Real Estate Research Agent | `research_agent` |
 
 **All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.**
 
@@ -173,6 +174,16 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 - Email sends from hello@norrai.co via SendGrid native n8n node
 - Agent voice personalization: few-shot prompting with 3–5 of agent's previous listings pasted into prompt
 - **Webhook URL:** `https://norrai.app.n8n.cloud/webhook/listing-description`
+
+### Research Agent (Subworkflow)
+- **Status:** Live in production — smoke tested 2026-05-10
+- **Stack:** Webhook → Token Check → Prep Input (Code) → Log Triggered (Neon) → Cache Lookup (Neon, 7-day TTL) → Evaluate Cache (Code) → [cache hit] Respond Cached / [cache miss] Census Geocoder → Build Gemini Prompt (Code) → Gemini 2.0 Flash + Google Search Grounding (HTTP) → Parse + Compliance Filter (Code) → Claude Haiku Formatter (HTTP) → Build Final Output (Code) → Save to Cache (Neon) → Log Completed (Neon) → Respond to Webhook
+- **Webhook URL:** `https://norrai.app.n8n.cloud/webhook/research-agent`
+- **Input:** `address`, `city`, `state`, `zip`, `price_range`, `beds`, `baths` (+ optional `sqft`, `year_built`, `caller`, `client_id`)
+- **Output:** `status`, `address_verified`, `walkability`, `schools`, `market`, `recent_comps`, `data_confidence`, `insight_block`, `comps_disclaimer`
+- **Credentials needed in n8n:** "Gemini API Key" (Query Auth credential — name: `key`, value: your Gemini API key) — created and wired
+- **Prerequisites:** `research_cache` table in Neon (added to `db/schema.sql` — apply to production)
+- See `PRD/research-agent.md` for full spec
 
 ### Event Ops Discovery Form
 - **Status:** Working end to end
@@ -340,6 +351,9 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [ ] Swap placeholder rates with real B&B rates once obtained
 - [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
 - [ ] Audit workflow_events logging coverage — only B&B Lead Generator currently logs to Neon; all real estate workflows (Instant Lead Response, Open House Follow-Up, Open House Setup, Listing Description, 7-Touch Nurture, Review Request, Lead Cleanser pipeline) need `workflow_events` INSERT nodes added before the monitoring dashboard can work
+- [ ] **Research Agent integration audit** — review all workflows where the Research Agent would add value and wire it in: (a) **Instant Lead Response** — call research-agent at lead intake, inject `insight_block` into the Claude SMS/email draft so the response references real market data; (b) **7-Touch Cold Nurture (Slack SMS Preview)** — call once at enrollment, cache for the full 21-day run, inject into T1/T3/T5 email and T2/T4/T6 SMS prompts to ground the messages in real schools/market data; (c) **Open House Follow-Up** — call with the property address during setup, cache the result, inject into follow-up drafts; (d) **Listing Description Generator** — optional, provides comp context for pricing language in the MLS description; (e) **Future CMA Tool (Phase 2A)** — research-agent provides the market snapshot section, ATTOM handles formal comp selection. Pattern for all: add an HTTP Request node after the existing Token Check/Validate node, POST to `https://norrai.app.n8n.cloud/webhook/research-agent` with the property address + token, inject `$json.insight_block` into the downstream Claude prompt.
+- [x] Apply `research_cache` table to Neon production — applied 2026-05-10
+- [ ] **Evaluate Token Check nodes across all workflows** — every workflow has a Token Check IF node that checks `x-norr-token: 8F68D963-7060-4033-BD04-7593E4B203CB` against the incoming header. This token is hardcoded in every client-facing HTML form and baked into the n8n IF condition — it's the same shared secret everywhere. The honest security value is low: anyone who views page source can see the token, and it's the same across all workflows. The real protection for agent-facing forms is Cloudflare Access (email OTP on `/clients/*`). Evaluate whether to: (a) **remove Token Check entirely** from all workflows and rely on Cloudflare Access as the auth layer; (b) **keep it but per-client** — rotate to a per-client token stored in Neon, looked up dynamically, so one leaked token doesn't open all workflows; or (c) **keep as-is** and accept it as a basic CSRF/accident guard rather than real security. Option (a) is likely the right call for workflows only triggered by Cloudflare-protected forms. Workflows that accept external webhooks (intake sources, chief of staff) are a separate question — those may need the check or a signed secret.
 - [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
 - [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
 
@@ -456,6 +470,20 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Built `n8n/workflows/Norr AI Client Health Query.json` — GET webhook at `/webhook/client-health` queries Neon, applies health logic (red=failures in 7d, yellow=silence, green=healthy), returns JSON; **smoke tested and confirmed working**
 - Built `n8n/workflows/Norr AI Red Alert Scheduler.json` — Cron at 6am + 6pm CT, queries Neon, posts Slack alert when any client is red; **smoke tested and confirmed working**
 - Re-imported Real Estate Instant Lead Response + Open House Follow-Up workflows in n8n with security enhancements (Validate Input node, [DATA] prompt injection delimiters)
+
+### 2026-05-10
+- Imported Real Estate Research Agent workflow into n8n and smoke tested end to end — confirmed working
+- Created "Gemini API Key" Query Auth credential in n8n (field: `key`)
+- Applied `research_cache` table to Neon production
+- Fixed workflow bugs discovered during smoke test:
+  - Token Check rightValue had `=` prefix causing expression eval failure — fixed to plain string
+  - Log Triggered SQL used `$json.caller` which n8n blocks for security — removed caller from payload
+  - Cache Lookup stops on 0 rows — enabled "Always Output Data" in node settings
+  - Gemini model `gemini-2.0-flash` no longer available to new users — updated to `gemini-2.5-flash`
+  - Gemini tool `google_search_retrieval` not supported in 2.5 — changed to `google_search`
+  - `generationConfig` REST key must be `generation_config` — fixed in Build Gemini Prompt node
+  - `response_mime_type: application/json` incompatible with tool use — removed from generation_config
+- Workflow is published and live at `POST /webhook/research-agent`
 
 ### 2026-04-28
 - Built `website/open_house_setup.html` + `n8n/workflows/Real Estate Open House Setup.json` — agent enters name/email/phone/address/MLS description; Claude extracts 3–5 property highlights; QR code generated via qrserver.com and emailed to agent; highlights encoded as `notes` param in the sign-in URL

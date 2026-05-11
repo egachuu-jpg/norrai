@@ -138,3 +138,19 @@ CREATE TABLE workflow_events (
 
 CREATE INDEX idx_workflow_events_client_workflow_time
   ON workflow_events(client_id, workflow_name, created_at);
+
+
+-- ============================================================
+-- RESEARCH AGENT CACHE
+-- ============================================================
+
+CREATE TABLE research_cache (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  address     text NOT NULL,
+  zip         text,
+  result      jsonb NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  expires_at  timestamptz NOT NULL DEFAULT now() + INTERVAL '7 days'
+);
+
+CREATE INDEX idx_research_cache_address_expires ON research_cache(address, expires_at);
