@@ -319,6 +319,9 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ## Open Tasks
 
+### Meta
+- [ ] Audit and reorganize Open Tasks — reduce essay-length bullets to one-liners, move detailed specs to PRDs, remove stale items, tighten section structure
+
 ### Immediate
 - [x] Connect `listing_form.html` to n8n production webhook URL
 - [ ] Upgrade Twilio account, buy local 507 number, replace toll-free 855
