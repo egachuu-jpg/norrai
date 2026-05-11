@@ -357,9 +357,9 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [ ] Swap placeholder rates with real B&B rates once obtained
 - [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
 - [ ] Audit workflow_events logging coverage — only B&B Lead Generator currently logs to Neon; all real estate workflows (Instant Lead Response, Open House Follow-Up, Open House Setup, Listing Description, 7-Touch Nurture, Review Request, Lead Cleanser pipeline) need `workflow_events` INSERT nodes added before the monitoring dashboard can work
-- [ ] **Wire research agent into 7-Touch Cold Nurture** — add HTTP Request node after Token Check, POST to `/webhook/research-agent` with enrollment address + token; inject `$json.insight_block` into all 6 Claude prompts (T1–T6); call once at enrollment, 7-day cache covers the full 21-day run
-- [ ] **Wire research agent into Instant Lead Response** — add HTTP Request node after Validate Input, POST to `/webhook/research-agent` with lead's property address; inject `$json.insight_block` into the Claude SMS/email draft; converts deflected market questions into real data answers
-- [ ] **Wire research agent into Open House Follow-Up** — call research agent during Open House Setup (address is known then); pass `insight_block` into Follow-Up workflow payload; inject into follow-up Claude prompt for market urgency signals
+- [x] **Wire research agent into 7-Touch Cold Nurture** — `Real Estate 7-Touch Cold Nurture with Research.json`; research called once at enrollment; insight_block injected into T1/T2/T3 prompts
+- [x] **Wire research agent into Instant Lead Response** — `Real Estate Instant Lead Response with Research.json`; research called after Validate Input; MARKET CONTEXT block added to Build Prompt
+- [x] **Wire research agent into Open House Follow-Up** — `Real Estate Open House Follow-Up with Research.json`; research called after overnight wait node; MARKET CONTEXT block added to Build Prompt
 - [x] Research Agent integration audit complete — see `PRD/buyer-briefing.md`, `PRD/price-sanity-checker.md`, `PRD/lead-scoring-at-intake.md` for new workflow PRDs
 - [ ] **Build Buyer Briefing Generator** — `clients/buyer_briefing.html` form + n8n workflow; pre-showing briefing emailed to buyer automatically; see `PRD/buyer-briefing.md`
 - [ ] **Build Price Sanity Checker** — `clients/price_check.html` form + n8n workflow; inline comp verdict in 60 seconds; see `PRD/price-sanity-checker.md`
@@ -422,10 +422,12 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
 - Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
 - Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
+- When `continueOnFail: true` is set on an HTTP Request node, `$input.first().json` in the downstream Code node is the n8n error object on failure — always use `$('NodeName').first().json` for a stable upstream named ref to preserve payload data regardless of HTTP result
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
 - When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
+- "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
 
 ### SendGrid
 - HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`

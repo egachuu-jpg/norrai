@@ -101,3 +101,11 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Restructured CLAUDE.md: replaced Session Log with Lessons Learned section (domain-organized gotchas); moved session history to `SESSION_LOG.md`
 - Created `/session-end` skill at `.claude/commands/session-end.md`
 - Added "donezo" and "wrap up" trigger phrases for session wrap-up
+- Brainstormed and scoped research agent integration into 3 existing workflows (Instant Lead Response, 7-Touch Cold Nurture, Open House Follow-Up); dropped Listing Description Generator as not worth complexity
+- Created design spec: `docs/superpowers/specs/2026-05-11-research-agent-workflow-integration-design.md`
+- Created implementation plan: `docs/superpowers/plans/2026-05-11-research-agent-workflow-integration.md`
+- Created `n8n/workflows/Real Estate Instant Lead Response with Research.json` — Call Research Agent + Enrich with Research nodes inserted after Validate Input; MARKET CONTEXT block added to Build Prompt
+- Created `n8n/workflows/Real Estate 7-Touch Cold Nurture with Research.json` — research called once at enrollment (Prep Fields → research → Enrich → Wait Day 1); insight_block injected into T1/T2/T3 prompts; T4/T5/T6 unchanged
+- Created `n8n/workflows/Real Estate Open House Follow-Up with Research.json` — research called after overnight wait (post-Prep Wait Time); no price_range/beds/baths (not on sign-in form)
+- Fixed critical bug in Enrich node: initial version used `$input.first().json` as spread source — when upstream HTTP Request fails with `continueOnFail: true`, n8n passes an error object as the item, which would wipe all lead data; fixed to use stable named upstream node ref (`$('Validate Input').first().json`, etc.)
+- Replaced Node.js inline JSON validation in plan steps with `jq empty` — the former triggered Vercel hook validation errors in the superpowers plugin environment
