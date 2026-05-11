@@ -454,6 +454,13 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `open_house.html` stays at root (public, QR code on door) — Cloudflare Access only covers `/clients/*` and `/internal/*`
 - Session durations: clients group = 7 days, internal group = 1 day
 
+### Claude Code
+- Web sessions (claude.ai/code) auto-create an isolated branch + cloud VM per session — no manual git needed
+- CLI sessions operate on the currently checked-out branch — use `--worktree <name>` for automatic branch isolation
+- Two CLI sessions on the same branch will interleave commits — always use `--worktree` for parallel CLI work
+- `.claude/commands/` holds custom slash command skills; create the directory manually if it doesn't exist
+- The `session-start-hook` skill is for running setup commands (tests, linters) on web sessions — not related to branching
+
 ### Architecture Decisions
 - Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security

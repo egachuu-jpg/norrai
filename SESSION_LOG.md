@@ -94,10 +94,13 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Workflow is published and live at `POST /webhook/research-agent`
 
 ### 2026-05-11
+- Checked repo status: two branches (main, claude/check-repo-status-79ji5), no open PRs, clean working tree
 - Analyzed research agent integration opportunities across all real estate workflows
 - Replaced broad "Research Agent integration audit" task with 3 specific todos (Cold Nurture, Instant Lead Response, Open House Follow-Up)
 - Created PRDs: `PRD/buyer-briefing.md`, `PRD/price-sanity-checker.md`, `PRD/lead-scoring-at-intake.md`
 - Added `buyer_briefing`, `price_sanity_checker`, `lead_scoring` to workflow_name registry in CLAUDE.md
 - Restructured CLAUDE.md: replaced Session Log with Lessons Learned section (domain-organized gotchas); moved session history to `SESSION_LOG.md`
-- Created `/session-end` skill at `.claude/commands/session-end.md`
-- Added "donezo" and "wrap up" trigger phrases for session wrap-up
+- Created `.claude/commands/session-end.md` skill for structured session wrap-up
+- Added "donezo" and "wrap up" trigger phrases + Session Wrap-Up section to CLAUDE.md
+- Added Meta todo to audit/reorganize Open Tasks granularity
+- Discussed Claude Code branching: web sessions auto-isolate per branch+VM; CLI uses --worktree for isolation
