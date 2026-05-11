@@ -410,99 +410,61 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ---
 
-## Session Log
+## Lessons Learned
 
-### 2026-04-23
-- Added `norr_ai_favicon.svg` to all 12 HTML pages
-- Connected `listing_form.html` to production webhook (`https://norrai.app.n8n.cloud/webhook/listing-description`)
-- Added localStorage agent profile persistence — saves `agent_name`, `agent_email`, `previous_listings` across sessions; "· saved / clear" badge in Your Voice section
-- Split single address field into `street_address`, `city`, `state` (default MN), `zip`, `county`; constructs `property_address` for workflow
-- Added price currency pattern validation + blur auto-format; changed `lot_size` to `type="number"` with decimal enforcement
-- Added `X-Norr-Token` shared secret header to form fetch + n8n IF node for basic auth
-- Fixed n8n workflow: removed hardcoded example listings, wired `previous_listings` from payload, fixed field name mismatches, added all new fields to Claude prompt, fixed `JSON.stringify` on prompt to prevent bad control character error, fixed double `$$` on price
-- n8n workflow now includes Token Check IF node + Valid Email Check against DataTable allowlist
-- Set up Playwright test suite — 41 tests, all passing (`npm test`)
-- Initialized git repo, pushed to `github.com/egachuu-jpg/norrai`
-- Deployed to Cloudflare Pages, custom domain `tools.norrai.co` live
+### n8n — Expressions & Nodes
+- Token Check rightValue must be a plain string — any `=` prefix causes n8n to evaluate it as an expression and the check always fails
+- Never use `$json.caller` (or similar dynamic fields) in SQL nodes — n8n blocks certain variable references in database queries for security; use hardcoded strings or safe payload fields
+- Cache Lookup (Postgres) node: enable "Always Output Data" or the node stops execution on 0 rows instead of passing through
+- Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
+- Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
+- Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
 
-### 2026-04-24
-- Set up Neon Postgres — project `norrai` (`gentle-hill-54285247`), Postgres 17, `us-east-1`
-- Applied `db/schema.sql` to production database: 7 tables (`clients`, `service_contracts`, `twilio_subaccounts`, `norrai_meetings`, `leads`, `appointments`, `workflow_events`), `set_updated_at()` trigger, indexes
-- Added `DATABASE_URL` to `.env`, added `.env` to `.gitignore`
-- Loaded test data across all 7 tables — 5 clients (dental, real estate, insurance, auto, wellness), realistic leads with vertical metadata, appointments, workflow events
+### n8n — Workflow Management
+- After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
+- When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
 
-### 2026-04-26
-- Built `website/lead_response.html` + `n8n/workflows/Real Estate Instant Lead Response.json` — agent pastes a new lead, Claude drafts personalized SMS + email reply within 60 seconds; agent gets a copy preview
-- Built `website/open_house.html` + `n8n/workflows/Real Estate Open House Follow-Up.json` — QR code on door, attendees sign in on their phone, Claude writes personalized follow-up sent at 9am CT next morning via SMS + email (if provided)
-- Built `website/nurture_enroll.html` + `n8n/workflows/Real Estate 7-Touch Cold Nurture.json` — agent enrolls a cold lead, 6 Claude-written touches over 21 days (Day 1 email, Day 3 SMS, Day 7 email, Day 10 SMS, Day 14 email, Day 21 SMS); includes disconnected Auto-Trigger webhook node for future automation
-- All 3 workflows use token check (`X-Norr-Token`), same Anthropic + SendGrid credentials as listing description workflow
-- Created `n8n/TESTING_NOTES.md` — known gotchas, gaps, and production promotion checklist
-- Created `n8n/TESTING_GUIDE.md` — step-by-step testing instructions per workflow
-- Discussed DB architecture: `appointments` table schema is fine to keep, but don't build calendar scraping/normalization layer until a real client forces it
-- Discussed agent-facing form auth: Cloudflare Access (Zero Trust) is the right answer — free up to 50 users, email OTP, protects specific paths; defer until first real agent client
+### SendGrid
+- HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`
+- Use HTTP Request node calling SendGrid v3 API directly for HTML emails — the native n8n SendGrid node doesn't set content-type correctly for HTML
+- SendGrid v3 HTTP Request requires a "Header Auth" credential: `Authorization: Bearer SG.xxx`; JSON.stringify the body value
+- Disable click tracking on transactional emails — enabled by default, causes Gmail to route to Promotions tab
 
-### 2026-04-30
-- Fixed Open House Setup workflow: HTML email was arriving as a file attachment in Gmail due to unescaped `&` in QR/signin URLs inside HTML attributes
-- Moved email HTML construction into the "Build QR URL" Code node with `&amp;`-escaped URLs
-- Replaced SendGrid node with HTTP Request node calling SendGrid v3 API directly (`text/html` content type, `JSON.stringify` for body value)
-- Requires "Header Auth" credential in n8n: Authorization: Bearer SG.xxx
-- Open House Setup + Open House Follow-Up both tested and confirmed working end to end
-- Built `website/review_request.html` + `n8n/workflows/Real Estate Review Request.json` — agent form triggers Claude-personalized SMS + email to closed client after 1/3/7-day delay; localStorage agent profile (name, Google URL, Zillow URL); 20 Playwright tests passing
+### Gemini
+- `gemini-2.0-flash` is no longer available to new API users — use `gemini-2.5-flash`
+- Gemini 2.5 tool name: `google_search` (not `google_search_retrieval` — that was 2.0 only)
+- REST generation config key is `generation_config` (snake_case), not `generationConfig` (JS SDK style)
+- `response_mime_type: application/json` is incompatible with tool use — remove it from `generation_config` when using `google_search`
+- n8n credential for Gemini: Query Auth type, field name `key`, display name "Gemini API Key"
 
-### 2026-04-29
-- Brainstormed and designed automated estimating workflow for **B&B Manufacturing and Assembly** (Faribault, MN) — 55,000 sq ft metal fab shop, 50+ employees, custom fabrication for OEMs across ag, aerospace, food processing, industrial markets
-- Design: web form → n8n → Claude API (line-item estimate with rate card) → SendGrid email to submitter within ~60 seconds; no human in the loop for demo
-- Built `website/bnb_estimate_form.html` — all 10 services (laser cutting, waterjet, CNC, press brake, welding, sandblasting, powder coating, plating, deburring, assembly), conditional detail fields per service, Polar Modern design
-- Built `n8n/workflows/B&B Manufacturing Estimate.json` — 6 nodes: Webhook (responds immediately) → Token Check → Build Claude Prompt (Code) → Claude API → Parse + Build Email (Code) → SendGrid
-- Rate card baked into Claude prompt as placeholder rates; designed for easy swap to Google Sheets in production
-- Claude outputs structured JSON; Code node builds full HTML email with line-item table, totals, lead time, disclaimer
-- Added 24 Playwright tests (`tests/bnb_estimate_form.spec.js`) — all passing; full suite 132/132
-- Added B&B testing section to `n8n/TESTING_NOTES.md` — import checklist, test payload, known gaps
-- Design spec: `docs/superpowers/specs/2026-04-28-bnb-estimating-design.md`
-- Implementation plan: `docs/superpowers/plans/2026-04-28-bnb-estimating.md`
-- **Pending:** smoke test (import workflow into n8n, fire test payload, verify email) — deferred to after work
-- Brainstormed and designed automated lead generator for B&B Manufacturing — Monday 6am schedule, Apollo.io search (250-mile radius, OEM industries, decision-maker titles, verified emails), Google Sheet exclusion list with JobBOSS stub, Claude scoring (1-10, 8+ threshold), SendGrid review email to B&B inbox with drafted outreach copy, Neon logging per qualified lead
-- Design spec: `docs/superpowers/specs/2026-04-29-bnb-lead-generator-design.md`; Implementation plan: `docs/superpowers/plans/2026-04-29-bnb-lead-generator.md`
+### Neon / Postgres
+- Never commit `.env` — `DATABASE_URL` (pooled connection string) lives there only
+- `appointments` table: schema is correct, but don't build calendar scraping/normalization until a real client requires it
 
-### 2026-05-06
-- Audited all HTML pages in website/ — found pages missing from CLAUDE.md: `discovery_form.html`, `lead_action_edit.html`, `privacy.html`, `terms.html`
-- Brainstormed and implemented Cloudflare Zero Trust Access for all non-public pages
-- Restructured `website/` folder: 7 client-facing pages moved to `website/clients/`, 2 internal pages to `website/internal/`; public pages stay at root
-- Cloudflare Access Groups: `clients` (all client/prospect tool users + Egan, 7-day session), `internal` (Egan only, 1-day session)
-- Cloudflare Access Applications: one for `/clients/*`, one for `/internal/*` — email OTP, free tier, up to 50 users
-- Updated 6 Playwright test files to reference new `/clients/` paths; 248 tests passing
-- To add a new client: Zero Trust → Access Groups → `clients` → add their email — automatically grants access to all `/clients/*` pages
-- n8n workflows unchanged — only workflow referencing a page URL points to `open_house.html` which stays public at root
+### Prompt Engineering
+- Wrap all user-supplied fields in Claude prompts with `[DATA][/DATA]` delimiters to prevent prompt injection (lead_name, lead_message, agent_notes, etc.)
+- Cold nurture and lead response prompts must explicitly say "do not invent school names, market statistics, or sold prices" until the research agent is wired in — Claude will hallucinate these without the instruction
+- Property highlights must be extracted during Open House Setup (when the MLS description is available) and passed as a URL param — the Follow-Up workflow fires the next morning with no access to the original listing copy
 
-### 2026-05-08
-- Built internal client health monitoring dashboard (`website/internal/dashboard.html`) — Polar Modern card grid, red/yellow/green status per client, manual refresh, loading/error/empty states; 10 Playwright tests
-- Built `n8n/workflows/Norr AI Client Health Query.json` — GET webhook at `/webhook/client-health` queries Neon, applies health logic (red=failures in 7d, yellow=silence, green=healthy), returns JSON; **smoke tested and confirmed working**
-- Built `n8n/workflows/Norr AI Red Alert Scheduler.json` — Cron at 6am + 6pm CT, queries Neon, posts Slack alert when any client is red; **smoke tested and confirmed working**
-- Re-imported Real Estate Instant Lead Response + Open House Follow-Up workflows in n8n with security enhancements (Validate Input node, [DATA] prompt injection delimiters)
+### Cloudflare Access
+- To add a new client: Zero Trust → Access Groups → `clients` → add email — grants access to all `/clients/*` pages automatically
+- `open_house.html` stays at root (public, QR code on door) — Cloudflare Access only covers `/clients/*` and `/internal/*`
+- Session durations: clients group = 7 days, internal group = 1 day
 
-### 2026-05-10
-- Imported Real Estate Research Agent workflow into n8n and smoke tested end to end — confirmed working
-- Created "Gemini API Key" Query Auth credential in n8n (field: `key`)
-- Applied `research_cache` table to Neon production
-- Fixed workflow bugs discovered during smoke test:
-  - Token Check rightValue had `=` prefix causing expression eval failure — fixed to plain string
-  - Log Triggered SQL used `$json.caller` which n8n blocks for security — removed caller from payload
-  - Cache Lookup stops on 0 rows — enabled "Always Output Data" in node settings
-  - Gemini model `gemini-2.0-flash` no longer available to new users — updated to `gemini-2.5-flash`
-  - Gemini tool `google_search_retrieval` not supported in 2.5 — changed to `google_search`
-  - `generationConfig` REST key must be `generation_config` — fixed in Build Gemini Prompt node
-  - `response_mime_type: application/json` incompatible with tool use — removed from generation_config
-- Workflow is published and live at `POST /webhook/research-agent`
-
-### 2026-04-28
-- Built `website/open_house_setup.html` + `n8n/workflows/Real Estate Open House Setup.json` — agent enters name/email/phone/address/MLS description; Claude extracts 3–5 property highlights; QR code generated via qrserver.com and emailed to agent; highlights encoded as `notes` param in the sign-in URL
-- Updated `website/open_house.html` to read `notes` URL param and pass it as `property_notes` in the form payload
-- Updated `Real Estate Open House Follow-Up.json`: threaded `property_notes` through all nodes; updated Build Prompt to include a PROPERTY HIGHLIGHTS section — fixes hallucinated property features
-- **Webhook URL (setup):** `https://norrai.app.n8n.cloud/webhook/open-house-setup`
-- **Re-import required:** Real Estate Open House Follow-Up workflow must be re-imported in n8n to pick up prompt changes
-
----
+### Architecture Decisions
+- Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
+- Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
+- Research Agent caches by address with 7-day TTL — call once per workflow run, not per touch; the cache covers the full cold nurture run
+- Dashboard health logic: red = any failures in last 7 days, yellow = no events in 7 days (silence), green = healthy
 
 ## About the Owner
 
 Egan is a data engineer working primarily with dbt and SQL Server. Comfortable with technical implementation. Norr AI is a side business being built from scratch.
+
+---
+
+## Session Wrap-Up
+
+When the user says **"donezo"** or **"wrap up"**, run the `/session-end` skill — update `SESSION_LOG.md` with what was done this session, extract any new lessons to `## Lessons Learned` above, and commit both files.
+
+Full instructions live in `.claude/commands/session-end.md`.
