@@ -9,8 +9,11 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
-      "id": "c3d4e5f6-0001-4000-8000-000000000001",
+      "position": [
+        0,
+        0
+      ],
+      "id": "bda7a653-667e-48b4-8367-3dede1da2c03",
       "name": "Receive Setup",
       "webhookId": "open-house-setup-webhook-001"
     },
@@ -41,8 +44,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [432, 224],
-      "id": "c3d4e5f6-0002-4000-8000-000000000002",
+      "position": [
+        192,
+        80
+      ],
+      "id": "4efc9494-857b-40c2-884c-8cc247cc2313",
       "name": "Token Check"
     },
     {
@@ -51,8 +57,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [640, 144],
-      "id": "c3d4e5f6-0003-4000-8000-000000000003",
+      "position": [
+        400,
+        0
+      ],
+      "id": "87e4db04-dd63-4921-82f2-9ab529d05e05",
       "name": "Prep Fields"
     },
     {
@@ -71,8 +80,11 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [848, 144],
-      "id": "c3d4e5f6-0004-4000-8000-000000000004",
+      "position": [
+        608,
+        0
+      ],
+      "id": "3045f7bf-1993-480f-9ad8-b10926ddd8df",
       "name": "Build Extraction Prompt"
     },
     {
@@ -101,8 +113,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1056, 144],
-      "id": "c3d4e5f6-0005-4000-8000-000000000005",
+      "position": [
+        816,
+        0
+      ],
+      "id": "0b3cd4b3-bc87-4222-a63c-b722983cca07",
       "name": "Extract Highlights (Claude)",
       "credentials": {
         "anthropicApi": {
@@ -117,8 +132,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1264, 144],
-      "id": "c3d4e5f6-0006-4000-8000-000000000006",
+      "position": [
+        1024,
+        0
+      ],
+      "id": "80e1efe5-5cbc-4973-808a-5ce241e67cb2",
       "name": "Build QR URL"
     },
     {
@@ -126,32 +144,94 @@
         "method": "POST",
         "url": "https://api.sendgrid.com/v3/mail/send",
         "authentication": "genericCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": \"Your open house QR code \\u2014 {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": \"Your open house QR code \\u2014 {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1472, 144],
-      "id": "c3d4e5f6-0007-4000-8000-000000000007",
+      "position": [
+        1232,
+        0
+      ],
+      "id": "e9b9041f-ee7f-4d97-bfbc-9d68d74d46bb",
       "name": "Email QR to Agent",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "SENDGRID_HEADER_AUTH",
-          "name": "SendGrid Header Auth"
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
       }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Receive Setup": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "content-length": "1385",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "152.117.90.20",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f42fd46df73e264-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=1, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "152.117.90.20, 108.162.216.227",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-sqd8x",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "152.117.90.20"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": "yessm",
+            "agent_email": "egachuu@gmail.com",
+            "agent_phone": "5072109774",
+            "street_address": "1231 Kane Ave",
+            "city": "Faribault",
+            "state": "MN",
+            "zip": "55021",
+            "property_address": "1231 Kane Ave, Faribault, MN, 55021",
+            "listing_description": "Step into this delightful home nestled in one of Faribault's most desirable neighborhoods, where thoughtful updates meet incredible value in a package that's perfect for first-time buyers. Built in 2013, this well-maintained gem offers 3 generous bedrooms and 2 full bathrooms, creating comfortable living spaces that feel both cozy and functional. The heart of the home showcases a beautifully remodeled kitchen with modern finishes and thoughtful design, perfect for daily living and casual entertaining. Every detail has been carefully considered to create a space that feels move-in ready from day one. Located in a wonderful neighborhood known for its friendly atmosphere and community spirit, you'll enjoy the perfect blend of small-town charm and convenience. Just minutes from downtown Faribault's growing dining and shopping scene, plus easy access to I-35 for commuting to the Twin Cities. This is more than just a starter home—it's your gateway to homeownership in a community that truly feels like home. An incredible opportunity to own in one of Southern Minnesota's most up-and-coming areas! ",
+            "source_form": "open_house_setup"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/open-house-setup",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
   "connections": {
     "Receive Setup": {
       "main": [
@@ -220,16 +300,22 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "open-house-setup-v1-001",
+  "versionId": "8f673c0a-8d82-43e5-8658-b50f53b80a68",
   "meta": {
-    "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
   },
-  "id": "",
-  "tags": []
+  "id": "7qRcLtblC23cygMD",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }

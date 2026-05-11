@@ -10,10 +10,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        240,
-        144
+        -1440,
+        96
       ],
-      "id": "b2c3d4e5-0001-4000-8000-000000000001",
+      "id": "d5a00d90-7a68-4858-82f9-560d3fdbc106",
       "name": "Receive Sign-In",
       "webhookId": "open-house-signin-webhook-001"
     },
@@ -45,10 +45,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        432,
-        224
+        -1216,
+        96
       ],
-      "id": "b2c3d4e5-0002-4000-8000-000000000002",
+      "id": "cfce3e8f-a9d8-422f-903c-24a306f620aa",
       "name": "Token Check"
     },
     {
@@ -58,25 +58,26 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
-        144
+        -992,
+        96
       ],
-      "id": "b2c3d4e5-0003-4000-8000-000000000003",
+      "id": "b1bc3e0a-049b-4ea8-8b2c-7ec6f6dd0160",
       "name": "Prep Wait Time"
     },
     {
       "parameters": {
         "resume": "specificTime",
-        "resumeAt": "={{ $json.resume_at }}"
+        "dateTime": "={{ $json.resume_at }}"
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        848,
-        144
+        -768,
+        96
       ],
-      "id": "b2c3d4e5-0004-4000-8000-000000000004",
-      "name": "Wait Until 9am CT"
+      "id": "01693bd5-6470-488f-bef2-7d5868ab8f90",
+      "name": "Wait Until 9am CT",
+      "webhookId": "74b13078-183e-448f-ae98-d920873a4441"
     },
     {
       "parameters": {
@@ -95,10 +96,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1056,
-        144
+        -544,
+        96
       ],
-      "id": "b2c3d4e5-0005-4000-8000-000000000005",
+      "id": "1e353274-a719-4e9d-9ab1-8294566a19c2",
       "name": "Build Prompt"
     },
     {
@@ -128,10 +129,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1264,
-        144
+        -320,
+        96
       ],
-      "id": "b2c3d4e5-0006-4000-8000-000000000006",
+      "id": "ee7275e2-0ec2-41e6-adcb-45971bb483cb",
       "name": "Draft Follow-Up (Claude)",
       "credentials": {
         "anthropicApi": {
@@ -147,32 +148,28 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
-        144
+        -96,
+        96
       ],
-      "id": "b2c3d4e5-0007-4000-8000-000000000007",
+      "id": "a3a6c7a9-167a-4bac-afd9-17fc2be411eb",
       "name": "Extract Message"
     },
     {
       "parameters": {
         "from": "+18XXXXXXXXXX",
         "to": "=+1{{ $json.phone.replace(/\\D/g, '') }}",
-        "message": "={{ $json.message }}"
+        "message": "={{ $json.message }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [
-        1680,
-        60
+        128,
+        0
       ],
-      "id": "b2c3d4e5-0008-4000-8000-000000000008",
+      "id": "ddcba60f-b515-494b-861f-f9d4cb1eb0ae",
       "name": "SMS to Attendee",
-      "credentials": {
-        "twilioApi": {
-          "id": "TWILIO_CREDENTIAL_ID",
-          "name": "Twilio account"
-        }
-      }
+      "disabled": true
     },
     {
       "parameters": {
@@ -202,10 +199,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1680,
-        228
+        128,
+        192
       ],
-      "id": "b2c3d4e5-0009-4000-8000-000000000009",
+      "id": "24de69a4-aad0-4057-897f-e7742d102999",
       "name": "Has Email?"
     },
     {
@@ -213,11 +210,14 @@
         "method": "POST",
         "url": "https://api.sendgrid.com/v3/mail/send",
         "authentication": "genericCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -228,20 +228,90 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1888,
-        228
+        352,
+        192
       ],
-      "id": "b2c3d4e5-0010-4000-8000-000000000010",
+      "id": "54060ff1-d704-4c56-9d0a-0db36e0e125c",
       "name": "Email to Attendee",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "SENDGRID_HEADER_AUTH",
-          "name": "SendGrid Header Auth"
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
       }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Receive Sign-In": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Mobile/15E148 Safari/604.1",
+            "content-length": "425",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "72.58.83.86",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f85a795b888a1d9-MSP",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=3, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "72.58.83.86, 104.23.201.38",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-sqd8x",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "72.58.83.86"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "attendee_name": "Isssssaaaboi",
+            "phone": "+1 (507) 210-9774",
+            "email": "egachuu@gmail.com",
+            "brought_you_in": "Curious about neighboring. Are there schools?",
+            "property_address": "1106 Cuylle ct, Faribault, MN, 55021",
+            "property_notes": "big yard, fireplace, garage golf simulator",
+            "agent_name": "Kevin",
+            "agent_email": "egan@norrai.co",
+            "agent_phone": "5072109774",
+            "submitted_at": "2026-05-08T04:17:24.980Z",
+            "source_form": "open_house_web"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/open-house-signin",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Wait Until 9am CT": [
+      {
+        "json": {
+          "resume_at": "2026-05-09T15:00:00.000Z",
+          "attendee_name": "Isssssaaaboi",
+          "phone": "+1 (507) 210-9774",
+          "email": "egachuu@gmail.com",
+          "brought_you_in": "Curious about neighboring. Are there schools?",
+          "property_address": "1106 Cuylle ct, Faribault, MN, 55021",
+          "property_notes": "big yard, fireplace, garage golf simulator",
+          "agent_name": "Kevin",
+          "agent_email": "egan@norrai.co",
+          "agent_phone": "5072109774"
+        }
+      }
+    ]
+  },
   "connections": {
     "Receive Sign-In": {
       "main": [
@@ -337,16 +407,22 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "open-house-followup-v1-001",
+  "versionId": "7b0e6071-fa86-4a9e-b094-81c8fd1d2258",
   "meta": {
-    "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
   },
-  "id": "",
-  "tags": []
+  "id": "M6a0i3AVf8TSS87E",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }

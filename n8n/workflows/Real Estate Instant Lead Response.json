@@ -9,8 +9,11 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
-      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "position": [
+        -1200,
+        48
+      ],
+      "id": "3e71e88a-f6a3-4013-a9ff-5ca0dfc0dd74",
       "name": "Receive Lead",
       "webhookId": "lead-response-webhook-001"
     },
@@ -41,8 +44,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [432, 224],
-      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "position": [
+        -976,
+        48
+      ],
+      "id": "de36911b-f76d-4806-839d-2576e5963868",
       "name": "Token Check"
     },
     {
@@ -51,8 +57,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [536, 144],
-      "id": "a1b2c3d4-00v1-4000-8000-000000000099",
+      "position": [
+        -752,
+        48
+      ],
+      "id": "a508639b-5306-42cf-8b64-9905224c3375",
       "name": "Validate Input"
     },
     {
@@ -107,8 +116,11 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [736, 144],
-      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "position": [
+        -528,
+        48
+      ],
+      "id": "94314142-65d2-4927-b187-d64a4b02278c",
       "name": "Build Prompt"
     },
     {
@@ -137,8 +149,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [944, 144],
-      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "position": [
+        -304,
+        48
+      ],
+      "id": "c4f44831-4d03-44ef-842b-faddc1831b54",
       "name": "Draft Response (Claude)",
       "credentials": {
         "anthropicApi": {
@@ -153,8 +168,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1152, 144],
-      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "position": [
+        -80,
+        48
+      ],
+      "id": "3a17d0c3-3131-4d76-a6e7-7e6938729f45",
       "name": "Extract Message"
     },
     {
@@ -162,11 +180,14 @@
         "method": "POST",
         "url": "https://api.sendgrid.com/v3/mail/send",
         "authentication": "genericCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -176,13 +197,16 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1360, 60],
-      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "position": [
+        144,
+        -48
+      ],
+      "id": "966374af-b9e2-4d8c-96e0-f69a7cc91fd7",
       "name": "Email to Lead",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "SENDGRID_HEADER_AUTH",
-          "name": "SendGrid Header Auth"
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
       }
     },
@@ -198,8 +222,11 @@
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [1360, 228],
-      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "position": [
+        144,
+        144
+      ],
+      "id": "09c8c24d-f5f3-45ad-9f69-dede2b95f1bd",
       "name": "Email Preview to Agent",
       "credentials": {
         "sendGridApi": {
@@ -209,7 +236,68 @@
       }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Receive Lead": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "content-length": "475",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "72.58.83.86",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f856cfb9f7eda16-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=1, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "72.58.83.86, 172.70.179.101",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-sqd8x",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "72.58.83.86"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": " 1 Faker Agent",
+            "agent_email": "eganbonde@gmail.com",
+            "agent_phone": "5072109774",
+            "lead_name": "kize",
+            "email": "eganbonde@gmail.com",
+            "phone": "5072109774",
+            "source": "zillow",
+            "lead_message": "Loveed the house, curious about price and neaerby lakes",
+            "property_address": "123 mapple street",
+            "price_range": "909182",
+            "beds": 3,
+            "baths": 2,
+            "key_details": "house is ready to go, new roof, fenced in yard",
+            "submitted_at": "2026-05-08T03:37:24.334Z",
+            "source_form": "lead_response_web"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/lead-response",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
   "connections": {
     "Receive Lead": {
       "main": [
@@ -283,16 +371,22 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "lead-response-v1-001",
+  "versionId": "7c52e40f-bd7c-405c-94aa-21e81cea68e5",
   "meta": {
-    "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
   },
-  "id": "",
-  "tags": []
+  "id": "aN9vvdXo9k1IKLXq",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }
