@@ -89,7 +89,7 @@
     },
     {
       "parameters": {
-        "jsCode": "let insight_block = '';\ntry {\n  const research = $('Call Research Agent').first().json;\n  if (research && research.status === 'ok' && research.insight_block) {\n    insight_block = research.insight_block;\n  }\n} catch(e) {}\n\nreturn [{ json: { ...$input.first().json, insight_block } }];"
+        "jsCode": "let insight_block = '';\ntry {\n  const research = $('Call Research Agent').first().json;\n  if (research && research.status === 'ok' && research.insight_block) {\n    insight_block = research.insight_block;\n  }\n} catch(e) {}\n\nreturn [{ json: { ...$('Validate Input').first().json, insight_block } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
