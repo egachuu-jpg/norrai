@@ -312,8 +312,13 @@
 
 <script>
   // ─── Config ───────────────────────────────────────────────────────────────
-  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/review-request';
-  const AGENT_KEY   = 'norrai_agent_profile_review';
+  const WEBHOOK_URL     = 'https://norrai.app.n8n.cloud/webhook/review-request';
+  const AGENT_KEY       = 'norrai_agent_profile_review';
+  const AGENT_TOKEN_KEY = 'norrai_agent_token';
+  (function () {
+    const t = new URLSearchParams(window.location.search).get('agent_token');
+    if (t) localStorage.setItem(AGENT_TOKEN_KEY, t);
+  }());
 
   // ─── Agent persistence ────────────────────────────────────────────────────
   const agentBadge = document.getElementById('agent-saved-badge');
@@ -375,6 +380,7 @@
       delay_days:       Number(fd.get('delay_days') || 3),
       submitted_at:     new Date().toISOString(),
       source_form:      'review_request_web',
+      agent_token:      localStorage.getItem(AGENT_TOKEN_KEY) || '',
     };
 
     status.className = 'status';

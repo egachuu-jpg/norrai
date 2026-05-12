@@ -252,7 +252,12 @@
 </div>
 
 <script>
-  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/open-house-setup';
+  const WEBHOOK_URL     = 'https://norrai.app.n8n.cloud/webhook/open-house-setup';
+  const AGENT_TOKEN_KEY = 'norrai_agent_token';
+  (function () {
+    const t = new URLSearchParams(window.location.search).get('agent_token');
+    if (t) localStorage.setItem(AGENT_TOKEN_KEY, t);
+  }());
 
   const form   = document.getElementById('setup-form');
   const btn    = document.getElementById('submit-btn');
@@ -286,6 +291,7 @@
       property_address:    propertyAddress,
       listing_description: fd.get('listing_description') || '',
       source_form:         'open_house_setup',
+      agent_token:         localStorage.getItem(AGENT_TOKEN_KEY) || '',
     };
 
     status.className = 'status';
