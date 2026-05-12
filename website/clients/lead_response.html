@@ -306,8 +306,22 @@
       </div>
       <div class="section-body">
         <div class="field">
-          <label for="property_address">Property address <span class="req">*</span></label>
-          <input type="text" id="property_address" name="property_address" placeholder="123 Maple St, Faribault, MN 55021" required>
+          <label for="property_street">Street address <span class="req">*</span></label>
+          <input type="text" id="property_street" name="property_street" placeholder="123 Maple St" required>
+        </div>
+        <div class="row-3">
+          <div class="field">
+            <label for="property_city">City <span class="req">*</span></label>
+            <input type="text" id="property_city" name="property_city" placeholder="Faribault" required>
+          </div>
+          <div class="field">
+            <label for="property_state">State <span class="req">*</span></label>
+            <input type="text" id="property_state" name="property_state" placeholder="MN" maxlength="2" required>
+          </div>
+          <div class="field">
+            <label for="property_zip">ZIP <span class="req">*</span></label>
+            <input type="text" id="property_zip" name="property_zip" placeholder="55021" maxlength="5" pattern="[0-9]{5}" required>
+          </div>
         </div>
         <div class="row-3">
           <div class="field">
@@ -410,8 +424,16 @@
       source:           fd.get('source')       || '',
       lead_message:     fd.get('lead_message') || '',
       // Property
-      property_address: fd.get('property_address') || '',
-      price_range:      fd.get('price_range')       || '',
+      property_street:  fd.get('property_street') || '',
+      property_city:    fd.get('property_city')   || '',
+      property_state:   fd.get('property_state')  || '',
+      property_zip:     fd.get('property_zip')    || '',
+      property_address: [
+        fd.get('property_street'),
+        fd.get('property_city'),
+        `${fd.get('property_state') || ''} ${fd.get('property_zip') || ''}`.trim(),
+      ].filter(Boolean).join(', '),
+      price_range:      fd.get('price_range')     || '',
       beds:             fd.get('beds')  ? Number(fd.get('beds'))  : null,
       baths:            fd.get('baths') ? Number(fd.get('baths')) : null,
       key_details:      fd.get('key_details') || '',
@@ -443,7 +465,8 @@
 
       // Clear only the lead + property sections; keep agent fields
       ['lead_name','email','phone','source','lead_message',
-       'property_address','price_range','beds','baths','key_details'].forEach(id => {
+       'property_street','property_city','property_state','property_zip',
+       'price_range','beds','baths','key_details'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = el.tagName === 'SELECT' ? el.options[0].value : '';
       });

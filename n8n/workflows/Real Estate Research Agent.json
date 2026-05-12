@@ -54,7 +54,7 @@
     },
     {
       "parameters": {
-        "jsCode": "//const body = $('Receive Request').first().json.body;\nconst body = $input.first().json.body;\n\n// Required fields\nconst required = ['address', 'city', 'state', 'zip'];\nfor (const f of required) {\n  if (!body[f] || !String(body[f]).trim()) throw new Error(`Missing required field: ${f}`);\n}\n\nconst full_address = `${body.address}, ${body.city}, ${body.state} ${body.zip}`;\n\nreturn [{ json: {\n  address:      body.address,\n  city:         body.city,\n  state:        body.state,\n  zip:          body.zip,\n  full_address,\n  price_range:  body.price_range  || '',\n  beds:         body.beds         || null,\n  baths:        body.baths        || null,\n  sqft:         body.sqft         || null,\n  year_built:   body.year_built   || null,\n  caller:       body.caller       || 'unknown',\n  client_id:    body.client_id    || 'e2f9934c-4d28-4bb4-ac90-4284c1123517'\n}}];"
+        "jsCode": "const body = $input.first().json.body;\n\n// Support both separate fields and combined \"street, city, state, zip\" address string\nlet address = (body.address || '').trim();\nlet city    = (body.city    || '').trim();\nlet state   = (body.state   || '').trim();\nlet zip     = (body.zip     || '').trim();\n\nif (address && (!city || !state || !zip)) {\n  const parts = address.split(',').map(p => p.trim());\n  if (parts.length >= 4) {\n    address = parts[0];\n    city    = parts[1];\n    state   = parts[2];\n    zip     = parts[3];\n  } else if (parts.length === 3) {\n    // \"street, city, state zip\"\n    address = parts[0];\n    city    = parts[1];\n    const stateZip = parts[2].split(/\\s+/);\n    state   = stateZip[0] || '';\n    zip     = stateZip[1] || '';\n  }\n}\n\n// Required fields\nconst required = { address, city, state, zip };\nfor (const [f, v] of Object.entries(required)) {\n  if (!v) throw new Error(`Missing required field: ${f}`);\n}\n\nconst full_address = `${address}, ${city}, ${state} ${zip}`;\n\nreturn [{ json: {\n  address,\n  city,\n  state,\n  zip,\n  full_address,\n  price_range:  body.price_range  || '',\n  beds:         body.beds         || null,\n  baths:        body.baths        || null,\n  sqft:         body.sqft         || null,\n  year_built:   body.year_built   || null,\n  caller:       body.caller       || 'unknown',\n  client_id:    body.client_id    || 'e2f9934c-4d28-4bb4-ac90-4284c1123517'\n}}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -159,6 +159,7 @@
     },
     {
       "parameters": {
+        "respondWith": "firstIncomingItem",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -254,7 +255,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const geminiResponse = $input.first().json;\nconst input = $('Build Gemini Prompt').first().json;\n\n// Parse Gemini response\nlet research = {};\ntry {\n  const candidates = geminiResponse.candidates;\n  if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {\n    const text = candidates[0].content.parts[0].text;\n    research = JSON.parse(text);\n  }\n} catch(e) {\n  research = { parse_error: String(e.message) };\n}\n\n// Compliance filter — strip any field containing blocked keywords\nconst BLOCKED = ['demographic', 'crime', 'race', 'racial', 'ethnicity', 'religion', 'national_origin', 'segregat'];\nfunction stripBlocked(obj) {\n  if (typeof obj !== 'object' || obj === null) return obj;\n  if (Array.isArray(obj)) return obj.map(stripBlocked);\n  const clean = {};\n  for (const [k, v] of Object.entries(obj)) {\n    if (BLOCKED.some(b => k.toLowerCase().includes(b))) continue;\n    if (typeof v === 'string' && BLOCKED.some(b => v.toLowerCase().includes(b))) continue;\n    clean[k] = stripBlocked(v);\n  }\n  return clean;\n}\n\nconst cleaned = stripBlocked(research);\n\nreturn [{ json: { ...input, research: cleaned } }];"
+        "jsCode": "const geminiResponse = $input.first().json;\nconst input = $('Build Gemini Prompt').first().json;\n\n// Parse Gemini response\nlet research = {};\ntry {\n  const candidates = geminiResponse.candidates;\n  if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {\n    let text = candidates[0].content.parts[0].text;\n    // Strip markdown code fences if Gemini wrapped the JSON\n    text = text.replace(/^```(?:json)?\\n?/, '').replace(/\\n?```$/, '').trim();\n    research = JSON.parse(text);\n  }\n} catch(e) {\n  research = { parse_error: String(e.message) };\n}\n\n// Compliance filter — strip any field containing blocked keywords\nconst BLOCKED = ['demographic', 'crime', 'race', 'racial', 'ethnicity', 'religion', 'national_origin', 'segregat'];\nfunction stripBlocked(obj) {\n  if (typeof obj !== 'object' || obj === null) return obj;\n  if (Array.isArray(obj)) return obj.map(stripBlocked);\n  const clean = {};\n  for (const [k, v] of Object.entries(obj)) {\n    if (BLOCKED.some(b => k.toLowerCase().includes(b))) continue;\n    if (typeof v === 'string' && BLOCKED.some(b => v.toLowerCase().includes(b))) continue;\n    clean[k] = stripBlocked(v);\n  }\n  return clean;\n}\n\nconst cleaned = stripBlocked(research);\n\nreturn [{ json: { ...input, research: cleaned } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -306,7 +307,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const claudeResponse = $input.first().json;\nconst prev = $('Parse + Compliance Filter').first().json;\nconst research = prev.research || {};\n\n// Extract insight_block from Claude JSON response\nlet insight_block = '';\ntry {\n  const parsed = JSON.parse(claudeResponse.content[0].text.trim());\n  insight_block = parsed.insight_block || '';\n} catch(e) {\n  // Claude returned plain text instead of JSON — use as-is\n  insight_block = (claudeResponse.content[0].text || '').trim();\n}\n\nconst hasComps = Array.isArray(research.recent_comps) && research.recent_comps.length > 0;\n\nconst output = {\n  status: 'ok',\n  address_verified: prev.address_verified || false,\n  walkability:      research.walkability      || null,\n  schools:          research.schools          || [],\n  market:           research.market           || null,\n  recent_comps:     research.recent_comps     || [],\n  data_confidence:  research.data_confidence  || { market: 'low', comps: 'low', schools: 'low' },\n  insight_block,\n  comps_disclaimer: hasComps\n    ? 'Comparable sales sourced from publicly available listings. For a complete market analysis, see your agent\\'s formal CMA.'\n    : undefined\n};\n\n// Remove undefined keys so the response JSON is clean\nObject.keys(output).forEach(k => { if (output[k] === undefined) delete output[k]; });\n\nreturn [{ json: output }];"
+        "jsCode": "const claudeResponse = $input.first().json;\nconst prev = $('Parse + Compliance Filter').first().json;\nconst research = prev.research || {};\n\n// Extract insight_block from Claude JSON response\nlet insight_block = '';\ntry {\n  // Strip markdown code fences if Claude wrapped the JSON\n  let text = claudeResponse.content[0].text.trim().replace(/^```(?:json)?\\n?/, '').replace(/\\n?```$/, '').trim();\n  const parsed = JSON.parse(text);\n  insight_block = parsed.insight_block || '';\n} catch(e) {\n  // Claude returned plain text — strip any stray fences and use as-is\n  insight_block = (claudeResponse.content[0].text || '').trim().replace(/^```(?:json)?\\n?/, '').replace(/\\n?```$/, '').trim();\n}\n\nconst hasComps = Array.isArray(research.recent_comps) && research.recent_comps.length > 0;\n\nconst output = {\n  status: 'ok',\n  address_verified: prev.address_verified || false,\n  walkability:      research.walkability      || null,\n  schools:          research.schools          || [],\n  market:           research.market           || null,\n  recent_comps:     research.recent_comps     || [],\n  data_confidence:  research.data_confidence  || { market: 'low', comps: 'low', schools: 'low' },\n  insight_block,\n  comps_disclaimer: hasComps\n    ? 'Comparable sales sourced from publicly available listings. For a complete market analysis, see your agent\\'s formal CMA.'\n    : undefined\n};\n\n// Remove undefined keys so the response JSON is clean\nObject.keys(output).forEach(k => { if (output[k] === undefined) delete output[k]; });\n\nreturn [{ json: output }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -363,6 +364,8 @@
     },
     {
       "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($('Build Final Output').first().json) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -373,46 +376,6 @@
       ],
       "id": "f63abd2c-96c4-4935-8e6e-dedca1631cc6",
       "name": "Respond to Webhook"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpQueryAuth",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "contents",
-              "value": "={{ $json.geminiBody.contents }}"
-            },
-            {
-              "name": "tools",
-              "value": "={{ $json.geminiBody.tools }}"
-            },
-            {
-              "name": "generation_config",
-              "value": "={{ $json.geminiBody.generation_config }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        832,
-        432
-      ],
-      "id": "071b2db7-797c-4783-8e37-72598566dd29",
-      "name": "Gemini Research1",
-      "credentials": {
-        "httpQueryAuth": {
-          "id": "6udcvJp0fcscvxSL",
-          "name": "Gemini API Key"
-        }
-      }
     }
   ],
   "pinData": {
