@@ -278,7 +278,7 @@ font-mono:    'JetBrains Mono'
 ## Testing
 
 **Test stack:** Playwright (`npm test`)
-**260 tests across 11 spec files — all must pass before pushing.**
+**276 tests across 11 spec files — all must pass before pushing.**
 
 | Spec file | Page covered |
 |---|---|
@@ -428,6 +428,10 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - When `continueOnFail: true` is set on an HTTP Request node, `$input.first().json` in the downstream Code node is the n8n error object on failure — always use `$('NodeName').first().json` for a stable upstream named ref to preserve payload data regardless of HTTP result
 - `respondToWebhook` node with empty `options: {}` returns `{"success": true}` — always set `respondWith: "firstIncomingItem"` (for passthrough) or `"json"` with an explicit `responseBody` expression
 - After removing a node from a workflow JSON array, check the previous node for a trailing comma — JSON is invalid with it and n8n will refuse to import
+- For confirm/accept workflows triggered by link clicks (GET requests), read the token from `$json.query.token` (query param), not from a request header
+- Validate UUIDs with regex before using them in SQL — untrusted URL params may be malformed or injection attempts; use `SELECT null::uuid WHERE false` as a safe no-op fallback
+- Idempotency in confirm workflows: check `IS NULL` on the timestamp column before updating to prevent double-enrollment on repeated link clicks
+- Parallel fire-and-forget in n8n: multiple downstream nodes can fan out from the same output — add them both to the same `connections["Source Node"]["main"][0]` array in the JSON
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
@@ -463,11 +467,15 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `open_house.html` stays at root (public, QR code on door) — Cloudflare Access only covers `/clients/*` and `/internal/*`
 - Session durations: clients group = 7 days, internal group = 1 day
 
+### Playwright / Testing
+- `npx serve` strips `.html` extension AND drops query params in clean-URL redirects — always navigate to the clean path (no `.html`) in Playwright tests when query params are needed
+
 ### Architecture Decisions
 - Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
 - Research Agent caches by address with 7-day TTL — call once per workflow run, not per touch; the cache covers the full cold nurture run
 - Dashboard health logic: red = any failures in last 7 days, yellow = no events in 7 days (silence), green = healthy
+- Per-client personalized URLs use `clients.token` (uuid) — no separate `agents` table needed at solo-agent-per-client scale
 
 ## About the Owner
 
