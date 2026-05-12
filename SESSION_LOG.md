@@ -109,3 +109,16 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Created `n8n/workflows/Real Estate Open House Follow-Up with Research.json` — research called after overnight wait (post-Prep Wait Time); no price_range/beds/baths (not on sign-in form)
 - Fixed critical bug in Enrich node: initial version used `$input.first().json` as spread source — when upstream HTTP Request fails with `continueOnFail: true`, n8n passes an error object as the item, which would wipe all lead data; fixed to use stable named upstream node ref (`$('Validate Input').first().json`, etc.)
 - Replaced Node.js inline JSON validation in plan steps with `jq empty` — the former triggered Vercel hook validation errors in the superpowers plugin environment
+
+### 2026-05-11 (continued)
+- Fixed "Missing required field: city" error in Research Agent — Prep Input node updated to parse comma-separated combined address strings into separate address/city/state/zip fields
+- Fixed Research Agent returning `{"success": true}` instead of actual data — both `respondToWebhook` nodes had empty `options: {}`; fixed `Respond Cached` to `respondWith: "firstIncomingItem"` and `Respond to Webhook` to `respondWith: "json"` referencing Build Final Output
+- Fixed malformed `insight_block` — Gemini and Claude Haiku both returned markdown-fenced JSON (` ```json{...}``` `); added fence-stripping in Parse + Compliance Filter and Build Final Output before `JSON.parse()`
+- Removed stray "Gemini Research1" duplicate node from Research Agent workflow; fixed trailing comma left after removal
+- Fixed empty `insight_block` in Instant Lead Response — root cause was structured school/walkability/market data never reaching the prompt; added `research_detail` extraction in Enrich with Research (formatted text block) and updated Build Prompt to use it
+- Split `property_address` single field into 4 separate fields (`property_street`, `property_city`, `property_state`, `property_zip`) in `lead_response.html` and `nurture_enroll.html` — eliminates address parsing ambiguity entirely
+- Updated all 3 "with Research" workflows (Instant Lead Response, 7-Touch Cold Nurture, Open House Follow-Up) to pass separate address fields to Research Agent and extract `research_detail`
+- Updated T1/T2/T3 prompts in all 3 workflows: `MARKET CONTEXT` → `RESEARCH DATA` using structured `research_detail`; updated "don't invent" instruction to "use research data for schools/walkability/market; defer only for property-specific unknowns"
+- Updated Playwright tests: `lead_response.spec.js` and `nurture_enroll.spec.js` updated for 4-field address split; all 260 tests passing
+- Created `n8n/workflows/Real Estate 7-Touch Cold Nurture Email Only.json` — demo variant, all 6 touches via SendGrid; T2/T4/T6 prompts updated to SUBJECT/BODY email format; no Twilio nodes; webhook: `nurture-enroll-email-only`
+- Added todo: optional property details field in `nurture_enroll.html` (agent pastes MLS description/notes → `property_notes` → injected into T1–T6 prompts)

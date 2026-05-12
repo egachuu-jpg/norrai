@@ -348,6 +348,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [x] Test and promote real estate workflows to production — open house setup + follow-up confirmed working
 - [ ] Re-import Real Estate Open House Follow-Up workflow in n8n (prompt updated to use property highlights, fix hallucination)
 - [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
+- [ ] Add optional property details field to nurture_enroll.html — agent pastes MLS description, highlights, or notes; field passed as `property_notes` in payload; inject into T1–T6 prompts so Claude can reference specific property features throughout the sequence rather than working from address/price/beds alone
 - [x] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
 - [x] Set up internal monitoring dashboard (red/green per client status) — built 2026-05-08: dashboard.html + Health Query webhook + Red Alert Scheduler (6am/6pm CT Slack)
 - [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
@@ -423,11 +424,14 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
 - Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
 - When `continueOnFail: true` is set on an HTTP Request node, `$input.first().json` in the downstream Code node is the n8n error object on failure — always use `$('NodeName').first().json` for a stable upstream named ref to preserve payload data regardless of HTTP result
+- `respondToWebhook` node with empty `options: {}` returns `{"success": true}` — always set `respondWith: "firstIncomingItem"` (for passthrough) or `"json"` with an explicit `responseBody` expression
+- After removing a node from a workflow JSON array, check the previous node for a trailing comma — JSON is invalid with it and n8n will refuse to import
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
 - When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
 - "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
+- Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
 
 ### SendGrid
 - HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`
@@ -441,8 +445,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - REST generation config key is `generation_config` (snake_case), not `generationConfig` (JS SDK style)
 - `response_mime_type: application/json` is incompatible with tool use — remove it from `generation_config` when using `google_search`
 - n8n credential for Gemini: Query Auth type, field name `key`, display name "Gemini API Key"
-
-### Neon / Postgres
+- Gemini (and Claude) may return markdown-fenced JSON (triple-backtick json blocks) even when instructed not to — always strip fences before JSON.parse()
 - Never commit `.env` — `DATABASE_URL` (pooled connection string) lives there only
 - `appointments` table: schema is correct, but don't build calendar scraping/normalization until a real client requires it
 
@@ -450,6 +453,8 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Wrap all user-supplied fields in Claude prompts with `[DATA][/DATA]` delimiters to prevent prompt injection (lead_name, lead_message, agent_notes, etc.)
 - Cold nurture and lead response prompts must explicitly say "do not invent school names, market statistics, or sold prices" until the research agent is wired in — Claude will hallucinate these without the instruction
 - Property highlights must be extracted during Open House Setup (when the MLS description is available) and passed as a URL param — the Follow-Up workflow fires the next morning with no access to the original listing copy
+- Pass structured research data as a formatted text block (`research_detail`) not just the `insight_block` summary — Claude needs school names/ratings/distances and market numbers to answer specific lead questions; the 2–3 sentence summary is too thin
+- When splitting a combined address string is required, 4 separate form fields is more reliable than parsing — comma placement is not enforced by users
 
 ### Cloudflare Access
 - To add a new client: Zero Trust → Access Groups → `clients` → add email — grants access to all `/clients/*` pages automatically
