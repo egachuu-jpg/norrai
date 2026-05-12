@@ -158,6 +158,8 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Buyer Briefing Generator | `buyer_briefing` |
 | Price Sanity Checker | `price_sanity_checker` |
 | Lead Scoring at Intake | `lead_scoring` |
+| Nurture Prompt Scheduler | `nurture_prompt_scheduler` |
+| Nurture Prompt Confirm | `nurture_prompt_confirm` |
 
 **All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.**
 
