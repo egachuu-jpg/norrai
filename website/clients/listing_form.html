@@ -471,8 +471,13 @@ This is where the magic is. The more examples you give, the more the output soun
 
 <script>
   // ─── Config ───────────────────────────────────────────────────────────────
-  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/listing-description';
-  const PROFILE_KEY = 'norrai_agent_profile';
+  const WEBHOOK_URL     = 'https://norrai.app.n8n.cloud/webhook/listing-description';
+  const PROFILE_KEY     = 'norrai_agent_profile';
+  const AGENT_TOKEN_KEY = 'norrai_agent_token';
+  (function () {
+    const t = new URLSearchParams(window.location.search).get('agent_token');
+    if (t) localStorage.setItem(AGENT_TOKEN_KEY, t);
+  }());
 
   // ─── Agent profile persistence ────────────────────────────────────────────
   const voiceBadge = document.getElementById('voice-saved-badge');
@@ -572,7 +577,8 @@ This is where the magic is. The more examples you give, the more the output soun
 
     // Metadata
     payload.submitted_at = new Date().toISOString();
-    payload.source = 'listing_form_web';
+    payload.source       = 'listing_form_web';
+    payload.agent_token  = localStorage.getItem(AGENT_TOKEN_KEY) || '';
 
     // UI state
     status.className = 'status';

@@ -32,6 +32,7 @@ CREATE TABLE clients (
   primary_contact_phone text,
   website               text,
   notes                 text,
+  token                 uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at            timestamptz NOT NULL DEFAULT now(),
   updated_at            timestamptz NOT NULL DEFAULT now()
 );
