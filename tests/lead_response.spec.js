@@ -13,7 +13,10 @@ async function fillRequired(page) {
   await page.fill('#email', 'sarah@gmail.com');
   await page.fill('#phone', '5075551234');
   await page.fill('#lead_message', 'I saw the listing on Zillow and I am interested. Is it still available?');
-  await page.fill('#property_address', '123 Maple St, Faribault, MN 55021');
+  await page.fill('#property_street', '123 Maple St');
+  await page.fill('#property_city', 'Faribault');
+  await page.fill('#property_state', 'MN');
+  await page.fill('#property_zip', '55021');
 }
 
 // ─── 1. Required field validation ─────────────────────────────────────────────
@@ -26,7 +29,10 @@ test.describe('Required field validation', () => {
     { id: 'email',             fill: 'sarah@gmail.com' },
     { id: 'phone',             fill: '5075551234' },
     { id: 'lead_message',      fill: 'Interested in your listing.' },
-    { id: 'property_address',  fill: '123 Maple St, Faribault, MN 55021' },
+    { id: 'property_street',   fill: '123 Maple St' },
+    { id: 'property_city',     fill: 'Faribault' },
+    { id: 'property_state',    fill: 'MN' },
+    { id: 'property_zip',      fill: '55021' },
   ];
 
   for (const field of requiredFields) {
@@ -75,6 +81,10 @@ test.describe('Payload shape', () => {
     expect(body.lead_name).toBe('Sarah Johnson');
     expect(body.email).toBe('sarah@gmail.com');
     expect(body.phone).toBe('5075551234');
+    expect(body.property_street).toBe('123 Maple St');
+    expect(body.property_city).toBe('Faribault');
+    expect(body.property_state).toBe('MN');
+    expect(body.property_zip).toBe('55021');
     expect(body.property_address).toBe('123 Maple St, Faribault, MN 55021');
     expect(body.source_form).toBe('lead_response_web');
   });
@@ -216,7 +226,8 @@ test.describe('Agent persistence', () => {
 
     await expect(page.locator('#lead_name')).toHaveValue('');
     await expect(page.locator('#phone')).toHaveValue('');
-    await expect(page.locator('#property_address')).toHaveValue('');
+    await expect(page.locator('#property_street')).toHaveValue('');
+    await expect(page.locator('#property_city')).toHaveValue('');
     await expect(page.locator('#agent_name')).toHaveValue('Jane Smith');
     await expect(page.locator('#agent_email')).toHaveValue('jane@brokerage.com');
   });

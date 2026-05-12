@@ -60,7 +60,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body;\n\nreturn [{\n  json: {\n    lead_name:        body.lead_name        || '',\n    phone:            body.phone            || '',\n    email:            body.email            || '',\n    source:           body.source           || '',\n    lead_message:     body.lead_message     || '',\n    property_address: body.property_address || '',\n    price_range:      body.price_range      || '',\n    beds:             body.beds             || '',\n    baths:            body.baths            || '',\n    agent_name:       body.agent_name       || '',\n    agent_email:      body.agent_email      || '',\n    agent_phone:      body.agent_phone      || '',\n    has_email:        (body.email || '').trim().length > 0,\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body;\n\nconst property_address = [\n  body.property_street,\n  body.property_city,\n  `${body.property_state || ''} ${body.property_zip || ''}`.trim(),\n].filter(Boolean).join(', ') || body.property_address || '';\n\nreturn [{\n  json: {\n    lead_name:        body.lead_name        || '',\n    phone:            body.phone            || '',\n    email:            body.email            || '',\n    source:           body.source           || '',\n    lead_message:     body.lead_message     || '',\n    property_street:  body.property_street  || '',\n    property_city:    body.property_city    || '',\n    property_state:   body.property_state   || '',\n    property_zip:     body.property_zip     || '',\n    property_address,\n    price_range:      body.price_range      || '',\n    beds:             body.beds             || '',\n    baths:            body.baths            || '',\n    agent_name:       body.agent_name       || '',\n    agent_email:      body.agent_email      || '',\n    agent_phone:      body.agent_phone      || '',\n    has_email:        (body.email || '').trim().length > 0,\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -81,7 +81,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"address\": \"{{ $json.property_address }}\",\n  \"price_range\": \"{{ $json.price_range }}\",\n  \"beds\": \"{{ $json.beds }}\",\n  \"baths\": \"{{ $json.baths }}\",\n  \"caller\": \"cold_nurture\"\n}",
+        "jsonBody": "={\n  \"address\": \"{{ $json.property_street }}\",\n  \"city\": \"{{ $json.property_city }}\",\n  \"state\": \"{{ $json.property_state }}\",\n  \"zip\": \"{{ $json.property_zip }}\",\n  \"price_range\": \"{{ $json.price_range }}\",\n  \"beds\": \"{{ $json.beds }}\",\n  \"baths\": \"{{ $json.baths }}\",\n  \"caller\": \"cold_nurture\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
