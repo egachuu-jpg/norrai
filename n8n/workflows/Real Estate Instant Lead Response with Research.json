@@ -268,6 +268,56 @@
           "name": "SendGrid account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($('Receive Lead').first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-544, 460],
+      "id": "ilrr-neon-001-4000-8000-000000000001",
+      "name": "Build Client Query",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.client_query }}",
+        "options": { "alwaysOutputData": true }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-320, 460],
+      "id": "ilrr-neon-002-4000-8000-000000000002",
+      "name": "Find Client",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const client_id = ($input.first().json.id || null);\nif (!client_id) return [{ json: { lead_query: 'SELECT 1' } }];\nconst body = $('Receive Lead').first().json.body;\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\nconst meta = JSON.stringify({ property_address: body.property_address || null, price_range: body.price_range || null, beds: body.beds || null }).replace(/'/g, \"''\");\nreturn [{ json: { lead_query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, metadata) VALUES ('${client_id}'::uuid, '${esc(body.lead_name)}', '${esc(body.email)}', '${esc(body.phone)}', '${esc(body.source)}', '${esc(body.lead_message)}', 'new', '${meta}'::jsonb)` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-96, 460],
+      "id": "ilrr-neon-003-4000-8000-000000000003",
+      "name": "Build Lead Insert",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.lead_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [128, 460],
+      "id": "ilrr-neon-004-4000-8000-000000000004",
+      "name": "Insert Lead",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
     }
   ],
   "pinData": {
@@ -362,14 +412,14 @@
     "Validate Input": {
       "main": [
         [
-          {
-            "node": "Call Research Agent",
-            "type": "main",
-            "index": 0
-          }
+          { "node": "Call Research Agent", "type": "main", "index": 0 },
+          { "node": "Build Client Query",  "type": "main", "index": 0 }
         ]
       ]
     },
+    "Build Client Query": { "main": [[{ "node": "Find Client",       "type": "main", "index": 0 }]] },
+    "Find Client":         { "main": [[{ "node": "Build Lead Insert", "type": "main", "index": 0 }]] },
+    "Build Lead Insert":   { "main": [[{ "node": "Insert Lead",       "type": "main", "index": 0 }]] },
     "Call Research Agent": {
       "main": [
         [
