@@ -32,6 +32,7 @@ CREATE TABLE clients (
   primary_contact_phone text,
   website               text,
   notes                 text,
+  token                 uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at            timestamptz NOT NULL DEFAULT now(),
   updated_at            timestamptz NOT NULL DEFAULT now()
 );
@@ -89,10 +90,11 @@ CREATE TABLE leads (
   phone        text,
   source       text,                     -- zillow | website | referral | form | phone | etc.
   lead_message text,
-  status       text NOT NULL DEFAULT 'new', -- new | contacted | nurturing | converted | dead
-  metadata     jsonb,                    -- vertical-specific fields (property info, policy type, etc.)
-  created_at   timestamptz NOT NULL DEFAULT now(),
-  updated_at   timestamptz NOT NULL DEFAULT now()
+  status              text NOT NULL DEFAULT 'new', -- new | contacted | nurturing | converted | dead
+  metadata            jsonb,                    -- vertical-specific fields (property info, policy type, etc.)
+  nurture_enrolled_at timestamptz,              -- set when lead enters cold nurture sequence
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at          timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TRIGGER leads_updated_at

@@ -361,8 +361,13 @@
 
 <script>
   // ─── Config ───────────────────────────────────────────────────────────────
-  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/lead-response';
-  const AGENT_KEY   = 'norrai_agent_profile_lead';
+  const WEBHOOK_URL     = 'https://norrai.app.n8n.cloud/webhook/lead-response';
+  const AGENT_KEY       = 'norrai_agent_profile_lead';
+  const AGENT_TOKEN_KEY = 'norrai_agent_token';
+  (function () {
+    const t = new URLSearchParams(window.location.search).get('agent_token');
+    if (t) localStorage.setItem(AGENT_TOKEN_KEY, t);
+  }());
 
   // ─── Agent persistence ────────────────────────────────────────────────────
   const agentBadge = document.getElementById('agent-saved-badge');
@@ -440,6 +445,7 @@
       // Meta
       submitted_at:     new Date().toISOString(),
       source_form:      'lead_response_web',
+      agent_token:      localStorage.getItem(AGENT_TOKEN_KEY) || '',
     };
 
     status.className = 'status';
