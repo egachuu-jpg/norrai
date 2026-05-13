@@ -122,3 +122,15 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Updated Playwright tests: `lead_response.spec.js` and `nurture_enroll.spec.js` updated for 4-field address split; all 260 tests passing
 - Created `n8n/workflows/Real Estate 7-Touch Cold Nurture Email Only.json` — demo variant, all 6 touches via SendGrid; T2/T4/T6 prompts updated to SUBJECT/BODY email format; no Twilio nodes; webhook: `nurture-enroll-email-only`
 - Added todo: optional property details field in `nurture_enroll.html` (agent pastes MLS description/notes → `property_notes` → injected into T1–T6 prompts)
+
+### 2026-05-12
+- Brainstormed and designed nurture prompt feature — daily scheduler emails agent a digest of enrolled-but-unresponded leads; one-click confirm URL marks lead as enrolled + fires nurture sequence
+- Built `n8n/workflows/Nurture Prompt Confirm.json` — GET webhook at `/webhook/nurture-prompt-confirm`; token read from `$json.query.token` (query param, not header — it's a link click); UUID regex validation before any DB query; idempotency check (`nurture_enrolled_at IS NULL`); fires `nurture-enroll-slack` webhook; updates `leads.nurture_enrolled_at`; returns HTML success/already-enrolled/error page
+- Built `n8n/workflows/Nurture Prompt Scheduler.json` — cron at 13:00 UTC (8am CDT); queries leads without `nurture_enrolled_at`; groups by agent; sends daily digest email via SendGrid with one-click enroll buttons; logs to `workflow_events` (norrai_internal)
+- Added `nurture_enrolled_at timestamptz` to `leads` table in `db/schema.sql`; added `token uuid NOT NULL DEFAULT gen_random_uuid()` to `clients` table
+- Production migrations: `ALTER TABLE leads ADD COLUMN nurture_enrolled_at timestamptz;` and `ALTER TABLE clients ADD COLUMN token uuid NOT NULL DEFAULT gen_random_uuid();`
+- Designed per-client personalized URL token system — decided against a separate `agents` table; `clients.token` (uuid) is sufficient for solo-agent-per-client model
+- Updated 5 agent-facing forms to read `?agent_token=` from URL → localStorage `norrai_agent_token` → payload body field: `listing_form.html`, `lead_response.html`, `open_house_setup.html`, `nurture_enroll.html`, `review_request.html`
+- Added `Agent token` Playwright test blocks (2 tests each) to 5 spec files — discovered `npx serve` strips `.html` and drops query params in clean-URL redirects; fixed by navigating to clean paths (no `.html` extension) — 276 tests passing
+- Added parallel fire-and-forget leads table INSERT to both `Real Estate Instant Lead Response.json` and `Real Estate Instant Lead Response with Research.json` — gated on `agent_token` → `clients.token` lookup; silently skips if no valid token; all 4 new nodes use `continueOnFail: true`
+- Deferred n8n Token Check node updates to per-client DB lookup — Token Check still uses hardcoded shared secret for now

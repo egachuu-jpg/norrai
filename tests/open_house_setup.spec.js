@@ -183,3 +183,27 @@ test.describe('Success and error banners', () => {
     await expect(page.locator('#status.error')).toBeVisible({ timeout: 5000 });
   });
 });
+
+// ─── Agent token ──────────────────────────────────────────────────────────────
+
+test.describe('Agent token', () => {
+  const FORM_URL_CLEAN = '/clients/open_house_setup?agent_token=test-token-abc123';
+
+  test('reads agent_token from URL and persists to localStorage', async ({ page }) => {
+    await page.goto(FORM_URL_CLEAN);
+    const stored = await page.evaluate(() => localStorage.getItem('norrai_agent_token'));
+    expect(stored).toBe('test-token-abc123');
+  });
+
+  test('includes agent_token in payload', async ({ page }) => {
+    await mockWebhook(page);
+    await page.goto(FORM_URL_CLEAN);
+    await fillRequired(page);
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.agent_token).toBe('test-token-abc123');
+  });
+});
