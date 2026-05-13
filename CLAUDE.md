@@ -429,6 +429,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
 - When `continueOnFail: true` is set on an HTTP Request node, `$input.first().json` in the downstream Code node is the n8n error object on failure — always use `$('NodeName').first().json` for a stable upstream named ref to preserve payload data regardless of HTTP result
 - `respondToWebhook` node with empty `options: {}` returns `{"success": true}` — always set `respondWith: "firstIncomingItem"` (for passthrough) or `"json"` with an explicit `responseBody` expression
+- `toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })` includes the year in Node.js even if you omit the `year` option — use the `toLocaleString` + split pattern instead: `new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', hour12: false }).split(', ')[0]` then split on `/` for month/day
 - After removing a node from a workflow JSON array, check the previous node for a trailing comma — JSON is invalid with it and n8n will refuse to import
 - For confirm/accept workflows triggered by link clicks (GET requests), read the token from `$json.query.token` (query param), not from a request header
 - Validate UUIDs with regex before using them in SQL — untrusted URL params may be malformed or injection attempts; use `SELECT null::uuid WHERE false` as a safe no-op fallback
