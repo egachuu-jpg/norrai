@@ -70,6 +70,22 @@
     },
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET nurture_enrolled_at = now(), updated_at = now() WHERE email = '{{ $json.email }}' AND nurture_enrolled_at IS NULL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [840, 300],
+      "id": "eo000001-0004-4000-8000-000000000099",
+      "name": "Mark Nurture Enrolled",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+      }
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://norrai.app.n8n.cloud/webhook/research-agent",
         "sendHeaders": true,
@@ -408,6 +424,9 @@
       "main": [[ { "node": "Prep Fields", "type": "main", "index": 0 } ]]
     },
     "Prep Fields": {
+      "main": [[ { "node": "Mark Nurture Enrolled", "type": "main", "index": 0 } ]]
+    },
+    "Mark Nurture Enrolled": {
       "main": [[ { "node": "Call Research Agent", "type": "main", "index": 0 } ]]
     },
     "Call Research Agent": {
