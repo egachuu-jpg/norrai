@@ -134,3 +134,12 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Added `Agent token` Playwright test blocks (2 tests each) to 5 spec files — discovered `npx serve` strips `.html` and drops query params in clean-URL redirects; fixed by navigating to clean paths (no `.html` extension) — 276 tests passing
 - Added parallel fire-and-forget leads table INSERT to both `Real Estate Instant Lead Response.json` and `Real Estate Instant Lead Response with Research.json` — gated on `agent_token` → `clients.token` lookup; silently skips if no valid token; all 4 new nodes use `continueOnFail: true`
 - Deferred n8n Token Check node updates to per-client DB lookup — Token Check still uses hardcoded shared secret for now
+
+### 2026-05-12 (bday-anniversary-message worktree)
+- Brainstormed and designed client birthday & anniversary outreach workflow (Growth tier)
+- Design decisions: Google Sheets as agent-owned data source, auto-send (no approval step), email primary / SMS fallback / skip-and-log if neither present, minimal personalization (name + occasion + address only, no research agent)
+- Architecture: single daily cron (7am CT), one Claude Haiku call per match, SendGrid for email (click tracking off), Twilio for SMS fallback (160-char truncated), Neon `workflow_events` logging
+- Sheet columns finalized: `name`, `email`, `phone`, `birthday` (MM-DD), `closing_date` (YYYY-MM-DD), `sell_date` (YYYY-MM-DD), `property_address`, `agent_name`, `agent_email`
+- Fixed two bugs in spec during self-review: `toLocaleDateString` with month/day options includes year — replaced with `toLocaleString` + split pattern; `.replace('-', '-')` no-op on closing_date removed
+- Wrote design spec: `docs/superpowers/specs/2026-05-12-bday-anniversary-outreach-design.md`
+- Added `bday_anniversary_outreach` to workflow name registry (pending CLAUDE.md update)
