@@ -372,6 +372,8 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
 - [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
 
+- [ ] **Build client birthday & anniversary outreach workflow** — n8n scheduled job (daily) queries `leads` table for clients whose birthday or home buying/selling anniversary falls today, Claude drafts a personalized SMS or email, sends via Twilio/SendGrid; store `birthday` and `transaction_anniversary` date fields in `leads.metadata`; Growth tier feature — positions agents as top-of-mind without manual effort
+
 ### First Client Targets
 - Insurance broker friend — Salesforce user, discovery call framework ready
 - Dental and real estate — easiest to template and repeat
