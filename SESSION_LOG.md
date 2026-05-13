@@ -134,3 +134,10 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Added `Agent token` Playwright test blocks (2 tests each) to 5 spec files — discovered `npx serve` strips `.html` and drops query params in clean-URL redirects; fixed by navigating to clean paths (no `.html` extension) — 276 tests passing
 - Added parallel fire-and-forget leads table INSERT to both `Real Estate Instant Lead Response.json` and `Real Estate Instant Lead Response with Research.json` — gated on `agent_token` → `clients.token` lookup; silently skips if no valid token; all 4 new nodes use `continueOnFail: true`
 - Deferred n8n Token Check node updates to per-client DB lookup — Token Check still uses hardcoded shared secret for now
+
+### 2026-05-12 (session 2)
+- Identified 6 remaining tasks to get nurture prompt scheduler live; 5 were ops/config (schema already applied, credentials wired, confirm webhook URL corrected, SendGrid var confirmed, workflows imported + activated)
+- Fixed `nurture_enroll.html` webhook URL: `nurture-enroll-slack` → `nurture-enroll`
+- Added `Mark Nurture Enrolled` Postgres UPDATE node to `Real Estate 7-Touch Cold Nurture.json` — inserted between `Prep Fields` and `Wait Day 1`; updates `nurture_enrolled_at` by email match since `lead_id` is not in the manual enrollment payload
+- Added same node to `Real Estate 7-Touch Cold Nurture Email Only.json` — inserted between `Prep Fields` and `Call Research Agent` (email-only variant has research built in; standard does not)
+- Confirmed scheduler multi-client behavior: one digest email per agent per day, grouped by `clients.primary_contact_email`, each agent sees only their own leads

@@ -440,6 +440,9 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
 - "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
 - Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
+- Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
+- The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
+- When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
 
 ### SendGrid
 - HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`
