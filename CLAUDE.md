@@ -437,6 +437,10 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Validate UUIDs with regex before using them in SQL — untrusted URL params may be malformed or injection attempts; use `SELECT null::uuid WHERE false` as a safe no-op fallback
 - Idempotency in confirm workflows: check `IS NULL` on the timestamp column before updating to prevent double-enrollment on repeated link clicks
 - Parallel fire-and-forget in n8n: multiple downstream nodes can fan out from the same output — add them both to the same `connections["Source Node"]["main"][0]` array in the JSON
+- After a parallel fan-out (e.g., Send to Lead → [Update Lead Record, Send Agent Copy]), `$json` in each downstream node is that node's own input — the HTTP response from the fork source, not the lead data; use `$('UpstreamNodeName').first().json.*` for all fields
+- `{{ JSON.stringify($json.field) }}}` triple-brace in jsonBody causes n8n parse errors — use `"{{ $json.field }}"` (quoted expression) for simple string fields that don't need JSON encoding
+- Neon SQL UUID quoting: always wrap UUID expressions in single quotes inside SQL strings — `'{{ $json.id }}'`, not `{{ $json.id }}`; bare UUID causes "invalid input syntax for type uuid" error
+- Dynamic client lookup from BoldTrail/Zapier payload: read `agentemail` from Zapier trigger, sanitize with `.replace(/'/g, "''")`, query `clients` table by `primary_contact_email` to get `id` and `token` — eliminates hardcoded placeholder tokens
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
