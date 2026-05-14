@@ -246,7 +246,7 @@ https://norrai.app.n8n.cloud/webhook/intake-boldtrail
 
 **This is a manual step in Zapier.**
 
-Prerequisites: Zapier account (free tier is fine for low lead volume — 100 tasks/mo).
+Prerequisites: Zapier account on the **Starter plan ($20/mo)**. Free tier pauses Zaps after 2 weeks of inactivity — unacceptable for a live client. Starter never pauses and polls every 2 minutes instead of 15. Pass the cost through to the client or absorb it.
 
 - [ ] **Step 1: Create a new Zap**
 
