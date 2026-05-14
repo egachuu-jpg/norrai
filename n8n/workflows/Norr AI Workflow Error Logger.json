@@ -1,0 +1,74 @@
+{
+  "name": "Norr AI Workflow Error Logger",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 144],
+      "id": "f0e1d2c3-0001-4000-8000-000000000001",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const WORKFLOW_NAME_MAP = {\n  'Real Estate Instant Lead Response': 'instant_lead_response',\n  'Real Estate Instant Lead Response with Research': 'instant_lead_response',\n  'Real Estate Open House Follow-Up': 'open_house_follow_up',\n  'Real Estate Open House Follow-Up with Research': 'open_house_follow_up',\n  'Real Estate Open House Setup': 'open_house_setup',\n  'Real Estate Listing Description Generator': 'listing_description',\n  'Real Estate Review Request': 'review_request',\n  'Real Estate 7-Touch Cold Nurture': 'cold_nurture',\n  'Real Estate 7-Touch Cold Nurture with Research': 'cold_nurture',\n  'Real Estate 7-Touch Cold Nurture Email Only': 'cold_nurture',\n  'Real Estate 7-Touch Cold Nurture (Slack SMS Preview)': 'cold_nurture',\n  'B&B Lead Generator': 'bnb_lead_generator',\n  'B&B Manufacturing Estimate': 'bnb_estimate',\n  'Norr AI Chief of Staff': 'norrai_chief_of_staff',\n  'Norr AI Client Health Query': 'client_health_query',\n  'Norr AI Red Alert Scheduler': 'red_alert_scheduler',\n  'Real Estate Lead Cleanser': 'lead_cleanser',\n  'Real Estate Zillow Intake': 'zillow_intake',\n  'Real Estate Realtor Intake': 'realtor_intake',\n  'Real Estate Facebook Intake': 'facebook_intake',\n  'Real Estate Custom Form Intake': 'custom_form_intake',\n  'Real Estate Lead Response Auto': 'lead_response_auto',\n  'Real Estate Lead Action Handler': 'lead_action_handler',\n  'Real Estate BoldTrail Intake': 'boldtrail_intake',\n  'Real Estate Research Agent': 'research_agent',\n  'Client Discovery \\u2192 Claude Analysis': 'client_discovery',\n  'Client Onboarding \\u2192 Claude Analysis': 'client_onboarding',\n  'Nurture Prompt Scheduler': 'nurture_prompt_scheduler',\n  'Nurture Prompt Confirm': 'nurture_prompt_confirm',\n  'Birthday & Anniversary Outreach': 'bday_anniversary_outreach',\n  'Event Ops Discovery': 'event_ops_discovery'\n};\n\nconst data = $input.first().json;\nconst wfDisplayName = String(data.workflow?.name || 'unknown');\nconst workflowName = WORKFLOW_NAME_MAP[wfDisplayName]\n  || wfDisplayName.toLowerCase().replace(/[^a-z0-9]+/g, '_');\n\nconst executionId   = String(data.execution?.id || '');\nconst executionUrl  = String(data.execution?.url || '');\nconst lastNode      = String(data.execution?.lastNodeExecuted || 'unknown');\nconst errorMessage  = String(data.execution?.error?.message || 'No error message');\n\n// Escape single quotes for use in SQL string literals\nconst sq = s => s.replace(/'/g, \"''\");\n\nconst slackLines = [\n  ':fire: *Workflow failed: ' + workflowName + '*',\n  '\\u2022 *Last node:* ' + lastNode,\n  '\\u2022 *Error:* ' + errorMessage\n];\nif (executionUrl) slackLines.push('\\u2022 <' + executionUrl + '|View execution>');\n\nreturn [{\n  json: {\n    workflow_name:      sq(workflowName),\n    execution_id:       sq(executionId),\n    execution_url:      sq(executionUrl),\n    last_node:          sq(lastNode),\n    error_message:      sq(errorMessage),\n    slack_message:      slackLines.join('\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [448, 144],
+      "id": "f0e1d2c3-0002-4000-8000-000000000002",
+      "name": "Extract Error Data"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  '{{ $json.workflow_name }}',\n  'failed',\n  json_build_object(\n    'execution_id',  '{{ $json.execution_id }}',\n    'execution_url',  '{{ $json.execution_url }}',\n    'last_node',      '{{ $json.last_node }}',\n    'error_message',  '{{ $json.error_message }}'\n  )::jsonb\n)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [656, 144],
+      "id": "f0e1d2c3-0003-4000-8000-000000000003",
+      "name": "Log Failed to Neon",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "SLACK_WEBHOOK_URL",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ text: $('Extract Error Data').first().json.slack_message }) }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [864, 144],
+      "id": "f0e1d2c3-0004-4000-8000-000000000004",
+      "name": "Post to Slack"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger":      { "main": [[{ "node": "Extract Error Data",  "type": "main", "index": 0 }]] },
+    "Extract Error Data": { "main": [[{ "node": "Log Failed to Neon",  "type": "main", "index": 0 }]] },
+    "Log Failed to Neon": { "main": [[{ "node": "Post to Slack",       "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "workflow-error-logger-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
