@@ -31,6 +31,7 @@ In Railway → your service → **Variables**, add everything from `.env.example
 | `SLACK_SIGNING_SECRET` | api.slack.com/apps → your app → Basic Information |
 | `TWILIO_ACCOUNT_SID` | console.twilio.com |
 | `TWILIO_AUTH_TOKEN` | console.twilio.com |
+| `GITHUB_PAT` | github.com → Settings → Developer settings → Fine-grained tokens → `norrai-n8n-read` (Contents: Read-only on egachuu-jpg/norrai) |
 
 ### 4. Get your public URL
 

@@ -3,7 +3,7 @@ import os
 
 import anthropic
 
-from tools import check_client_health, get_workflow_errors
+from tools import check_client_health, get_open_tasks, get_workflow_errors
 
 _client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
@@ -12,9 +12,10 @@ MAX_HISTORY = 20  # messages retained per session (controls token cost)
 
 SYSTEM_PROMPT = """You are the Norr AI Chief of Staff — an internal assistant for Egan, who runs Norr AI, an AI automation agency in Faribault, Minnesota.
 
-Your job: help Egan monitor and manage the Norr AI business. You have two tools:
+Your job: help Egan monitor and manage the Norr AI business. You have three tools:
 - check_client_health: overall red/yellow/green status per active client and workflow
 - get_workflow_errors: recent failure events from Neon, optionally filtered by client or time window
+- get_open_tasks: open (unchecked) tasks from CLAUDE.md, grouped by section — use this when Egan asks what's on his plate, what to work on, or what's pending
 
 Be concise and direct. Egan is a technical data engineer — no fluff. Plain text only (works in both Slack and SMS).
 
@@ -34,6 +35,24 @@ TOOLS = [
         "input_schema": {
             "type": "object",
             "properties": {},
+            "required": [],
+        },
+    },
+    {
+        "name": "get_open_tasks",
+        "description": (
+            "Fetch open (unchecked) tasks from CLAUDE.md in the norrai GitHub repo. "
+            "Returns tasks grouped by subsection (Immediate, Security, Near Term, etc.). "
+            "Optionally filter to a specific section by partial name."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "section": {
+                    "type": "string",
+                    "description": "Partial section name to filter (e.g. 'immediate', 'near term'). Omit for all sections.",
+                },
+            },
             "required": [],
         },
     },
@@ -64,6 +83,8 @@ TOOLS = [
 def _execute_tool(name: str, inputs: dict):
     if name == "check_client_health":
         return check_client_health()
+    if name == "get_open_tasks":
+        return get_open_tasks(section=inputs.get("section"))
     if name == "get_workflow_errors":
         return get_workflow_errors(
             days=inputs.get("days", 7),
