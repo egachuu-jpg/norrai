@@ -123,6 +123,20 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Created `n8n/workflows/Real Estate 7-Touch Cold Nurture Email Only.json` — demo variant, all 6 touches via SendGrid; T2/T4/T6 prompts updated to SUBJECT/BODY email format; no Twilio nodes; webhook: `nurture-enroll-email-only`
 - Added todo: optional property details field in `nurture_enroll.html` (agent pastes MLS description/notes → `property_notes` → injected into T1–T6 prompts)
 
+### 2026-05-13
+- Brainstormed BoldTrail (kvCORE) lead intake integration for a Weichert agent
+- Investigated BoldTrail account: Weichert-managed brokerage instance, agent-level access only — no outbound webhook available at agent tier
+- Confirmed Lead Dropbox API key is inbound-only — `GET /contacts` with key returns 401; cannot be used for polling leads out
+- Decided on Zapier Starter ($20/mo) as integration method — free tier pauses Zaps after 2 weeks of inactivity, too risky for a live client
+- Built `n8n/workflows/Real Estate BoldTrail Intake.json` — 6 nodes: Webhook → Lookup Client → Log Triggered → Normalize Payload (Code) → Send to Lead Cleanser → Log Completed
+- Used Zapier Copilot prompt to get confirmed BoldTrail field names from live payload inspection; updated Normalize Payload with actuals (`firstname`, `lastname`, `origin`, `is_seller`, buyer/seller address split, `email_status`, `on_drip`, `starrating`, `leadid`); no price_range or beds in BoldTrail Zapier trigger
+- Registered `boldtrail_intake` in CLAUDE.md workflow name registry
+- Key discovery during session: agent had unsubscribed from all BoldTrail email notifications — completely blind to new leads; strong sales angle
+- Key discovery: BoldTrail already sends listing alert emails to leads — decided Norr AI nurture for this client should be SMS-dominant to avoid channel overlap
+- Design spec: `docs/superpowers/specs/2026-05-13-boldtrail-intake-design.md`; Implementation plan: `docs/superpowers/plans/2026-05-13-boldtrail-intake.md`
+- PR #12 opened: `worktree-boldtrail-integration-weichert` → `main`
+- Pending (blocks on client onboarding): fill in CLIENT_TOKEN_PLACEHOLDER / CLIENT_ID_PLACEHOLDER, import into n8n, set up Zapier Zap, smoke test
+
 ### 2026-05-12
 - Brainstormed and designed nurture prompt feature — daily scheduler emails agent a digest of enrolled-but-unresponded leads; one-click confirm URL marks lead as enrolled + fires nurture sequence
 - Built `n8n/workflows/Nurture Prompt Confirm.json` — GET webhook at `/webhook/nurture-prompt-confirm`; token read from `$json.query.token` (query param, not header — it's a link click); UUID regex validation before any DB query; idempotency check (`nurture_enrolled_at IS NULL`); fires `nurture-enroll-slack` webhook; updates `leads.nurture_enrolled_at`; returns HTML success/already-enrolled/error page
@@ -135,14 +149,13 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Added parallel fire-and-forget leads table INSERT to both `Real Estate Instant Lead Response.json` and `Real Estate Instant Lead Response with Research.json` — gated on `agent_token` → `clients.token` lookup; silently skips if no valid token; all 4 new nodes use `continueOnFail: true`
 - Deferred n8n Token Check node updates to per-client DB lookup — Token Check still uses hardcoded shared secret for now
 
-<<<<<<< HEAD
 ### 2026-05-12 (session 2)
 - Identified 6 remaining tasks to get nurture prompt scheduler live; 5 were ops/config (schema already applied, credentials wired, confirm webhook URL corrected, SendGrid var confirmed, workflows imported + activated)
 - Fixed `nurture_enroll.html` webhook URL: `nurture-enroll-slack` → `nurture-enroll`
 - Added `Mark Nurture Enrolled` Postgres UPDATE node to `Real Estate 7-Touch Cold Nurture.json` — inserted between `Prep Fields` and `Wait Day 1`; updates `nurture_enrolled_at` by email match since `lead_id` is not in the manual enrollment payload
 - Added same node to `Real Estate 7-Touch Cold Nurture Email Only.json` — inserted between `Prep Fields` and `Call Research Agent` (email-only variant has research built in; standard does not)
 - Confirmed scheduler multi-client behavior: one digest email per agent per day, grouped by `clients.primary_contact_email`, each agent sees only their own leads
-=======
+
 ### 2026-05-12 (bday-anniversary-message worktree)
 - Brainstormed and designed client birthday & anniversary outreach workflow (Growth tier)
 - Design decisions: Google Sheets as agent-owned data source, auto-send (no approval step), email primary / SMS fallback / skip-and-log if neither present, minimal personalization (name + occasion + address only, no research agent)
@@ -151,4 +164,3 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Fixed two bugs in spec during self-review: `toLocaleDateString` with month/day options includes year — replaced with `toLocaleString` + split pattern; `.replace('-', '-')` no-op on closing_date removed
 - Wrote design spec: `docs/superpowers/specs/2026-05-12-bday-anniversary-outreach-design.md`
 - Added `bday_anniversary_outreach` to workflow name registry (pending CLAUDE.md update)
->>>>>>> worktree-bday-anniversary-message
