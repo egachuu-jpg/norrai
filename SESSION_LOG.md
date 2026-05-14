@@ -164,3 +164,22 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Fixed two bugs in spec during self-review: `toLocaleDateString` with month/day options includes year — replaced with `toLocaleString` + split pattern; `.replace('-', '-')` no-op on closing_date removed
 - Wrote design spec: `docs/superpowers/specs/2026-05-12-bday-anniversary-outreach-design.md`
 - Added `bday_anniversary_outreach` to workflow name registry (pending CLAUDE.md update)
+
+### 2026-05-14
+- Removed approval step from `Real Estate Lead Response Auto.json` — now sends directly to lead via SendGrid (SMS pending A2P registration)
+- Added `Update Lead Record` Postgres node — sets `status = 'contacted'`, logs `last_outreach_at` / `last_outreach_type` in `metadata` jsonb after send
+- Added `Send Agent Copy` node — sends agent a copy of the email with lead details; CC hello@norrai.co
+- Fixed `Update Lead Record` UUID undefined error — `$json.lead_id` was the SendGrid 202 response; fixed to `$('Parse Response').first().json.lead_id`
+- Fixed `Send Agent Copy` all-undefined fields — same root cause; changed all `$json.*` refs to `$('Parse Response').first().json.*`
+- Fixed `{{ JSON.stringify($json.agent_email) }}}` triple-brace parse error in Send Agent Copy — replaced with `"{{ $('Parse Response').first().json.agent_email }}"` (quoted expression)
+- Updated `Real Estate Lead Cleanser.json`: SELECT now fetches `primary_contact_phone`, `business_name`; agent_phone + brokerage threaded through Build Dedupe Query, Build Insert Query, and Prepare Handoff
+- Added `Email OK?` IF node to Lead Cleanser between Prepare Handoff and Trigger Lead Response — blocks leads with `email_status = 'Unsubscribed'` (case-insensitive)
+- Added `alwaysOutputData: true` to Dedupe Check node in Lead Cleanser — prevents execution stop on 0-row result
+- Updated `Real Estate BoldTrail Intake.json`: replaced hardcoded `CLIENT_TOKEN_PLACEHOLDER` with dynamic Neon lookup by `agentemail`; added `Build Lookup Query` (Code, sanitizes email), `Agent Found?` (IF), `Log Unknown Agent` (Postgres, norrai_internal fallback)
+- Fixed BoldTrail Intake `Log Triggered` UUID quoting error — wrapped `{{$json.id}}` in single quotes → `'{{$json.id}}'`
+- Fixed BoldTrail Intake `Normalize Payload` — was reading `$input` (Log Triggered result); fixed to `$('Receive BoldTrail Lead').first().json.body`
+- Fixed BoldTrail Intake `Log Completed` — still had `CLIENT_TOKEN_PLACEHOLDER`; fixed to `$('Lookup Client').first().json.id`
+- Added `retryOnFail: true, maxTries: 3, waitBetweenTries: 5000` to all 19 Claude HTTP Request nodes across all workflows
+- Updated Lead Response Auto prompt: agent signature block with name/brokerage/phone/email; "omit blank lines" instruction prevents Claude from inventing phone numbers
+- Stripped research agent nodes (`Call Research Agent`, `Enrich with Research`) from `Real Estate Instant Lead Response with Research.json` — research overhead not worth it for this workflow; Validate Input now fans directly to Build Prompt + Build Client Query
+- Removed RESEARCH DATA block from Build Prompt in that workflow; restored "do NOT guess — acknowledge and say you'll follow up" instruction
