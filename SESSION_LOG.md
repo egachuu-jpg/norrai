@@ -183,3 +183,9 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Updated Lead Response Auto prompt: agent signature block with name/brokerage/phone/email; "omit blank lines" instruction prevents Claude from inventing phone numbers
 - Stripped research agent nodes (`Call Research Agent`, `Enrich with Research`) from `Real Estate Instant Lead Response with Research.json` — research overhead not worth it for this workflow; Validate Input now fans directly to Build Prompt + Build Client Query
 - Removed RESEARCH DATA block from Build Prompt in that workflow; restored "do NOT guess — acknowledge and say you'll follow up" instruction
+
+### 2026-05-14 (session 2)
+- Discussed native n8n error handling — identified Error Trigger payload fields (`lastNodeExecuted`, `error.message`, `execution.url`) as underutilized for health diagnostics
+- Confirmed `Norr AI Workflow Error Logger` workflow did not exist in the repo (gap — all workflows referenced it in Settings but it was never built or exported)
+- Built `n8n/workflows/Norr AI Workflow Error Logger.json` — Error Trigger → Extract Error Data (Code, maps display names to registry keys, SQL-escapes all fields, builds Slack message) → Log Failed to Neon (Postgres, `continueOnFail`) → Post to Slack (HTTP, `continueOnFail`); `payload` column stores `execution_id`, `execution_url`, `last_node`, `error_message`
+- Added todos: wire Neon credential + Slack webhook in Error Logger, set Error Workflow setting in all other workflows
