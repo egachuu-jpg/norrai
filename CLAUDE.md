@@ -362,6 +362,8 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [ ] Swap placeholder rates with real B&B rates once obtained
 - [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
 - [ ] Audit workflow_events logging coverage — only B&B Lead Generator currently logs to Neon; all real estate workflows (Instant Lead Response, Open House Follow-Up, Open House Setup, Listing Description, 7-Touch Nurture, Review Request, Lead Cleanser pipeline) need `workflow_events` INSERT nodes added before the monitoring dashboard can work
+- [ ] Wire `Norr AI Workflow Error Logger` credentials: replace `NEON_CREDENTIAL_ID` with actual Neon Postgres credential and `SLACK_WEBHOOK_URL` with Slack incoming webhook URL
+- [ ] Set Error Workflow in every n8n workflow's Settings tab to point to `Norr AI Workflow Error Logger`
 - [x] **Wire research agent into 7-Touch Cold Nurture** — `Real Estate 7-Touch Cold Nurture with Research.json`; research called once at enrollment; insight_block injected into T1/T2/T3 prompts
 - [x] **Wire research agent into Instant Lead Response** — `Real Estate Instant Lead Response with Research.json`; research called after Validate Input; MARKET CONTEXT block added to Build Prompt
 - [x] **Wire research agent into Open House Follow-Up** — `Real Estate Open House Follow-Up with Research.json`; research called after overnight wait node; MARKET CONTEXT block added to Build Prompt
@@ -441,6 +443,10 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `{{ JSON.stringify($json.field) }}}` triple-brace in jsonBody causes n8n parse errors — use `"{{ $json.field }}"` (quoted expression) for simple string fields that don't need JSON encoding
 - Neon SQL UUID quoting: always wrap UUID expressions in single quotes inside SQL strings — `'{{ $json.id }}'`, not `{{ $json.id }}`; bare UUID causes "invalid input syntax for type uuid" error
 - Dynamic client lookup from BoldTrail/Zapier payload: read `agentemail` from Zapier trigger, sanitize with `.replace(/'/g, "''")`, query `clients` table by `primary_contact_email` to get `id` and `token` — eliminates hardcoded placeholder tokens
+- Error Trigger payload fields: `$json.execution.lastNodeExecuted`, `$json.execution.error.message`, and `$json.execution.url` are available in error workflows — log all three or the dashboard can only show that something failed, not where or why
+- `json_build_object()` in Postgres SQL is safer than embedding arbitrary text in jsonb string literals — handles quotes and special characters without manual escaping
+- `onError: "continueRegularOutput"` is the JSON-export representation of `continueOnFail: true` — use this in workflow JSON files, not `"continueOnFail": true` at the node level
+- After a Postgres node, `$json` is the Postgres result — always reference the upstream Code node by name (`$('NodeName').first().json`) when building downstream expressions that need data from before the DB call
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
