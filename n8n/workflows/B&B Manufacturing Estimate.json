@@ -87,6 +87,9 @@
       "position": [900, 120],
       "id": "bb000001-0000-4000-8000-000000000004",
       "name": "Claude — Generate Estimate",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",

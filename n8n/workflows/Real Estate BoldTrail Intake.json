@@ -17,13 +17,23 @@
     },
     {
       "parameters": {
+        "jsCode": "const email = ($input.first().json.body.agentemail || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id, token FROM clients WHERE primary_contact_email = '${email}'`,\n    agentemail: $input.first().json.body.agentemail || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "id": "bt000001-0007-4000-8000-000000000007",
+      "name": "Build Lookup Query"
+    },
+    {
+      "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM clients WHERE token = 'CLIENT_TOKEN_PLACEHOLDER'",
+        "query": "={{ $json.query }}",
         "continueOnFail": true
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [440, 300],
+      "position": [640, 300],
       "id": "bt000001-0002-4000-8000-000000000002",
       "name": "Lookup Client",
       "continueOnFail": true,
@@ -36,13 +46,55 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "agent-found-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "notEmpty"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [840, 300],
+      "id": "bt000001-0008-4000-8000-000000000008",
+      "name": "Agent Found?"
+    },
+    {
+      "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('CLIENT_ID_PLACEHOLDER', 'boldtrail_intake', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517', 'boldtrail_intake', 'failed', '{\"execution_id\": \"{{ $execution.id }}\", \"error\": \"agent_not_found\", \"agentemail\": \"{{ $('Receive BoldTrail Lead').first().json.body.agentemail }}\"}'::jsonb)",
         "continueOnFail": true
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [640, 300],
+      "position": [1040, 420],
+      "id": "bt000001-0009-4000-8000-000000000009",
+      "name": "Log Unknown Agent",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{$json.id}}', 'boldtrail_intake', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "continueOnFail": true
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1040, 180],
       "id": "bt000001-0003-4000-8000-000000000003",
       "name": "Log Triggered",
       "continueOnFail": true,
@@ -55,11 +107,11 @@
     },
     {
       "parameters": {
-        "jsCode": "// BoldTrail Zapier field names confirmed from live payload inspection.\nconst b = $input.first().json.body || $input.first().json;\n\nconst leadName = `${b.firstname || ''} ${b.lastname || ''}`.trim();\n\n// Buyers use street/city/state/zip; sellers use seller_* fields\nconst isSeller = b.is_seller === 'Yes';\nconst address = isSeller\n  ? (b.seller_full_address || [b.seller_street, b.seller_city, b.seller_state, b.seller_zip].filter(Boolean).join(', '))\n  : [b.street, b.city, b.state, b.zip].filter(Boolean).join(', ');\n\n// Construct lead_message from available context\nconst msgParts = [\n  b.origin ? `Source: ${b.origin}` : null,\n  isSeller ? 'Interested in selling' : 'Looking to buy',\n  b.referrer ? `Referrer: ${b.referrer}` : null,\n  b.hashtags ? `Tags: ${b.hashtags}` : null\n].filter(Boolean);\n\nreturn [{\n  json: {\n    client_token: 'CLIENT_TOKEN_PLACEHOLDER',\n    lead_name: leadName,\n    email: b.email || '',\n    phone: b.phone || '',\n    source: b.origin || 'boldtrail',\n    property_address: address,\n    price_range: '',\n    beds: null,\n    lead_message: msgParts.join('. ') || 'BoldTrail lead',\n    boldtrail_lead_id: b.leadid || null,\n    is_seller: b.is_seller || 'No',\n    email_status: b.email_status || '',\n    on_drip: b.on_drip || 'No',\n    star_rating: b.starrating || null\n  }\n}];"
+        "jsCode": "// BoldTrail Zapier field names confirmed from live payload inspection.\nconst b = $('Receive BoldTrail Lead').first().json.body;\nconst client = $('Lookup Client').first().json;\n\nconst leadName = `${b.firstname || ''} ${b.lastname || ''}`.trim();\n\n// Buyers use street/city/state/zip; sellers use seller_* fields\nconst isSeller = b.is_seller === 'Yes';\nconst address = isSeller\n  ? (b.seller_full_address || [b.seller_street, b.seller_city, b.seller_state, b.seller_zip].filter(Boolean).join(', '))\n  : [b.street, b.city, b.state, b.zip].filter(Boolean).join(', ');\n\n// Construct lead_message from available context\nconst msgParts = [\n  b.origin ? `Source: ${b.origin}` : null,\n  isSeller ? 'Interested in selling' : 'Looking to buy',\n  b.referrer ? `Referrer: ${b.referrer}` : null,\n  b.hashtags ? `Tags: ${b.hashtags}` : null\n].filter(Boolean);\n\nreturn [{\n  json: {\n    client_token: client.token,\n    lead_name: leadName,\n    email: b.email || '',\n    phone: b.phone || '',\n    source: b.origin || 'boldtrail',\n    property_address: address,\n    price_range: '',\n    beds: null,\n    lead_message: msgParts.join('. ') || 'BoldTrail lead',\n    boldtrail_lead_id: b.leadid || null,\n    is_seller: b.is_seller || 'No',\n    email_status: b.email_status || '',\n    on_drip: b.on_drip || 'No',\n    star_rating: b.starrating || null,\n    address: isSeller ? (b.seller_street || '') : (b.street || ''),\n    city: isSeller ? (b.seller_city || '') : (b.city || ''),\n    state: isSeller ? (b.seller_state || '') : (b.state || ''),\n    zip: isSeller ? (b.seller_zip || '') : (b.zip || '')\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [840, 300],
+      "position": [1240, 180],
       "id": "bt000001-0004-4000-8000-000000000004",
       "name": "Normalize Payload"
     },
@@ -74,19 +126,19 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1040, 300],
+      "position": [1440, 180],
       "id": "bt000001-0005-4000-8000-000000000005",
       "name": "Send to Lead Cleanser"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('CLIENT_ID_PLACEHOLDER', 'boldtrail_intake', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Lookup Client').first().json.id }}', 'boldtrail_intake', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
         "continueOnFail": true
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1240, 300],
+      "position": [1640, 180],
       "id": "bt000001-0006-4000-8000-000000000006",
       "name": "Log Completed",
       "continueOnFail": true,
@@ -100,8 +152,15 @@
   ],
   "pinData": {},
   "connections": {
-    "Receive BoldTrail Lead": {"main": [[{"node": "Lookup Client", "type": "main", "index": 0}]]},
-    "Lookup Client": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]},
+    "Receive BoldTrail Lead": {"main": [[{"node": "Build Lookup Query", "type": "main", "index": 0}]]},
+    "Build Lookup Query": {"main": [[{"node": "Lookup Client", "type": "main", "index": 0}]]},
+    "Lookup Client": {"main": [[{"node": "Agent Found?", "type": "main", "index": 0}]]},
+    "Agent Found?": {
+      "main": [
+        [{"node": "Log Triggered", "type": "main", "index": 0}],
+        [{"node": "Log Unknown Agent", "type": "main", "index": 0}]
+      ]
+    },
     "Log Triggered": {"main": [[{"node": "Normalize Payload", "type": "main", "index": 0}]]},
     "Normalize Payload": {"main": [[{"node": "Send to Lead Cleanser", "type": "main", "index": 0}]]},
     "Send to Lead Cleanser": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
@@ -111,7 +170,7 @@
     "executionOrder": "v1",
     "errorWorkflow": "Norr AI Workflow Error Logger"
   },
-  "versionId": "boldtrail-intake-v1-001",
+  "versionId": "boldtrail-intake-v2-001",
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"

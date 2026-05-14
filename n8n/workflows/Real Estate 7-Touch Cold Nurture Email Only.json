@@ -147,6 +147,9 @@
       "position": [1240, 300],
       "id": "eo000001-0009-4000-8000-000000000009",
       "name": "Claude T1",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
@@ -197,6 +200,9 @@
       "position": [2240, 300],
       "id": "eo000001-0014-4000-8000-000000000014",
       "name": "Claude T2",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
@@ -247,6 +253,9 @@
       "position": [3240, 300],
       "id": "eo000001-0019-4000-8000-000000000019",
       "name": "Claude T3",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
@@ -295,6 +304,9 @@
       "position": [4240, 300],
       "id": "eo000001-0024-4000-8000-000000000024",
       "name": "Claude T4",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
@@ -345,6 +357,9 @@
       "position": [5240, 300],
       "id": "eo000001-0029-4000-8000-000000000029",
       "name": "Claude T5",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
@@ -393,6 +408,9 @@
       "position": [6240, 300],
       "id": "eo000001-0034-4000-8000-000000000034",
       "name": "Claude T6",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {

@@ -155,6 +155,9 @@
       ],
       "id": "c4f44831-4d03-44ef-842b-faddc1831b54",
       "name": "Draft Response (Claude)",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",

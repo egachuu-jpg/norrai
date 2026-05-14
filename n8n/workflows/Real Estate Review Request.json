@@ -112,6 +112,9 @@
       "position": [1264, 144],
       "id": "d1e2f3a4-0006-4000-8000-000000000006",
       "name": "Claude API",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",

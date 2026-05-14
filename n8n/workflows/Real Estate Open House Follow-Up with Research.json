@@ -168,6 +168,9 @@
       ],
       "id": "ee7275e2-0ec2-41e6-adcb-45971bb483cb",
       "name": "Draft Follow-Up (Claude)",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",
