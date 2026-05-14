@@ -1,4 +1,7 @@
+import base64
+import json
 import os
+import urllib.request
 from datetime import datetime, timedelta, timezone
 
 import psycopg2
@@ -82,6 +85,52 @@ def check_client_health() -> dict:
 
     clients.sort(key=lambda c: (-RANK[c["overall_status"]], c["business_name"]))
     return {"clients": clients}
+
+
+def get_open_tasks(section: str | None = None) -> dict:
+    """
+    Fetch CLAUDE.md from GitHub and return unchecked tasks grouped by subsection.
+    Optionally filter to a single section by partial name match (case-insensitive).
+    Returns: { sections: { "Immediate": [...], ... }, total_count: N }
+    Requires GITHUB_PAT env var with Contents: Read-only on egachuu-jpg/norrai.
+    """
+    pat = os.environ.get("GITHUB_PAT", "")
+    url = "https://api.github.com/repos/egachuu-jpg/norrai/contents/CLAUDE.md"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"token {pat}",
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "norrai-cos",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        data = json.loads(resp.read())
+
+    raw = base64.b64decode(data["content"]).decode("utf-8")
+
+    # Extract ## Open Tasks section only
+    import re
+    match = re.search(r"## Open Tasks([\s\S]*?)(?=\n## |\n---\n|\n# |$)", raw)
+    if not match:
+        return {"sections": {}, "total_count": 0}
+
+    sections: dict[str, list[str]] = {}
+    current = "General"
+    for line in match.group(1).split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("### "):
+            current = stripped[4:]
+        elif stripped.startswith("- [ ]"):
+            task = stripped[6:]  # drop "- [ ] "
+            sections.setdefault(current, []).append(task)
+
+    if section:
+        key = section.lower()
+        sections = {k: v for k, v in sections.items() if key in k.lower()}
+
+    total = sum(len(v) for v in sections.values())
+    return {"sections": sections, "total_count": total}
 
 
 def get_workflow_errors(days: int = 7, client_name: str | None = None) -> dict:
