@@ -175,7 +175,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Combine lead_id from INSERT RETURNING with context fields\nconst insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    payload: ctx.payload\n  }\n}];"
+        "jsCode": "// Combine lead_id from INSERT RETURNING with context fields\nconst insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    address_present: !!(ctx.payload && ctx.payload.property_address),\n    payload: ctx.payload\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
