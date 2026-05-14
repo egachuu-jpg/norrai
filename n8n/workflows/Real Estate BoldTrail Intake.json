@@ -1,0 +1,121 @@
+{
+  "name": "Real Estate BoldTrail Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake-boldtrail",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "bt000001-0001-4000-8000-000000000001",
+      "name": "Receive BoldTrail Lead",
+      "webhookId": "boldtrail-intake-webhook-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM clients WHERE token = 'CLIENT_TOKEN_PLACEHOLDER'",
+        "continueOnFail": true
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 300],
+      "id": "bt000001-0002-4000-8000-000000000002",
+      "name": "Lookup Client",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('CLIENT_ID_PLACEHOLDER', 'boldtrail_intake', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "continueOnFail": true
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 300],
+      "id": "bt000001-0003-4000-8000-000000000003",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map BoldTrail Zapier fields to Norr AI standard payload shape.\n// IMPORTANT: Verify field names against actual Zapier trigger output before going live.\n// Open the Zap, run a test, and inspect the 'Available fields' panel to confirm.\nconst b = $input.first().json.body || $input.first().json;\n\nconst firstName = b.first_name || b.contact_first_name || '';\nconst lastName = b.last_name || b.contact_last_name || '';\nconst fullName = b.full_name || b.contact_name || `${firstName} ${lastName}`.trim();\n\nconst minPrice = b.min_price || b.price_min || '';\nconst maxPrice = b.max_price || b.price_max || '';\nconst priceRange = b.price_range || (minPrice ? `$${minPrice}–$${maxPrice}` : '');\n\nreturn [{\n  json: {\n    client_token: 'CLIENT_TOKEN_PLACEHOLDER',\n    lead_name: fullName,\n    email: b.email || b.contact_email || '',\n    phone: b.phone || b.contact_phone || b.phone_number || '',\n    source: 'boldtrail',\n    property_address: b.address || b.property_address || b.street_address || '',\n    price_range: priceRange,\n    beds: b.min_beds || b.bedrooms || b.beds || null,\n    lead_message: b.notes || b.message || b.lead_notes || 'BoldTrail lead'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300],
+      "id": "bt000001-0004-4000-8000-000000000004",
+      "name": "Normalize Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://norrai.app.n8n.cloud/webhook/lead-cleanser",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1040, 300],
+      "id": "bt000001-0005-4000-8000-000000000005",
+      "name": "Send to Lead Cleanser"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('CLIENT_ID_PLACEHOLDER', 'boldtrail_intake', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "continueOnFail": true
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1240, 300],
+      "id": "bt000001-0006-4000-8000-000000000006",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive BoldTrail Lead": {"main": [[{"node": "Lookup Client", "type": "main", "index": 0}]]},
+    "Lookup Client": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]},
+    "Log Triggered": {"main": [[{"node": "Normalize Payload", "type": "main", "index": 0}]]},
+    "Normalize Payload": {"main": [[{"node": "Send to Lead Cleanser", "type": "main", "index": 0}]]},
+    "Send to Lead Cleanser": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "boldtrail-intake-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
