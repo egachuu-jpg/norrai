@@ -135,9 +135,20 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Added parallel fire-and-forget leads table INSERT to both `Real Estate Instant Lead Response.json` and `Real Estate Instant Lead Response with Research.json` — gated on `agent_token` → `clients.token` lookup; silently skips if no valid token; all 4 new nodes use `continueOnFail: true`
 - Deferred n8n Token Check node updates to per-client DB lookup — Token Check still uses hardcoded shared secret for now
 
+<<<<<<< HEAD
 ### 2026-05-12 (session 2)
 - Identified 6 remaining tasks to get nurture prompt scheduler live; 5 were ops/config (schema already applied, credentials wired, confirm webhook URL corrected, SendGrid var confirmed, workflows imported + activated)
 - Fixed `nurture_enroll.html` webhook URL: `nurture-enroll-slack` → `nurture-enroll`
 - Added `Mark Nurture Enrolled` Postgres UPDATE node to `Real Estate 7-Touch Cold Nurture.json` — inserted between `Prep Fields` and `Wait Day 1`; updates `nurture_enrolled_at` by email match since `lead_id` is not in the manual enrollment payload
 - Added same node to `Real Estate 7-Touch Cold Nurture Email Only.json` — inserted between `Prep Fields` and `Call Research Agent` (email-only variant has research built in; standard does not)
 - Confirmed scheduler multi-client behavior: one digest email per agent per day, grouped by `clients.primary_contact_email`, each agent sees only their own leads
+=======
+### 2026-05-12 (bday-anniversary-message worktree)
+- Brainstormed and designed client birthday & anniversary outreach workflow (Growth tier)
+- Design decisions: Google Sheets as agent-owned data source, auto-send (no approval step), email primary / SMS fallback / skip-and-log if neither present, minimal personalization (name + occasion + address only, no research agent)
+- Architecture: single daily cron (7am CT), one Claude Haiku call per match, SendGrid for email (click tracking off), Twilio for SMS fallback (160-char truncated), Neon `workflow_events` logging
+- Sheet columns finalized: `name`, `email`, `phone`, `birthday` (MM-DD), `closing_date` (YYYY-MM-DD), `sell_date` (YYYY-MM-DD), `property_address`, `agent_name`, `agent_email`
+- Fixed two bugs in spec during self-review: `toLocaleDateString` with month/day options includes year — replaced with `toLocaleString` + split pattern; `.replace('-', '-')` no-op on closing_date removed
+- Wrote design spec: `docs/superpowers/specs/2026-05-12-bday-anniversary-outreach-design.md`
+- Added `bday_anniversary_outreach` to workflow name registry (pending CLAUDE.md update)
+>>>>>>> worktree-bday-anniversary-message
