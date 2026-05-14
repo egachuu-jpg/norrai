@@ -160,6 +160,7 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Lead Scoring at Intake | `lead_scoring` |
 | Nurture Prompt Scheduler | `nurture_prompt_scheduler` |
 | Nurture Prompt Confirm | `nurture_prompt_confirm` |
+| Real Estate BoldTrail Intake | `boldtrail_intake` |
 
 **All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.**
 
