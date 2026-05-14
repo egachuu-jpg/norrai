@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const b = $input.first().json.body;\nconst token = b.client_token || '';\nreturn [{\n  json: {\n    query: `SELECT id, primary_contact_email, primary_contact_name FROM clients WHERE token = '${token.replace(/'/g, \"''\")}'`,\n    payload: b\n  }\n}];"
+        "jsCode": "const b = $input.first().json.body;\nconst token = b.client_token || '';\nreturn [{\n  json: {\n    query: `SELECT id, primary_contact_email, primary_contact_name, primary_contact_phone, business_name FROM clients WHERE token = '${token.replace(/'/g, \"''\")}'`,\n    payload: b\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -68,7 +68,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').replace(/'/g, \"''\");\nconst phone = (prev.phone || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${row.id}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    payload: prev\n  }\n}];"
+        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').replace(/'/g, \"''\");\nconst phone = (prev.phone || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${row.id}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    agent_phone: row.primary_contact_phone || '',\n    brokerage: row.business_name || '',\n    payload: prev\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -86,6 +86,7 @@
       "position": [1240, 220],
       "id": "lc000001-0006-4000-8000-000000000006",
       "name": "Dedupe Check",
+      "alwaysOutputData": true,
       "continueOnFail": true,
       "credentials": {
         "postgres": {
@@ -147,7 +148,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\n\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  property_address: p.property_address || null,\n  price_range: p.price_range || null,\n  beds: p.beds || null\n}).replace(/'/g, \"''\");\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, stage, next_action_due, metadata) VALUES ('${ctx.client_id}', '${esc(p.lead_name)}', '${esc(p.email)}', '${esc(p.phone)}', '${esc(p.source)}', '${esc(p.lead_message)}', 'new', 'new', '${today}', '${metadata}') RETURNING id`,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    payload: p\n  }\n}];"
+        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\n\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  property_address: p.property_address || null,\n  price_range: p.price_range || null,\n  beds: p.beds || null\n}).replace(/'/g, \"''\");\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, stage, next_action_due, metadata) VALUES ('${ctx.client_id}', '${esc(p.lead_name)}', '${esc(p.email)}', '${esc(p.phone)}', '${esc(p.source)}', '${esc(p.lead_message)}', 'new', 'new', '${today}', '${metadata}') RETURNING id`,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    agent_phone: ctx.agent_phone || '',\n    brokerage: ctx.brokerage || '',\n    payload: p\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -175,13 +176,36 @@
     },
     {
       "parameters": {
-        "jsCode": "// Combine lead_id from INSERT RETURNING with context fields\nconst insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    address_present: !!(ctx.payload && ctx.payload.property_address),\n    payload: ctx.payload\n  }\n}];"
+        "jsCode": "// Combine lead_id from INSERT RETURNING with context fields\nconst insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    agent_phone: ctx.agent_phone || '',\n    brokerage: ctx.brokerage || '',\n    address_present: !!(ctx.payload && ctx.payload.property_address),\n    payload: ctx.payload\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [2040, 300],
       "id": "lc000001-0012-4000-8000-000000000012",
       "name": "Prepare Handoff"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "email-ok-001",
+              "leftValue": "={{ $json.payload.email_status }}",
+              "rightValue": "Unsubscribed",
+              "operator": {"type": "string", "operation": "notEquals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2240, 300],
+      "id": "lc000001-0014-4000-8000-000000000014",
+      "name": "Email OK?"
     },
     {
       "parameters": {
@@ -194,7 +218,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2240, 300],
+      "position": [2440, 300],
       "id": "lc000001-0013-4000-8000-000000000013",
       "name": "Trigger Lead Response"
     }
@@ -221,7 +245,8 @@
     "Build Update Query": {"main": [[{"node": "Update Existing Lead", "type": "main", "index": 0}]]},
     "Build Insert Query": {"main": [[{"node": "Insert New Lead", "type": "main", "index": 0}]]},
     "Insert New Lead": {"main": [[{"node": "Prepare Handoff", "type": "main", "index": 0}]]},
-    "Prepare Handoff": {"main": [[{"node": "Trigger Lead Response", "type": "main", "index": 0}]]}
+    "Prepare Handoff": {"main": [[{"node": "Email OK?", "type": "main", "index": 0}]]},
+    "Email OK?": {"main": [[{"node": "Trigger Lead Response", "type": "main", "index": 0}], []]}
   },
   "active": false,
   "settings": {"executionOrder": "v1"},

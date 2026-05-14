@@ -143,6 +143,9 @@
       "id": "b3b4c5d6-0006-4000-8000-000000000006",
       "name": "Score with Claude",
       "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",
@@ -221,6 +224,9 @@
       "id": "b3b4c5d6-0009-4000-8000-000000000009",
       "name": "Draft Outreach",
       "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",

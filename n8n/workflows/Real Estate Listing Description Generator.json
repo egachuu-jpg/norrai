@@ -118,6 +118,9 @@
       ],
       "id": "c605c7d6-b401-47aa-8309-4d74d43cae0c",
       "name": "Generate Listing (Claude)",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",
