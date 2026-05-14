@@ -476,12 +476,23 @@ Instead of the workflow sending the automated text directly to the lead, route i
 ### Playwright / Testing
 - `npx serve` strips `.html` extension AND drops query params in clean-URL redirects — always navigate to the clean path (no `.html`) in Playwright tests when query params are needed
 
+### BoldTrail / kvCORE
+- Lead Dropbox API key is inbound-only — `GET /contacts` returns 401; it pushes leads into BoldTrail, not out; Zapier uses OAuth separately
+- Confirmed Zapier trigger field names: `firstname`, `lastname`, `email`, `phone`, `street`, `city`, `state`, `zip`, `origin` (lead source), `is_seller`, `seller_full_address`, `seller_street`, `seller_city`, `seller_state`, `seller_zip`, `email_status`, `on_drip`, `starrating`, `leadid`; no price_range or beds exposed
+- Weichert-managed instances: outbound webhook config is brokerage-controlled; agent-level accounts have no access to configure it — Zapier is the only supported outbound path
+- BoldTrail sends automated listing alert emails to leads by default — Norr AI nurture should be SMS-dominant for BoldTrail clients to avoid channel overlap and differentiate value
+
+### Zapier
+- Free tier pauses Zaps after 2 weeks of inactivity — always provision Starter ($20/mo) for live clients; silent lead drops are unacceptable
+- Zapier Copilot is useful for getting confirmed payload field names before wiring n8n normalization — ask it to build the Zap, then inspect the confirmed JSON to update Code node field mappings
+
 ### Architecture Decisions
 - Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
 - Research Agent caches by address with 7-day TTL — call once per workflow run, not per touch; the cache covers the full cold nurture run
 - Dashboard health logic: red = any failures in last 7 days, yellow = no events in 7 days (silence), green = healthy
 - Per-client personalized URLs use `clients.token` (uuid) — no separate `agents` table needed at solo-agent-per-client scale
+- For clients on CRMs with restricted API access (e.g. Weichert/kvCORE), Zapier Starter is the right integration layer — don't try to reverse-engineer inbound-only API keys
 
 ## About the Owner
 
