@@ -1,0 +1,164 @@
+{
+  "name": "Mission Control List",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "mc-tasks",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 144],
+      "id": "mc-list-node-0001",
+      "name": "Webhook",
+      "webhookId": "mc-tasks-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "mc-list-token-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [432, 144],
+      "id": "mc-list-node-0002",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT json_build_object(\n  'stories', (\n    SELECT coalesce(json_agg(\n      json_build_object(\n        'id', s.id,\n        'title', s.title,\n        'description', s.description,\n        'outcome', s.outcome,\n        'status', s.status,\n        'priority', s.priority,\n        'tags', s.tags,\n        'created_at', s.created_at,\n        'tasks', (\n          SELECT coalesce(json_agg(\n            json_build_object(\n              'id', t.id,\n              'story_id', t.story_id,\n              'title', t.title,\n              'description', t.description,\n              'context', t.context,\n              'output', t.output,\n              'category', t.category,\n              'priority', t.priority,\n              'status', t.status,\n              'assigned_to', t.assigned_to,\n              'seq', t.seq,\n              'tags', t.tags,\n              'created_at', t.created_at\n            ) ORDER BY t.seq NULLS LAST, t.created_at\n          ), '[]'::json)\n          FROM tasks t WHERE t.story_id = s.id\n        )\n      ) ORDER BY\n        CASE s.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,\n        s.created_at\n    ), '[]'::json)\n    FROM stories s WHERE s.status != 'cancelled'\n  ),\n  'standalone', (\n    SELECT coalesce(json_agg(\n      json_build_object(\n        'id', t.id,\n        'title', t.title,\n        'description', t.description,\n        'context', t.context,\n        'output', t.output,\n        'category', t.category,\n        'priority', t.priority,\n        'status', t.status,\n        'assigned_to', t.assigned_to,\n        'tags', t.tags,\n        'created_at', t.created_at\n      ) ORDER BY\n        CASE t.status WHEN 'agent_working' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'review' THEN 3 WHEN 'ready' THEN 4 WHEN 'backlog' THEN 5 ELSE 6 END,\n        CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,\n        t.created_at\n    ), '[]'::json)\n    FROM tasks t WHERE t.story_id IS NULL AND t.status != 'done'\n  ),\n  'generated_at', now()\n) as result",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 144],
+      "id": "mc-list-node-0003",
+      "name": "Fetch Data",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $input.first().json.result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [848, 144],
+      "id": "mc-list-node-0004",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1056, 144],
+      "id": "mc-list-node-0005",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mc-list-unauth-001",
+              "name": "error",
+              "value": "Unauthorized",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [432, 320],
+      "id": "mc-list-node-0006",
+      "name": "Unauthorized"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"error\": \"Unauthorized\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, 320],
+      "id": "mc-list-node-0007",
+      "name": "Respond 401"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Token Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [{ "node": "Fetch Data", "type": "main", "index": 0 }],
+        [{ "node": "Unauthorized", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Data": {
+      "main": [
+        [{ "node": "Format Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
+      ]
+    },
+    "Unauthorized": {
+      "main": [
+        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "mc-list-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}

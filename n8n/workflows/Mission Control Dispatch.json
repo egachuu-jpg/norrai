@@ -1,0 +1,218 @@
+{
+  "name": "Mission Control Dispatch",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mc-dispatch",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 144],
+      "id": "mc-dispatch-node-0001",
+      "name": "Webhook",
+      "webhookId": "mc-dispatch-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "mc-dispatch-token-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [432, 144],
+      "id": "mc-dispatch-node-0002",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT t.*, s.title as story_title, s.description as story_description\nFROM tasks t\nLEFT JOIN stories s ON s.id = t.story_id\nWHERE t.id = '{{ $json.body.task_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 144],
+      "id": "mc-dispatch-node-0003",
+      "name": "Fetch Task",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const t = $input.first().json;\nconst storyCtx = t.story_title ? `Story: ${t.story_title}\\n${t.story_description || ''}\\n\\n` : '';\nconst prompt = `${storyCtx}Task: ${t.title}\\nCategory: ${t.category}\\n\\nDescription:\\n${t.description || '(none)'}\\n\\nContext:\\n${t.context || '(none)'}\\n\\nPlease research this thoroughly and return a structured analysis with clear findings and recommended next steps for the Norr AI codebase.`;\nreturn [{ json: { ...t, prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [848, 144],
+      "id": "mc-dispatch-node-0004",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: $json.prompt }] }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1056, 144],
+      "id": "mc-dispatch-node-0005",
+      "name": "Call Claude",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const taskData = $('Build Prompt').first().json;\nconst claudeResp = $input.first().json;\nconst output = claudeResp.content && claudeResp.content[0] ? claudeResp.content[0].text : '';\nreturn [{ json: { task_id: taskData.id, output } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1264, 144],
+      "id": "mc-dispatch-node-0006",
+      "name": "Parse Output"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE tasks SET output = $1, status = 'review', updated_at = now() WHERE id = $2",
+        "options": {
+          "queryBatching": "independently"
+        },
+        "additionalFields": {
+          "queryParams": "={{ JSON.stringify([$json.output, $json.task_id]) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1472, 144],
+      "id": "mc-dispatch-node-0007",
+      "name": "Save Output",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, output: $('Parse Output').first().json.output }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1680, 144],
+      "id": "mc-dispatch-node-0008",
+      "name": "Respond"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"error\": \"Unauthorized\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, 320],
+      "id": "mc-dispatch-node-0009",
+      "name": "Respond 401"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Token Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [{ "node": "Fetch Task", "type": "main", "index": 0 }],
+        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Task": {
+      "main": [
+        [{ "node": "Build Prompt", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [{ "node": "Call Claude", "type": "main", "index": 0 }]
+      ]
+    },
+    "Call Claude": {
+      "main": [
+        [{ "node": "Parse Output", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Output": {
+      "main": [
+        [{ "node": "Save Output", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save Output": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "mc-dispatch-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
