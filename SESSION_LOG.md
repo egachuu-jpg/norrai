@@ -189,3 +189,15 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Confirmed `Norr AI Workflow Error Logger` workflow did not exist in the repo (gap — all workflows referenced it in Settings but it was never built or exported)
 - Built `n8n/workflows/Norr AI Workflow Error Logger.json` — Error Trigger → Extract Error Data (Code, maps display names to registry keys, SQL-escapes all fields, builds Slack message) → Log Failed to Neon (Postgres, `continueOnFail`) → Post to Slack (HTTP, `continueOnFail`); `payload` column stores `execution_id`, `execution_url`, `last_node`, `error_message`
 - Added todos: wire Neon credential + Slack webhook in Error Logger, set Error Workflow setting in all other workflows
+
+### 2026-05-15
+- Brainstormed Mission Control concept: client health, workflow throughput, lead activity, open task visibility, revenue snapshot — scoped down to task/kanban + subagent dispatch as the priority
+- Designed two-table schema (`stories` + `tasks`) instead of self-referencing single table — stories and tasks have different fields and different dispatch semantics
+- Key schema decisions: `seq` int on tasks for ordered display within a story; `context` text field as agent dispatch input; `output` text field for agent results; `assigned_to` for egan vs agent:research etc.; `agent_working` as distinct status from `in_progress`
+- `db/migrations/004_tasks_stories.sql` — `stories` + `tasks` tables with CHECK constraints, updated_at triggers, and indexes
+- `db/migrations/005_seed_tasks.sql` — DO $$ block seeding 8 stories + 11 standalone tasks from CLAUDE.md open tasks (~50 task rows total)
+- `website/internal/mission-control.html` — 1105-line Kanban board: Stories view (default, grid of story cards with progress bars + category dots) + Board view (6 columns: Backlog → Done), task drawer with immediate status/priority updates via POST, Dispatch button for research/analysis tasks (→ Claude API), Copy Agent Prompt for dev/testing tasks (→ clipboard), New Task + New Story modals; Polar Modern design
+- `n8n/workflows/Mission Control List.json` — GET /webhook/mc-tasks; single nested Postgres query with correlated subqueries returns `{ stories: [...with tasks], standalone: [...], generated_at }` in one round trip
+- `n8n/workflows/Mission Control Mutate.json` — POST /webhook/mc-mutate; Switch node routes `update_task` / `create_task` / `create_story` to their respective Postgres operations
+- `n8n/workflows/Mission Control Dispatch.json` — POST /webhook/mc-dispatch; fetches task + story context → Claude Haiku → saves output to `tasks.output`, sets status to `review`
+- `tests/mission-control.spec.js` — 18 Playwright tests; all 294 tests passing
