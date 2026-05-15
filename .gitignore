@@ -19,3 +19,6 @@ playwright-report/
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Claude Code local settings (contains secrets)
+.claude/settings.local.json
