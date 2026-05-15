@@ -1,0 +1,263 @@
+{
+  "name": "Mission Control Mutate",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mc-mutate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 144],
+      "id": "mc-mutate-node-0001",
+      "name": "Webhook",
+      "webhookId": "mc-mutate-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "mc-mutate-token-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [432, 144],
+      "id": "mc-mutate-node-0002",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "mc-switch-rule-001",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "update_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "update_task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "mc-switch-rule-002",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "create_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create_task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "mc-switch-rule-003",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "create_story",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create_story"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [640, 144],
+      "id": "mc-mutate-node-0003",
+      "name": "Route Action"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE tasks SET\n  status      = COALESCE(NULLIF('{{ $json.body.status }}', ''), status),\n  priority    = COALESCE(NULLIF('{{ $json.body.priority }}', ''), priority),\n  description = COALESCE(NULLIF('{{ $json.body.description }}', ''), description),\n  context     = COALESCE(NULLIF('{{ $json.body.context }}', ''), context),\n  output      = COALESCE(NULLIF('{{ $json.body.output }}', ''), output),\n  assigned_to = COALESCE(NULLIF('{{ $json.body.assigned_to }}', ''), assigned_to),\n  updated_at  = now()\nWHERE id = '{{ $json.body.task_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [848, 80],
+      "id": "mc-mutate-node-0004",
+      "name": "Update Task",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO tasks (title, category, priority, status, description, context, story_id)\nVALUES (\n  '{{ $json.body.title }}',\n  '{{ $json.body.category }}',\n  COALESCE(NULLIF('{{ $json.body.priority }}', ''), 'medium'),\n  COALESCE(NULLIF('{{ $json.body.status }}', ''), 'backlog'),\n  NULLIF('{{ $json.body.description }}', ''),\n  NULLIF('{{ $json.body.context }}', ''),\n  NULLIF('{{ $json.body.story_id }}', '')::uuid\n)\nRETURNING *",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [848, 200],
+      "id": "mc-mutate-node-0005",
+      "name": "Create Task",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO stories (title, description, outcome, priority)\nVALUES (\n  '{{ $json.body.title }}',\n  NULLIF('{{ $json.body.description }}', ''),\n  NULLIF('{{ $json.body.outcome }}', ''),\n  COALESCE(NULLIF('{{ $json.body.priority }}', ''), 'medium')\n)\nRETURNING *",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [848, 320],
+      "id": "mc-mutate-node-0006",
+      "name": "Create Story",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": true}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1056, 200],
+      "id": "mc-mutate-node-0007",
+      "name": "Respond"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"error\": \"Unauthorized\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, 320],
+      "id": "mc-mutate-node-0008",
+      "name": "Respond 401"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Token Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [{ "node": "Route Action", "type": "main", "index": 0 }],
+        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [{ "node": "Update Task", "type": "main", "index": 0 }],
+        [{ "node": "Create Task", "type": "main", "index": 0 }],
+        [{ "node": "Create Story", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update Task": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create Task": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create Story": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "mc-mutate-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
