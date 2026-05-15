@@ -447,6 +447,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `json_build_object()` in Postgres SQL is safer than embedding arbitrary text in jsonb string literals — handles quotes and special characters without manual escaping
 - `onError: "continueRegularOutput"` is the JSON-export representation of `continueOnFail: true` — use this in workflow JSON files, not `"continueOnFail": true` at the node level
 - After a Postgres node, `$json` is the Postgres result — always reference the upstream Code node by name (`$('NodeName').first().json`) when building downstream expressions that need data from before the DB call
+- For read-heavy dashboard endpoints, a single Postgres query using nested `json_build_object()` with correlated subqueries returns fully nested JSON in one round trip — no downstream Code node assembly required
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
@@ -505,6 +506,10 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - Dashboard health logic: red = any failures in last 7 days, yellow = no events in 7 days (silence), green = healthy
 - Per-client personalized URLs use `clients.token` (uuid) — no separate `agents` table needed at solo-agent-per-client scale
 - For clients on CRMs with restricted API access (e.g. Weichert/kvCORE), Zapier Starter is the right integration layer — don't try to reverse-engineer inbound-only API keys
+- Mission Control uses two tables (`stories` + `tasks`) not a self-referencing single table — stories and tasks have different schemas and different dispatch semantics; mixed parent/child rows in one table make queries and routing awkward
+- `seq` int on tasks enables ordered display within a story and future auto-advance logic; add it even before the automation is built
+- Task `category` is the dispatch routing key: research/analysis → Claude API via n8n (fully autonomous); dev/testing → formatted prompt for Claude Code (human in loop); ops → neither
+- `agent_working` is a distinct task status from `in_progress` — signals an automated process is running, prevents concurrent edits, gives the board a clear in-flight indicator
 
 ## About the Owner
 
