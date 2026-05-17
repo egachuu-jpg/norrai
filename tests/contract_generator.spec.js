@@ -219,4 +219,20 @@ test.describe('Mark as Signed', () => {
     await page.click('#record-btn');
     await expect(page.locator('#record-btn')).toBeEnabled({ timeout: 5000 });
   });
+
+  test('setup_fee of 0 is accepted — payload includes 0 not empty', async ({ page }) => {
+    await mockWebhook(page);
+    await page.goto(FORM_URL);
+    await fillGenerateForm(page);
+    await page.fill('#setup_fee', '0');
+    await page.click('#generate-btn');
+    await page.fill('#signed_date', '2026-05-20');
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#record-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.setup_fee).toBe(0);
+  });
 });
