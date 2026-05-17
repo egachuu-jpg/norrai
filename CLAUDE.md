@@ -457,6 +457,9 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `onError: "continueRegularOutput"` is the JSON-export representation of `continueOnFail: true` — use this in workflow JSON files, not `"continueOnFail": true` at the node level
 - After a Postgres node, `$json` is the Postgres result — always reference the upstream Code node by name (`$('NodeName').first().json`) when building downstream expressions that need data from before the DB call
 - For read-heavy dashboard endpoints, a single Postgres query using nested `json_build_object()` with correlated subqueries returns fully nested JSON in one round trip — no downstream Code node assembly required
+- Token Check false branch must have a Respond Unauthorized node (401) — a dead-end false branch leaves HTTP connections hanging indefinitely
+- Upsert with CTE: `WITH existing AS (SELECT id FROM t WHERE ...), inserted AS (INSERT INTO t ... WHERE NOT EXISTS (SELECT 1 FROM existing) RETURNING id) SELECT COALESCE((SELECT id FROM existing), (SELECT id FROM inserted))` — single round-trip that returns id regardless of insert vs. existing
+- Sanitize Input Code node between Token Check and Postgres is the right place to escape single quotes (`.replace(/'/g, "''")`), cast numerics with `parseFloat()`, and output a flat clean object; downstream nodes reference it by name, not `$json`
 
 ### n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
@@ -495,8 +498,14 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `open_house.html` stays at root (public, QR code on door) — Cloudflare Access only covers `/clients/*` and `/internal/*`
 - Session durations: clients group = 7 days, internal group = 1 day
 
+### HTML / JavaScript
+- `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
+- `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
+- `btn.disabled = true` after a successful webhook response prevents double-submit — apply this to every form submit handler
+
 ### Playwright / Testing
 - `npx serve` strips `.html` extension AND drops query params in clean-URL redirects — always navigate to the clean path (no `.html`) in Playwright tests when query params are needed
+- `"0".trim()` is truthy — `setup_fee=0` passes a non-empty string check; add an explicit test for zero-value numeric fields to prevent silent regression if validation logic changes
 
 ### BoldTrail / kvCORE
 - Lead Dropbox API key is inbound-only — `GET /contacts` returns 401; it pushes leads into BoldTrail, not out; Zapier uses OAuth separately
