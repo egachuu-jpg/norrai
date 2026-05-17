@@ -287,6 +287,34 @@
       "name": "Insert Lead",
       "continueOnFail": true,
       "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'instant_lead_response',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-528, 500],
+      "id": "ilr-neon-005-4000-8000-000000000005",
+      "name": "Log Triggered",
+      "onError": "continueRegularOutput",
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(NULLIF(NULLIF('{{ $('Find Client').first().json.id }}', ''), 'null'), 'e2f9934c-4d28-4bb4-ac90-4284c1123517')::uuid,\n  'instant_lead_response',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [352, 300],
+      "id": "ilr-neon-006-4000-8000-000000000006",
+      "name": "Log Completed",
+      "onError": "continueRegularOutput",
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
     }
   ],
   "pinData": {
@@ -378,13 +406,15 @@
       "main": [
         [
           { "node": "Build Prompt",        "type": "main", "index": 0 },
-          { "node": "Build Client Query",  "type": "main", "index": 0 }
+          { "node": "Build Client Query",  "type": "main", "index": 0 },
+          { "node": "Log Triggered",       "type": "main", "index": 0 }
         ]
       ]
     },
     "Build Client Query": { "main": [[{ "node": "Find Client",      "type": "main", "index": 0 }]] },
     "Find Client":         { "main": [[{ "node": "Build Lead Insert", "type": "main", "index": 0 }]] },
     "Build Lead Insert":   { "main": [[{ "node": "Insert Lead",       "type": "main", "index": 0 }]] },
+    "Insert Lead":         { "main": [[{ "node": "Log Completed",     "type": "main", "index": 0 }]] },
     "Build Prompt": {
       "main": [
         [

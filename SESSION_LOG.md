@@ -190,6 +190,23 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Built `n8n/workflows/Norr AI Workflow Error Logger.json` — Error Trigger → Extract Error Data (Code, maps display names to registry keys, SQL-escapes all fields, builds Slack message) → Log Failed to Neon (Postgres, `continueOnFail`) → Post to Slack (HTTP, `continueOnFail`); `payload` column stores `execution_id`, `execution_url`, `last_node`, `error_message`
 - Added todos: wire Neon credential + Slack webhook in Error Logger, set Error Workflow setting in all other workflows
 
+### 2026-05-16
+- Fixed `Mission Control Mutate.json` — all three SQL queries (Create Task, Update Task, Create Story) used `NULLIF('{{ expr }}', '')` which doesn't catch n8n's `"undefined"` string; fixed to `NULLIF(NULLIF(..., ''), 'undefined')` pattern throughout
+- Diagnosed Error Logger receiving hardcoded example payload — confirmed it's n8n's built-in sample data displayed on the Error Trigger node in the editor; real data flows to downstream nodes and is visible in the Executions tab
+- Cleaned up Neon: deleted "Test story" and all its test tasks (including the "undefined"-title row created by the CHECK constraint bug)
+- Set task tracking rule: tasks are now in Neon (`stories` + `tasks`), not CLAUDE.md; added stale warning + query to CLAUDE.md Open Tasks section; saved to memory
+- Created "Weichert Client Onboarding" story in Neon with 10 ordered tasks covering the full onboarding sequence
+- **Weichert onboarding progress:**
+  - Task 3 ✅ — INSERT Michelle Jasinski into `clients` (Evan already existed); both agents have UUIDs and tokens
+  - Task 4 ✅ — Added both agent emails to Cloudflare Access `clients` group
+  - Task 5 ✅ — Evan's Zapier Zap live and tested end-to-end; Michelle pending her Zapier key (copy Evan's Zap, swap agentemail); decided on free tier
+  - Task 6 ✅ — Generated personalized tool URLs for both agents using their `clients.token` UUIDs
+  - Task 7 ✅ — Wired Error Logger credentials in n8n: Neon Postgres + Slack webhook from `.env`
+  - Task 8 ✅ — Set Error Workflow → `Norr AI Workflow Error Logger` in all active workflows
+- Added "Expand agent_token consumption to all client-facing workflows" as a standalone task on the board — currently only Instant Lead Response uses it; connection to Client Health dashboard value noted
+- Added `workflow_events` logging (Log Triggered + Log Completed) to `Real Estate Instant Lead Response.json` — Log Triggered fires in parallel from Validate Input using `norrai_internal`; Log Completed fires after Insert Lead using actual `client_id` from Find Client with norrai_internal fallback; re-imported into n8n
+- Discussed Zapier free tier inactivity pause — no clean programmatic workaround for BoldTrail-triggered Zaps
+
 ### 2026-05-15
 - Brainstormed Mission Control concept: client health, workflow throughput, lead activity, open task visibility, revenue snapshot — scoped down to task/kanban + subagent dispatch as the priority
 - Designed two-table schema (`stories` + `tasks`) instead of self-referencing single table — stories and tasks have different fields and different dispatch semantics
