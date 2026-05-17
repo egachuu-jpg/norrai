@@ -340,6 +340,7 @@ document.getElementById('record-btn').addEventListener('click', async function (
     statusEl.textContent = 'Contract recorded in Neon.';
     statusEl.className   = 'status-msg success';
     btn.textContent      = 'Recorded';
+    btn.disabled         = true;
   } catch {
     statusEl.textContent = 'Error recording contract. Try again or check n8n.';
     statusEl.className   = 'status-msg error';
