@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contract Generator — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone: #FAFAF7; --ink: #0A0F1A; --glacial: #7FA9B8; --graphite: #3A3F48;
+    --blush: #E8D4C4; --surface: #FFFFFF; --border: #E5E4DE; --muted: #9EA3AA;
+    --secondary: #6A6F78;
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; min-height: 100dvh; }
+
+  .site-header { background: var(--ink); padding: 40px 24px 36px; border-bottom: 1px solid #1e2535; }
+  .site-header-inner { max-width: 800px; margin: 0 auto; }
+  .eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px; }
+  .site-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.03em; line-height: 1.1; color: var(--bone); }
+
+  .wrap { max-width: 800px; margin: 0 auto; padding: 36px 24px 72px; display: flex; flex-direction: column; gap: 32px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; }
+  .card h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; margin-bottom: 20px; }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  label { font-size: 13px; font-weight: 500; color: var(--secondary); }
+  input, select {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 14px; font-family: var(--font-body);
+    background: var(--surface); color: var(--ink);
+    transition: border-color 0.15s; width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--glacial); }
+
+  .btn-primary {
+    background: var(--ink); color: var(--bone);
+    border: none; border-radius: var(--radius-sm);
+    padding: 12px 24px; font-family: var(--font-display); font-weight: 600;
+    font-size: 14px; letter-spacing: -0.01em; cursor: pointer;
+    transition: background 0.15s; margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--graphite); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 20px; font-family: var(--font-display); font-weight: 500;
+    font-size: 13px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--glacial); }
+
+  .contract-actions { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+
+  .contract-document {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 48px 56px;
+    font-size: 13px; line-height: 1.65; color: var(--ink);
+  }
+  .contract-document .contract-header { text-align: center; margin-bottom: 32px; border-bottom: 2px solid var(--ink); padding-bottom: 20px; }
+  .contract-document .contract-header h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .contract-document .contract-header p { font-size: 13px; color: var(--secondary); margin-top: 4px; }
+  .contract-document p { margin-bottom: 12px; }
+  .contract-document h3 { font-family: var(--font-display); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin: 24px 0 8px; color: var(--ink); }
+  .contract-document ul { margin: 8px 0 12px 20px; }
+  .contract-document ul li { margin-bottom: 4px; }
+  .contract-document .contract-intro { margin-bottom: 24px; }
+
+  .signature-block { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); }
+  .sig-col p { font-size: 13px; margin-bottom: 4px; line-height: 1.4; }
+  .sig-line { border-bottom: 1px solid var(--ink); margin: 28px 0 8px; }
+  .sig-date { margin-top: 16px !important; color: var(--secondary); }
+
+  .status-msg { display: none; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 12px; }
+  .status-msg.success { display: block; background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; }
+  .status-msg.error   { display: block; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
+
+  @media (max-width: 600px) {
+    .field-row { grid-template-columns: 1fr; }
+    .contract-document { padding: 28px 24px; }
+    .signature-block { grid-template-columns: 1fr; gap: 32px; }
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { background: white; }
+    .wrap { padding: 0; max-width: 100%; }
+    #contract-preview { display: block !important; }
+    .contract-actions { display: none !important; }
+    .contract-document {
+      border: none; padding: 0;
+      font-size: 11pt; line-height: 1.6;
+    }
+    .contract-document .contract-header h1 { font-size: 16pt; }
+    .contract-document h3 { font-size: 9pt; }
+    .signature-block { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header no-print">
+  <div class="site-header-inner">
+    <p class="eyebrow">Internal</p>
+    <h1>Contract Generator</h1>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- Section A: Generate form -->
+  <div class="card no-print" id="generate-card">
+    <h2>Generate Contract</h2>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="contact_name">Client Name</label>
+        <input type="text" id="contact_name" placeholder="Sarah Johnson" required>
+      </div>
+      <div class="field-group">
+        <label for="business_name">Business Name</label>
+        <input type="text" id="business_name" placeholder="Johnson Family Dental" required>
+      </div>
+    </div>
+    <div class="field-group">
+      <label for="contact_email">Contact Email</label>
+      <input type="email" id="contact_email" placeholder="sarah@johnsondental.com" required>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="monthly_price">Monthly Retainer ($)</label>
+        <input type="number" id="monthly_price" placeholder="500" min="1" step="1" required>
+      </div>
+      <div class="field-group">
+        <label for="setup_fee">Setup Fee ($)</label>
+        <input type="number" id="setup_fee" placeholder="500" min="0" step="1" required>
+      </div>
+    </div>
+    <div class="field-group">
+      <label for="start_date">Contract Start Date</label>
+      <input type="date" id="start_date" required>
+    </div>
+    <button type="button" class="btn-primary" id="generate-btn">Generate Contract</button>
+  </div>
+
+  <!-- Section B: Contract preview -->
+  <div id="contract-preview" style="display:none">
+    <div class="contract-actions no-print">
+      <button type="button" class="btn-secondary" id="print-btn" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+    <div id="contract-body" class="contract-document"></div>
+  </div>
+
+  <!-- Section C: Mark as Signed -->
+  <div class="card no-print" id="sign-section" style="display:none">
+    <h2>Mark as Signed</h2>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="signed_date">Signed Date</label>
+        <input type="date" id="signed_date" required>
+      </div>
+      <div class="field-group">
+        <label for="signed_via">Signed Via</label>
+        <select id="signed_via">
+          <option value="email_reply">Email reply ("I agree")</option>
+          <option value="print_scan">Print, sign, scan, email back</option>
+          <option value="docusign">DocuSign</option>
+        </select>
+      </div>
+    </div>
+    <button type="button" class="btn-primary" id="record-btn">Record Signature</button>
+    <div id="sign-status" class="status-msg"></div>
+  </div>
+
+</main>
+
+<script>
+const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/contract-signed';
+const NORR_TOKEN  = '8F68D963-7060-4033-BD04-7593E4B203CB';
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function fmtMoney(n) {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(dateStr) {
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
+
+function renderContract({ contact_name, business_name, contact_email, monthly_price, setup_fee, start_date }) {
+  const n  = escapeHtml(contact_name);
+  const b  = escapeHtml(business_name);
+  const e  = escapeHtml(contact_email);
+  const mp = fmtMoney(monthly_price);
+  const sf = fmtMoney(setup_fee);
+  const sd = fmtDate(start_date);
+
+  return `
+    <div class="contract-header">
+      <h1>Service Agreement</h1>
+      <p>Norr AI LLC</p>
+    </div>
+
+    <p class="contract-intro">This Service Agreement ("Agreement") is entered into as of <strong>${sd}</strong> between <strong>Norr AI LLC</strong>, a Minnesota limited liability company ("Norr AI"), and <strong>${b}</strong> ("Client").</p>
+
+    <h3>1. Services</h3>
+    <p>Norr AI will provide automation workflow services using n8n and Claude API technology, as mutually agreed upon in writing ("Services"). Services are template-based and do not include custom software development.</p>
+
+    <h3>2. Fees and Payment</h3>
+    <p>Client agrees to pay:</p>
+    <ul>
+      <li>A one-time setup fee of <strong>$${sf}</strong>, due upon execution of this Agreement.</li>
+      <li>A monthly retainer of <strong>$${mp}</strong>, due on the same date each month beginning ${sd}.</li>
+    </ul>
+    <p>The setup fee is non-refundable. Invoices not paid within 15 days of the due date may result in suspension of services.</p>
+
+    <h3>3. Term and Cancellation</h3>
+    <p>This Agreement begins on ${sd} and continues month-to-month until terminated. Either party may terminate this Agreement with 30 days written notice to the other party. Upon termination, Client is responsible for fees accrued through the end of the notice period. The setup fee is non-refundable.</p>
+
+    <h3>4. Ownership of Work Product</h3>
+    <p>Norr AI retains ownership of all automation workflows, templates, infrastructure, and tooling developed or used in connection with the Services. Client retains ownership of its own business data processed through the Services.</p>
+
+    <h3>5. Confidentiality</h3>
+    <p>Each party agrees to keep confidential the other party's non-public business information disclosed in connection with this Agreement and to use such information solely for the purpose of fulfilling obligations hereunder.</p>
+
+    <h3>6. No Guarantee of Results</h3>
+    <p>Norr AI will apply reasonable skill and care in delivering the Services. Norr AI makes no guarantee of specific outcomes, including but not limited to lead volume, revenue, conversion rates, or any other business metric.</p>
+
+    <h3>7. Limitation of Liability</h3>
+    <p>Norr AI's total liability to Client for any claim arising out of or related to this Agreement shall not exceed the fees paid by Client to Norr AI in the 30 days preceding the claim. In no event shall Norr AI be liable for indirect, incidental, or consequential damages.</p>
+
+    <h3>8. Governing Law</h3>
+    <p>This Agreement is governed by the laws of the State of Minnesota. Any disputes shall be resolved in Rice County, Minnesota.</p>
+
+    <h3>9. Entire Agreement</h3>
+    <p>This Agreement constitutes the entire agreement between the parties regarding the Services and supersedes all prior discussions and agreements.</p>
+
+    <div class="signature-block">
+      <div class="sig-col">
+        <p><strong>NORR AI LLC</strong></p>
+        <div class="sig-line"></div>
+        <p>Egan</p>
+        <p>Norr AI LLC</p>
+        <p>hello@norrai.co</p>
+        <p class="sig-date">Date: _______________</p>
+      </div>
+      <div class="sig-col">
+        <p><strong>CLIENT: ${b}</strong></p>
+        <div class="sig-line"></div>
+        <p>${n}</p>
+        <p>${b}</p>
+        <p>${e}</p>
+        <p class="sig-date">Date: _______________</p>
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('generate-btn').addEventListener('click', function () {
+  const ids = ['contact_name', 'business_name', 'contact_email', 'monthly_price', 'setup_fee', 'start_date'];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (!el.value.trim() || !el.checkValidity()) {
+      el.reportValidity();
+      return;
+    }
+  }
+
+  const data = {
+    contact_name:  document.getElementById('contact_name').value.trim(),
+    business_name: document.getElementById('business_name').value.trim(),
+    contact_email: document.getElementById('contact_email').value.trim(),
+    monthly_price: document.getElementById('monthly_price').value,
+    setup_fee:     document.getElementById('setup_fee').value,
+    start_date:    document.getElementById('start_date').value,
+  };
+
+  document.getElementById('contract-body').innerHTML = renderContract(data);
+  document.getElementById('contract-preview').style.display = 'block';
+  document.getElementById('sign-section').style.display    = 'block';
+  document.getElementById('contract-preview').scrollIntoView({ behavior: 'smooth' });
+});
+
+document.getElementById('record-btn').addEventListener('click', async function () {
+  const signedDate = document.getElementById('signed_date').value;
+  if (!signedDate) {
+    document.getElementById('signed_date').reportValidity();
+    return;
+  }
+
+  const btn      = this;
+  const statusEl = document.getElementById('sign-status');
+  btn.disabled    = true;
+  btn.textContent = 'Recording\u2026';
+  statusEl.className   = 'status-msg';
+  statusEl.textContent = '';
+
+  const payload = {
+    contact_name:  document.getElementById('contact_name').value.trim(),
+    business_name: document.getElementById('business_name').value.trim(),
+    contact_email: document.getElementById('contact_email').value.trim(),
+    monthly_price: parseFloat(document.getElementById('monthly_price').value),
+    setup_fee:     parseFloat(document.getElementById('setup_fee').value),
+    start_date:    document.getElementById('start_date').value,
+    signed_date:   signedDate,
+    signed_via:    document.getElementById('signed_via').value,
+    tier:          'starter',
+  };
+
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Norr-Token': NORR_TOKEN,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    statusEl.textContent = 'Contract recorded in Neon.';
+    statusEl.className   = 'status-msg success';
+    btn.textContent      = 'Recorded';
+  } catch {
+    statusEl.textContent = 'Error recording contract. Try again or check n8n.';
+    statusEl.className   = 'status-msg error';
+    btn.disabled         = false;
+    btn.textContent      = 'Record Signature';
+  }
+});
+</script>
+</body>
+</html>
