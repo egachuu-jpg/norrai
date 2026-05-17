@@ -165,6 +165,14 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Wrote design spec: `docs/superpowers/specs/2026-05-12-bday-anniversary-outreach-design.md`
 - Added `bday_anniversary_outreach` to workflow name registry (pending CLAUDE.md update)
 
+### 2026-05-17
+- Brainstormed and designed Starter tier contract system — design spec: `docs/superpowers/specs/2026-05-17-starter-contract-system-design.md`
+- Built `website/internal/contract_generator.html` — two-section internal tool: Generate (renders print-ready contract from form fields) + Mark as Signed (fires POST to n8n after client returns signed copy); supports email reply / print-scan / DocuSign signing methods via dropdown
+- Built `tests/contract_generator.spec.js` — 25 tests covering page load, required fields, contract rendering, Mark as Signed payload (including setup_fee=0 edge case); 319/319 tests passing
+- Built `n8n/workflows/Norr AI Contract Signed.json` — 9-node workflow: Token Check → Respond Unauthorized (401 on false) → Sanitize Input (Code, escapes quotes, casts numerics) → Upsert Client (CTE pattern) → Log Triggered → Insert Contract → Log Completed → Respond Success; imported and smoke tested working
+- Added `contract_signed` to workflow_name registry in CLAUDE.md
+- Implementation used TDD + subagent-driven development on `feature/starter-contracts` worktree; merged to main
+
 ### 2026-05-14
 - Removed approval step from `Real Estate Lead Response Auto.json` — now sends directly to lead via SendGrid (SMS pending A2P registration)
 - Added `Update Lead Record` Postgres node — sets `status = 'contacted'`, logs `last_outreach_at` / `last_outreach_type` in `metadata` jsonb after send
