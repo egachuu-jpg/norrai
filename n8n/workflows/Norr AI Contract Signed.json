@@ -1,0 +1,178 @@
+{
+  "name": "Norr AI Contract Signed",
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "contract-signed-webhook-001",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contract-signed",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-token-check",
+      "name": "Token Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-token",
+              "leftValue": "={{ $json.headers['x-norr-token'] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-sanitize",
+      "name": "Sanitize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst s = str => String(str || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    contact_name:  s(body.contact_name),\n    business_name: s(body.business_name),\n    contact_email: s(body.contact_email),\n    monthly_price: parseFloat(body.monthly_price) || 0,\n    setup_fee:     parseFloat(body.setup_fee) || 0,\n    start_date:    s(body.start_date),\n    signed_date:   s(body.signed_date),\n    signed_via:    s(body.signed_via),\n    tier:          s(body.tier)\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-upsert-client",
+      "name": "Upsert Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [850, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH existing AS (\n  SELECT id FROM clients\n  WHERE primary_contact_email = '{{ $json.contact_email }}'\n  LIMIT 1\n),\ninserted AS (\n  INSERT INTO clients (business_name, vertical, tier, status, primary_contact_name, primary_contact_email)\n  SELECT '{{ $json.business_name }}', 'tbd', 'starter', 'active', '{{ $json.contact_name }}', '{{ $json.contact_email }}'\n  WHERE NOT EXISTS (SELECT 1 FROM existing)\n  RETURNING id\n)\nSELECT COALESCE((SELECT id FROM existing), (SELECT id FROM inserted)) AS client_id",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "node-log-triggered",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1050, 300],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Upsert Client').first().json.client_id }}'::uuid,\n  'contract_signed',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}')\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "node-insert-contract",
+      "name": "Insert Contract",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1250, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO service_contracts (client_id, tier, monthly_price, setup_fee, start_date, status, notes)\nVALUES (\n  '{{ $('Upsert Client').first().json.client_id }}'::uuid,\n  'starter',\n  {{ $('Sanitize Input').first().json.monthly_price }},\n  {{ $('Sanitize Input').first().json.setup_fee }},\n  '{{ $('Sanitize Input').first().json.start_date }}'::date,\n  'active',\n  'Signed {{ $('Sanitize Input').first().json.signed_date }} via {{ $('Sanitize Input').first().json.signed_via }}'\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "node-log-completed",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1450, 300],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Upsert Client').first().json.client_id }}'::uuid,\n  'contract_signed',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "node-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1650, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({success: true}) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Token Check", "type": "main", "index": 0}]]
+    },
+    "Token Check": {
+      "main": [
+        [{"node": "Sanitize Input", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Sanitize Input": {
+      "main": [[{"node": "Upsert Client", "type": "main", "index": 0}]]
+    },
+    "Upsert Client": {
+      "main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]
+    },
+    "Log Triggered": {
+      "main": [[{"node": "Insert Contract", "type": "main", "index": 0}]]
+    },
+    "Insert Contract": {
+      "main": [[{"node": "Log Completed", "type": "main", "index": 0}]]
+    },
+    "Log Completed": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "errorWorkflow": "Norr AI Workflow Error Logger",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": true },
+  "tags": []
+}
