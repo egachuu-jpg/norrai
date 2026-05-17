@@ -323,6 +323,10 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ## Open Tasks
 
+> **IMPORTANT:** Tasks are now tracked in Neon (`stories` + `tasks` tables) and visualized in the Mission Control dashboard (`/internal/mission-control.html`). The list below is **stale** — do not reference it. Query Neon directly for current task state.
+>
+> Quick query: `SELECT t.title, t.status, t.priority, s.title as story FROM tasks t LEFT JOIN stories s ON t.story_id = s.id ORDER BY t.priority, t.seq;`
+
 ### Meta
 - [ ] Audit and reorganize Open Tasks — reduce essay-length bullets to one-liners, move detailed specs to PRDs, remove stale items, tighten section structure
 
@@ -374,6 +378,8 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - [x] Apply `research_cache` table to Neon production — applied 2026-05-10
 - [ ] **Evaluate Token Check nodes across all workflows** — every workflow has a Token Check IF node that checks `x-norr-token: 8F68D963-7060-4033-BD04-7593E4B203CB` against the incoming header. This token is hardcoded in every client-facing HTML form and baked into the n8n IF condition — it's the same shared secret everywhere. The honest security value is low: anyone who views page source can see the token, and it's the same across all workflows. The real protection for agent-facing forms is Cloudflare Access (email OTP on `/clients/*`). Evaluate whether to: (a) **remove Token Check entirely** from all workflows and rely on Cloudflare Access as the auth layer; (b) **keep it but per-client** — rotate to a per-client token stored in Neon, looked up dynamically, so one leaked token doesn't open all workflows; or (c) **keep as-is** and accept it as a basic CSRF/accident guard rather than real security. Option (a) is likely the right call for workflows only triggered by Cloudflare-protected forms. Workflows that accept external webhooks (intake sources, chief of staff) are a separate question — those may need the check or a signed secret.
 - [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
+- [ ] **Telegram → Claude Code bridge** — Telegram bot on remote server that forwards messages to `claude --print` and returns output; enables sending tasks to Claude Code from phone; hybrid option: `tmux send-keys` for long-running sessions; n8n Telegram Trigger node as alternative to custom bot
+
 - [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
 
 - [ ] **Build client birthday & anniversary outreach workflow** — n8n scheduled job (daily) queries `leads` table for clients whose birthday or home buying/selling anniversary falls today, Claude drafts a personalized SMS or email, sends via Twilio/SendGrid; store `birthday` and `transaction_anniversary` date fields in `leads.metadata`; Growth tier feature — positions agents as top-of-mind without manual effort
@@ -442,8 +448,10 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - After a parallel fan-out (e.g., Send to Lead → [Update Lead Record, Send Agent Copy]), `$json` in each downstream node is that node's own input — the HTTP response from the fork source, not the lead data; use `$('UpstreamNodeName').first().json.*` for all fields
 - `{{ JSON.stringify($json.field) }}}` triple-brace in jsonBody causes n8n parse errors — use `"{{ $json.field }}"` (quoted expression) for simple string fields that don't need JSON encoding
 - Neon SQL UUID quoting: always wrap UUID expressions in single quotes inside SQL strings — `'{{ $json.id }}'`, not `{{ $json.id }}`; bare UUID causes "invalid input syntax for type uuid" error
+- `NULLIF('{{ $json.body.field }}', '')` is not sufficient — when n8n can't resolve the expression it renders the literal string `"undefined"`, which passes `NULLIF` and hits CHECK constraints; always use `NULLIF(NULLIF('{{ $json.body.field }}', ''), 'undefined')` in Postgres nodes
 - Dynamic client lookup from BoldTrail/Zapier payload: read `agentemail` from Zapier trigger, sanitize with `.replace(/'/g, "''")`, query `clients` table by `primary_contact_email` to get `id` and `token` — eliminates hardcoded placeholder tokens
 - Error Trigger payload fields: `$json.execution.lastNodeExecuted`, `$json.execution.error.message`, and `$json.execution.url` are available in error workflows — log all three or the dashboard can only show that something failed, not where or why
+- The Error Trigger node always displays n8n's hardcoded example payload in the editor (id: 231, "Example Error Message", "Example Workflow") regardless of what actually ran — to see real error data, open the execution in the Executions tab and check the downstream node (e.g., Extract Error Data) output, not the Error Trigger node itself
 - `json_build_object()` in Postgres SQL is safer than embedding arbitrary text in jsonb string literals — handles quotes and special characters without manual escaping
 - `onError: "continueRegularOutput"` is the JSON-export representation of `continueOnFail: true` — use this in workflow JSON files, not `"continueOnFail": true` at the node level
 - After a Postgres node, `$json` is the Postgres result — always reference the upstream Code node by name (`$('NodeName').first().json`) when building downstream expressions that need data from before the DB call
@@ -510,6 +518,8 @@ Instead of the workflow sending the automated text directly to the lead, route i
 - `seq` int on tasks enables ordered display within a story and future auto-advance logic; add it even before the automation is built
 - Task `category` is the dispatch routing key: research/analysis → Claude API via n8n (fully autonomous); dev/testing → formatted prompt for Claude Code (human in loop); ops → neither
 - `agent_working` is a distinct task status from `in_progress` — signals an automated process is running, prevents concurrent edits, gives the board a clear in-flight indicator
+- Tasks are tracked in Neon (`stories` + `tasks` tables), not in CLAUDE.md — the Open Tasks section in CLAUDE.md is stale; always query Neon for current task state
+- Zapier free tier Zaps pause after 2 weeks of inactivity — no programmatic workaround for BoldTrail-triggered Zaps (can't synthetically fire BoldTrail events); accept the risk for active agents or pay $20/mo Starter
 
 ## About the Owner
 

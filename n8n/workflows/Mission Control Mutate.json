@@ -21,113 +21,43 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
+            "typeValidation": "loose"
           },
           "conditions": [
             {
               "id": "mc-mutate-token-001",
-              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "leftValue": "={{ $json.headers['x-norr-token'] }}",
               "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
               "operator": {
                 "type": "string",
-                "operation": "startsWith"
+                "operation": "equals"
               }
             }
           ],
-          "combinator": "or"
+          "combinator": "and"
         },
-        "looseTypeValidation": true,
         "options": {}
       },
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "typeVersion": 2.2,
       "position": [432, 144],
       "id": "mc-mutate-node-0002",
       "name": "Token Check"
     },
     {
       "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.body.action }}",
         "rules": {
           "rules": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "mc-switch-rule-001",
-                    "leftValue": "={{ $json.body.action }}",
-                    "rightValue": "update_task",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "update_task"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "mc-switch-rule-002",
-                    "leftValue": "={{ $json.body.action }}",
-                    "rightValue": "create_task",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "create_task"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "mc-switch-rule-003",
-                    "leftValue": "={{ $json.body.action }}",
-                    "rightValue": "create_story",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "create_story"
-            }
+            { "value2": "update_task" },
+            { "value2": "create_task" },
+            { "value2": "create_story" }
           ]
-        },
-        "options": {}
+        }
       },
       "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.2,
+      "typeVersion": 2,
       "position": [640, 144],
       "id": "mc-mutate-node-0003",
       "name": "Route Action"
@@ -135,12 +65,12 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE tasks SET\n  status      = COALESCE(NULLIF('{{ $json.body.status }}', ''), status),\n  priority    = COALESCE(NULLIF('{{ $json.body.priority }}', ''), priority),\n  description = COALESCE(NULLIF('{{ $json.body.description }}', ''), description),\n  context     = COALESCE(NULLIF('{{ $json.body.context }}', ''), context),\n  output      = COALESCE(NULLIF('{{ $json.body.output }}', ''), output),\n  assigned_to = COALESCE(NULLIF('{{ $json.body.assigned_to }}', ''), assigned_to),\n  updated_at  = now()\nWHERE id = '{{ $json.body.task_id }}'",
+        "query": "UPDATE tasks SET\n  status      = COALESCE(NULLIF(NULLIF('{{ $json.body.status }}', ''), 'undefined'), status),\n  priority    = COALESCE(NULLIF(NULLIF('{{ $json.body.priority }}', ''), 'undefined'), priority),\n  description = COALESCE(NULLIF(NULLIF('{{ $json.body.description }}', ''), 'undefined'), description),\n  context     = COALESCE(NULLIF(NULLIF('{{ $json.body.context }}', ''), 'undefined'), context),\n  output      = COALESCE(NULLIF(NULLIF('{{ $json.body.output }}', ''), 'undefined'), output),\n  assigned_to = COALESCE(NULLIF(NULLIF('{{ $json.body.assigned_to }}', ''), 'undefined'), assigned_to),\n  updated_at  = now()\nWHERE id = '{{ $json.body.task_id }}'",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 80],
+      "position": [848, 48],
       "id": "mc-mutate-node-0004",
       "name": "Update Task",
       "credentials": {
@@ -153,12 +83,12 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO tasks (title, category, priority, status, description, context, story_id)\nVALUES (\n  '{{ $json.body.title }}',\n  '{{ $json.body.category }}',\n  COALESCE(NULLIF('{{ $json.body.priority }}', ''), 'medium'),\n  COALESCE(NULLIF('{{ $json.body.status }}', ''), 'backlog'),\n  NULLIF('{{ $json.body.description }}', ''),\n  NULLIF('{{ $json.body.context }}', ''),\n  NULLIF('{{ $json.body.story_id }}', '')::uuid\n)\nRETURNING *",
+        "query": "INSERT INTO tasks (title, category, priority, status, description, context, story_id)\nVALUES (\n  '{{ $json.body.title }}',\n  '{{ $json.body.category }}',\n  COALESCE(NULLIF(NULLIF('{{ $json.body.priority }}', ''), 'undefined'), 'medium'),\n  COALESCE(NULLIF(NULLIF('{{ $json.body.status }}', ''), 'undefined'), 'backlog'),\n  NULLIF(NULLIF('{{ $json.body.description }}', ''), 'undefined'),\n  NULLIF(NULLIF('{{ $json.body.context }}', ''), 'undefined'),\n  NULLIF(NULLIF('{{ $json.body.story_id }}', ''), 'undefined')::uuid\n)\nRETURNING *",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 200],
+      "position": [848, 192],
       "id": "mc-mutate-node-0005",
       "name": "Create Task",
       "credentials": {
@@ -171,12 +101,12 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO stories (title, description, outcome, priority)\nVALUES (\n  '{{ $json.body.title }}',\n  NULLIF('{{ $json.body.description }}', ''),\n  NULLIF('{{ $json.body.outcome }}', ''),\n  COALESCE(NULLIF('{{ $json.body.priority }}', ''), 'medium')\n)\nRETURNING *",
+        "query": "INSERT INTO stories (title, description, outcome, priority)\nVALUES (\n  '{{ $json.body.title }}',\n  NULLIF(NULLIF('{{ $json.body.description }}', ''), 'undefined'),\n  NULLIF(NULLIF('{{ $json.body.outcome }}', ''), 'undefined'),\n  COALESCE(NULLIF(NULLIF('{{ $json.body.priority }}', ''), 'undefined'), 'medium')\n)\nRETURNING *",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 320],
+      "position": [848, 336],
       "id": "mc-mutate-node-0006",
       "name": "Create Story",
       "credentials": {
@@ -189,19 +119,19 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\"success\": true}",
+        "responseBody": "{\"success\": true}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1056, 200],
+      "position": [1056, 192],
       "id": "mc-mutate-node-0007",
       "name": "Respond"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\"error\": \"Unauthorized\"}",
+        "responseBody": "{\"error\": \"Unauthorized\"}",
         "options": {
           "responseCode": 401
         }
@@ -253,7 +183,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "mc-mutate-v1-001",
+  "versionId": "mc-mutate-v1-002",
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
