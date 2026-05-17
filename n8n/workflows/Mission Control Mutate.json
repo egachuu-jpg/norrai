@@ -21,113 +21,43 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
+            "typeValidation": "loose"
           },
           "conditions": [
             {
               "id": "mc-mutate-token-001",
-              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "leftValue": "={{ $json.headers['x-norr-token'] }}",
               "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
               "operator": {
                 "type": "string",
-                "operation": "startsWith"
+                "operation": "equals"
               }
             }
           ],
-          "combinator": "or"
+          "combinator": "and"
         },
-        "looseTypeValidation": true,
         "options": {}
       },
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "typeVersion": 2.2,
       "position": [432, 144],
       "id": "mc-mutate-node-0002",
       "name": "Token Check"
     },
     {
       "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.body.action }}",
         "rules": {
           "rules": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "mc-switch-rule-001",
-                    "leftValue": "={{ $json.body.action }}",
-                    "rightValue": "update_task",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "update_task"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "mc-switch-rule-002",
-                    "leftValue": "={{ $json.body.action }}",
-                    "rightValue": "create_task",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "create_task"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "mc-switch-rule-003",
-                    "leftValue": "={{ $json.body.action }}",
-                    "rightValue": "create_story",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "create_story"
-            }
+            { "value2": "update_task" },
+            { "value2": "create_task" },
+            { "value2": "create_story" }
           ]
-        },
-        "options": {}
+        }
       },
       "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.2,
+      "typeVersion": 2,
       "position": [640, 144],
       "id": "mc-mutate-node-0003",
       "name": "Route Action"
@@ -140,7 +70,7 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 80],
+      "position": [848, 48],
       "id": "mc-mutate-node-0004",
       "name": "Update Task",
       "credentials": {
@@ -158,7 +88,7 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 200],
+      "position": [848, 192],
       "id": "mc-mutate-node-0005",
       "name": "Create Task",
       "credentials": {
@@ -176,7 +106,7 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 320],
+      "position": [848, 336],
       "id": "mc-mutate-node-0006",
       "name": "Create Story",
       "credentials": {
@@ -189,19 +119,19 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\"success\": true}",
+        "responseBody": "{\"success\": true}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1056, 200],
+      "position": [1056, 192],
       "id": "mc-mutate-node-0007",
       "name": "Respond"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\"error\": \"Unauthorized\"}",
+        "responseBody": "{\"error\": \"Unauthorized\"}",
         "options": {
           "responseCode": 401
         }
@@ -253,7 +183,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "mc-mutate-v1-001",
+  "versionId": "mc-mutate-v1-002",
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
