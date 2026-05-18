@@ -146,11 +146,6 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Real Estate Custom Form Intake | `custom_form_intake` |
 | Real Estate Lead Response Auto | `lead_response_auto` |
 | Real Estate Lead Action Handler | `lead_action_handler` |
-| Real Estate Lead Cleanser | `lead_cleanser` |
-| Real Estate Zillow Intake | `zillow_intake` |
-| Real Estate Realtor Intake | `realtor_intake` |
-| Real Estate Facebook Intake | `facebook_intake` |
-| Real Estate Custom Form Intake | `custom_form_intake` |
 | Client Discovery → Claude Analysis | `client_discovery` |
 | Client Onboarding → Claude Analysis | `client_onboarding` |
 | Event Ops Discovery | `event_ops_discovery` |
@@ -324,71 +319,11 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ## Open Tasks
 
-> **IMPORTANT:** Tasks are now tracked in Neon (`stories` + `tasks` tables) and visualized in the Mission Control dashboard (`/internal/mission-control.html`). The list below is **stale** — do not reference it. Query Neon directly for current task state.
+> **Tasks are tracked in Neon (`stories` + `tasks` tables), not here.** Query Neon for current state:
 >
-> Quick query: `SELECT t.title, t.status, t.priority, s.title as story FROM tasks t LEFT JOIN stories s ON t.story_id = s.id ORDER BY t.priority, t.seq;`
-
-### Meta
-- [ ] Audit and reorganize Open Tasks — reduce essay-length bullets to one-liners, move detailed specs to PRDs, remove stale items, tighten section structure
-
-### Immediate
-- [x] Connect `listing_form.html` to n8n production webhook URL
-- [ ] Upgrade Twilio account, buy local 507 number, replace toll-free 855
-- [x] Complete SendGrid domain authentication DNS records for norrai.co
-- [ ] Open Relay business bank account once MN LLC approval certificate arrives
-
-### Security (Pre-First Client)
-- [x] Fix `innerHTML` → `textContent` in `open_house_setup.html` line 307 — XSS code smell, one-line fix
-- [x] Set up Cloudflare Access (Zero Trust) on all agent-facing forms — restructured website/ into clients/ and internal/ subfolders; two Access Groups (clients, internal) + two Applications protect /clients/* and /internal/* with email OTP (7-day and 1-day sessions)
-- [ ] Add rate limiting to n8n webhook endpoints — prevent abuse before first live client
-- [x] Add server-side input validation in n8n workflows — added to Instant Lead Response (Validate Input node) and Open House Follow-Up (Prep Wait Time node)
-- [ ] Encrypt PII columns in Neon DB (phone, email, name) using pgcrypto — currently plaintext
-- [x] Add explicit input escaping for user-supplied fields in n8n Claude prompt templates (lead_name, lead_message) — [DATA][/DATA] delimiter wrapping added to Instant Lead Response and Open House Follow-Up prompts
-
-### Research / Product Decisions
-- [ ] **Real estate email inbox lead ingestion — design and build email-to-lead pipeline:** Many agents receive leads via email from lead companies (Zillow, Realtor.com, Homes.com, BoomTown, Opcity, etc.). Build a pipeline that monitors an agent's inbox, detects emails from known lead providers, parses the lead data out of the email body, normalizes it to the standard payload shape, runs it through the existing lead cleansing/dedupe layer, and auto-enrolls in the instant lead response + cold nurture workflows. Key design decisions: (a) **Email access method** — Gmail API via n8n Gmail Trigger node (cleanest, OAuth, real-time push) vs. IMAP polling (works for any inbox, slightly more setup); Gmail Trigger is the right default for agents on Google Workspace. (b) **Parsing approach** — each lead company sends a different email format; options are n8n Code node with per-provider regex/string extraction, a managed email parsing service (Mailparser.io, Parseur) that normalizes to JSON before hitting n8n, or Claude itself to extract structured lead data from raw email HTML (most flexible, handles format drift). Claude extraction is the strongest long-term choice — pass raw email body, get back normalized JSON. (c) **Provider detection** — use sender domain (`@zillow.com`, `@realtor.com`, etc.) or subject line patterns to identify lead emails and ignore everything else. (d) **Normalization** — all parsed leads must conform to the existing normalized payload shape before hitting the cleansing workflow (`lead_name`, `email`, `phone`, `source`, `property_address`, `price_range`, `beds`, `lead_message`). Dedupe check against Neon `leads` table by email + phone before firing any sequence. This is an intake source addition, not a new workflow — it plugs into the existing architecture upstream of everything that already works.
-- [ ] **Real estate lead reply handling — decide on conversation architecture:** When a lead replies to an AI-sent SMS or email, should the workflow (a) let the AI continue the conversation autonomously (bidirectional AI ↔ lead loop), or (b) capture the reply, stop automation, and route it directly to the agent to pick up manually? Key tradeoffs: option (a) is faster and scales infinitely but risks the AI going off-script or losing trust on a high-value transaction; option (b) is safer and keeps the agent in control but adds latency and defeats part of the value prop. Consider a hybrid: AI handles first 1–2 reply turns (answers basic questions, re-qualifies interest), then hands off to agent with full context. Research how other real estate AI tools (Follow Up Boss, Sierra, Ylopo) handle this boundary. Applies to: instant lead response, 7-touch cold nurture, open house follow-up.
-
-### Near Term
-- [ ] Write Growth tier Claude prompts: SOI re-engagement (real estate), cross-sell campaign (insurance)
-- [x] Design Postgres schema as connective tissue between Tier 1 and Tier 2
-- [x] Build real estate Starter workflows: instant lead response, open house setup + follow-up, 7-touch cold nurture
-- [x] Build real estate Starter: review request — form + workflow + tests complete (2026-04-30)
-- [x] Test and promote real estate workflows to production — open house setup + follow-up confirmed working
-- [ ] Re-import Real Estate Open House Follow-Up workflow in n8n (prompt updated to use property highlights, fix hallucination)
-- [ ] Fix nurture_enroll.html: make email required (known gap — T1/T3/T5 are email-only, no guard)
-- [ ] Add optional property details field to nurture_enroll.html — agent pastes MLS description, highlights, or notes; field passed as `property_notes` in payload; inject into T1–T6 prompts so Claude can reference specific property features throughout the sequence rather than working from address/price/beds alone
-- [x] Set up Cloudflare Access (Zero Trust) on agent-facing forms before handing URL to first client
-- [x] Set up internal monitoring dashboard (red/green per client status) — built 2026-05-08: dashboard.html + Health Query webhook + Red Alert Scheduler (6am/6pm CT Slack)
-- [x] Deploy HTML tools to tools.norrai.co (Cloudflare Pages)
-- [x] Build B&B Manufacturing estimating demo — form + n8n workflow + tests (see 2026-04-29 session log)
-- [x] Build B&B lead generator workflow — n8n schedule + Apollo.io + Claude scoring + SendGrid review email + Neon logging
-- [ ] Smoke test B&B workflow: import JSON into n8n, fire test payload, verify estimate email
-- [ ] Swap placeholder rates with real B&B rates once obtained
-- [ ] Add Neon logging nodes to B&B workflow when B&B is onboarded as a client
-- [ ] Audit workflow_events logging coverage — only B&B Lead Generator currently logs to Neon; all real estate workflows (Instant Lead Response, Open House Follow-Up, Open House Setup, Listing Description, 7-Touch Nurture, Review Request, Lead Cleanser pipeline) need `workflow_events` INSERT nodes added before the monitoring dashboard can work
-- [ ] Wire `Norr AI Workflow Error Logger` credentials: replace `NEON_CREDENTIAL_ID` with actual Neon Postgres credential and `SLACK_WEBHOOK_URL` with Slack incoming webhook URL
-- [ ] Set Error Workflow in every n8n workflow's Settings tab to point to `Norr AI Workflow Error Logger`
-- [x] **Wire research agent into 7-Touch Cold Nurture** — `Real Estate 7-Touch Cold Nurture with Research.json`; research called once at enrollment; insight_block injected into T1/T2/T3 prompts
-- [x] **Wire research agent into Instant Lead Response** — `Real Estate Instant Lead Response with Research.json`; research called after Validate Input; MARKET CONTEXT block added to Build Prompt
-- [x] **Wire research agent into Open House Follow-Up** — `Real Estate Open House Follow-Up with Research.json`; research called after overnight wait node; MARKET CONTEXT block added to Build Prompt
-- [x] Research Agent integration audit complete — see `PRD/buyer-briefing.md`, `PRD/price-sanity-checker.md`, `PRD/lead-scoring-at-intake.md` for new workflow PRDs
-- [ ] **Build Buyer Briefing Generator** — `clients/buyer_briefing.html` form + n8n workflow; pre-showing briefing emailed to buyer automatically; see `PRD/buyer-briefing.md`
-- [ ] **Build Price Sanity Checker** — `clients/price_check.html` form + n8n workflow; inline comp verdict in 60 seconds; see `PRD/price-sanity-checker.md`
-- [ ] **Build Lead Scoring at Intake** — parallel scoring branch in Lead Cleanser pipeline + dashboard hot-lead indicator; see `PRD/lead-scoring-at-intake.md`
-- [x] Apply `research_cache` table to Neon production — applied 2026-05-10
-- [ ] **Evaluate Token Check nodes across all workflows** — every workflow has a Token Check IF node that checks `x-norr-token: 8F68D963-7060-4033-BD04-7593E4B203CB` against the incoming header. This token is hardcoded in every client-facing HTML form and baked into the n8n IF condition — it's the same shared secret everywhere. The honest security value is low: anyone who views page source can see the token, and it's the same across all workflows. The real protection for agent-facing forms is Cloudflare Access (email OTP on `/clients/*`). Evaluate whether to: (a) **remove Token Check entirely** from all workflows and rely on Cloudflare Access as the auth layer; (b) **keep it but per-client** — rotate to a per-client token stored in Neon, looked up dynamically, so one leaked token doesn't open all workflows; or (c) **keep as-is** and accept it as a basic CSRF/accident guard rather than real security. Option (a) is likely the right call for workflows only triggered by Cloudflare-protected forms. Workflows that accept external webhooks (intake sources, chief of staff) are a separate question — those may need the check or a signed secret.
-- [ ] Move B&B rate card to Google Sheets for production (so B&B staff can update rates without touching n8n)
-- [ ] **Telegram → Claude Code bridge** — Telegram bot on remote server that forwards messages to `claude --print` and returns output; enables sending tasks to Claude Code from phone; hybrid option: `tmux send-keys` for long-running sessions; n8n Telegram Trigger node as alternative to custom bot
-
-- [ ] **Real estate chief of staff — add AI voice bot interface:** The chief of staff currently lives in Slack (text). Extend it so an agent can *call in* on their phone and have a spoken conversation to kick off tasks (e.g., "Enroll Sarah Johnson in the cold nurture sequence" or "Generate a listing description for 412 Oak Street"). Stack options to evaluate: (a) Twilio Voice + Twilio Media Streams → real-time audio → Whisper/Deepgram for STT → Claude for intent + task execution → TTS response back through Twilio; (b) Vapi.ai or Bland.ai as a managed voice agent layer that handles the telephony plumbing and exposes a webhook for Claude. Vapi/Bland are faster to ship; Twilio is more controllable and already in the stack. Voice sessions should map to the same task-dispatch layer as Slack commands — same Claude prompt, same n8n webhook triggers, just a different input surface. Design the voice interface as a thin adapter over the existing chief of staff logic, not a separate system.
-
-- [ ] **Build client birthday & anniversary outreach workflow** — n8n scheduled job (daily) queries `leads` table for clients whose birthday or home buying/selling anniversary falls today, Claude drafts a personalized SMS or email, sends via Twilio/SendGrid; store `birthday` and `transaction_anniversary` date fields in `leads.metadata`; Growth tier feature — positions agents as top-of-mind without manual effort
-
-### First Client Targets
-- Insurance broker friend — Salesforce user, discovery call framework ready
-- Dental and real estate — easiest to template and repeat
-- **B&B Manufacturing** (Faribault, MN) — warm prospect, demo estimating workflow built; lead generator workflow built; pending smoke tests and n8n import for both; Apollo.io account is a required dependency B&B must provision
+> ```sql
+> SELECT t.title, t.status, t.priority, s.title as story FROM tasks t LEFT JOIN stories s ON t.story_id = s.id ORDER BY t.priority, t.seq;
+> ```
 
 ---
 
@@ -431,105 +366,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ## Lessons Learned
 
-### n8n — Expressions & Nodes
-- Token Check rightValue must be a plain string — any `=` prefix causes n8n to evaluate it as an expression and the check always fails
-- Never use `$json.caller` (or similar dynamic fields) in SQL nodes — n8n blocks certain variable references in database queries for security; use hardcoded strings or safe payload fields
-- Cache Lookup (Postgres) node: enable "Always Output Data" or the node stops execution on 0 rows instead of passing through
-- Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
-- Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
-- Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
-- When `continueOnFail: true` is set on an HTTP Request node, `$input.first().json` in the downstream Code node is the n8n error object on failure — always use `$('NodeName').first().json` for a stable upstream named ref to preserve payload data regardless of HTTP result
-- `respondToWebhook` node with empty `options: {}` returns `{"success": true}` — always set `respondWith: "firstIncomingItem"` (for passthrough) or `"json"` with an explicit `responseBody` expression
-- `toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })` includes the year in Node.js even if you omit the `year` option — use the `toLocaleString` + split pattern instead: `new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', hour12: false }).split(', ')[0]` then split on `/` for month/day
-- After removing a node from a workflow JSON array, check the previous node for a trailing comma — JSON is invalid with it and n8n will refuse to import
-- For confirm/accept workflows triggered by link clicks (GET requests), read the token from `$json.query.token` (query param), not from a request header
-- Validate UUIDs with regex before using them in SQL — untrusted URL params may be malformed or injection attempts; use `SELECT null::uuid WHERE false` as a safe no-op fallback
-- Idempotency in confirm workflows: check `IS NULL` on the timestamp column before updating to prevent double-enrollment on repeated link clicks
-- Parallel fire-and-forget in n8n: multiple downstream nodes can fan out from the same output — add them both to the same `connections["Source Node"]["main"][0]` array in the JSON
-- After a parallel fan-out (e.g., Send to Lead → [Update Lead Record, Send Agent Copy]), `$json` in each downstream node is that node's own input — the HTTP response from the fork source, not the lead data; use `$('UpstreamNodeName').first().json.*` for all fields
-- `{{ JSON.stringify($json.field) }}}` triple-brace in jsonBody causes n8n parse errors — use `"{{ $json.field }}"` (quoted expression) for simple string fields that don't need JSON encoding
-- Neon SQL UUID quoting: always wrap UUID expressions in single quotes inside SQL strings — `'{{ $json.id }}'`, not `{{ $json.id }}`; bare UUID causes "invalid input syntax for type uuid" error
-- `NULLIF('{{ $json.body.field }}', '')` is not sufficient — when n8n can't resolve the expression it renders the literal string `"undefined"`, which passes `NULLIF` and hits CHECK constraints; always use `NULLIF(NULLIF('{{ $json.body.field }}', ''), 'undefined')` in Postgres nodes
-- Dynamic client lookup from BoldTrail/Zapier payload: read `agentemail` from Zapier trigger, sanitize with `.replace(/'/g, "''")`, query `clients` table by `primary_contact_email` to get `id` and `token` — eliminates hardcoded placeholder tokens
-- Error Trigger payload fields: `$json.execution.lastNodeExecuted`, `$json.execution.error.message`, and `$json.execution.url` are available in error workflows — log all three or the dashboard can only show that something failed, not where or why
-- The Error Trigger node always displays n8n's hardcoded example payload in the editor (id: 231, "Example Error Message", "Example Workflow") regardless of what actually ran — to see real error data, open the execution in the Executions tab and check the downstream node (e.g., Extract Error Data) output, not the Error Trigger node itself
-- `json_build_object()` in Postgres SQL is safer than embedding arbitrary text in jsonb string literals — handles quotes and special characters without manual escaping
-- `onError: "continueRegularOutput"` is the JSON-export representation of `continueOnFail: true` — use this in workflow JSON files, not `"continueOnFail": true` at the node level
-- After a Postgres node, `$json` is the Postgres result — always reference the upstream Code node by name (`$('NodeName').first().json`) when building downstream expressions that need data from before the DB call
-- For read-heavy dashboard endpoints, a single Postgres query using nested `json_build_object()` with correlated subqueries returns fully nested JSON in one round trip — no downstream Code node assembly required
-- Token Check false branch must have a Respond Unauthorized node (401) — a dead-end false branch leaves HTTP connections hanging indefinitely
-- Upsert with CTE: `WITH existing AS (SELECT id FROM t WHERE ...), inserted AS (INSERT INTO t ... WHERE NOT EXISTS (SELECT 1 FROM existing) RETURNING id) SELECT COALESCE((SELECT id FROM existing), (SELECT id FROM inserted))` — single round-trip that returns id regardless of insert vs. existing
-- Sanitize Input Code node between Token Check and Postgres is the right place to escape single quotes (`.replace(/'/g, "''")`), cast numerics with `parseFloat()`, and output a flat clean object; downstream nodes reference it by name, not `$json`
-
-### n8n — Workflow Management
-- After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
-- When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
-- "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
-- Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
-- Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
-- The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
-- When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
-
-### SendGrid
-- HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`
-- Use HTTP Request node calling SendGrid v3 API directly for HTML emails — the native n8n SendGrid node doesn't set content-type correctly for HTML
-- SendGrid v3 HTTP Request requires a "Header Auth" credential: `Authorization: Bearer SG.xxx`; JSON.stringify the body value
-- Disable click tracking on transactional emails — enabled by default, causes Gmail to route to Promotions tab
-
-### Gemini
-- `gemini-2.0-flash` is no longer available to new API users — use `gemini-2.5-flash`
-- Gemini 2.5 tool name: `google_search` (not `google_search_retrieval` — that was 2.0 only)
-- REST generation config key is `generation_config` (snake_case), not `generationConfig` (JS SDK style)
-- `response_mime_type: application/json` is incompatible with tool use — remove it from `generation_config` when using `google_search`
-- n8n credential for Gemini: Query Auth type, field name `key`, display name "Gemini API Key"
-- Gemini (and Claude) may return markdown-fenced JSON (triple-backtick json blocks) even when instructed not to — always strip fences before JSON.parse()
-- Never commit `.env` — `DATABASE_URL` (pooled connection string) lives there only
-- `appointments` table: schema is correct, but don't build calendar scraping/normalization until a real client requires it
-
-### Prompt Engineering
-- Wrap all user-supplied fields in Claude prompts with `[DATA][/DATA]` delimiters to prevent prompt injection (lead_name, lead_message, agent_notes, etc.)
-- Cold nurture and lead response prompts must explicitly say "do not invent school names, market statistics, or sold prices" until the research agent is wired in — Claude will hallucinate these without the instruction
-- Property highlights must be extracted during Open House Setup (when the MLS description is available) and passed as a URL param — the Follow-Up workflow fires the next morning with no access to the original listing copy
-- Pass structured research data as a formatted text block (`research_detail`) not just the `insight_block` summary — Claude needs school names/ratings/distances and market numbers to answer specific lead questions; the 2–3 sentence summary is too thin
-- When splitting a combined address string is required, 4 separate form fields is more reliable than parsing — comma placement is not enforced by users
-
-### Cloudflare Access
-- To add a new client: Zero Trust → Access Groups → `clients` → add email — grants access to all `/clients/*` pages automatically
-- `open_house.html` stays at root (public, QR code on door) — Cloudflare Access only covers `/clients/*` and `/internal/*`
-- Session durations: clients group = 7 days, internal group = 1 day
-
-### HTML / JavaScript
-- `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
-- `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
-- `btn.disabled = true` after a successful webhook response prevents double-submit — apply this to every form submit handler
-
-### Playwright / Testing
-- `npx serve` strips `.html` extension AND drops query params in clean-URL redirects — always navigate to the clean path (no `.html`) in Playwright tests when query params are needed
-- `"0".trim()` is truthy — `setup_fee=0` passes a non-empty string check; add an explicit test for zero-value numeric fields to prevent silent regression if validation logic changes
-
-### BoldTrail / kvCORE
-- Lead Dropbox API key is inbound-only — `GET /contacts` returns 401; it pushes leads into BoldTrail, not out; Zapier uses OAuth separately
-- Confirmed Zapier trigger field names: `firstname`, `lastname`, `email`, `phone`, `street`, `city`, `state`, `zip`, `origin` (lead source), `is_seller`, `seller_full_address`, `seller_street`, `seller_city`, `seller_state`, `seller_zip`, `email_status`, `on_drip`, `starrating`, `leadid`; no price_range or beds exposed
-- Weichert-managed instances: outbound webhook config is brokerage-controlled; agent-level accounts have no access to configure it — Zapier is the only supported outbound path
-- BoldTrail sends automated listing alert emails to leads by default — Norr AI nurture should be SMS-dominant for BoldTrail clients to avoid channel overlap and differentiate value
-
-### Zapier
-- Free tier pauses Zaps after 2 weeks of inactivity — always provision Starter ($20/mo) for live clients; silent lead drops are unacceptable
-- Zapier Copilot is useful for getting confirmed payload field names before wiring n8n normalization — ask it to build the Zap, then inspect the confirmed JSON to update Code node field mappings
-
-### Architecture Decisions
-- Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
-- Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
-- Research Agent caches by address with 7-day TTL — call once per workflow run, not per touch; the cache covers the full cold nurture run
-- Dashboard health logic: red = any failures in last 7 days, yellow = no events in 7 days (silence), green = healthy
-- Per-client personalized URLs use `clients.token` (uuid) — no separate `agents` table needed at solo-agent-per-client scale
-- For clients on CRMs with restricted API access (e.g. Weichert/kvCORE), Zapier Starter is the right integration layer — don't try to reverse-engineer inbound-only API keys
-- Mission Control uses two tables (`stories` + `tasks`) not a self-referencing single table — stories and tasks have different schemas and different dispatch semantics; mixed parent/child rows in one table make queries and routing awkward
-- `seq` int on tasks enables ordered display within a story and future auto-advance logic; add it even before the automation is built
-- Task `category` is the dispatch routing key: research/analysis → Claude API via n8n (fully autonomous); dev/testing → formatted prompt for Claude Code (human in loop); ops → neither
-- `agent_working` is a distinct task status from `in_progress` — signals an automated process is running, prevents concurrent edits, gives the board a clear in-flight indicator
-- Tasks are tracked in Neon (`stories` + `tasks` tables), not in CLAUDE.md — the Open Tasks section in CLAUDE.md is stale; always query Neon for current task state
-- Zapier free tier Zaps pause after 2 weeks of inactivity — no programmatic workaround for BoldTrail-triggered Zaps (can't synthetically fire BoldTrail events); accept the risk for active agents or pay $20/mo Starter
+See `docs/lessons-learned.md` for the full reference — n8n expressions, workflow management, SendGrid, Gemini, prompt engineering, Cloudflare Access, HTML/JS, Playwright, BoldTrail, Zapier, and architecture decisions.
 
 ## About the Owner
 
@@ -539,6 +376,12 @@ Egan is a data engineer working primarily with dbt and SQL Server. Comfortable w
 
 ## Session Wrap-Up
 
-When the user says **"donezo"** or **"wrap up"**, run the `/session-end` skill — update `SESSION_LOG.md` with what was done this session, extract any new lessons to `## Lessons Learned` above, and commit both files.
+When the user says **"donezo"** or **"wrap up"**, run the `/session-end` skill and also do the following **before committing**:
 
-Full instructions live in `.claude/commands/session-end.md`.
+**Additional step — update Neon tasks:**
+- Review what was completed this session
+- Run `UPDATE tasks SET status = 'completed', updated_at = NOW() WHERE title = '...'` for each task finished
+- If a story's tasks are all done, update the story status too: `UPDATE stories SET status = 'completed' WHERE id = '...'`
+- Use the Neon MCP tool to execute these directly
+
+Then commit `SESSION_LOG.md` and `docs/lessons-learned.md` as usual.
