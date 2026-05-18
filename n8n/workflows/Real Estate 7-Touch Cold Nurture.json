@@ -146,7 +146,7 @@
             {
               "id": "prompt-t2",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nProperty: {{ $('Prep Fields').first().json.property_address }}\nPrice: {{ $('Prep Fields').first().json.price_range }}\nBeds/Baths: {{ $('Prep Fields').first().json.beds }} bed / {{ $('Prep Fields').first().json.baths }} bath\nTheir original message: {{ $('Prep Fields').first().json.lead_message }}\n\nThis is TOUCH 2 of 6 — Day 3. Channel: SMS.\nAngle: Different angle from the first message. Pick one compelling thing about the property or a sharp market observation relevant to their price range. Make it feel like a genuine tip, not a follow-up. No \"just checking in.\" Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nReturn ONLY the SMS text. Under 160 characters. No labels.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 2 of 6 — Day 3. Channel: EMAIL.\nAngle: Different angle from the first message. Pick one compelling angle — a specific detail about the property if listed, a sharp market observation if you have a price range, or a genuine question about what they're prioritizing if you have neither. Make it feel like a genuine tip, not a follow-up. No \"just checking in.\" Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 80 words. Sharp and useful.",
               "type": "string"
             }
           ]
@@ -160,7 +160,7 @@
       "name": "Build Prompt T2"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [2240, 300],
@@ -172,7 +172,7 @@
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
-      "parameters": { "jsCode": "const message = $input.first().json.content[0].text.trim();\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { message, ...p } }];" },
+      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Quick thought';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [2440, 300],
@@ -248,7 +248,7 @@
             {
               "id": "prompt-t4",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nProperty: {{ $('Prep Fields').first().json.property_address }}\nPrice: {{ $('Prep Fields').first().json.price_range }}\nTheir original message: {{ $('Prep Fields').first().json.lead_message }}\n\nThis is TOUCH 4 of 6 — Day 10. Channel: SMS.\nAngle: Soft check-in. Are they still searching? Maybe their situation changed. Keep it genuinely curious, not needy. One or two sentences max. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nReturn ONLY the SMS text. Under 160 characters. No labels.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 4 of 6 — Day 10. Channel: EMAIL.\nAngle: Soft check-in. Are they still searching? Maybe their situation changed. Keep it genuinely curious, not needy. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words. Casual and brief.",
               "type": "string"
             }
           ]
@@ -262,7 +262,7 @@
       "name": "Build Prompt T4"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [4240, 300],
@@ -350,7 +350,7 @@
             {
               "id": "prompt-t6",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nProperty: {{ $('Prep Fields').first().json.property_address }}\nPrice: {{ $('Prep Fields').first().json.price_range }}\nTheir original message: {{ $('Prep Fields').first().json.lead_message }}\n\nThis is TOUCH 6 of 6 — Day 21. Channel: SMS. This is the last message.\nAngle: Final touch. Low pressure, door wide open. Something like: you won't keep reaching out, but you're here whenever they're ready. Leave a genuinely warm impression. No guilt, no urgency. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nReturn ONLY the SMS text. Under 160 characters. No labels.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 6 of 6 — Day 21. Channel: EMAIL. This is the last message.\nAngle: Final touch. Low pressure, door wide open. Something like: you won't keep reaching out, but you're here whenever they're ready. Leave a genuinely warm impression. No guilt, no urgency. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words.",
               "type": "string"
             }
           ]
@@ -364,7 +364,7 @@
       "name": "Build Prompt T6"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [6240, 300],
