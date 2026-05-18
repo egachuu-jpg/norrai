@@ -180,13 +180,21 @@
       "name": "Extract T2"
     },
     {
-      "parameters": { "from": "+18XXXXXXXXXX", "to": "=+1{{ $json.phone.replace(/\\D/g, '') }}", "message": "={{ $json.message }}" },
-      "type": "n8n-nodes-base.twilio",
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [2640, 300],
       "id": "c3d4e5f6-0014-4000-8000-000000000014",
-      "name": "SMS T2",
-      "credentials": { "twilioApi": { "id": "TWILIO_CREDENTIAL_ID", "name": "Twilio account" } }
+      "name": "Email T2",
+      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
     },
 
     { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [2840, 300], "id": "c3d4e5f6-0015-4000-8000-000000000015", "name": "Wait Day 7" },
@@ -274,7 +282,7 @@
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
-      "parameters": { "jsCode": "const message = $input.first().json.content[0].text.trim();\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { message, ...p } }];" },
+      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Still here';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [4440, 300],
@@ -282,13 +290,21 @@
       "name": "Extract T4"
     },
     {
-      "parameters": { "from": "+18XXXXXXXXXX", "to": "=+1{{ $json.phone.replace(/\\D/g, '') }}", "message": "={{ $json.message }}" },
-      "type": "n8n-nodes-base.twilio",
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [4640, 300],
       "id": "c3d4e5f6-0024-4000-8000-000000000024",
-      "name": "SMS T4",
-      "credentials": { "twilioApi": { "id": "TWILIO_CREDENTIAL_ID", "name": "Twilio account" } }
+      "name": "Email T4",
+      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
     },
 
     { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [4840, 300], "id": "c3d4e5f6-0025-4000-8000-000000000025", "name": "Wait Day 14" },
@@ -376,7 +392,7 @@
       "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
     },
     {
-      "parameters": { "jsCode": "const message = $input.first().json.content[0].text.trim();\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { message, ...p } }];" },
+      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Take care';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [6440, 300],
@@ -384,13 +400,21 @@
       "name": "Extract T6"
     },
     {
-      "parameters": { "from": "+18XXXXXXXXXX", "to": "=+1{{ $json.phone.replace(/\\D/g, '') }}", "message": "={{ $json.message }}" },
-      "type": "n8n-nodes-base.twilio",
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [6640, 300],
       "id": "c3d4e5f6-0034-4000-8000-000000000034",
-      "name": "SMS T6",
-      "credentials": { "twilioApi": { "id": "TWILIO_CREDENTIAL_ID", "name": "Twilio account" } }
+      "name": "Email T6",
+      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
     }
   ],
   "pinData": {},
@@ -415,8 +439,8 @@
     "Wait Day 3":  { "main": [[ { "node": "Build Prompt T2", "type": "main", "index": 0 } ]] },
     "Build Prompt T2": { "main": [[ { "node": "Claude T2", "type": "main", "index": 0 } ]] },
     "Claude T2":   { "main": [[ { "node": "Extract T2", "type": "main", "index": 0 } ]] },
-    "Extract T2":  { "main": [[ { "node": "SMS T2",     "type": "main", "index": 0 } ]] },
-    "SMS T2":      { "main": [[ { "node": "Wait Day 7", "type": "main", "index": 0 } ]] },
+    "Extract T2":  { "main": [[ { "node": "Email T2",   "type": "main", "index": 0 } ]] },
+    "Email T2":    { "main": [[ { "node": "Wait Day 7", "type": "main", "index": 0 } ]] },
     "Wait Day 7":  { "main": [[ { "node": "Build Prompt T3", "type": "main", "index": 0 } ]] },
     "Build Prompt T3": { "main": [[ { "node": "Claude T3", "type": "main", "index": 0 } ]] },
     "Claude T3":   { "main": [[ { "node": "Extract T3", "type": "main", "index": 0 } ]] },
@@ -425,8 +449,8 @@
     "Wait Day 10": { "main": [[ { "node": "Build Prompt T4", "type": "main", "index": 0 } ]] },
     "Build Prompt T4": { "main": [[ { "node": "Claude T4", "type": "main", "index": 0 } ]] },
     "Claude T4":   { "main": [[ { "node": "Extract T4", "type": "main", "index": 0 } ]] },
-    "Extract T4":  { "main": [[ { "node": "SMS T4",     "type": "main", "index": 0 } ]] },
-    "SMS T4":      { "main": [[ { "node": "Wait Day 14", "type": "main", "index": 0 } ]] },
+    "Extract T4":  { "main": [[ { "node": "Email T4",   "type": "main", "index": 0 } ]] },
+    "Email T4":    { "main": [[ { "node": "Wait Day 14", "type": "main", "index": 0 } ]] },
     "Wait Day 14": { "main": [[ { "node": "Build Prompt T5", "type": "main", "index": 0 } ]] },
     "Build Prompt T5": { "main": [[ { "node": "Claude T5", "type": "main", "index": 0 } ]] },
     "Claude T5":   { "main": [[ { "node": "Extract T5", "type": "main", "index": 0 } ]] },
@@ -435,7 +459,7 @@
     "Wait Day 21": { "main": [[ { "node": "Build Prompt T6", "type": "main", "index": 0 } ]] },
     "Build Prompt T6": { "main": [[ { "node": "Claude T6", "type": "main", "index": 0 } ]] },
     "Claude T6":   { "main": [[ { "node": "Extract T6", "type": "main", "index": 0 } ]] },
-    "Extract T6":  { "main": [[ { "node": "SMS T6",     "type": "main", "index": 0 } ]] }
+    "Extract T6":  { "main": [[ { "node": "Email T6",   "type": "main", "index": 0 } ]] }
   },
   "active": false,
   "settings": {
