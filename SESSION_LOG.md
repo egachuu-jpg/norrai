@@ -215,6 +215,22 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Added `workflow_events` logging (Log Triggered + Log Completed) to `Real Estate Instant Lead Response.json` — Log Triggered fires in parallel from Validate Input using `norrai_internal`; Log Completed fires after Insert Lead using actual `client_id` from Find Client with norrai_internal fallback; re-imported into n8n
 - Discussed Zapier free tier inactivity pause — no clean programmatic workaround for BoldTrail-triggered Zaps
 
+### 2026-05-18
+- Brainstormed and designed graceful handling for property-null leads in cold nurture — general buyer inquiries with no specific listing attached
+- Design spec: `docs/superpowers/specs/2026-05-17-cold-nurture-property-null-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-17-cold-nurture-property-null.md`
+- Updated `n8n/workflows/Real Estate 7-Touch Cold Nurture.json`:
+  - `Prep Fields`: assembles `context_block` string from only available fields (property, price, beds/baths, lead_message); falls back to "General buyer inquiry — no details or message on file." when all are absent; emits `channel: 'email'` for A2P restore path
+  - Fixed beds/baths falsy edge case: `if (beds || baths)` → `if (beds !== '' || baths !== '')` to handle `beds: 0` correctly
+  - All 6 `Build Prompt` nodes: replaced individual property field references with `context_block`; removed separate "Their original message:" line (now in context_block); updated angle instructions to be context-adaptive
+  - T1/T3: added explicit minimal-context fallback instructions to prevent weak/hollow output when context_block is bare
+  - T2/T4/T6 `Build Prompt`: converted from SMS format (160-char plain text) to email format (SUBJECT/BODY); `max_tokens` 150 → 300
+  - T2/T4/T6 `Extract` nodes: converted from SMS message extraction to SUBJECT/BODY parse pattern
+  - T2/T4/T6 delivery nodes: Twilio replaced with SendGrid; connections updated to `Email T2/T4/T6`
+  - T1 + T2: added "Only reference property details you have been given — do not invent specifics you weren't told" after discovering Claude hallucinated "half acre with mature oaks" for a property it knew only by address
+- PR #17 opened: `feat/cold-nurture-property-null` → `main`
+- Pending: smoke test all three context scenarios (full / partial / minimal) before merge
+
 ### 2026-05-15
 - Brainstormed Mission Control concept: client health, workflow throughput, lead activity, open task visibility, revenue snapshot — scoped down to task/kanban + subagent dispatch as the priority
 - Designed two-table schema (`stories` + `tasks`) instead of self-referencing single table — stories and tasks have different fields and different dispatch semantics
