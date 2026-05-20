@@ -12,6 +12,7 @@ async function fillRequired(page) {
   await page.selectOption('#industry', 'Dental / Medical');
   await page.fill('#what_brings_you', 'Losing patients to no-shows and spending too much time on manual follow-up.');
   await page.fill('#success_looks_like', 'Never miss a follow-up and cut admin time in half.');
+  await page.check('#sms_consent');
 }
 
 // ─── 1. Required field validation ─────────────────────────────────────────────
@@ -42,6 +43,16 @@ test.describe('Required field validation', () => {
     await page.goto(FORM_URL);
     await fillRequired(page);
     await page.selectOption('#industry', '');
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
+
+  test('blocks submit when sms_consent is unchecked', async ({ page }) => {
+    await mockWebhook(page);
+    await page.goto(FORM_URL);
+    await fillRequired(page);
+    await page.uncheck('#sms_consent');
     await page.click('#submit-btn');
 
     await expect(page.locator('#status.success')).not.toBeVisible();
@@ -178,6 +189,19 @@ test.describe('Payload shape', () => {
     const body = JSON.parse(req.postData());
 
     expect(body.source).toBe('discovery_form_web');
+  });
+
+  test('sms_consent is true in payload when checked', async ({ page }) => {
+    await mockWebhook(page);
+    await page.goto(FORM_URL);
+    await fillRequired(page);
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.sms_consent).toBe(true);
   });
 
   test('X-Norr-Token header is present', async ({ page }) => {
