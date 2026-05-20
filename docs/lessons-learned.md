@@ -6,6 +6,7 @@
 - Cache Lookup (Postgres) node: enable "Always Output Data" or the node stops execution on 0 rows instead of passing through
 - Any Postgres SELECT used as a conditional check (dedup, existence, lookup) must have `alwaysReturnData: true` in options — without it, 0-row results silently kill the execution path instead of flowing to the downstream IF node
 - After any node that overwrites `$json` (Postgres query, HTTP Request, Code node), upstream data is gone from `$json` — always reference the original source node by name: `$('Node Name').item.json.field` instead of `$json.field`
+- Code nodes use the n8n JS API directly — `$('Node Name').item.json` with no `{{ }}` wrapper. The `{{ }}` expression syntax is only for non-code fields (Set assignments, IF conditions, HTTP body strings, etc). Mixing them causes SyntaxError: Unexpected identifier
 - n8n Split In Batches: output 0 = done (fires when all items processed), output 1 = loop (fires for each item) — the reverse of what you'd expect
 - Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
 - Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
