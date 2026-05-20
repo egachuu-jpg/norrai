@@ -229,10 +229,14 @@ function makeInboxWorkflow(inboxEmail, gmailCredName, workflowName) {
         jsCode: `const raw = $input.first().json.content[0].text.trim();
 let c;
 try { c = JSON.parse(raw); }
-catch (e) { c = { category: 'uncertain', confidence: 0, proposed_action: 'queue_for_review', reason: 'parse error' }; }
+catch (e) { c = { category: 'uncertain', confidence: 0, proposed_action: 'mark_read_archive', reason: 'parse error' }; }
 if ((c.confidence ?? 0) < 0.80) {
   c.category = 'uncertain';
-  c.proposed_action = 'queue_for_review';
+  c.proposed_action = 'mark_read_archive';
+}
+// If Claude itself returned uncertain, standardise the action too
+if (c.category === 'uncertain') {
+  c.proposed_action = 'mark_read_archive';
 }
 const prev = $('Build Classifier Input').item.json;
 return [{ json: { ...prev, ...c } }];`
