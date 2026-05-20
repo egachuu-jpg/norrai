@@ -23,6 +23,7 @@ async function fillRequired(page) {
   await page.fill('#attendee_name', 'Sarah Johnson');
   await page.fill('#phone', '5075551234');
   await page.fill('#email', 'sarah@gmail.com');
+  await page.check('#sms_consent');
 }
 
 // ─── 1. URL param handling ─────────────────────────────────────────────────────
@@ -107,6 +108,16 @@ test.describe('Required field validation', () => {
 
     await expect(page.locator('#status.success')).not.toBeVisible();
   });
+
+  test('blocks submit when sms_consent is unchecked', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.uncheck('#sms_consent');
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
 });
 
 // ─── 3. Payload shape ─────────────────────────────────────────────────────────
@@ -152,6 +163,19 @@ test.describe('Payload shape', () => {
     ]);
     const body = JSON.parse(req.postData());
     expect(body.email).toBe('sarah@gmail.com');
+  });
+
+  test('sms_consent is true in payload when checked', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.sms_consent).toBe(true);
   });
 
   test('X-Norr-Token header is present', async ({ page }) => {
