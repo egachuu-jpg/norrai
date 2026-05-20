@@ -355,6 +355,27 @@ return [{ json: { ...prev, ...c } }];`
       parameters: { mode: 'append', options: {} }
     },
 
+    // 13b. Sanitize — escape single quotes in text fields before SQL insert
+    {
+      id: uid('et'),
+      name: 'Sanitize for Queue',
+      type: 'n8n-nodes-base.code',
+      typeVersion: 2,
+      position: [2840, 560],
+      parameters: {
+        jsCode: `const d = $input.first().json;
+const esc = s => (s ?? '').replace(/'/g, "''");
+return [{ json: {
+  message_id:      d.message_id      ?? '',
+  sender:          esc(d.sender),
+  subject:         esc(d.subject),
+  snippet:         esc(d.snippet),
+  category:        d.category        ?? 'uncertain',
+  proposed_action: d.proposed_action ?? 'mark_read_archive',
+}}];`
+      }
+    },
+
     // 14. Log to Queue
     {
       id: uid('et'),
@@ -442,8 +463,9 @@ WHERE run_id = '{{ $execution.id }}' AND inbox = '${inboxEmail}'`,
     [n('Trash (cold outreach)')]:     { main: [[{ node: 'Merge Actions', type: 'main', index: 2 }]] },
     [n('Mark Important (business)')]: { main: [[{ node: 'Merge Actions', type: 'main', index: 3 }]] },
     [n('Mark Important (personal)')]: { main: [[{ node: 'Merge Actions', type: 'main', index: 4 }]] },
-    [n('Merge Actions')]:             { main: [[{ node: 'Log to Queue', type: 'main', index: 0 }]] },
-    [n('Log to Queue')]:              { main: [[{ node: 'Loop Over Emails', type: 'main', index: 0 }]] }
+    [n('Merge Actions')]:             { main: [[{ node: 'Sanitize for Queue',  type: 'main', index: 0 }]] },
+    [n('Sanitize for Queue')]:        { main: [[{ node: 'Log to Queue',        type: 'main', index: 0 }]] },
+    [n('Log to Queue')]:              { main: [[{ node: 'Loop Over Emails',    type: 'main', index: 0 }]] }
   };
 
   return {

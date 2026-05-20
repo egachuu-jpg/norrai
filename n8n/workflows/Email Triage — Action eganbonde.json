@@ -2,7 +2,7 @@
   "name": "Email Triage — Action eganbonde",
   "nodes": [
     {
-      "id": "aw-0068-4000-8000-000000000000",
+      "id": "aw-0071-4000-8000-000000000000",
       "name": "When Called by Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "aw-0069-4000-8000-000000000000",
+      "id": "aw-0072-4000-8000-000000000000",
       "name": "Route by Action",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -120,7 +120,7 @@
       }
     },
     {
-      "id": "aw-0070-4000-8000-000000000000",
+      "id": "aw-0073-4000-8000-000000000000",
       "name": "Mark Read (archive path)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -141,7 +141,7 @@
       }
     },
     {
-      "id": "aw-0071-4000-8000-000000000000",
+      "id": "aw-0074-4000-8000-000000000000",
       "name": "Archive",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -165,7 +165,7 @@
       }
     },
     {
-      "id": "aw-0072-4000-8000-000000000000",
+      "id": "aw-0075-4000-8000-000000000000",
       "name": "Mark Read",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -186,7 +186,7 @@
       }
     },
     {
-      "id": "aw-0073-4000-8000-000000000000",
+      "id": "aw-0076-4000-8000-000000000000",
       "name": "Trash",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -207,7 +207,7 @@
       }
     },
     {
-      "id": "aw-0074-4000-8000-000000000000",
+      "id": "aw-0077-4000-8000-000000000000",
       "name": "Mark Important",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,

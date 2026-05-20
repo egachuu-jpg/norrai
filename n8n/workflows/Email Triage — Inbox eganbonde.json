@@ -2,7 +2,7 @@
   "name": "Email Triage — Inbox eganbonde",
   "nodes": [
     {
-      "id": "et-0021-4000-8000-000000000000",
+      "id": "et-0022-4000-8000-000000000000",
       "name": "When Called By Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "et-0022-4000-8000-000000000000",
+      "id": "et-0023-4000-8000-000000000000",
       "name": "Log Run Start",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -35,7 +35,7 @@
       }
     },
     {
-      "id": "et-0023-4000-8000-000000000000",
+      "id": "et-0024-4000-8000-000000000000",
       "name": "Get Unread Messages",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -66,7 +66,7 @@
       }
     },
     {
-      "id": "et-0024-4000-8000-000000000000",
+      "id": "et-0025-4000-8000-000000000000",
       "name": "Loop Over Emails",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -80,7 +80,7 @@
       }
     },
     {
-      "id": "et-0025-4000-8000-000000000000",
+      "id": "et-0026-4000-8000-000000000000",
       "name": "Dedup Check",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -104,7 +104,7 @@
       }
     },
     {
-      "id": "et-0026-4000-8000-000000000000",
+      "id": "et-0027-4000-8000-000000000000",
       "name": "Already Processed?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -137,7 +137,7 @@
       }
     },
     {
-      "id": "et-0027-4000-8000-000000000000",
+      "id": "et-0028-4000-8000-000000000000",
       "name": "Build Classifier Input",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -184,7 +184,7 @@
       }
     },
     {
-      "id": "et-0028-4000-8000-000000000000",
+      "id": "et-0029-4000-8000-000000000000",
       "name": "Build Prompt",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -237,7 +237,7 @@
       }
     },
     {
-      "id": "et-0029-4000-8000-000000000000",
+      "id": "et-0030-4000-8000-000000000000",
       "name": "Claude Classify",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -279,7 +279,7 @@
       }
     },
     {
-      "id": "et-0030-4000-8000-000000000000",
+      "id": "et-0031-4000-8000-000000000000",
       "name": "Parse + Gate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -292,7 +292,7 @@
       }
     },
     {
-      "id": "et-0031-4000-8000-000000000000",
+      "id": "et-0032-4000-8000-000000000000",
       "name": "Route by Category",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -443,7 +443,7 @@
       }
     },
     {
-      "id": "et-0032-4000-8000-000000000000",
+      "id": "et-0033-4000-8000-000000000000",
       "name": "Mark Read (newsletter)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -464,7 +464,7 @@
       }
     },
     {
-      "id": "et-0033-4000-8000-000000000000",
+      "id": "et-0034-4000-8000-000000000000",
       "name": "Archive (newsletter)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -488,7 +488,7 @@
       }
     },
     {
-      "id": "et-0034-4000-8000-000000000000",
+      "id": "et-0035-4000-8000-000000000000",
       "name": "Mark Read (notification)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -509,7 +509,7 @@
       }
     },
     {
-      "id": "et-0035-4000-8000-000000000000",
+      "id": "et-0036-4000-8000-000000000000",
       "name": "Trash (cold outreach)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -530,7 +530,7 @@
       }
     },
     {
-      "id": "et-0036-4000-8000-000000000000",
+      "id": "et-0037-4000-8000-000000000000",
       "name": "Mark Important (business)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -554,7 +554,7 @@
       }
     },
     {
-      "id": "et-0037-4000-8000-000000000000",
+      "id": "et-0038-4000-8000-000000000000",
       "name": "Mark Important (personal)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -578,7 +578,7 @@
       }
     },
     {
-      "id": "et-0038-4000-8000-000000000000",
+      "id": "et-0039-4000-8000-000000000000",
       "name": "Merge Actions",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -592,7 +592,20 @@
       }
     },
     {
-      "id": "et-0039-4000-8000-000000000000",
+      "id": "et-0040-4000-8000-000000000000",
+      "name": "Sanitize for Queue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2840,
+        560
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst esc = s => (s ?? '').replace(/'/g, \"''\");\nreturn [{ json: {\n  message_id:      d.message_id      ?? '',\n  sender:          esc(d.sender),\n  subject:         esc(d.subject),\n  snippet:         esc(d.snippet),\n  category:        d.category        ?? 'uncertain',\n  proposed_action: d.proposed_action ?? 'mark_read_archive',\n}}];"
+      }
+    },
+    {
+      "id": "et-0041-4000-8000-000000000000",
       "name": "Log to Queue",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -614,7 +627,7 @@
       }
     },
     {
-      "id": "et-0040-4000-8000-000000000000",
+      "id": "et-0042-4000-8000-000000000000",
       "name": "Log Run Complete",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -874,6 +887,17 @@
       ]
     },
     "Merge Actions": {
+      "main": [
+        [
+          {
+            "node": "Sanitize for Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize for Queue": {
       "main": [
         [
           {
