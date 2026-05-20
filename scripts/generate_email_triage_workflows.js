@@ -118,7 +118,7 @@ function makeInboxWorkflow(inboxEmail, gmailCredName, workflowName) {
       parameters: {
         operation: 'executeQuery',
         query: `SELECT id FROM email_triage_queue WHERE message_id = '{{ $json.id }}' AND inbox = '${inboxEmail}' LIMIT 1`,
-        options: {}
+        options: { alwaysReturnData: true }
       },
       credentials: { postgres: NEON_CRED }
     },
