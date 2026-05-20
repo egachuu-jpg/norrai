@@ -249,7 +249,7 @@ return [{ json: { ...prev, ...c } }];`
       parameters: {
         mode: 'rules',
         rules: {
-          values: ['newsletter', 'automated_notification', 'cold_outreach', 'norrai_business', 'personal'].map((cat, i) => ({
+          values: ['newsletter', 'automated_notification', 'cold_outreach', 'norrai_business', 'personal', 'uncertain'].map((cat, i) => ({
             conditions: {
               options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 },
               conditions: [{ id: `cat-${i}`, leftValue: '={{ $json.category }}', rightValue: cat, operator: { type: 'string', operation: 'equals' } }],
@@ -257,7 +257,7 @@ return [{ json: { ...prev, ...c } }];`
             }
           }))
         },
-        fallbackOutput: 'extra',
+        fallbackOutput: 5,
         options: {}
       }
     },
@@ -423,7 +423,7 @@ WHERE run_id = '{{ $execution.id }}' AND inbox = '${inboxEmail}'`,
     [n('Build Prompt')]:           { main: [[{ node: 'Claude Classify', type: 'main', index: 0 }]] },
     [n('Claude Classify')]:        { main: [[{ node: 'Parse + Gate', type: 'main', index: 0 }]] },
     [n('Parse + Gate')]:           { main: [[{ node: 'Route by Category', type: 'main', index: 0 }]] },
-    // Switch outputs: 0=newsletter, 1=automated_notification, 2=cold_outreach, 3=norrai_business, 4=personal, extra=uncertain
+    // Switch outputs: 0=newsletter, 1=automated_notification, 2=cold_outreach, 3=norrai_business, 4=personal, 5=uncertain
     [n('Route by Category')]:      { main: [
       [{ node: 'Mark Read (newsletter)',   type: 'main', index: 0 }],
       [{ node: 'Mark Read (notification)', type: 'main', index: 0 }],

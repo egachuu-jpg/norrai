@@ -413,10 +413,32 @@
                 ],
                 "combinator": "and"
               }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cat-5",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "uncertain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
             }
           ]
         },
-        "fallbackOutput": "extra",
+        "fallbackOutput": 5,
         "options": {}
       }
     },
