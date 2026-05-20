@@ -650,14 +650,14 @@
       "main": [
         [
           {
-            "node": "Dedup Check",
+            "node": "Log Run Complete",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Log Run Complete",
+            "node": "Dedup Check",
             "type": "main",
             "index": 0
           }

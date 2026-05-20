@@ -416,8 +416,8 @@ WHERE run_id = '{{ $execution.id }}' AND inbox = '${inboxEmail}'`,
     [n('Get Unread Messages')]:  { main: [[{ node: 'Loop Over Emails', type: 'main', index: 0 }]] },
     // Loop output 0 = next batch, output 1 = done
     [n('Loop Over Emails')]:     { main: [
-      [{ node: 'Dedup Check', type: 'main', index: 0 }],
-      [{ node: 'Log Run Complete', type: 'main', index: 0 }]
+      [{ node: 'Log Run Complete', type: 'main', index: 0 }],  // output 0 = done
+      [{ node: 'Dedup Check',      type: 'main', index: 0 }]   // output 1 = loop (each item)
     ]},
     [n('Dedup Check')]:          { main: [[{ node: 'Already Processed?', type: 'main', index: 0 }]] },
     // IF: true (already processed) → back to loop; false → classify
