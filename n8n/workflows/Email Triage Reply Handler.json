@@ -2,7 +2,7 @@
   "name": "Email Triage Reply Handler",
   "nodes": [
     {
-      "id": "rh-0072-4000-8000-000000000000",
+      "id": "rh-0093-4000-8000-000000000000",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
@@ -25,7 +25,7 @@
       "webhookId": "email-triage-telegram-reply-001"
     },
     {
-      "id": "rh-0073-4000-8000-000000000000",
+      "id": "rh-0094-4000-8000-000000000000",
       "name": "Is My Chat?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -58,7 +58,7 @@
       }
     },
     {
-      "id": "rh-0074-4000-8000-000000000000",
+      "id": "rh-0095-4000-8000-000000000000",
       "name": "Parse Reply",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -71,7 +71,7 @@
       }
     },
     {
-      "id": "rh-0075-4000-8000-000000000000",
+      "id": "rh-0096-4000-8000-000000000000",
       "name": "Fetch Pending",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "rh-0076-4000-8000-000000000000",
+      "id": "rh-0097-4000-8000-000000000000",
       "name": "Build Action Plan",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -105,7 +105,7 @@
       }
     },
     {
-      "id": "rh-0077-4000-8000-000000000000",
+      "id": "rh-0098-4000-8000-000000000000",
       "name": "Loop Over Actions",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -119,7 +119,7 @@
       }
     },
     {
-      "id": "rh-0078-4000-8000-000000000000",
+      "id": "rh-0099-4000-8000-000000000000",
       "name": "Is Summary?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -152,7 +152,7 @@
       }
     },
     {
-      "id": "rh-0079-4000-8000-000000000000",
+      "id": "rh-0100-4000-8000-000000000000",
       "name": "Send Confirmation",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -175,7 +175,7 @@
       }
     },
     {
-      "id": "rh-0080-4000-8000-000000000000",
+      "id": "rh-0101-4000-8000-000000000000",
       "name": "Skip or Act?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -208,8 +208,8 @@
       }
     },
     {
-      "id": "rh-0081-4000-8000-000000000000",
-      "name": "Route by Action",
+      "id": "rh-0102-4000-8000-000000000000",
+      "name": "Route by Inbox",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
@@ -230,9 +230,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "act-0",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "mark_read_archive",
+                    "id": "inbox-0",
+                    "leftValue": "={{ $json.inbox }}",
+                    "rightValue": "egachuu@gmail.com",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -252,9 +252,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "act-1",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "mark_read",
+                    "id": "inbox-1",
+                    "leftValue": "={{ $json.inbox }}",
+                    "rightValue": "eganbonde@gmail.com",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -274,9 +274,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "act-2",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "trash",
+                    "id": "inbox-2",
+                    "leftValue": "={{ $json.inbox }}",
+                    "rightValue": "hello@norrai.co",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -288,102 +288,66 @@
             }
           ]
         },
-        "fallbackOutput": "extra",
+        "fallbackOutput": 0,
         "options": {}
       }
     },
     {
-      "id": "rh-0082-4000-8000-000000000000",
-      "name": "Gmail Mark Read + Archive",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
+      "id": "rh-0103-4000-8000-000000000000",
+      "name": "Execute Action — egachuu",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [
         2040,
         80
       ],
       "parameters": {
-        "resource": "message",
-        "operation": "removeLabels",
-        "messageId": "={{ $json.message_id }}",
-        "labelIds": [
-          "INBOX"
-        ]
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — egachuu"
-        }
+        "source": "database",
+        "workflowId": {
+          "mode": "name",
+          "value": "Email Triage — Action egachuu"
+        },
+        "options": {}
       }
     },
     {
-      "id": "rh-0083-4000-8000-000000000000",
-      "name": "Gmail Mark Read Only",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
+      "id": "rh-0104-4000-8000-000000000000",
+      "name": "Execute Action — eganbonde",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [
         2040,
         260
       ],
       "parameters": {
-        "resource": "message",
-        "operation": "markAsRead",
-        "messageId": "={{ $json.message_id }}"
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — egachuu"
-        }
+        "source": "database",
+        "workflowId": {
+          "mode": "name",
+          "value": "Email Triage — Action eganbonde"
+        },
+        "options": {}
       }
     },
     {
-      "id": "rh-0084-4000-8000-000000000000",
-      "name": "Gmail Trash",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
+      "id": "rh-0105-4000-8000-000000000000",
+      "name": "Execute Action — hello",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [
         2040,
         440
       ],
       "parameters": {
-        "resource": "message",
-        "operation": "delete",
-        "messageId": "={{ $json.message_id }}"
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — egachuu"
-        }
+        "source": "database",
+        "workflowId": {
+          "mode": "name",
+          "value": "Email Triage — Action hello"
+        },
+        "options": {}
       }
     },
     {
-      "id": "rh-0085-4000-8000-000000000000",
-      "name": "Gmail Mark Important",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [
-        2040,
-        620
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "addLabels",
-        "messageId": "={{ $json.message_id }}",
-        "labelIds": [
-          "IMPORTANT"
-        ]
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — egachuu"
-        }
-      }
-    },
-    {
-      "id": "rh-0086-4000-8000-000000000000",
+      "id": "rh-0106-4000-8000-000000000000",
       "name": "Update Queue Approved",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -405,7 +369,7 @@
       }
     },
     {
-      "id": "rh-0087-4000-8000-000000000000",
+      "id": "rh-0107-4000-8000-000000000000",
       "name": "Update Queue Skipped",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -427,7 +391,7 @@
       }
     },
     {
-      "id": "rh-0088-4000-8000-000000000000",
+      "id": "rh-0108-4000-8000-000000000000",
       "name": "No Op (not my chat)",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -551,39 +515,32 @@
         ]
       ]
     },
-    "Route by Action": {
+    "Route by Inbox": {
       "main": [
         [
           {
-            "node": "Gmail Mark Read + Archive",
+            "node": "Execute Action — egachuu",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Gmail Mark Read Only",
+            "node": "Execute Action — eganbonde",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Gmail Trash",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Gmail Mark Important",
+            "node": "Execute Action — hello",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Gmail Mark Read + Archive": {
+    "Execute Action — egachuu": {
       "main": [
         [
           {
@@ -594,7 +551,7 @@
         ]
       ]
     },
-    "Gmail Mark Read Only": {
+    "Execute Action — eganbonde": {
       "main": [
         [
           {
@@ -605,18 +562,7 @@
         ]
       ]
     },
-    "Gmail Trash": {
-      "main": [
-        [
-          {
-            "node": "Update Queue Approved",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gmail Mark Important": {
+    "Execute Action — hello": {
       "main": [
         [
           {
