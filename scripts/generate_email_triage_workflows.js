@@ -672,6 +672,115 @@ VALUES ('${NORRAI_INTERNAL}', 'email_triage_sweep', 'completed', '{"execution_id
   };
 }
 
+// ─── Action sub-workflow factory (one per inbox) ──────────────────────────
+// Called by Reply Handler via Execute Workflow. Input item has message_id and proposed_action.
+
+function makeActionWorkflow(inboxEmail, gmailCredName, workflowName) {
+  const gmailCred = { id: 'GMAIL_CREDENTIAL_ID', name: gmailCredName };
+
+  const nodes = [
+    {
+      id: uid('aw'),
+      name: 'When Called by Another Workflow',
+      type: 'n8n-nodes-base.executeWorkflowTrigger',
+      typeVersion: 1.1,
+      position: [240, 300],
+      parameters: {}
+    },
+    {
+      id: uid('aw'),
+      name: 'Route by Action',
+      type: 'n8n-nodes-base.switch',
+      typeVersion: 3.2,
+      position: [440, 300],
+      parameters: {
+        mode: 'rules',
+        rules: {
+          values: [
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'act-0', leftValue: '={{ $json.proposed_action }}', rightValue: 'mark_read_archive', operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } },
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'act-1', leftValue: '={{ $json.proposed_action }}', rightValue: 'mark_read',         operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } },
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'act-2', leftValue: '={{ $json.proposed_action }}', rightValue: 'trash',             operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } },
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'act-3', leftValue: '={{ $json.proposed_action }}', rightValue: 'mark_important',    operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } }
+          ]
+        },
+        fallbackOutput: 3,
+        options: {}
+      }
+    },
+    // mark_read_archive: mark read first, then remove from inbox
+    {
+      id: uid('aw'),
+      name: 'Mark Read (archive path)',
+      type: 'n8n-nodes-base.gmail',
+      typeVersion: 2.1,
+      position: [640, 80],
+      parameters: { resource: 'message', operation: 'markAsRead', messageId: '={{ $json.message_id }}' },
+      credentials: { gmailOAuth2: gmailCred }
+    },
+    {
+      id: uid('aw'),
+      name: 'Archive',
+      type: 'n8n-nodes-base.gmail',
+      typeVersion: 2.1,
+      position: [840, 80],
+      parameters: { resource: 'message', operation: 'removeLabels', messageId: '={{ $json.message_id }}', labelIds: ['INBOX'] },
+      credentials: { gmailOAuth2: gmailCred }
+    },
+    // mark_read only
+    {
+      id: uid('aw'),
+      name: 'Mark Read',
+      type: 'n8n-nodes-base.gmail',
+      typeVersion: 2.1,
+      position: [640, 260],
+      parameters: { resource: 'message', operation: 'markAsRead', messageId: '={{ $json.message_id }}' },
+      credentials: { gmailOAuth2: gmailCred }
+    },
+    // trash
+    {
+      id: uid('aw'),
+      name: 'Trash',
+      type: 'n8n-nodes-base.gmail',
+      typeVersion: 2.1,
+      position: [640, 440],
+      parameters: { resource: 'message', operation: 'delete', messageId: '={{ $json.message_id }}' },
+      credentials: { gmailOAuth2: gmailCred }
+    },
+    // mark important
+    {
+      id: uid('aw'),
+      name: 'Mark Important',
+      type: 'n8n-nodes-base.gmail',
+      typeVersion: 2.1,
+      position: [640, 620],
+      parameters: { resource: 'message', operation: 'addLabels', messageId: '={{ $json.message_id }}', labelIds: ['IMPORTANT'] },
+      credentials: { gmailOAuth2: gmailCred }
+    }
+  ];
+
+  const connections = {
+    'When Called by Another Workflow': { main: [[{ node: 'Route by Action', type: 'main', index: 0 }]] },
+    'Route by Action': { main: [
+      [{ node: 'Mark Read (archive path)', type: 'main', index: 0 }],
+      [{ node: 'Mark Read',               type: 'main', index: 0 }],
+      [{ node: 'Trash',                   type: 'main', index: 0 }],
+      [{ node: 'Mark Important',          type: 'main', index: 0 }]
+    ]},
+    'Mark Read (archive path)': { main: [[{ node: 'Archive', type: 'main', index: 0 }]] }
+  };
+
+  return {
+    name: workflowName,
+    nodes,
+    connections,
+    settings: {
+      executionOrder: 'v1',
+      errorWorkflow: 'Norr AI Workflow Error Logger'
+    },
+    staticData: null
+  };
+}
+
 // ─── Reply Handler workflow ────────────────────────────────────────────────
 
 function makeReplyWorkflow() {
@@ -824,64 +933,58 @@ return [
     },
     {
       id: uid('rh'),
-      name: 'Route by Action',
+      name: 'Route by Inbox',
       type: 'n8n-nodes-base.switch',
       typeVersion: 3.2,
       position: [1840, 200],
       parameters: {
         mode: 'rules',
         rules: {
-          values: ['mark_read_archive', 'mark_read', 'trash'].map((act, i) => ({
-            conditions: {
-              options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 },
-              conditions: [{ id: `act-${i}`, leftValue: '={{ $json.proposed_action }}', rightValue: act, operator: { type: 'string', operation: 'equals' } }],
-              combinator: 'and'
-            }
-          }))
+          values: [
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'inbox-0', leftValue: '={{ $json.inbox }}', rightValue: 'egachuu@gmail.com',  operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } },
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'inbox-1', leftValue: '={{ $json.inbox }}', rightValue: 'eganbonde@gmail.com', operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } },
+            { conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: 'inbox-2', leftValue: '={{ $json.inbox }}', rightValue: 'hello@norrai.co',     operator: { type: 'string', operation: 'equals' } }], combinator: 'and' } }
+          ]
         },
-        fallbackOutput: 'extra',
+        fallbackOutput: 0,
         options: {}
       }
     },
-    // Gmail action nodes — inbox routing via a nested IF
-    // For simplicity we include all 3 credential variants per action and use IF to pick the right one
-    // Using a Code node to determine which Gmail operation to call is cleaner but requires custom nodes
-    // These will need manual credential assignment in n8n after import
     {
       id: uid('rh'),
-      name: 'Gmail Mark Read + Archive',
-      type: 'n8n-nodes-base.gmail',
-      typeVersion: 2.1,
+      name: 'Execute Action — egachuu',
+      type: 'n8n-nodes-base.executeWorkflow',
+      typeVersion: 1.2,
       position: [2040, 80],
-      parameters: { resource: 'message', operation: 'removeLabels', messageId: '={{ $json.message_id }}', labelIds: ['INBOX'] },
-      credentials: { gmailOAuth2: { id: 'GMAIL_CREDENTIAL_ID', name: 'Gmail — egachuu' } }
+      parameters: {
+        source: 'database',
+        workflowId: { mode: 'name', value: 'Email Triage — Action egachuu' },
+        options: {}
+      }
     },
     {
       id: uid('rh'),
-      name: 'Gmail Mark Read Only',
-      type: 'n8n-nodes-base.gmail',
-      typeVersion: 2.1,
+      name: 'Execute Action — eganbonde',
+      type: 'n8n-nodes-base.executeWorkflow',
+      typeVersion: 1.2,
       position: [2040, 260],
-      parameters: { resource: 'message', operation: 'markAsRead', messageId: '={{ $json.message_id }}' },
-      credentials: { gmailOAuth2: { id: 'GMAIL_CREDENTIAL_ID', name: 'Gmail — egachuu' } }
+      parameters: {
+        source: 'database',
+        workflowId: { mode: 'name', value: 'Email Triage — Action eganbonde' },
+        options: {}
+      }
     },
     {
       id: uid('rh'),
-      name: 'Gmail Trash',
-      type: 'n8n-nodes-base.gmail',
-      typeVersion: 2.1,
+      name: 'Execute Action — hello',
+      type: 'n8n-nodes-base.executeWorkflow',
+      typeVersion: 1.2,
       position: [2040, 440],
-      parameters: { resource: 'message', operation: 'delete', messageId: '={{ $json.message_id }}' },
-      credentials: { gmailOAuth2: { id: 'GMAIL_CREDENTIAL_ID', name: 'Gmail — egachuu' } }
-    },
-    {
-      id: uid('rh'),
-      name: 'Gmail Mark Important',
-      type: 'n8n-nodes-base.gmail',
-      typeVersion: 2.1,
-      position: [2040, 620],
-      parameters: { resource: 'message', operation: 'addLabels', messageId: '={{ $json.message_id }}', labelIds: ['IMPORTANT'] },
-      credentials: { gmailOAuth2: { id: 'GMAIL_CREDENTIAL_ID', name: 'Gmail — egachuu' } }
+      parameters: {
+        source: 'database',
+        workflowId: { mode: 'name', value: 'Email Triage — Action hello' },
+        options: {}
+      }
     },
     {
       id: uid('rh'),
@@ -940,16 +1043,14 @@ return [
       [{ node: 'Route by Action',    type: 'main', index: 0 }],
       [{ node: 'Update Queue Skipped', type: 'main', index: 0 }]
     ]},
-    'Route by Action':         { main: [
-      [{ node: 'Gmail Mark Read + Archive', type: 'main', index: 0 }],
-      [{ node: 'Gmail Mark Read Only',      type: 'main', index: 0 }],
-      [{ node: 'Gmail Trash',               type: 'main', index: 0 }],
-      [{ node: 'Gmail Mark Important',      type: 'main', index: 0 }]
+    'Route by Inbox':           { main: [
+      [{ node: 'Execute Action — egachuu',   type: 'main', index: 0 }],
+      [{ node: 'Execute Action — eganbonde', type: 'main', index: 0 }],
+      [{ node: 'Execute Action — hello',     type: 'main', index: 0 }]
     ]},
-    'Gmail Mark Read + Archive': { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
-    'Gmail Mark Read Only':      { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
-    'Gmail Trash':               { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
-    'Gmail Mark Important':      { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
+    'Execute Action — egachuu':   { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
+    'Execute Action — eganbonde': { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
+    'Execute Action — hello':     { main: [[{ node: 'Update Queue Approved', type: 'main', index: 0 }]] },
     'Update Queue Approved':     { main: [[{ node: 'Loop Over Actions',     type: 'main', index: 0 }]] },
     'Update Queue Skipped':      { main: [[{ node: 'Loop Over Actions',     type: 'main', index: 0 }]] }
   };
@@ -969,13 +1070,26 @@ return [
 // ─── Generate all files ────────────────────────────────────────────────────
 
 const inboxConfigs = [
-  { email: 'egachuu@gmail.com',  cred: 'Gmail — egachuu',       name: 'Email Triage — Inbox egachuu'   },
-  { email: 'eganbonde@gmail.com', cred: 'Gmail — eganbonde',    name: 'Email Triage — Inbox eganbonde' },
-  { email: 'hello@norrai.co',    cred: 'Gmail — hello@norrai.co', name: 'Email Triage — Inbox hello'   }
+  { email: 'egachuu@gmail.com',   cred: 'Gmail — egachuu',          name: 'Email Triage — Inbox egachuu'   },
+  { email: 'eganbonde@gmail.com', cred: 'Gmail — eganbonde',         name: 'Email Triage — Inbox eganbonde' },
+  { email: 'hello@norrai.co',     cred: 'Gmail — hello@norrai.co',   name: 'Email Triage — Inbox hello'     }
+];
+
+const actionConfigs = [
+  { email: 'egachuu@gmail.com',   cred: 'Gmail — egachuu',          name: 'Email Triage — Action egachuu'   },
+  { email: 'eganbonde@gmail.com', cred: 'Gmail — eganbonde',         name: 'Email Triage — Action eganbonde' },
+  { email: 'hello@norrai.co',     cred: 'Gmail — hello@norrai.co',   name: 'Email Triage — Action hello'     }
 ];
 
 inboxConfigs.forEach(cfg => {
   const wf = makeInboxWorkflow(cfg.email, cfg.cred, cfg.name);
+  const file = path.join(OUT_DIR, `${cfg.name}.json`);
+  fs.writeFileSync(file, JSON.stringify(wf, null, 2));
+  console.log(`✓ ${cfg.name}.json`);
+});
+
+actionConfigs.forEach(cfg => {
+  const wf = makeActionWorkflow(cfg.email, cfg.cred, cfg.name);
   const file = path.join(OUT_DIR, `${cfg.name}.json`);
   fs.writeFileSync(file, JSON.stringify(wf, null, 2));
   console.log(`✓ ${cfg.name}.json`);
@@ -989,11 +1103,9 @@ const reply = makeReplyWorkflow();
 fs.writeFileSync(path.join(OUT_DIR, 'Email Triage Reply Handler.json'), JSON.stringify(reply, null, 2));
 console.log('✓ Email Triage Reply Handler.json');
 
-console.log('\nDone. Import all 5 files into n8n Cloud.');
+console.log('\nDone. Import all 8 files into n8n Cloud.');
 console.log('After import, assign credentials where n8n prompts you:');
 console.log('  - "Neon Postgres" → your Neon connection');
 console.log('  - "Gmail — egachuu/eganbonde/hello@norrai.co" → the matching Gmail OAuth2 credential');
 console.log('  - "Telegram — Norr AI Email Bot" → your Telegram API credential');
 console.log('  - "Anthropic account 2" → should auto-link (already used in other workflows)');
-console.log('\nFor the Reply Handler Gmail nodes: after import, set each to the correct inbox credential');
-console.log('(the handler needs to act on messages from any inbox — see plan notes).');
