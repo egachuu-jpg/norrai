@@ -8,6 +8,7 @@
 - After any node that overwrites `$json` (Postgres query, HTTP Request, Code node), upstream data is gone from `$json` — always reference the original source node by name: `$('Node Name').item.json.field` instead of `$json.field`
 - Code nodes use the n8n JS API directly — `$('Node Name').item.json` with no `{{ }}` wrapper. The `{{ }}` expression syntax is only for non-code fields (Set assignments, IF conditions, HTTP body strings, etc). Mixing them causes SyntaxError: Unexpected identifier
 - n8n Split In Batches: output 0 = done (fires when all items processed), output 1 = loop (fires for each item) — the reverse of what you'd expect
+- n8n Switch node `fallbackOutput: 'extra'` does NOT wire through the connections array — the fallback port is unconnected even with a 6th entry in `main[]`. Always add an explicit named rule for every expected category (including the catch-all) instead of relying on the fallback output
 - Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
 - Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
 - Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
