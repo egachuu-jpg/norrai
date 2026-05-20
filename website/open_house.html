@@ -187,6 +187,33 @@
   footer a { color: var(--muted); text-decoration: none; }
   footer a:hover { color: var(--secondary); }
 
+  /* ── Consent checkbox ── */
+  .consent-field {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .consent-field input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin-top: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    accent-color: var(--ink);
+    cursor: pointer;
+    padding: 0;
+  }
+  .consent-label {
+    font-size: 12px;
+    color: var(--secondary);
+    line-height: 1.6;
+    cursor: pointer;
+  }
+  .consent-label a { color: var(--secondary); }
+  .consent-label a:hover { color: var(--ink); }
+
   @media (max-width: 480px) {
     .site-header { padding: 32px 18px 28px; }
     .wrap { padding: 28px 18px 60px; }
@@ -234,6 +261,15 @@
       <div class="field">
         <label for="brought_you_in">What brought you in today? <span class="opt">(optional)</span></label>
         <textarea id="brought_you_in" name="brought_you_in" placeholder="Just browsing, curious about the neighborhood, looking for something in this price range..."></textarea>
+      </div>
+
+      <div class="field">
+        <div class="consent-field">
+          <input type="checkbox" id="sms_consent" name="sms_consent" required>
+          <label class="consent-label" for="sms_consent">
+            I agree to receive text messages from the agent about this property and related real estate inquiries. Message and data rates may apply. Reply STOP at any time to opt out.
+          </label>
+        </div>
       </div>
 
       <div id="status" class="status" role="alert"></div>
@@ -287,6 +323,7 @@
       phone:            fd.get('phone')         || '',
       email:            fd.get('email')         || '',
       brought_you_in:   fd.get('brought_you_in') || '',
+      sms_consent:      fd.get('sms_consent') === 'on',
       property_address: propertyAddress,
       property_notes:   propertyNotes,
       agent_name:       agentName,
