@@ -1,0 +1,658 @@
+{
+  "name": "Email Triage Reply Handler",
+  "nodes": [
+    {
+      "id": "rh-0072-4000-8000-000000000000",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram — Norr AI Email Bot"
+        }
+      },
+      "webhookId": "email-triage-telegram-reply-001"
+    },
+    {
+      "id": "rh-0073-4000-8000-000000000000",
+      "name": "Is My Chat?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "chat-id-check",
+              "leftValue": "={{ $json.message.chat.id.toString() }}",
+              "rightValue": "8792529492",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0074-4000-8000-000000000000",
+      "name": "Parse Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const text = ($input.first().json.message.text ?? '').trim().toLowerCase();\nconst approvedNumbers = text === 'all' ? 'all' : text.split(/\\s+/).map(Number).filter(n => !isNaN(n) && n > 0);\nreturn [{ json: { approvedNumbers, rawText: text } }];"
+      }
+    },
+    {
+      "id": "rh-0075-4000-8000-000000000000",
+      "name": "Fetch Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        840,
+        200
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, message_id, inbox, sender, subject, proposed_action\nFROM email_triage_queue\nWHERE status = 'pending'\nORDER BY created_at ASC",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "rh-0076-4000-8000-000000000000",
+      "name": "Build Action Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const pending = $input.all().map((item, i) => ({ ...item.json, position: i + 1 }));\nconst approved = $('Parse Reply').first().json.approvedNumbers;\nconst toAct  = approved === 'all' ? pending : pending.filter(p => approved.includes(p.position));\nconst toSkip = pending.filter(p => !toAct.find(a => a.id === p.id));\n\nconst verb = { mark_read_archive: 'archived', mark_read: 'marked read', trash: 'trashed', mark_important: 'marked important', queue_for_review: 'reviewed' };\nconst parts = [];\nif (toAct.length)  parts.push(`✓ Done — ${toAct.map(i => `${verb[i.proposed_action] ?? 'actioned'} ${i.position}`).join(', ')}.`);\nif (toSkip.length) parts.push(`Skipped ${toSkip.map(i => i.position).join(', ')}.`);\nconst confirmMsg = parts.join(' ') || '✓ No actions taken.';\n\nreturn [\n  ...toAct.map(i  => ({ json: { ...i, skip: false } })),\n  ...toSkip.map(i => ({ json: { ...i, skip: true  } })),\n  { json: { __is_summary: true, __confirm_msg: confirmMsg } }\n];"
+      }
+    },
+    {
+      "id": "rh-0077-4000-8000-000000000000",
+      "name": "Loop Over Actions",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1240,
+        200
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0078-4000-8000-000000000000",
+      "name": "Is Summary?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-summary",
+              "leftValue": "={{ $json.__is_summary }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0079-4000-8000-000000000000",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1640,
+        80
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8792529492",
+        "text": "={{ $json.__confirm_msg }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram — Norr AI Email Bot"
+        }
+      }
+    },
+    {
+      "id": "rh-0080-4000-8000-000000000000",
+      "name": "Skip or Act?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1640,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0081-4000-8000-000000000000",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1840,
+        200
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "act-0",
+                    "leftValue": "={{ $json.proposed_action }}",
+                    "rightValue": "mark_read_archive",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "act-1",
+                    "leftValue": "={{ $json.proposed_action }}",
+                    "rightValue": "mark_read",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "act-2",
+                    "leftValue": "={{ $json.proposed_action }}",
+                    "rightValue": "trash",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0082-4000-8000-000000000000",
+      "name": "Gmail Mark Read + Archive",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2040,
+        80
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "removeLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "rh-0083-4000-8000-000000000000",
+      "name": "Gmail Mark Read Only",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2040,
+        260
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "markAsRead",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "rh-0084-4000-8000-000000000000",
+      "name": "Gmail Trash",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2040,
+        440
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "delete",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "rh-0085-4000-8000-000000000000",
+      "name": "Gmail Mark Important",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2040,
+        620
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "IMPORTANT"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "rh-0086-4000-8000-000000000000",
+      "name": "Update Queue Approved",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2240,
+        300
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE email_triage_queue SET status = 'approved', resolved_at = NOW() WHERE id = '{{ $json.id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "rh-0087-4000-8000-000000000000",
+      "name": "Update Queue Skipped",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1840,
+        420
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE email_triage_queue SET status = 'skipped', resolved_at = NOW() WHERE id = '{{ $json.id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "rh-0088-4000-8000-000000000000",
+      "name": "No Op (not my chat)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        640,
+        400
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is My Chat?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is My Chat?": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Op (not my chat)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending": {
+      "main": [
+        [
+          {
+            "node": "Build Action Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Action Plan": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Actions": {
+      "main": [
+        [
+          {
+            "node": "Is Summary?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Summary?": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip or Act?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation": {
+      "main": []
+    },
+    "Skip or Act?": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Queue Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Gmail Mark Read + Archive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail Mark Read Only",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail Trash",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail Mark Important",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Mark Read + Archive": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Mark Read Only": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trash": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Mark Important": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Queue Approved": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Queue Skipped": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "staticData": null
+}

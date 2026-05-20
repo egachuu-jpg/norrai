@@ -1,0 +1,879 @@
+{
+  "name": "Email Triage — Inbox egachuu",
+  "nodes": [
+    {
+      "id": "et-0001-4000-8000-000000000000",
+      "name": "When Called By Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "et-0002-4000-8000-000000000000",
+      "name": "Log Run Start",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        440,
+        300
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO email_triage_runs (run_id, inbox, started_at) VALUES ('{{ $execution.id }}', 'egachuu@gmail.com', NOW())",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "et-0003-4000-8000-000000000000",
+      "name": "Get Unread Messages",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "labelIds": [
+            "UNREAD"
+          ],
+          "receivedAfter": "={{ DateTime.now().minus({hours: 24}).toISO() }}"
+        },
+        "options": {
+          "downloadAttachments": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0004-4000-8000-000000000000",
+      "name": "Loop Over Emails",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        840,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "et-0005-4000-8000-000000000000",
+      "name": "Dedup Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1040,
+        300
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM email_triage_queue WHERE message_id = '{{ $json.id }}' AND inbox = 'egachuu@gmail.com' LIMIT 1",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "et-0006-4000-8000-000000000000",
+      "name": "Already Processed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1240,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dedup-check-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "et-0007-4000-8000-000000000000",
+      "name": "Build Classifier Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        480
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "inbox",
+              "value": "egachuu@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "message_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "sender",
+              "value": "={{ $json.from }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "snippet",
+              "value": "={{ ($json.snippet ?? '').slice(0, 200) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "et-0008-4000-8000-000000000000",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1640,
+        480
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "prompt",
+              "value": "=You are an email triage classifier. Classify the email below into exactly one category.\n\nINBOX: {{ $json.inbox }}\nFROM: {{ $json.sender }}\nSUBJECT: {{ $json.subject }}\nSNIPPET: {{ $json.snippet }}\n\nCATEGORIES:\n- newsletter: Marketing emails, digests, Substack, promotional content, sale announcements\n- automated_notification: System-generated alerts (GitHub, Notion, Slack, receipts, shipping confirmations, bank alerts, app notifications)\n- cold_outreach: Unsolicited sales or partnership emails from people you do not know\n- norrai_business: Client inquiries, leads, vendor emails, or business proposals for Norr AI — use this for any email to hello@norrai.co that could be from a real person with business intent\n- personal: Emails from real people you know (friends, family, colleagues) or that need a personal reply\n- uncertain: Does not clearly fit any category above\n\nRULES:\n- If inbox is hello@norrai.co and the email could be a lead or client, classify as norrai_business (not newsletter or cold_outreach)\n- Prefer uncertain over a wrong confident guess\n- Return ONLY valid JSON, no extra text\n\n{\"category\":\"<category>\",\"confidence\":<0.0-1.0>,\"proposed_action\":\"<mark_read_archive|mark_read|trash|mark_important|queue_for_review>\",\"reason\":\"<one sentence>\"}",
+              "type": "string"
+            },
+            {
+              "id": "p2",
+              "name": "inbox",
+              "value": "={{ $json.inbox }}",
+              "type": "string"
+            },
+            {
+              "id": "p3",
+              "name": "message_id",
+              "value": "={{ $json.message_id }}",
+              "type": "string"
+            },
+            {
+              "id": "p4",
+              "name": "sender",
+              "value": "={{ $json.sender }}",
+              "type": "string"
+            },
+            {
+              "id": "p5",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "p6",
+              "name": "snippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "et-0009-4000-8000-000000000000",
+      "name": "Claude Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1840,
+        480
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 256,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "id": "et-0010-4000-8000-000000000000",
+      "name": "Parse + Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        480
+      ],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content[0].text.trim();\nlet c;\ntry { c = JSON.parse(raw); }\ncatch (e) { c = { category: 'uncertain', confidence: 0, proposed_action: 'queue_for_review', reason: 'parse error' }; }\nif ((c.confidence ?? 0) < 0.80) {\n  c.category = 'uncertain';\n  c.proposed_action = 'queue_for_review';\n}\nconst prev = {\n  inbox:      '{{ $('Build Classifier Input').item.json.inbox }}',\n  message_id: '{{ $('Build Classifier Input').item.json.message_id }}',\n  sender:     '{{ $('Build Classifier Input').item.json.sender }}',\n  subject:    '{{ $('Build Classifier Input').item.json.subject }}',\n  snippet:    '{{ $('Build Classifier Input').item.json.snippet }}'\n};\nreturn [{ json: { ...prev, ...c } }];"
+      }
+    },
+    {
+      "id": "et-0011-4000-8000-000000000000",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2240,
+        480
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cat-0",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "newsletter",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cat-1",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "automated_notification",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cat-2",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "cold_outreach",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cat-3",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "norrai_business",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cat-4",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "personal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      }
+    },
+    {
+      "id": "et-0012-4000-8000-000000000000",
+      "name": "Mark Read (newsletter)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "markAsRead",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0013-4000-8000-000000000000",
+      "name": "Archive (newsletter)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2640,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "removeLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0014-4000-8000-000000000000",
+      "name": "Mark Read (notification)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        380
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "markAsRead",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0015-4000-8000-000000000000",
+      "name": "Trash (cold outreach)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        560
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "delete",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0016-4000-8000-000000000000",
+      "name": "Mark Important (business)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        740
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "IMPORTANT"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0017-4000-8000-000000000000",
+      "name": "Mark Important (personal)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        920
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "IMPORTANT"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GMAIL_CREDENTIAL_ID",
+          "name": "Gmail — egachuu"
+        }
+      }
+    },
+    {
+      "id": "et-0018-4000-8000-000000000000",
+      "name": "Merge Actions",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2840,
+        560
+      ],
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      }
+    },
+    {
+      "id": "et-0019-4000-8000-000000000000",
+      "name": "Log to Queue",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3040,
+        560
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO email_triage_queue (message_id, inbox, sender, subject, snippet, category, proposed_action, status)\nVALUES (\n  '{{ $json.message_id }}',\n  'egachuu@gmail.com',\n  '{{ $json.sender }}',\n  '{{ $json.subject }}',\n  '{{ $json.snippet }}',\n  '{{ $json.category }}',\n  '{{ $json.proposed_action }}',\n  '{{ $json.category === \"uncertain\" ? \"pending\" : \"auto_actioned\" }}'\n)\nON CONFLICT (message_id, inbox) DO NOTHING",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "et-0020-4000-8000-000000000000",
+      "name": "Log Run Complete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1040,
+        560
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE email_triage_runs\nSET\n  completed_at      = NOW(),\n  emails_processed  = (SELECT count(*) FROM email_triage_queue WHERE inbox = 'egachuu@gmail.com' AND created_at > NOW() - INTERVAL '2 hours'),\n  auto_actioned     = (SELECT count(*) FROM email_triage_queue WHERE inbox = 'egachuu@gmail.com' AND status = 'auto_actioned' AND created_at > NOW() - INTERVAL '2 hours'),\n  queued_for_review = (SELECT count(*) FROM email_triage_queue WHERE inbox = 'egachuu@gmail.com' AND status = 'pending' AND created_at > NOW() - INTERVAL '2 hours')\nWHERE run_id = '{{ $execution.id }}' AND inbox = 'egachuu@gmail.com'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When Called By Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Log Run Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Run Start": {
+      "main": [
+        [
+          {
+            "node": "Get Unread Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Unread Messages": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Emails": {
+      "main": [
+        [
+          {
+            "node": "Dedup Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Run Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup Check": {
+      "main": [
+        [
+          {
+            "node": "Already Processed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already Processed?": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Classifier Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Classifier Input": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Classify": {
+      "main": [
+        [
+          {
+            "node": "Parse + Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse + Gate": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "Mark Read (newsletter)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Read (notification)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trash (cold outreach)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Important (business)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Important (personal)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Read (newsletter)": {
+      "main": [
+        [
+          {
+            "node": "Archive (newsletter)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive (newsletter)": {
+      "main": [
+        [
+          {
+            "node": "Merge Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Read (notification)": {
+      "main": [
+        [
+          {
+            "node": "Merge Actions",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Trash (cold outreach)": {
+      "main": [
+        [
+          {
+            "node": "Merge Actions",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Mark Important (business)": {
+      "main": [
+        [
+          {
+            "node": "Merge Actions",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Mark Important (personal)": {
+      "main": [
+        [
+          {
+            "node": "Merge Actions",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge Actions": {
+      "main": [
+        [
+          {
+            "node": "Log to Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Queue": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}
