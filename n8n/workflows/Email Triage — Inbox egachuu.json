@@ -593,6 +593,19 @@
     },
     {
       "id": "et-0019-4000-8000-000000000000",
+      "name": "Sanitize for Queue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2840,
+        560
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst esc = s => (s ?? '').replace(/'/g, \"''\");\nreturn [{ json: {\n  message_id:      d.message_id      ?? '',\n  sender:          esc(d.sender),\n  subject:         esc(d.subject),\n  snippet:         esc(d.snippet),\n  category:        d.category        ?? 'uncertain',\n  proposed_action: d.proposed_action ?? 'mark_read_archive',\n}}];"
+      }
+    },
+    {
+      "id": "et-0020-4000-8000-000000000000",
       "name": "Log to Queue",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -614,7 +627,7 @@
       }
     },
     {
-      "id": "et-0020-4000-8000-000000000000",
+      "id": "et-0021-4000-8000-000000000000",
       "name": "Log Run Complete",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -874,6 +887,17 @@
       ]
     },
     "Merge Actions": {
+      "main": [
+        [
+          {
+            "node": "Sanitize for Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize for Queue": {
       "main": [
         [
           {
