@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS email_triage_queue (
 -- One row per inbox per sweep run for health monitoring.
 CREATE TABLE IF NOT EXISTS email_triage_runs (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  run_id            UUID NOT NULL,
+  run_id            TEXT NOT NULL,
   inbox             TEXT NOT NULL,
   emails_processed  INT DEFAULT 0,
   auto_actioned     INT DEFAULT 0,
