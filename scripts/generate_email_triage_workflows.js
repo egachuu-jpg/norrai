@@ -155,11 +155,11 @@ function makeInboxWorkflow(inboxEmail, gmailCredName, workflowName) {
       parameters: {
         assignments: {
           assignments: [
-            { id: 'f1', name: 'inbox',      value: inboxEmail,                                               type: 'string' },
-            { id: 'f2', name: 'message_id', value: '={{ $json.id }}',                                       type: 'string' },
-            { id: 'f3', name: 'sender',     value: '={{ $json.from }}',                                     type: 'string' },
-            { id: 'f4', name: 'subject',    value: '={{ $json.subject }}',                                  type: 'string' },
-            { id: 'f5', name: 'snippet',    value: '={{ ($json.snippet ?? \'\').slice(0, 200) }}',           type: 'string' }
+            { id: 'f1', name: 'inbox',      value: inboxEmail,                                                                         type: 'string' },
+            { id: 'f2', name: 'message_id', value: "={{ $('Loop Over Emails').item.json.id }}",                                    type: 'string' },
+            { id: 'f3', name: 'sender',     value: "={{ $('Loop Over Emails').item.json.from }}",                                  type: 'string' },
+            { id: 'f4', name: 'subject',    value: "={{ $('Loop Over Emails').item.json.subject }}",                               type: 'string' },
+            { id: 'f5', name: 'snippet',    value: "={{ ($('Loop Over Emails').item.json.snippet ?? '').slice(0, 200) }}",         type: 'string' }
           ]
         },
         options: {}
