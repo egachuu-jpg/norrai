@@ -234,13 +234,7 @@ if ((c.confidence ?? 0) < 0.80) {
   c.category = 'uncertain';
   c.proposed_action = 'queue_for_review';
 }
-const prev = {
-  inbox:      '{{ $('Build Classifier Input').item.json.inbox }}',
-  message_id: '{{ $('Build Classifier Input').item.json.message_id }}',
-  sender:     '{{ $('Build Classifier Input').item.json.sender }}',
-  subject:    '{{ $('Build Classifier Input').item.json.subject }}',
-  snippet:    '{{ $('Build Classifier Input').item.json.snippet }}'
-};
+const prev = $('Build Classifier Input').item.json;
 return [{ json: { ...prev, ...c } }];`
       }
     },
