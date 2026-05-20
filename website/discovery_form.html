@@ -293,6 +293,31 @@
   .conditional { display: none; }
   .conditional.show { display: block; margin-top: 16px; }
 
+  /* ── Consent checkbox ── */
+  .consent-field {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .consent-field input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin-top: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    accent-color: var(--ink);
+    cursor: pointer;
+    padding: 0;
+  }
+  .consent-label {
+    font-size: 12px;
+    color: var(--secondary);
+    line-height: 1.6;
+    cursor: pointer;
+  }
+
   /* ── Submit area ── */
   .submit-area { display: flex; flex-direction: column; gap: 12px; }
 
@@ -734,6 +759,12 @@
     </div>
 
     <div class="submit-area">
+      <div class="consent-field">
+        <input type="checkbox" id="sms_consent" name="sms_consent" required>
+        <label class="consent-label" for="sms_consent">
+          I agree to receive text messages from Norr AI about my inquiry. Message and data rates may apply. Reply STOP at any time to opt out.
+        </label>
+      </div>
       <div id="status" class="status"></div>
       <button type="submit" id="submit-btn">Submit Discovery</button>
     </div>
@@ -809,6 +840,7 @@
     if (!payload.timeline)                  payload.timeline = '';
     if (!payload.tried_automation_before)   payload.tried_automation_before = '';
     if (!payload.automation_experience)     payload.automation_experience = '';
+    payload.sms_consent = fd.get('sms_consent') === 'on';
 
     payload.submitted_at = new Date().toISOString();
     payload.source = 'discovery_form_web';
