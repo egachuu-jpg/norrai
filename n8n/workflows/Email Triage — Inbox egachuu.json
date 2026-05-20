@@ -288,7 +288,7 @@
         480
       ],
       "parameters": {
-        "jsCode": "const raw = $input.first().json.content[0].text.trim();\nlet c;\ntry { c = JSON.parse(raw); }\ncatch (e) { c = { category: 'uncertain', confidence: 0, proposed_action: 'queue_for_review', reason: 'parse error' }; }\nif ((c.confidence ?? 0) < 0.80) {\n  c.category = 'uncertain';\n  c.proposed_action = 'queue_for_review';\n}\nconst prev = {\n  inbox:      '{{ $('Build Classifier Input').item.json.inbox }}',\n  message_id: '{{ $('Build Classifier Input').item.json.message_id }}',\n  sender:     '{{ $('Build Classifier Input').item.json.sender }}',\n  subject:    '{{ $('Build Classifier Input').item.json.subject }}',\n  snippet:    '{{ $('Build Classifier Input').item.json.snippet }}'\n};\nreturn [{ json: { ...prev, ...c } }];"
+        "jsCode": "const raw = $input.first().json.content[0].text.trim();\nlet c;\ntry { c = JSON.parse(raw); }\ncatch (e) { c = { category: 'uncertain', confidence: 0, proposed_action: 'queue_for_review', reason: 'parse error' }; }\nif ((c.confidence ?? 0) < 0.80) {\n  c.category = 'uncertain';\n  c.proposed_action = 'queue_for_review';\n}\nconst prev = $('Build Classifier Input').item.json;\nreturn [{ json: { ...prev, ...c } }];"
       }
     },
     {
