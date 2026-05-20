@@ -35,6 +35,8 @@
 - When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
 - "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
 - Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
+- When A2P registration is pending, hardcode `channel: 'email'` in Prep Fields and replace Twilio nodes with SendGrid — restore to SMS by changing one field + adding IF gates per touch; scattering the channel decision across multiple nodes makes it hard to restore later
+- `if (beds || baths)` evaluates `0` as falsy even after `|| ''` initialization — when a numeric field could legitimately be zero, use `if (beds !== '' || baths !== '')` for the explicit empty-string check
 - Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
 - The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
 - When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
@@ -58,6 +60,8 @@
 ## Prompt Engineering
 - Wrap all user-supplied fields in Claude prompts with `[DATA][/DATA]` delimiters to prevent prompt injection (lead_name, lead_message, agent_notes, etc.)
 - Cold nurture and lead response prompts must explicitly say "do not invent school names, market statistics, or sold prices" until the research agent is wired in — Claude will hallucinate these without the instruction
+- Claude will also invent property-specific details (yard size, mature trees, finishes) when given an address and a prompt that says "pick one specific detail" — any touch with a property-specific angle needs "only reference details you have been given; do not invent specifics you weren't told"
+- Assembled context block pattern: build a `context_block` string in Prep Fields from only the fields that are actually populated, with a fallback string when all are absent — Claude gets coherent context instead of blank labeled lines, and the fallback behavior is explicit rather than implicit
 - Property highlights must be extracted during Open House Setup (when the MLS description is available) and passed as a URL param — the Follow-Up workflow fires the next morning with no access to the original listing copy
 - Pass structured research data as a formatted text block (`research_detail`) not just the `insight_block` summary — Claude needs school names/ratings/distances and market numbers to answer specific lead questions; the 2–3 sentence summary is too thin
 - When splitting a combined address string is required, 4 separate form fields is more reliable than parsing — comma placement is not enforced by users
