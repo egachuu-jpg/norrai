@@ -157,25 +157,25 @@
             {
               "id": "f2",
               "name": "message_id",
-              "value": "={{ $json.id }}",
+              "value": "={{ $('Loop Over Emails').item.json.id }}",
               "type": "string"
             },
             {
               "id": "f3",
               "name": "sender",
-              "value": "={{ $json.from }}",
+              "value": "={{ $('Loop Over Emails').item.json.from }}",
               "type": "string"
             },
             {
               "id": "f4",
               "name": "subject",
-              "value": "={{ $json.subject }}",
+              "value": "={{ $('Loop Over Emails').item.json.subject }}",
               "type": "string"
             },
             {
               "id": "f5",
               "name": "snippet",
-              "value": "={{ ($json.snippet ?? '').slice(0, 200) }}",
+              "value": "={{ ($('Loop Over Emails').item.json.snippet ?? '').slice(0, 200) }}",
               "type": "string"
             }
           ]
