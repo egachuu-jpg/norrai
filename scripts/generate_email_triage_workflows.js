@@ -594,13 +594,20 @@ ORDER BY created_at ASC`,
       position: [1840, 200],
       parameters: {
         jsCode: `const items = $input.all();
-const verb = { mark_read_archive: 'archive', mark_read: 'mark read', trash: 'trash', queue_for_review: 'review' };
-let msg = \`📬 \${items.length} email\${items.length > 1 ? 's' : ''} need your review:\\n\\n\`;
+const actionLabel = {
+  mark_read_archive: '🗄 archive',
+  mark_read:         '📖 mark read',
+  trash:             '🗑 trash',
+  mark_important:    '⭐ mark important',
+  queue_for_review:  '❓ uncertain — reply to archive, or skip to leave in inbox'
+};
+const count = items.length;
+let msg = \`📬 \${count} email\${count !== 1 ? 's' : ''} need\${count === 1 ? 's' : ''} your review:\\n\\n\`;
 items.forEach((item, i) => {
-  const a = verb[item.json.proposed_action] ?? 'review';
-  msg += \`\${i + 1}. \${item.json.sender} — "\${item.json.subject}" → \${a}?\\n\`;
+  const a = actionLabel[item.json.proposed_action] ?? '❓ uncertain';
+  msg += \`\${i + 1}. \${item.json.sender} — "\${item.json.subject}"\\n   → \${a}\\n\\n\`;
 });
-msg += \`\\nReply with numbers to approve (e.g. "1 3") or "all"\\nSkip any by not including its number.\`;
+msg += \`Reply with numbers to approve proposed actions (e.g. "1 3") or "all".\\nSkip any by not including its number.\`;
 return [{ json: { message: msg } }];`
       }
     },
