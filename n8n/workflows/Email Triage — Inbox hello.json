@@ -163,13 +163,13 @@
             {
               "id": "f3",
               "name": "sender",
-              "value": "={{ $('Loop Over Emails').item.json.from }}",
+              "value": "={{ $('Loop Over Emails').item.json.From }}",
               "type": "string"
             },
             {
               "id": "f4",
               "name": "subject",
-              "value": "={{ $('Loop Over Emails').item.json.subject }}",
+              "value": "={{ $('Loop Over Emails').item.json.Subject }}",
               "type": "string"
             },
             {
