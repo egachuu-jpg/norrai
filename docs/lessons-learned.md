@@ -43,6 +43,7 @@
 - Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
 - When A2P registration is pending, hardcode `channel: 'email'` in Prep Fields and replace Twilio nodes with SendGrid — restore to SMS by changing one field + adding IF gates per touch; scattering the channel decision across multiple nodes makes it hard to restore later
 - `if (beds || baths)` evaluates `0` as falsy even after `|| ''` initialization — when a numeric field could legitimately be zero, use `if (beds !== '' || baths !== '')` for the explicit empty-string check
+- Gmail node returns email headers with initial caps: `From` and `Subject` (not `from`/`subject`) — accessing lowercase field names silently returns `undefined`
 - Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
 - The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
 - When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
