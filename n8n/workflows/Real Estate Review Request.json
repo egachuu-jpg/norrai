@@ -10,7 +10,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
+      "position": [
+        240,
+        144
+      ],
       "id": "d1e2f3a4-0001-4000-8000-000000000001",
       "name": "Receive Review Request",
       "webhookId": "review-request-webhook-001"
@@ -42,7 +45,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [432, 224],
+      "position": [
+        432,
+        224
+      ],
       "id": "d1e2f3a4-0002-4000-8000-000000000002",
       "name": "Token Check"
     },
@@ -52,7 +58,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [640, 144],
+      "position": [
+        640,
+        144
+      ],
       "id": "d1e2f3a4-0003-4000-8000-000000000003",
       "name": "Prep Fields"
     },
@@ -65,7 +74,10 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [848, 144],
+      "position": [
+        848,
+        144
+      ],
       "id": "d1e2f3a4-0004-4000-8000-000000000004",
       "name": "Wait"
     },
@@ -76,7 +88,7 @@
             {
               "id": "set-prompt-review-001",
               "name": "prompt",
-              "value": "=You are a real estate assistant helping agent {{ $('Prep Fields').first().json.agent_name }} request a review from a recently closed client.\n\nClient: {{ $('Prep Fields').first().json.client_name }}\nTransaction: {{ $('Prep Fields').first().json.transaction_type }} (buyer = they purchased a home; seller = they sold a home)\nProperty: {{ $('Prep Fields').first().json.property_address }}\nAgent: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite three things in exactly this format:\n\nSMS:\n<A warm, conversational message under 160 characters. For buyers, reference 'your new home at [property]'. For sellers, reference 'a successful sale at [property]'. Ask for an honest review and say it only takes a minute. Do NOT include any URLs — those will be added automatically.>\n\nEMAIL_SUBJECT:\n<Warm subject line under 60 characters>\n\nEMAIL_BODY:\n<2-3 short paragraphs. Warm congratulations on the transaction. Explain that a review helps other families find trusted help, and that it takes just a minute. Sign off from {{ $('Prep Fields').first().json.agent_name }}. Do NOT include any URLs — those will be added automatically.>\n\nReturn ONLY these three labeled sections. No extra commentary, no quotation marks.",
+              "value": "=You are a real estate assistant helping agent {{ $('Prep Fields').first().json.agent_name }} request a review from a recently closed client.\n\nClient: {{ $('Prep Fields').first().json.client_name }}\nTransaction: {{ $('Prep Fields').first().json.transaction_type }} (buyer = they purchased a home; seller = they sold a home)\nProperty: {{ $('Prep Fields').first().json.property_address }}\nAgent: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite three things in exactly this format:\n\nSMS:\n<A warm, conversational message under 160 characters. For buyers, reference 'your new home at [property]'. For sellers, reference 'a successful sale at [property]'. Ask for an honest review and say it only takes a minute. Do NOT include any URLs \u2014 those will be added automatically.>\n\nEMAIL_SUBJECT:\n<Warm subject line under 60 characters>\n\nEMAIL_BODY:\n<2-3 short paragraphs. Warm congratulations on the transaction. Explain that a review helps other families find trusted help, and that it takes just a minute. Sign off from {{ $('Prep Fields').first().json.agent_name }}. Do NOT include any URLs \u2014 those will be added automatically.>\n\nReturn ONLY these three labeled sections. No extra commentary, no quotation marks.",
               "type": "string"
             }
           ]
@@ -85,7 +97,10 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1056, 144],
+      "position": [
+        1056,
+        144
+      ],
       "id": "d1e2f3a4-0005-4000-8000-000000000005",
       "name": "Build Claude Prompt"
     },
@@ -98,8 +113,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "anthropic-version", "value": "2023-06-01" },
-            { "name": "content-type",      "value": "application/json" }
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -109,7 +130,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1264, 144],
+      "position": [
+        1264,
+        144
+      ],
       "id": "d1e2f3a4-0006-4000-8000-000000000006",
       "name": "Claude API",
       "retryOnFail": true,
@@ -124,11 +148,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text;\nconst prep = $('Prep Fields').first().json;\n\nfunction extract(label, str) {\n  const re = new RegExp(label + ':\\\\s*([\\\\s\\\\S]*?)(?=\\\\n[A-Z_]+:|$)');\n  const m = str.match(re);\n  return m ? m[1].trim() : '';\n}\n\nconst smsText      = extract('SMS', text);\nconst emailSubject = extract('EMAIL_SUBJECT', text);\nconst emailBodyRaw = extract('EMAIL_BODY', text);\n\n// Build SMS — append links\nconst linkLines = ['', '\\u2b50 Leave a review:'];\nif (prep.google_url) linkLines.push('Google: ' + prep.google_url);\nif (prep.zillow_url) linkLines.push('Zillow: ' + prep.zillow_url);\nconst smsMessage = smsText + linkLines.join('\\n');\n\n// Build email HTML\nconst esc = s => (s || '').replace(/&/g, '&amp;');\nconst linkHtml = [\n  prep.google_url ? `<a href=\"${esc(prep.google_url)}\" style=\"color:#7FA9B8;\">Leave a Google review</a>` : '',\n  prep.zillow_url ? `<a href=\"${esc(prep.zillow_url)}\" style=\"color:#7FA9B8;\">Leave a Zillow review</a>` : '',\n].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');\n\nconst bodyHtml = emailBodyRaw\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\n\\n/g, '</p><p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">')\n  .replace(/\\n/g, '<br>');\n\nconst emailHtml = [\n  '<div style=\"font-family:\\'Inter\\',Arial,sans-serif;max-width:520px;margin:0 auto;color:#0A0F1A;\">',\n  '  <div style=\"background:#0A0F1A;padding:32px 32px 28px;border-radius:8px 8px 0 0;\">',\n  '    <p style=\"font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#7FA9B8;margin:0 0 10px;\">Review Request</p>',\n  `    <h1 style=\"font-size:22px;font-weight:700;color:#FAFAF7;margin:0;letter-spacing:-0.02em;\">${emailSubject.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h1>`,\n  '  </div>',\n  '  <div style=\"background:#FFFFFF;padding:32px;border:1px solid #E5E4DE;border-top:none;border-radius:0 0 8px 8px;\">',\n  `    <p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">${bodyHtml}</p>`,\n  `    <p style=\"font-size:14px;margin:0 0 28px;\">${linkHtml}</p>`,\n  '    <hr style=\"border:none;border-top:1px solid #E5E4DE;margin:0 0 20px;\">',\n  '    <p style=\"font-size:12px;color:#9EA3AA;margin:0;\">Norr AI &nbsp;&middot;&nbsp; <a href=\"https://norrai.co\" style=\"color:#9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    sms_message:   smsMessage,\n    email_subject: emailSubject,\n    email_html:    emailHtml,\n    client_phone:  prep.client_phone,\n    client_email:  prep.client_email,\n  }\n}];"
+        "jsCode": "const text = $input.first().json.content[0].text;\nconst prep = $('Prep Fields').first().json;\n\nfunction extract(label, str) {\n  const re = new RegExp(label + ':\\\\s*([\\\\s\\\\S]*?)(?=\\\\n[A-Z_]+:|$)');\n  const m = str.match(re);\n  return m ? m[1].trim() : '';\n}\n\nconst smsText      = extract('SMS', text);\nconst emailSubject = extract('EMAIL_SUBJECT', text);\nconst emailBodyRaw = extract('EMAIL_BODY', text);\n\n// Build SMS \u2014 append links\nconst linkLines = ['', '\\u2b50 Leave a review:'];\nif (prep.google_url) linkLines.push('Google: ' + prep.google_url);\nif (prep.zillow_url) linkLines.push('Zillow: ' + prep.zillow_url);\nconst smsMessage = smsText + linkLines.join('\\n');\n\n// Build email HTML\nconst esc = s => (s || '').replace(/&/g, '&amp;');\nconst linkHtml = [\n  prep.google_url ? `<a href=\"${esc(prep.google_url)}\" style=\"color:#7FA9B8;\">Leave a Google review</a>` : '',\n  prep.zillow_url ? `<a href=\"${esc(prep.zillow_url)}\" style=\"color:#7FA9B8;\">Leave a Zillow review</a>` : '',\n].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');\n\nconst bodyHtml = emailBodyRaw\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\n\\n/g, '</p><p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">')\n  .replace(/\\n/g, '<br>');\n\nconst emailHtml = [\n  '<div style=\"font-family:\\'Inter\\',Arial,sans-serif;max-width:520px;margin:0 auto;color:#0A0F1A;\">',\n  '  <div style=\"background:#0A0F1A;padding:32px 32px 28px;border-radius:8px 8px 0 0;\">',\n  '    <p style=\"font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#7FA9B8;margin:0 0 10px;\">Review Request</p>',\n  `    <h1 style=\"font-size:22px;font-weight:700;color:#FAFAF7;margin:0;letter-spacing:-0.02em;\">${emailSubject.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h1>`,\n  '  </div>',\n  '  <div style=\"background:#FFFFFF;padding:32px;border:1px solid #E5E4DE;border-top:none;border-radius:0 0 8px 8px;\">',\n  `    <p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">${bodyHtml}</p>`,\n  `    <p style=\"font-size:14px;margin:0 0 28px;\">${linkHtml}</p>`,\n  '    <hr style=\"border:none;border-top:1px solid #E5E4DE;margin:0 0 20px;\">',\n  '    <p style=\"font-size:12px;color:#9EA3AA;margin:0;\">Norr AI &nbsp;&middot;&nbsp; <a href=\"https://norrai.co\" style=\"color:#9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    sms_message:   smsMessage,\n    email_subject: emailSubject,\n    email_html:    emailHtml,\n    client_phone:  prep.client_phone,\n    client_email:  prep.client_email,\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1472, 144],
+      "position": [
+        1472,
+        144
+      ],
       "id": "d1e2f3a4-0007-4000-8000-000000000007",
       "name": "Parse + Build Email"
     },
@@ -141,7 +168,10 @@
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
-      "position": [1680, 144],
+      "position": [
+        1680,
+        144
+      ],
       "id": "d1e2f3a4-0008-4000-8000-000000000008",
       "name": "Send SMS",
       "credentials": {
@@ -178,7 +208,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1888, 224],
+      "position": [
+        1888,
+        224
+      ],
       "id": "d1e2f3a4-0009-4000-8000-000000000009",
       "name": "Has Email?"
     },
@@ -191,7 +224,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -201,7 +237,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2096, 144],
+      "position": [
+        2096,
+        144
+      ],
       "id": "d1e2f3a4-0010-4000-8000-000000000010",
       "name": "Send Email",
       "credentials": {
@@ -210,37 +249,213 @@
           "name": "SendGrid Header Auth"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        632,
+        484
+      ],
+      "id": "btq-674b84f63d124d0c",
+      "name": "Build Token Query",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.client_query }}",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        852,
+        484
+      ],
+      "id": "vct-331244d959774ce7",
+      "name": "Validate Client Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4b5cde19-1408-4f56-8a70-c1c3a0eda7df",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        484
+      ],
+      "id": "cv-c46a813d469741c4",
+      "name": "Client Valid?"
     }
   ],
   "pinData": {},
   "connections": {
     "Receive Review Request": {
-      "main": [[{ "node": "Token Check", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Token Check": {
-      "main": [[{ "node": "Prep Fields", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Token Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prep Fields": {
-      "main": [[{ "node": "Wait", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Wait": {
-      "main": [[{ "node": "Build Claude Prompt", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Claude Prompt": {
-      "main": [[{ "node": "Claude API", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Claude API": {
-      "main": [[{ "node": "Parse + Build Email", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parse + Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse + Build Email": {
-      "main": [[{ "node": "Send SMS", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Send SMS": {
-      "main": [[{ "node": "Has Email?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Email?": {
       "main": [
-        [{ "node": "Send Email", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Token Query": {
+      "main": [
+        [
+          {
+            "node": "Validate Client Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Client Token": {
+      "main": [
+        [
+          {
+            "node": "Client Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     }
