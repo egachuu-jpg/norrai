@@ -4,6 +4,11 @@
 - Token Check rightValue must be a plain string — any `=` prefix causes n8n to evaluate it as an expression and the check always fails
 - Never use `$json.caller` (or similar dynamic fields) in SQL nodes — n8n blocks certain variable references in database queries for security; use hardcoded strings or safe payload fields
 - Cache Lookup (Postgres) node: enable "Always Output Data" or the node stops execution on 0 rows instead of passing through
+- Any Postgres SELECT used as a conditional check (dedup, existence, lookup) must have `alwaysReturnData: true` in options — without it, 0-row results silently kill the execution path instead of flowing to the downstream IF node
+- After any node that overwrites `$json` (Postgres query, HTTP Request, Code node), upstream data is gone from `$json` — always reference the original source node by name: `$('Node Name').item.json.field` instead of `$json.field`
+- Code nodes use the n8n JS API directly — `$('Node Name').item.json` with no `{{ }}` wrapper. The `{{ }}` expression syntax is only for non-code fields (Set assignments, IF conditions, HTTP body strings, etc). Mixing them causes SyntaxError: Unexpected identifier
+- n8n Split In Batches: output 0 = done (fires when all items processed), output 1 = loop (fires for each item) — the reverse of what you'd expect
+- n8n Switch node `fallbackOutput: 'extra'` does NOT wire through the connections array — the fallback port is unconnected even with a 6th entry in `main[]`. Always add an explicit named rule for every expected category (including the catch-all) instead of relying on the fallback output
 - Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
 - Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
 - Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
@@ -19,6 +24,7 @@
 - `{{ JSON.stringify($json.field) }}}` triple-brace in jsonBody causes n8n parse errors — use `"{{ $json.field }}"` (quoted expression) for simple string fields that don't need JSON encoding
 - Neon SQL UUID quoting: always wrap UUID expressions in single quotes inside SQL strings — `'{{ $json.id }}'`, not `{{ $json.id }}`; bare UUID causes "invalid input syntax for type uuid" error
 - `NULLIF('{{ $json.body.field }}', '')` is not sufficient — when n8n can't resolve the expression it renders the literal string `"undefined"`, which passes `NULLIF` and hits CHECK constraints; always use `NULLIF(NULLIF('{{ $json.body.field }}', ''), 'undefined')` in Postgres nodes
+- Any user-supplied text field (sender name, subject, body snippet) can contain apostrophes that break raw SQL string interpolation — always add a Sanitize Code node before any Postgres INSERT that takes external text, running `.replace(/'/g, "''")` on each field
 - Dynamic client lookup from BoldTrail/Zapier payload: read `agentemail` from Zapier trigger, sanitize with `.replace(/'/g, "''")`, query `clients` table by `primary_contact_email` to get `id` and `token` — eliminates hardcoded placeholder tokens
 - Error Trigger payload fields: `$json.execution.lastNodeExecuted`, `$json.execution.error.message`, and `$json.execution.url` are available in error workflows — log all three or the dashboard can only show that something failed, not where or why
 - The Error Trigger node always displays n8n's hardcoded example payload in the editor (id: 231, "Example Error Message", "Example Workflow") regardless of what actually ran — to see real error data, open the execution in the Executions tab and check the downstream node (e.g., Extract Error Data) output, not the Error Trigger node itself
@@ -37,6 +43,7 @@
 - Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
 - When A2P registration is pending, hardcode `channel: 'email'` in Prep Fields and replace Twilio nodes with SendGrid — restore to SMS by changing one field + adding IF gates per touch; scattering the channel decision across multiple nodes makes it hard to restore later
 - `if (beds || baths)` evaluates `0` as falsy even after `|| ''` initialization — when a numeric field could legitimately be zero, use `if (beds !== '' || baths !== '')` for the explicit empty-string check
+- Gmail node returns email headers with initial caps: `From` and `Subject` (not `from`/`subject`) — accessing lowercase field names silently returns `undefined`
 - Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
 - The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
 - When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
