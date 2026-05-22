@@ -9,7 +9,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "id": "c3d4e5f6-0001-4000-8000-000000000001",
       "name": "Manual Enrollment",
       "webhookId": "nurture-enroll-webhook-001"
@@ -22,9 +25,12 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 500],
+      "position": [
+        240,
+        500
+      ],
       "id": "c3d4e5f6-0002-4000-8000-000000000002",
-      "name": "Auto-Trigger (future — wire to Token Check when ready)",
+      "name": "Auto-Trigger (future \u2014 wire to Token Check when ready)",
       "webhookId": "nurture-auto-trigger-webhook-001"
     },
     {
@@ -54,7 +60,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [440, 380],
+      "position": [
+        440,
+        380
+      ],
       "id": "c3d4e5f6-0003-4000-8000-000000000003",
       "name": "Token Check"
     },
@@ -64,7 +73,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [640, 300],
+      "position": [
+        640,
+        300
+      ],
       "id": "c3d4e5f6-0004-4000-8000-000000000004",
       "name": "Prep Fields"
     },
@@ -76,16 +88,35 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [840, 300],
+      "position": [
+        840,
+        300
+      ],
       "id": "c3d4e5f6-0004-4000-8000-000000000099",
       "name": "Mark Nurture Enrolled",
       "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
       }
     },
-
-    { "parameters": { "resume": "timeInterval", "amount": 1, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1040, 300], "id": "c3d4e5f6-0005-4000-8000-000000000005", "name": "Wait Day 1" },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 1,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        300
+      ],
+      "id": "c3d4e5f6-0005-4000-8000-000000000005",
+      "name": "Wait Day 1"
+    },
     {
       "parameters": {
         "assignments": {
@@ -93,7 +124,7 @@
             {
               "id": "prompt-t1",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent following up with a lead who went quiet.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nSource: {{ $('Prep Fields').first().json.source }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 1 of 6 — Day 1. Channel: EMAIL.\nAngle: Warm follow-up. You reached out once and didn't hear back. Keep it short. Reference what you know about their search — if a property is listed use it specifically, otherwise speak to their search stage based on the context available. Only reference details you have been given — do not invent specifics you weren't told. If context is minimal, focus entirely on warmth and availability — skip property-specific references. No pressure. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nKeep the body under 80 words. Warm and personal.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent following up with a lead who went quiet.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nSource: {{ $('Prep Fields').first().json.source }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 1 of 6 \u2014 Day 1. Channel: EMAIL.\nAngle: Warm follow-up. You reached out once and didn't hear back. Keep it short. Reference what you know about their search \u2014 if a property is listed use it specifically, otherwise speak to their search stage based on the context available. Only reference details you have been given \u2014 do not invent specifics you weren't told. If context is minimal, focus entirely on warmth and availability \u2014 skip property-specific references. No pressure. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nKeep the body under 80 words. Warm and personal.",
               "type": "string"
             }
           ]
@@ -102,21 +133,54 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1040, 300],
+      "position": [
+        1040,
+        300
+      ],
       "id": "c3d4e5f6-0006-4000-8000-000000000006",
       "name": "Build Prompt T1"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1240, 300],
+      "position": [
+        1240,
+        300
+      ],
       "id": "c3d4e5f6-0007-4000-8000-000000000007",
       "name": "Claude T1",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
       "parameters": {
@@ -124,21 +188,53 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1440, 300],
+      "position": [
+        1440,
+        300
+      ],
       "id": "c3d4e5f6-0008-4000-8000-000000000008",
       "name": "Extract T1"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [1640, 300],
+      "position": [
+        1640,
+        300
+      ],
       "id": "c3d4e5f6-0009-4000-8000-000000000009",
       "name": "Email T1",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
     },
-
-    { "parameters": { "resume": "timeInterval", "amount": 2, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1840, 300], "id": "c3d4e5f6-0010-4000-8000-000000000010", "name": "Wait Day 3" },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 2,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        300
+      ],
+      "id": "c3d4e5f6-0010-4000-8000-000000000010",
+      "name": "Wait Day 3"
+    },
     {
       "parameters": {
         "assignments": {
@@ -146,7 +242,7 @@
             {
               "id": "prompt-t2",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 2 of 6 — Day 3. Channel: EMAIL.\nAngle: Different angle from the first message. Pick one compelling angle — a specific detail about the property if listed, a sharp market observation if you have a price range, or a genuine question about what they're prioritizing if you have neither. Only reference property details you have been given — do not invent specifics you weren't told. Make it feel like a genuine tip, not a follow-up. No \"just checking in.\" Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 80 words. Sharp and useful.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 2 of 6 \u2014 Day 3. Channel: EMAIL.\nAngle: Different angle from the first message. Pick one compelling angle \u2014 a specific detail about the property if listed, a sharp market observation if you have a price range, or a genuine question about what they're prioritizing if you have neither. Only reference property details you have been given \u2014 do not invent specifics you weren't told. Make it feel like a genuine tip, not a follow-up. No \"just checking in.\" Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 80 words. Sharp and useful.",
               "type": "string"
             }
           ]
@@ -155,27 +251,65 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [2040, 300],
+      "position": [
+        2040,
+        300
+      ],
       "id": "c3d4e5f6-0011-4000-8000-000000000011",
       "name": "Build Prompt T2"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2240, 300],
+      "position": [
+        2240,
+        300
+      ],
       "id": "c3d4e5f6-0012-4000-8000-000000000012",
       "name": "Claude T2",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
-      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Quick thought';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Quick thought';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2440, 300],
+      "position": [
+        2440,
+        300
+      ],
       "id": "c3d4e5f6-0013-4000-8000-000000000013",
       "name": "Extract T2"
     },
@@ -191,13 +325,34 @@
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [2640, 300],
+      "position": [
+        2640,
+        300
+      ],
       "id": "c3d4e5f6-0014-4000-8000-000000000014",
       "name": "Email T2",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
     },
-
-    { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [2840, 300], "id": "c3d4e5f6-0015-4000-8000-000000000015", "name": "Wait Day 7" },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 4,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2840,
+        300
+      ],
+      "id": "c3d4e5f6-0015-4000-8000-000000000015",
+      "name": "Wait Day 7"
+    },
     {
       "parameters": {
         "assignments": {
@@ -205,7 +360,7 @@
             {
               "id": "prompt-t3",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 3 of 6 — Day 7. Channel: EMAIL.\nAngle: Value-add. Value-add touch. If you have specific context (price range, property), share a relevant market observation. If context is minimal, acknowledge that real estate timing is everything and offer a genuine, no-pressure check-in — something that feels useful, not like a follow-up. Make them feel like you're giving them useful intel, not chasing them. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words. Informative, not salesy.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 3 of 6 \u2014 Day 7. Channel: EMAIL.\nAngle: Value-add. Value-add touch. If you have specific context (price range, property), share a relevant market observation. If context is minimal, acknowledge that real estate timing is everything and offer a genuine, no-pressure check-in \u2014 something that feels useful, not like a follow-up. Make them feel like you're giving them useful intel, not chasing them. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words. Informative, not salesy.",
               "type": "string"
             }
           ]
@@ -214,41 +369,108 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [3040, 300],
+      "position": [
+        3040,
+        300
+      ],
       "id": "c3d4e5f6-0016-4000-8000-000000000016",
       "name": "Build Prompt T3"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [3240, 300],
+      "position": [
+        3240,
+        300
+      ],
       "id": "c3d4e5f6-0017-4000-8000-000000000017",
       "name": "Claude T3",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
-      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Market update';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Market update';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3440, 300],
+      "position": [
+        3440,
+        300
+      ],
       "id": "c3d4e5f6-0018-4000-8000-000000000018",
       "name": "Extract T3"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [3640, 300],
+      "position": [
+        3640,
+        300
+      ],
       "id": "c3d4e5f6-0019-4000-8000-000000000019",
       "name": "Email T3",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
     },
-
-    { "parameters": { "resume": "timeInterval", "amount": 3, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [3840, 300], "id": "c3d4e5f6-0020-4000-8000-000000000020", "name": "Wait Day 10" },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 3,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3840,
+        300
+      ],
+      "id": "c3d4e5f6-0020-4000-8000-000000000020",
+      "name": "Wait Day 10"
+    },
     {
       "parameters": {
         "assignments": {
@@ -256,7 +478,7 @@
             {
               "id": "prompt-t4",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 4 of 6 — Day 10. Channel: EMAIL.\nAngle: Soft check-in. Are they still searching? Maybe their situation changed. Keep it genuinely curious, not needy. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words. Casual and brief.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 4 of 6 \u2014 Day 10. Channel: EMAIL.\nAngle: Soft check-in. Are they still searching? Maybe their situation changed. Keep it genuinely curious, not needy. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words. Casual and brief.",
               "type": "string"
             }
           ]
@@ -265,27 +487,65 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [4040, 300],
+      "position": [
+        4040,
+        300
+      ],
       "id": "c3d4e5f6-0021-4000-8000-000000000021",
       "name": "Build Prompt T4"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [4240, 300],
+      "position": [
+        4240,
+        300
+      ],
       "id": "c3d4e5f6-0022-4000-8000-000000000022",
       "name": "Claude T4",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
-      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Still here';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Still here';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4440, 300],
+      "position": [
+        4440,
+        300
+      ],
       "id": "c3d4e5f6-0023-4000-8000-000000000023",
       "name": "Extract T4"
     },
@@ -301,13 +561,34 @@
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [4640, 300],
+      "position": [
+        4640,
+        300
+      ],
       "id": "c3d4e5f6-0024-4000-8000-000000000024",
       "name": "Email T4",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
     },
-
-    { "parameters": { "resume": "timeInterval", "amount": 4, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [4840, 300], "id": "c3d4e5f6-0025-4000-8000-000000000025", "name": "Wait Day 14" },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 4,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4840,
+        300
+      ],
+      "id": "c3d4e5f6-0025-4000-8000-000000000025",
+      "name": "Wait Day 14"
+    },
     {
       "parameters": {
         "assignments": {
@@ -315,7 +596,7 @@
             {
               "id": "prompt-t5",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 5 of 6 — Day 14. Channel: EMAIL.\nAngle: No pressure at all. Acknowledge that timing is everything in real estate and people's situations change. You're not going anywhere. Offer to answer any questions whenever they're ready — even if it's months from now. Warm and genuinely patient tone. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 5 of 6 \u2014 Day 14. Channel: EMAIL.\nAngle: No pressure at all. Acknowledge that timing is everything in real estate and people's situations change. You're not going anywhere. Offer to answer any questions whenever they're ready \u2014 even if it's months from now. Warm and genuinely patient tone. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words.",
               "type": "string"
             }
           ]
@@ -324,41 +605,108 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [5040, 300],
+      "position": [
+        5040,
+        300
+      ],
       "id": "c3d4e5f6-0026-4000-8000-000000000026",
       "name": "Build Prompt T5"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [5240, 300],
+      "position": [
+        5240,
+        300
+      ],
       "id": "c3d4e5f6-0027-4000-8000-000000000027",
       "name": "Claude T5",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
-      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'No rush';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'No rush';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [5440, 300],
+      "position": [
+        5440,
+        300
+      ],
       "id": "c3d4e5f6-0028-4000-8000-000000000028",
       "name": "Extract T5"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "={{ $json.agent_name }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [5640, 300],
+      "position": [
+        5640,
+        300
+      ],
       "id": "c3d4e5f6-0029-4000-8000-000000000029",
       "name": "Email T5",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
     },
-
-    { "parameters": { "resume": "timeInterval", "amount": 7, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [5840, 300], "id": "c3d4e5f6-0030-4000-8000-000000000030", "name": "Wait Day 21" },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 7,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5840,
+        300
+      ],
+      "id": "c3d4e5f6-0030-4000-8000-000000000030",
+      "name": "Wait Day 21"
+    },
     {
       "parameters": {
         "assignments": {
@@ -366,7 +714,7 @@
             {
               "id": "prompt-t6",
               "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 6 of 6 — Day 21. Channel: EMAIL. This is the last message.\nAngle: Final touch. Low pressure, door wide open. Something like: you won't keep reaching out, but you're here whenever they're ready. Leave a genuinely warm impression. No guilt, no urgency. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words.",
+              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 6 of 6 \u2014 Day 21. Channel: EMAIL. This is the last message.\nAngle: Final touch. Low pressure, door wide open. Something like: you won't keep reaching out, but you're here whenever they're ready. Leave a genuinely warm impression. No guilt, no urgency. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words.",
               "type": "string"
             }
           ]
@@ -375,27 +723,65 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [6040, 300],
+      "position": [
+        6040,
+        300
+      ],
       "id": "c3d4e5f6-0031-4000-8000-000000000031",
       "name": "Build Prompt T6"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [6240, 300],
+      "position": [
+        6240,
+        300
+      ],
       "id": "c3d4e5f6-0032-4000-8000-000000000032",
       "name": "Claude T6",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": { "anthropicApi": { "id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2" } }
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
-      "parameters": { "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Take care';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];" },
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Take care';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [6440, 300],
+      "position": [
+        6440,
+        300
+      ],
       "id": "c3d4e5f6-0033-4000-8000-000000000033",
       "name": "Extract T6"
     },
@@ -411,55 +797,491 @@
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [6640, 300],
+      "position": [
+        6640,
+        300
+      ],
       "id": "c3d4e5f6-0034-4000-8000-000000000034",
       "name": "Email T6",
-      "credentials": { "sendGridApi": { "id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account" } }
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        640
+      ],
+      "id": "btq-039ffbe7e7a64585",
+      "name": "Build Token Query",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.client_query }}",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        860,
+        640
+      ],
+      "id": "vct-9fdb88404d7a4b47",
+      "name": "Validate Client Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "24f4927d-7db3-4e9e-a376-22e95cd69014",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        640
+      ],
+      "id": "cv-f070c5b0ec9e4b40",
+      "name": "Client Valid?"
     }
   ],
   "pinData": {},
   "connections": {
     "Manual Enrollment": {
-      "main": [[ { "node": "Token Check", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Token Check": {
-      "main": [[ { "node": "Prep Fields", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Build Token Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prep Fields": {
-      "main": [[ { "node": "Mark Nurture Enrolled", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Mark Nurture Enrolled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Mark Nurture Enrolled": {
-      "main": [[ { "node": "Wait Day 1", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Wait Day 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Wait Day 1":  { "main": [[ { "node": "Build Prompt T1", "type": "main", "index": 0 } ]] },
-    "Build Prompt T1": { "main": [[ { "node": "Claude T1", "type": "main", "index": 0 } ]] },
-    "Claude T1":   { "main": [[ { "node": "Extract T1", "type": "main", "index": 0 } ]] },
-    "Extract T1":  { "main": [[ { "node": "Email T1",   "type": "main", "index": 0 } ]] },
-    "Email T1":    { "main": [[ { "node": "Wait Day 3", "type": "main", "index": 0 } ]] },
-    "Wait Day 3":  { "main": [[ { "node": "Build Prompt T2", "type": "main", "index": 0 } ]] },
-    "Build Prompt T2": { "main": [[ { "node": "Claude T2", "type": "main", "index": 0 } ]] },
-    "Claude T2":   { "main": [[ { "node": "Extract T2", "type": "main", "index": 0 } ]] },
-    "Extract T2":  { "main": [[ { "node": "Email T2",   "type": "main", "index": 0 } ]] },
-    "Email T2":    { "main": [[ { "node": "Wait Day 7", "type": "main", "index": 0 } ]] },
-    "Wait Day 7":  { "main": [[ { "node": "Build Prompt T3", "type": "main", "index": 0 } ]] },
-    "Build Prompt T3": { "main": [[ { "node": "Claude T3", "type": "main", "index": 0 } ]] },
-    "Claude T3":   { "main": [[ { "node": "Extract T3", "type": "main", "index": 0 } ]] },
-    "Extract T3":  { "main": [[ { "node": "Email T3",   "type": "main", "index": 0 } ]] },
-    "Email T3":    { "main": [[ { "node": "Wait Day 10", "type": "main", "index": 0 } ]] },
-    "Wait Day 10": { "main": [[ { "node": "Build Prompt T4", "type": "main", "index": 0 } ]] },
-    "Build Prompt T4": { "main": [[ { "node": "Claude T4", "type": "main", "index": 0 } ]] },
-    "Claude T4":   { "main": [[ { "node": "Extract T4", "type": "main", "index": 0 } ]] },
-    "Extract T4":  { "main": [[ { "node": "Email T4",   "type": "main", "index": 0 } ]] },
-    "Email T4":    { "main": [[ { "node": "Wait Day 14", "type": "main", "index": 0 } ]] },
-    "Wait Day 14": { "main": [[ { "node": "Build Prompt T5", "type": "main", "index": 0 } ]] },
-    "Build Prompt T5": { "main": [[ { "node": "Claude T5", "type": "main", "index": 0 } ]] },
-    "Claude T5":   { "main": [[ { "node": "Extract T5", "type": "main", "index": 0 } ]] },
-    "Extract T5":  { "main": [[ { "node": "Email T5",   "type": "main", "index": 0 } ]] },
-    "Email T5":    { "main": [[ { "node": "Wait Day 21", "type": "main", "index": 0 } ]] },
-    "Wait Day 21": { "main": [[ { "node": "Build Prompt T6", "type": "main", "index": 0 } ]] },
-    "Build Prompt T6": { "main": [[ { "node": "Claude T6", "type": "main", "index": 0 } ]] },
-    "Claude T6":   { "main": [[ { "node": "Extract T6", "type": "main", "index": 0 } ]] },
-    "Extract T6":  { "main": [[ { "node": "Email T6",   "type": "main", "index": 0 } ]] }
+    "Wait Day 1": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt T1": {
+      "main": [
+        [
+          {
+            "node": "Claude T1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude T1": {
+      "main": [
+        [
+          {
+            "node": "Extract T1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract T1": {
+      "main": [
+        [
+          {
+            "node": "Email T1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T1": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 3": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt T2": {
+      "main": [
+        [
+          {
+            "node": "Claude T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude T2": {
+      "main": [
+        [
+          {
+            "node": "Extract T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract T2": {
+      "main": [
+        [
+          {
+            "node": "Email T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T2": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 7": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt T3": {
+      "main": [
+        [
+          {
+            "node": "Claude T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude T3": {
+      "main": [
+        [
+          {
+            "node": "Extract T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract T3": {
+      "main": [
+        [
+          {
+            "node": "Email T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T3": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 10": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt T4": {
+      "main": [
+        [
+          {
+            "node": "Claude T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude T4": {
+      "main": [
+        [
+          {
+            "node": "Extract T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract T4": {
+      "main": [
+        [
+          {
+            "node": "Email T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T4": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 14": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt T5": {
+      "main": [
+        [
+          {
+            "node": "Claude T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude T5": {
+      "main": [
+        [
+          {
+            "node": "Extract T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract T5": {
+      "main": [
+        [
+          {
+            "node": "Email T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T5": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 21": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt T6": {
+      "main": [
+        [
+          {
+            "node": "Claude T6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude T6": {
+      "main": [
+        [
+          {
+            "node": "Extract T6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract T6": {
+      "main": [
+        [
+          {
+            "node": "Email T6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Token Query": {
+      "main": [
+        [
+          {
+            "node": "Validate Client Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Client Token": {
+      "main": [
+        [
+          {
+            "node": "Client Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
   },
   "active": false,
   "settings": {
