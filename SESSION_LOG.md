@@ -242,3 +242,7 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - `n8n/workflows/Mission Control Mutate.json` — POST /webhook/mc-mutate; Switch node routes `update_task` / `create_task` / `create_story` to their respective Postgres operations
 - `n8n/workflows/Mission Control Dispatch.json` — POST /webhook/mc-dispatch; fetches task + story context → Claude Haiku → saves output to `tasks.output`, sets status to `review`
 - `tests/mission-control.spec.js` — 18 Playwright tests; all 294 tests passing
+
+### 2026-05-20
+- Fixed `Build Classifier Input` node in email triage inbox workflows: `json.from` → `json.From` and `json.subject` → `json.Subject` to match Gmail node's actual output field names
+- Updated `scripts/generate_email_triage_workflows.js` and regenerated all 8 email triage workflow JSON files
