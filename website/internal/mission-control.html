@@ -107,6 +107,12 @@
   .status-chip.review        { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
   .status-chip.done          { background: #F0FDF4; color: #166534; border-color: #BBF7D0; }
 
+  /* ── Story filter banner ── */
+  .story-filter-banner { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); margin-bottom: 16px; font-size: 13px; color: #1D4ED8; }
+  .story-filter-banner strong { font-weight: 600; }
+  .story-filter-clear { background: none; border: none; font-size: 13px; color: #1D4ED8; cursor: pointer; padding: 0; font-weight: 500; margin-left: auto; }
+  .story-filter-clear:hover { text-decoration: underline; }
+
   /* ── Board View ── */
   #board-view { display: none; }
   #board-view.visible { display: block; }
@@ -259,6 +265,10 @@
 
   <!-- Board View -->
   <div id="board-view">
+    <div id="story-filter-banner" class="story-filter-banner" style="display:none">
+      <span>Tasks in story: <strong id="story-filter-label"></strong></span>
+      <button class="story-filter-clear" id="clear-story-filter">Clear filter ×</button>
+    </div>
     <div class="board-scroll">
       <div class="board-columns" id="board-columns"></div>
     </div>
@@ -404,6 +414,7 @@
     standalone: [],
     view: 'stories',
     categoryFilter: 'all',
+    storyFilter: null,
     loading: true,
     error: null,
     drawer: null,
@@ -581,8 +592,7 @@
       viewLink.textContent = 'View tasks →';
       viewLink.addEventListener('click', (e) => {
         e.stopPropagation();
-        switchToBoard();
-        // Filter to show this story's tasks by switching view
+        switchToBoard(story.id);
       });
 
       card.append(priorityBadge, titleEl, descEl, progressWrap, catsEl, viewLink);
@@ -614,7 +624,17 @@
 
   function renderBoard() {
     boardColumns.innerHTML = '';
-    const allTasks = allTasksForBoard().filter(filterTask);
+    let allTasks = allTasksForBoard().filter(filterTask);
+
+    const banner = document.getElementById('story-filter-banner');
+    if (state.storyFilter) {
+      const story = findStory(state.storyFilter);
+      allTasks = allTasks.filter(t => t.story_id === state.storyFilter);
+      document.getElementById('story-filter-label').textContent = story ? story.title : state.storyFilter;
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
     const DONE_LIMIT = 10;
 
     for (const status of STATUSES) {
@@ -1025,8 +1045,9 @@
   }
 
   // ── View switch ───────────────────────────────────────────────────────────────
-  function switchToBoard() {
+  function switchToBoard(storyId) {
     state.view = 'board';
+    if (storyId !== undefined) state.storyFilter = storyId || null;
     document.getElementById('btn-stories').classList.remove('active');
     document.getElementById('btn-board').classList.add('active');
     render();
@@ -1044,12 +1065,17 @@
 
   document.getElementById('btn-stories').addEventListener('click', () => {
     state.view = 'stories';
+    state.storyFilter = null;
     document.getElementById('btn-stories').classList.add('active');
     document.getElementById('btn-board').classList.remove('active');
     render();
   });
 
-  document.getElementById('btn-board').addEventListener('click', switchToBoard);
+  document.getElementById('btn-board').addEventListener('click', () => switchToBoard());
+  document.getElementById('clear-story-filter').addEventListener('click', () => {
+    state.storyFilter = null;
+    render();
+  });
 
   document.getElementById('filter-pills').addEventListener('click', (e) => {
     const pill = e.target.closest('.pill');
