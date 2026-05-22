@@ -1,0 +1,604 @@
+{
+  "name": "Email Triage Reply Handler",
+  "nodes": [
+    {
+      "id": "rh-0096-4000-8000-000000000000",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram — Norr AI Email Bot"
+        }
+      },
+      "webhookId": "email-triage-telegram-reply-001"
+    },
+    {
+      "id": "rh-0097-4000-8000-000000000000",
+      "name": "Is My Chat?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "chat-id-check",
+              "leftValue": "={{ $json.message.chat.id.toString() }}",
+              "rightValue": "8792529492",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0098-4000-8000-000000000000",
+      "name": "Parse Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const text = ($input.first().json.message.text ?? '').trim().toLowerCase();\nconst approvedNumbers = text === 'all' ? 'all' : text.split(/\\s+/).map(Number).filter(n => !isNaN(n) && n > 0);\nreturn [{ json: { approvedNumbers, rawText: text } }];"
+      }
+    },
+    {
+      "id": "rh-0099-4000-8000-000000000000",
+      "name": "Fetch Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        840,
+        200
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, message_id, inbox, sender, subject, proposed_action\nFROM email_triage_queue\nWHERE status = 'pending'\nORDER BY created_at ASC",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "rh-0100-4000-8000-000000000000",
+      "name": "Build Action Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const pending = $input.all().map((item, i) => ({ ...item.json, position: i + 1 }));\nconst approved = $('Parse Reply').first().json.approvedNumbers;\nconst toAct  = approved === 'all' ? pending : pending.filter(p => approved.includes(p.position));\nconst toSkip = pending.filter(p => !toAct.find(a => a.id === p.id));\n\nconst verb = { mark_read_archive: 'archived', mark_read: 'marked read', trash: 'trashed', mark_important: 'marked important', queue_for_review: 'reviewed' };\nconst parts = [];\nif (toAct.length)  parts.push(`✓ Done — ${toAct.map(i => `${verb[i.proposed_action] ?? 'actioned'} ${i.position}`).join(', ')}.`);\nif (toSkip.length) parts.push(`Skipped ${toSkip.map(i => i.position).join(', ')}.`);\nconst confirmMsg = parts.join(' ') || '✓ No actions taken.';\n\nreturn [\n  ...toAct.map(i  => ({ json: { ...i, skip: false } })),\n  ...toSkip.map(i => ({ json: { ...i, skip: true  } })),\n  { json: { __is_summary: true, __confirm_msg: confirmMsg } }\n];"
+      }
+    },
+    {
+      "id": "rh-0101-4000-8000-000000000000",
+      "name": "Loop Over Actions",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1240,
+        200
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0102-4000-8000-000000000000",
+      "name": "Is Summary?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-summary",
+              "leftValue": "={{ $json.__is_summary }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0103-4000-8000-000000000000",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1640,
+        80
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8792529492",
+        "text": "={{ $json.__confirm_msg }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram — Norr AI Email Bot"
+        }
+      }
+    },
+    {
+      "id": "rh-0104-4000-8000-000000000000",
+      "name": "Skip or Act?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1640,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0105-4000-8000-000000000000",
+      "name": "Route by Inbox",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1840,
+        200
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "inbox-0",
+                    "leftValue": "={{ $json.inbox }}",
+                    "rightValue": "egachuu@gmail.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "inbox-1",
+                    "leftValue": "={{ $json.inbox }}",
+                    "rightValue": "eganbonde@gmail.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "inbox-2",
+                    "leftValue": "={{ $json.inbox }}",
+                    "rightValue": "hello@norrai.co",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "fallbackOutput": 0,
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0106-4000-8000-000000000000",
+      "name": "Execute Action — egachuu",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2040,
+        80
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "mode": "name",
+          "value": "Email Triage — Action egachuu"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0107-4000-8000-000000000000",
+      "name": "Execute Action — eganbonde",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2040,
+        260
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "mode": "name",
+          "value": "Email Triage — Action eganbonde"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0108-4000-8000-000000000000",
+      "name": "Execute Action — hello",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2040,
+        440
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "mode": "name",
+          "value": "Email Triage — Action hello"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "rh-0109-4000-8000-000000000000",
+      "name": "Update Queue Approved",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2240,
+        300
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE email_triage_queue SET status = 'approved', resolved_at = NOW() WHERE id = '{{ $json.id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "rh-0110-4000-8000-000000000000",
+      "name": "Update Queue Skipped",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1840,
+        420
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE email_triage_queue SET status = 'skipped', resolved_at = NOW() WHERE id = '{{ $json.id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "id": "rh-0111-4000-8000-000000000000",
+      "name": "No Op (not my chat)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        640,
+        400
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is My Chat?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is My Chat?": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Op (not my chat)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending": {
+      "main": [
+        [
+          {
+            "node": "Build Action Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Action Plan": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Actions": {
+      "main": [
+        [
+          {
+            "node": "Is Summary?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Summary?": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip or Act?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation": {
+      "main": []
+    },
+    "Skip or Act?": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Queue Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Inbox": {
+      "main": [
+        [
+          {
+            "node": "Execute Action — egachuu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Action — eganbonde",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Action — hello",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Action — egachuu": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Action — eganbonde": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Action — hello": {
+      "main": [
+        [
+          {
+            "node": "Update Queue Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Queue Approved": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Queue Skipped": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "staticData": null
+}

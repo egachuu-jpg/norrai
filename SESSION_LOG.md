@@ -215,6 +215,22 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Added `workflow_events` logging (Log Triggered + Log Completed) to `Real Estate Instant Lead Response.json` — Log Triggered fires in parallel from Validate Input using `norrai_internal`; Log Completed fires after Insert Lead using actual `client_id` from Find Client with norrai_internal fallback; re-imported into n8n
 - Discussed Zapier free tier inactivity pause — no clean programmatic workaround for BoldTrail-triggered Zaps
 
+### 2026-05-18
+- Brainstormed and designed graceful handling for property-null leads in cold nurture — general buyer inquiries with no specific listing attached
+- Design spec: `docs/superpowers/specs/2026-05-17-cold-nurture-property-null-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-17-cold-nurture-property-null.md`
+- Updated `n8n/workflows/Real Estate 7-Touch Cold Nurture.json`:
+  - `Prep Fields`: assembles `context_block` string from only available fields (property, price, beds/baths, lead_message); falls back to "General buyer inquiry — no details or message on file." when all are absent; emits `channel: 'email'` for A2P restore path
+  - Fixed beds/baths falsy edge case: `if (beds || baths)` → `if (beds !== '' || baths !== '')` to handle `beds: 0` correctly
+  - All 6 `Build Prompt` nodes: replaced individual property field references with `context_block`; removed separate "Their original message:" line (now in context_block); updated angle instructions to be context-adaptive
+  - T1/T3: added explicit minimal-context fallback instructions to prevent weak/hollow output when context_block is bare
+  - T2/T4/T6 `Build Prompt`: converted from SMS format (160-char plain text) to email format (SUBJECT/BODY); `max_tokens` 150 → 300
+  - T2/T4/T6 `Extract` nodes: converted from SMS message extraction to SUBJECT/BODY parse pattern
+  - T2/T4/T6 delivery nodes: Twilio replaced with SendGrid; connections updated to `Email T2/T4/T6`
+  - T1 + T2: added "Only reference property details you have been given — do not invent specifics you weren't told" after discovering Claude hallucinated "half acre with mature oaks" for a property it knew only by address
+- PR #17 opened: `feat/cold-nurture-property-null` → `main`
+- Pending: smoke test all three context scenarios (full / partial / minimal) before merge
+
 ### 2026-05-15
 - Brainstormed Mission Control concept: client health, workflow throughput, lead activity, open task visibility, revenue snapshot — scoped down to task/kanban + subagent dispatch as the priority
 - Designed two-table schema (`stories` + `tasks`) instead of self-referencing single table — stories and tasks have different fields and different dispatch semantics
@@ -226,3 +242,17 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - `n8n/workflows/Mission Control Mutate.json` — POST /webhook/mc-mutate; Switch node routes `update_task` / `create_task` / `create_story` to their respective Postgres operations
 - `n8n/workflows/Mission Control Dispatch.json` — POST /webhook/mc-dispatch; fetches task + story context → Claude Haiku → saves output to `tasks.output`, sets status to `review`
 - `tests/mission-control.spec.js` — 18 Playwright tests; all 294 tests passing
+
+### 2026-05-20
+- Fixed `Build Classifier Input` node in email triage inbox workflows: `json.from` → `json.From` and `json.subject` → `json.Subject` to match Gmail node's actual output field names
+- Updated `scripts/generate_email_triage_workflows.js` and regenerated all 8 email triage workflow JSON files
+
+### 2026-05-21
+- Brainstormed and designed client onboarding materials for Evan Knutson (Weichert Realty) — handoff call tomorrow morning; all 6 workflows already live
+- Design spec: `docs/superpowers/specs/2026-05-21-weichert-onboarding-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-21-weichert-onboarding.md`
+- Built `website/clients/weichert_guide.html` — 6-workflow reference page (Instant Lead Response, Listing Description Generator, Open House, Cold Nurture, Review Request, Birthday & Anniversary); Polar Modern design, no JS, `@media print` stylesheet for PDF leave-behind
+- Birthday & Anniversary section documents Google Sheet column format instead of a tool button (automated workflow, no form)
+- Built `tests/weichert_guide.spec.js` — 4 smoke tests (title, no JS errors, 6 section IDs, 5 tool buttons); 327/327 full suite passing
+- Created `obsidian/clients/evan-knutson-weichert.md` — internal client record; Evan's client_id (`ded234e3`), email, phone, BoldTrail/Zapier notes, open items (Twilio number, Google Sheet ID, Zapier plan confirm) all wired in
+- Looked up Evan's Neon record — also found Michelle Jasinski at same office (client_id `451306d1`), flagged as future prospect in the Obsidian file
