@@ -54,7 +54,7 @@ Warm prospect. Demo estimating workflow was built to show them a concrete use ca
 
 ## Open items
 
-- [ ] Smoke test B&B estimate workflow: import JSON into n8n, fire test payload, verify estimate email
+- [x] Smoke test B&B estimate workflow: import JSON into n8n, fire test payload, verify estimate email
 - [ ] Swap placeholder rates with real B&B rates
 - [ ] Add Neon logging nodes once B&B is onboarded as a client
 - [ ] B&B to provision Apollo.io account

@@ -4,6 +4,11 @@
 - Token Check rightValue must be a plain string — any `=` prefix causes n8n to evaluate it as an expression and the check always fails
 - Never use `$json.caller` (or similar dynamic fields) in SQL nodes — n8n blocks certain variable references in database queries for security; use hardcoded strings or safe payload fields
 - Cache Lookup (Postgres) node: enable "Always Output Data" or the node stops execution on 0 rows instead of passing through
+- Any Postgres SELECT used as a conditional check (dedup, existence, lookup) must have `alwaysReturnData: true` in options — without it, 0-row results silently kill the execution path instead of flowing to the downstream IF node
+- After any node that overwrites `$json` (Postgres query, HTTP Request, Code node), upstream data is gone from `$json` — always reference the original source node by name: `$('Node Name').item.json.field` instead of `$json.field`
+- Code nodes use the n8n JS API directly — `$('Node Name').item.json` with no `{{ }}` wrapper. The `{{ }}` expression syntax is only for non-code fields (Set assignments, IF conditions, HTTP body strings, etc). Mixing them causes SyntaxError: Unexpected identifier
+- n8n Split In Batches: output 0 = done (fires when all items processed), output 1 = loop (fires for each item) — the reverse of what you'd expect
+- n8n Switch node `fallbackOutput: 'extra'` does NOT wire through the connections array — the fallback port is unconnected even with a 6th entry in `main[]`. Always add an explicit named rule for every expected category (including the catch-all) instead of relying on the fallback output
 - Multiline Claude prompts: build in a Set node first, pass as `$json.prompt` to the HTTP Request — avoids bad control character errors from inline expressions
 - Watch for field name mismatches between HTML form payload keys and n8n node references — silent failures with no error output
 - Double `$$` on price fields in n8n expressions is a known gotcha — check expressions on any currency field
@@ -19,6 +24,7 @@
 - `{{ JSON.stringify($json.field) }}}` triple-brace in jsonBody causes n8n parse errors — use `"{{ $json.field }}"` (quoted expression) for simple string fields that don't need JSON encoding
 - Neon SQL UUID quoting: always wrap UUID expressions in single quotes inside SQL strings — `'{{ $json.id }}'`, not `{{ $json.id }}`; bare UUID causes "invalid input syntax for type uuid" error
 - `NULLIF('{{ $json.body.field }}', '')` is not sufficient — when n8n can't resolve the expression it renders the literal string `"undefined"`, which passes `NULLIF` and hits CHECK constraints; always use `NULLIF(NULLIF('{{ $json.body.field }}', ''), 'undefined')` in Postgres nodes
+- Any user-supplied text field (sender name, subject, body snippet) can contain apostrophes that break raw SQL string interpolation — always add a Sanitize Code node before any Postgres INSERT that takes external text, running `.replace(/'/g, "''")` on each field
 - Dynamic client lookup from BoldTrail/Zapier payload: read `agentemail` from Zapier trigger, sanitize with `.replace(/'/g, "''")`, query `clients` table by `primary_contact_email` to get `id` and `token` — eliminates hardcoded placeholder tokens
 - Error Trigger payload fields: `$json.execution.lastNodeExecuted`, `$json.execution.error.message`, and `$json.execution.url` are available in error workflows — log all three or the dashboard can only show that something failed, not where or why
 - The Error Trigger node always displays n8n's hardcoded example payload in the editor (id: 231, "Example Error Message", "Example Workflow") regardless of what actually ran — to see real error data, open the execution in the Executions tab and check the downstream node (e.g., Extract Error Data) output, not the Error Trigger node itself
@@ -35,6 +41,9 @@
 - When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
 - "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
 - Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
+- When A2P registration is pending, hardcode `channel: 'email'` in Prep Fields and replace Twilio nodes with SendGrid — restore to SMS by changing one field + adding IF gates per touch; scattering the channel decision across multiple nodes makes it hard to restore later
+- `if (beds || baths)` evaluates `0` as falsy even after `|| ''` initialization — when a numeric field could legitimately be zero, use `if (beds !== '' || baths !== '')` for the explicit empty-string check
+- Gmail node returns email headers with initial caps: `From` and `Subject` (not `from`/`subject`) — accessing lowercase field names silently returns `undefined`
 - Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
 - The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
 - When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
@@ -58,6 +67,8 @@
 ## Prompt Engineering
 - Wrap all user-supplied fields in Claude prompts with `[DATA][/DATA]` delimiters to prevent prompt injection (lead_name, lead_message, agent_notes, etc.)
 - Cold nurture and lead response prompts must explicitly say "do not invent school names, market statistics, or sold prices" until the research agent is wired in — Claude will hallucinate these without the instruction
+- Claude will also invent property-specific details (yard size, mature trees, finishes) when given an address and a prompt that says "pick one specific detail" — any touch with a property-specific angle needs "only reference details you have been given; do not invent specifics you weren't told"
+- Assembled context block pattern: build a `context_block` string in Prep Fields from only the fields that are actually populated, with a fallback string when all are absent — Claude gets coherent context instead of blank labeled lines, and the fallback behavior is explicit rather than implicit
 - Property highlights must be extracted during Open House Setup (when the MLS description is available) and passed as a URL param — the Follow-Up workflow fires the next morning with no access to the original listing copy
 - Pass structured research data as a formatted text block (`research_detail`) not just the `insight_block` summary — Claude needs school names/ratings/distances and market numbers to answer specific lead questions; the 2–3 sentence summary is too thin
 - When splitting a combined address string is required, 4 separate form fields is more reliable than parsing — comma placement is not enforced by users
@@ -68,6 +79,7 @@
 - Session durations: clients group = 7 days, internal group = 1 day
 
 ## HTML / JavaScript
+- When creating a new Polar Modern HTML page, start by copying the full `:root` CSS block from an existing page in the same directory — partial copies silently omit canonical tokens (e.g. `--blush`) that may be needed for components added later
 - `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
 - `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
 - `btn.disabled = true` after a successful webhook response prevents double-submit — apply this to every form submit handler

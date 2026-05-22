@@ -175,3 +175,43 @@ CREATE TABLE research_cache (
 );
 
 CREATE INDEX idx_research_cache_address_expires ON research_cache(address, expires_at);
+
+-- ============================================================
+-- EMAIL TRIAGE ASSISTANT
+-- ============================================================
+
+-- Stores all processed emails: dedup key + audit log.
+-- status = auto_actioned for emails acted on automatically,
+-- pending = awaiting Telegram approval,
+-- approved/skipped = resolved via Telegram reply.
+CREATE TABLE IF NOT EXISTS email_triage_queue (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id      TEXT NOT NULL,
+  inbox           TEXT NOT NULL,
+  sender          TEXT,
+  subject         TEXT,
+  snippet         TEXT,
+  category        TEXT,
+  proposed_action TEXT,
+  status          TEXT DEFAULT 'auto_actioned',
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at     TIMESTAMPTZ,
+  UNIQUE(message_id, inbox)
+);
+
+-- One row per inbox per sweep run for health monitoring.
+CREATE TABLE IF NOT EXISTS email_triage_runs (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  run_id            TEXT NOT NULL,
+  inbox             TEXT NOT NULL,
+  emails_processed  INT DEFAULT 0,
+  auto_actioned     INT DEFAULT 0,
+  queued_for_review INT DEFAULT 0,
+  started_at        TIMESTAMPTZ DEFAULT NOW(),
+  completed_at      TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_triage_queue_pending
+  ON email_triage_queue(status) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_triage_queue_dedup
+  ON email_triage_queue(message_id, inbox);
