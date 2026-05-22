@@ -58,13 +58,25 @@ Speed-to-lead and consistent follow-up. BoldTrail doesn't automate personalized 
 
 - Confirm Evan is on Zapier Starter plan (not free) at every check-in — free tier silently pauses
 - Nurture is SMS-dominant — avoid stacking email sequences on top of BoldTrail's automated listing alerts
-- Michelle Jasinski also at this office (same business name in Neon, `client_id: 451306d1-6437-42b8-8ffe-c16f28803490`) — potential future client
+- Michelle Jasinski also at this office (same business name in Neon, `client_id: 451306d1-6437-42b8-8ffe-c16f28803490`) — active client, same workflow stack
+
+---
+
+## Active Stories
+
+| Story | Status | PRD |
+|---|---|---|
+| Weichert Realty - Open House Enhancements | backlog | [[2026-05-22-open-house-enhancements]] |
+| Weichert Realty - 7-Touch Cold Nurture Enhancements | backlog | [[2026-05-22-nurture-enhancements]] |
+| Weichert Realty — Weekly Marketing Drip | backlog | [[2026-05-22-weekly-marketing-drip]] |
+| Weichert Realty — Boosted Property Lead Ingestion | backlog | [[2026-05-22-property-boost-lead-ingestion]] |
 
 ---
 
 ## History
 
 - 2026-05-22 — Onboarding call, system handoff
+- 2026-05-22 — Open house enhancements story created (14 tasks)
 
 ---
 
