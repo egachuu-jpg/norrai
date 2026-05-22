@@ -79,6 +79,7 @@
 - Session durations: clients group = 7 days, internal group = 1 day
 
 ## HTML / JavaScript
+- When creating a new Polar Modern HTML page, start by copying the full `:root` CSS block from an existing page in the same directory — partial copies silently omit canonical tokens (e.g. `--blush`) that may be needed for components added later
 - `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
 - `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
 - `btn.disabled = true` after a successful webhook response prevents double-submit — apply this to every form submit handler

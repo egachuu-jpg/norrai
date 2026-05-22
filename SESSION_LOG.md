@@ -246,3 +246,13 @@ Historical record of work done per session. Not loaded into Claude's context by 
 ### 2026-05-20
 - Fixed `Build Classifier Input` node in email triage inbox workflows: `json.from` → `json.From` and `json.subject` → `json.Subject` to match Gmail node's actual output field names
 - Updated `scripts/generate_email_triage_workflows.js` and regenerated all 8 email triage workflow JSON files
+
+### 2026-05-21
+- Brainstormed and designed client onboarding materials for Evan Knutson (Weichert Realty) — handoff call tomorrow morning; all 6 workflows already live
+- Design spec: `docs/superpowers/specs/2026-05-21-weichert-onboarding-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-21-weichert-onboarding.md`
+- Built `website/clients/weichert_guide.html` — 6-workflow reference page (Instant Lead Response, Listing Description Generator, Open House, Cold Nurture, Review Request, Birthday & Anniversary); Polar Modern design, no JS, `@media print` stylesheet for PDF leave-behind
+- Birthday & Anniversary section documents Google Sheet column format instead of a tool button (automated workflow, no form)
+- Built `tests/weichert_guide.spec.js` — 4 smoke tests (title, no JS errors, 6 section IDs, 5 tool buttons); 327/327 full suite passing
+- Created `obsidian/clients/evan-knutson-weichert.md` — internal client record; Evan's client_id (`ded234e3`), email, phone, BoldTrail/Zapier notes, open items (Twilio number, Google Sheet ID, Zapier plan confirm) all wired in
+- Looked up Evan's Neon record — also found Michelle Jasinski at same office (client_id `451306d1`), flagged as future prospect in the Obsidian file
