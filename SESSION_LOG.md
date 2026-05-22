@@ -256,3 +256,16 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Built `tests/weichert_guide.spec.js` — 4 smoke tests (title, no JS errors, 6 section IDs, 5 tool buttons); 327/327 full suite passing
 - Created `obsidian/clients/evan-knutson-weichert.md` — internal client record; Evan's client_id (`ded234e3`), email, phone, BoldTrail/Zapier notes, open items (Twilio number, Google Sheet ID, Zapier plan confirm) all wired in
 - Looked up Evan's Neon record — also found Michelle Jasinski at same office (client_id `451306d1`), flagged as future prospect in the Obsidian file
+
+### 2026-05-22
+- Attempted Notion task query via MCP — workspace was empty (default onboarding pages only); confirmed tasks live in Neon, not Notion
+- Created 4 Weichert Realty stories in Neon (47 tasks total, all with context fields):
+  - **Open House Enhancements** (14 tasks) — MLS listing link + Make an Offer button post-sign-in; agent representation Yes/No toggle; offer form emails hosting agent; unrepresented attendees logged as leads + follow-up; represented attendees forward agent info to host
+  - **7-Touch Cold Nurture Enhancements** (11 tasks) — weekly Monday de-enroll digest email per agent with per-lead remove button; mid-sequence enrollment check before each touch; activate Nurture Prompt Scheduler + Nurture Prompt Confirm; `unenrolled` as new lead status (no migration needed, no CHECK constraint)
+  - **Weekly Marketing Drip** (14 tasks) — weekly Monday 9am listing email to full CRM contact list; Apify scrapes listing URLs for photo/price; SendGrid forks per agent (Evan vs Michelle); per-lead sends for personalized opt-out tokens; `communication_opted_out` column + `listing_queue` table added to schema plan; two-workflow architecture (intake webhook → Neon queue → separate Monday scheduled workflow)
+  - **Boosted Property Lead Ingestion** (8 tasks) — Gmail triggers on Evan + Michelle inboxes watching for `no-reply@boldtrail.com` "New Lead Email" emails; Claude Haiku parses HTML → structured JSON; dedupe + Neon insert; fires existing `instant_lead_response`; read Tina Jore .eml to confirm field extraction (name, phone, email, property interest, listing URL from Notes field)
+- Created 4 PRDs in `obsidian/PRDs/`: open-house-enhancements, nurture-enhancements, weekly-marketing-drip, property-boost-lead-ingestion
+- Created `obsidian/clients/michelle-jasinski-weichert.md` — full client record mirroring Evan's format
+- Updated `obsidian/clients/evan-knutson-weichert.md` — corrected Michelle from "potential future client" to "active client"; added Active Stories table with all 4 stories
+- Identified SendGrid volume risk for marketing drip — per-lead sends require personalized opt-out URLs; documented threshold query + fallback to Marketing Campaigns API at 2,000+ sends; noted in PRD
+- Drafted client-facing email to Evan + Michelle summarizing 4 upcoming features in non-technical language
