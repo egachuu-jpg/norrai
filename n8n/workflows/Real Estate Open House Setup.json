@@ -71,7 +71,7 @@
             {
               "id": "set-prompt-setup-001",
               "name": "prompt",
-              "value": "=You are a real estate assistant. Extract the 3-5 most compelling property highlights from this listing description. These will be used to personalize follow-up messages to open house attendees.\n\nReturn ONLY a short comma-separated list. Each item should be 2-5 words, specific, and factual — only include details explicitly stated in the description. Never invent or assume details.\n\nExample output: vaulted ceilings, updated kitchen, large fenced backyard, 2-car garage, main floor primary\n\nListing description:\n{{ $json.listing_description }}\n\nReturn ONLY the comma-separated list. No labels, no explanation.",
+              "value": "=You are a real estate assistant. Extract the 3-5 most compelling property highlights from this listing description. These will be used to personalize follow-up messages to open house attendees.\n\nReturn ONLY a short comma-separated list. Each item should be 2-5 words, specific, and factual \u2014 only include details explicitly stated in the description. Never invent or assume details.\n\nExample output: vaulted ceilings, updated kitchen, large fenced backyard, 2-car garage, main floor primary\n\nListing description:\n{{ $json.listing_description }}\n\nReturn ONLY the comma-separated list. No labels, no explanation.",
               "type": "string"
             }
           ]
@@ -176,6 +176,78 @@
           "name": "Header Auth account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        392,
+        340
+      ],
+      "id": "btq-d4d6d77966f54dcb",
+      "name": "Build Token Query",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.client_query }}",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        612,
+        340
+      ],
+      "id": "vct-4944f0ce817346c4",
+      "name": "Validate Client Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8d25f37a-6180-4b65-971e-139acd8b774a",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        832,
+        340
+      ],
+      "id": "cv-250fbe0dcfaa49df",
+      "name": "Client Valid?"
     }
   ],
   "pinData": {
@@ -226,7 +298,7 @@
             "state": "MN",
             "zip": "55021",
             "property_address": "1231 Kane Ave, Faribault, MN, 55021",
-            "listing_description": "Step into this delightful home nestled in one of Faribault's most desirable neighborhoods, where thoughtful updates meet incredible value in a package that's perfect for first-time buyers. Built in 2013, this well-maintained gem offers 3 generous bedrooms and 2 full bathrooms, creating comfortable living spaces that feel both cozy and functional. The heart of the home showcases a beautifully remodeled kitchen with modern finishes and thoughtful design, perfect for daily living and casual entertaining. Every detail has been carefully considered to create a space that feels move-in ready from day one. Located in a wonderful neighborhood known for its friendly atmosphere and community spirit, you'll enjoy the perfect blend of small-town charm and convenience. Just minutes from downtown Faribault's growing dining and shopping scene, plus easy access to I-35 for commuting to the Twin Cities. This is more than just a starter home—it's your gateway to homeownership in a community that truly feels like home. An incredible opportunity to own in one of Southern Minnesota's most up-and-coming areas! ",
+            "listing_description": "Step into this delightful home nestled in one of Faribault's most desirable neighborhoods, where thoughtful updates meet incredible value in a package that's perfect for first-time buyers. Built in 2013, this well-maintained gem offers 3 generous bedrooms and 2 full bathrooms, creating comfortable living spaces that feel both cozy and functional. The heart of the home showcases a beautifully remodeled kitchen with modern finishes and thoughtful design, perfect for daily living and casual entertaining. Every detail has been carefully considered to create a space that feels move-in ready from day one. Located in a wonderful neighborhood known for its friendly atmosphere and community spirit, you'll enjoy the perfect blend of small-town charm and convenience. Just minutes from downtown Faribault's growing dining and shopping scene, plus easy access to I-35 for commuting to the Twin Cities. This is more than just a starter home\u2014it's your gateway to homeownership in a community that truly feels like home. An incredible opportunity to own in one of Southern Minnesota's most up-and-coming areas! ",
             "source_form": "open_house_setup"
           },
           "webhookUrl": "https://norrai.app.n8n.cloud/webhook/open-house-setup",
@@ -251,7 +323,7 @@
       "main": [
         [
           {
-            "node": "Prep Fields",
+            "node": "Build Token Query",
             "type": "main",
             "index": 0
           }
@@ -300,6 +372,40 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Build Token Query": {
+      "main": [
+        [
+          {
+            "node": "Validate Client Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Client Token": {
+      "main": [
+        [
+          {
+            "node": "Client Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
