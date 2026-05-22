@@ -147,7 +147,7 @@
         "fromEmail": "studio@norrai.co",
         "fromName": "Norr AI",
         "toEmail": "={{ $node[\"Parse HTML\"].json.agent_email }}",
-        "subject": "=New listing copy ready — {{ $json.headline }}",
+        "subject": "=New listing copy ready \u2014 {{ $json.headline }}",
         "contentValue": "=Hi, {{ $node[\"Parse HTML\"].json.agent_name }}, below are the headline/descriptions for your latest listing.\n\nHEADLINE: {{ $json.headline }}  \n\nMLS DESCRIPTION: {{ $json.mls_description }}  \n\nSOCIAL MEDIA POST: {{ $json.social_caption }}",
         "additionalFields": {}
       },
@@ -165,6 +165,78 @@
           "name": "SendGrid account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1032,
+        4
+      ],
+      "id": "btq-1e3dca5296684c5e",
+      "name": "Build Token Query",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.client_query }}",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1252,
+        4
+      ],
+      "id": "vct-bbaf906922904b4a",
+      "name": "Validate Client Token",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "efc6ad00-4ab9-4346-a758-9f66ecf10d58",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        4
+      ],
+      "id": "cv-24b4f174b80d48fd",
+      "name": "Client Valid?"
     }
   ],
   "pinData": {
@@ -218,7 +290,7 @@
             "neighborhood_notes": "Walking distance to the Douglas state trail, pine island elementary school, short drive to highway 52",
             "tone": "family_friendly",
             "target_buyer": "Move-up buyer",
-            "previous_listings": "Ideally situated on a spacious corner lot, this beautifully refreshed home has a lot to offer! Main floor living at its finest, with 3 bedrooms, full bath, and laundry all on one level. The interior has been thoughtfully revitalized, featuring new kitchen and bathroom flooring, new kitchen appliances, finished basement, new doors, and outdoor fence perfect for your pets. The finished basement adds a large family room, office/workout room, and walkout to your backyard space great for entertaining. Located just 15 minutes from Rochester, within walking distance of Pine Island Middle/High School and the Douglas State Trail, this home is a must see!\n\n—-\n\nBeautiful 2-story side-by-side townhome offering comfort, convenience, and low-maintenance living! This well-maintained townhome offers functional layout with 3 bedrooms on the upper level with full bath. Relax in your open living room that flows into the dining/kitchen area featuring stainless steel appliances, ample cabinets space, and great countertop space. Escape to the lower level and enjoy the family room, play room and office space. End unit home, offers extra yard space, with convenient patio space out back. Located in a quiet neighborhood, easy access to Highway 14, this one is move-in ready!\n\n",
+            "previous_listings": "Ideally situated on a spacious corner lot, this beautifully refreshed home has a lot to offer! Main floor living at its finest, with 3 bedrooms, full bath, and laundry all on one level. The interior has been thoughtfully revitalized, featuring new kitchen and bathroom flooring, new kitchen appliances, finished basement, new doors, and outdoor fence perfect for your pets. The finished basement adds a large family room, office/workout room, and walkout to your backyard space great for entertaining. Located just 15 minutes from Rochester, within walking distance of Pine Island Middle/High School and the Douglas State Trail, this home is a must see!\n\n\u2014-\n\nBeautiful 2-story side-by-side townhome offering comfort, convenience, and low-maintenance living! This well-maintained townhome offers functional layout with 3 bedrooms on the upper level with full bath. Relax in your open living room that flows into the dining/kitchen area featuring stainless steel appliances, ample cabinets space, and great countertop space. Escape to the lower level and enjoy the family room, play room and office space. End unit home, offers extra yard space, with convenient patio space out back. Located in a quiet neighborhood, easy access to Highway 14, this one is move-in ready!\n\n",
             "property_address": "2018 Douglas Trail Dr, Pine Island, MN 55963",
             "beds": 4,
             "baths": 2,
@@ -251,7 +323,7 @@
       "main": [
         [
           {
-            "node": "Parse HTML",
+            "node": "Build Token Query",
             "type": "main",
             "index": 0
           }
@@ -290,6 +362,40 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Build Token Query": {
+      "main": [
+        [
+          {
+            "node": "Validate Client Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Client Token": {
+      "main": [
+        [
+          {
+            "node": "Client Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Parse HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
