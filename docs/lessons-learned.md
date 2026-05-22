@@ -98,6 +98,11 @@
 - Free tier pauses Zaps after 2 weeks of inactivity — always provision Starter ($20/mo) for live clients; silent lead drops are unacceptable
 - Zapier Copilot is useful for getting confirmed payload field names before wiring n8n normalization — ask it to build the Zap, then inspect the confirmed JSON to update Code node field mappings
 
+## Notion MCP
+- Fetching a Notion database returns schema + view configs but not rows — to query rows, search within the database using `data_source_url: collection://...` from the `<data-source>` tag in the fetch result
+- Fetching a view URL directly (`view://...`) is not supported by the fetch tool — results in a validation error
+- Notion workspace search returns the database itself as a result, not the individual rows inside it — workspace search is not a substitute for a database query
+
 ## Architecture Decisions
 - Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
@@ -111,3 +116,9 @@
 - `agent_working` is a distinct task status from `in_progress` — signals an automated process is running, prevents concurrent edits, gives the board a clear in-flight indicator
 - Tasks are tracked in Neon (`stories` + `tasks` tables), not in CLAUDE.md — the Open Tasks section in CLAUDE.md is stale; always query Neon for current task state
 - Zapier free tier Zaps pause after 2 weeks of inactivity — no programmatic workaround for BoldTrail-triggered Zaps (can't synthetically fire BoldTrail events); accept the risk for active agents or pay $20/mo Starter
+- For delayed-send workflows (form submit now, send on a future scheduled day), use two workflows: an intake webhook that writes to a Neon queue table + a separate scheduled workflow that reads and executes — a single workflow with a multi-day Wait node leaves executions open and is unreliable
+- Per-lead SendGrid sends are required when opt-out tokens must be personalized per recipient; at 2,000+ sends switch to Marketing Campaigns API with substitution tags — run `SELECT client_id, COUNT(*) FROM leads WHERE email IS NOT NULL AND communication_opted_out != true GROUP BY client_id` before go-live to determine the right approach
+- `tasks.category` has a CHECK constraint — valid values are: research, analysis, dev, testing, ops; frontend work and n8n workflow builds both map to dev
+- Neon MCP `run_sql` only supports a single SQL statement per call — attempting multiple statements (semicolon-separated) raises a validation error; issue separate calls for each statement
+- n8n Gmail Trigger: one OAuth credential and trigger node per workflow — two agents monitoring for the same email pattern require two separate trigger workflows; share downstream logic via a parser subworkflow
+- BoldTrail PropertyBoost Facebook ad leads arrive via email from `no-reply@boldtrail.com`, subject: "New Lead Email - [Name]"; HTML body contains: lead name, phone, email, property interest, source (PropertyBoost), referrer (Facebook: LeadAd), and listing URL in the Notes field
