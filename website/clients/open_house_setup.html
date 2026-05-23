@@ -101,6 +101,7 @@
     letter-spacing: 0.01em;
   }
   label .req { color: var(--glacial); margin-left: 2px; }
+  label .opt { font-weight: 400; color: var(--muted); margin-left: 4px; }
 
   input, textarea, select {
     width: 100%;
@@ -240,6 +241,12 @@
       <div class="hint">The full description — the more detail, the better the follow-up.</div>
     </div>
 
+    <div class="field">
+      <label for="listing_url">MLS listing URL <span class="opt">(optional)</span></label>
+      <input type="url" id="listing_url" name="listing_url" placeholder="https://www.zillow.com/homedetails/...">
+      <div class="hint">If provided, attendees can tap a link to view the full listing after signing in.</div>
+    </div>
+
     <div id="status" class="status" role="alert"></div>
 
     <button type="submit" id="submit-btn">Generate QR Code →</button>
@@ -290,6 +297,7 @@
       zip,
       property_address:    propertyAddress,
       listing_description: fd.get('listing_description') || '',
+      listing_url:         fd.get('listing_url')         || '',
       source_form:         'open_house_setup',
       agent_token:         localStorage.getItem(AGENT_TOKEN_KEY) || '',
     };

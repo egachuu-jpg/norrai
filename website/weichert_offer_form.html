@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit an Offer — Weichert Realty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; min-height: 100dvh; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 40px 24px 36px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 540px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 12px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--bone);
+    margin-bottom: 10px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+
+  /* Property badge */
+  .property-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 13px;
+    color: var(--glacial);
+    margin-top: 4px;
+  }
+  .property-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--glacial);
+    flex-shrink: 0;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 36px 24px 72px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 20px; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  /* ── Fields ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-row { display: grid; gap: 12px; }
+  .field-row.col-2 { grid-template-columns: 1fr 1fr; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+  label .opt { font-weight: 400; color: var(--muted); margin-left: 4px; }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239EA3AA' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  textarea { resize: vertical; min-height: 100px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Contingency checkboxes ── */
+  .checkbox-group { display: flex; flex-direction: column; gap: 10px; }
+  .checkbox-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin-top: 1px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    accent-color: var(--ink);
+    cursor: pointer;
+    padding: 0;
+  }
+  .checkbox-item span {
+    font-size: 14px;
+    color: var(--secondary);
+    line-height: 1.5;
+  }
+
+  /* ── Submit ── */
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 16px 24px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 4px;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Error state — missing params ── */
+  .missing-params {
+    max-width: 540px;
+    margin: 60px auto;
+    padding: 0 24px;
+    text-align: center;
+    color: var(--secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .missing-params strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 8px; }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  @media (max-width: 540px) {
+    .site-header { padding: 32px 18px 28px; }
+    .wrap { padding: 28px 18px 60px; }
+    .field-row.col-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="missing-params" class="missing-params" style="display:none;">
+  <strong>Link is missing property info.</strong>
+  Please go back and sign in at the open house first, or ask the agent for help.
+</div>
+
+<div id="main-content" style="display:none;">
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="eyebrow">Make an Offer · Weichert Realty</div>
+      <h1>Let's put in<br><span class="accent">an offer.</span></h1>
+      <div class="property-badge">
+        <div class="property-badge-dot"></div>
+        <span id="property-display"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <form id="offer-form" novalidate>
+
+      <div class="section-label">Your Info</div>
+
+      <div class="field">
+        <label for="buyer_name">Your name <span class="req">*</span></label>
+        <input type="text" id="buyer_name" name="buyer_name" autocomplete="name" placeholder="Sarah Johnson" required>
+      </div>
+
+      <div class="field-row col-2">
+        <div class="field">
+          <label for="buyer_phone">Phone <span class="req">*</span></label>
+          <input type="tel" id="buyer_phone" name="buyer_phone" autocomplete="tel" placeholder="507-555-1234" required>
+        </div>
+        <div class="field">
+          <label for="buyer_email">Email <span class="req">*</span></label>
+          <input type="email" id="buyer_email" name="buyer_email" autocomplete="email" placeholder="sarah@gmail.com" required>
+        </div>
+      </div>
+
+      <div class="section-label">Offer Details</div>
+
+      <div class="field">
+        <label for="offer_amount">Offer amount <span class="req">*</span></label>
+        <input type="number" id="offer_amount" name="offer_amount" placeholder="275000" min="1" step="any" required>
+        <div class="hint">Enter the full purchase price in dollars (no commas).</div>
+      </div>
+
+      <div class="field">
+        <label for="financing_type">Financing type <span class="req">*</span></label>
+        <select id="financing_type" name="financing_type" required>
+          <option value="" disabled selected>Select one…</option>
+          <option value="conventional">Conventional (pre-approved)</option>
+          <option value="fha">FHA</option>
+          <option value="va">VA</option>
+          <option value="cash">Cash</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="proposed_close_date">Preferred closing date <span class="req">*</span></label>
+        <input type="date" id="proposed_close_date" name="proposed_close_date" required>
+      </div>
+
+      <div class="section-label">Contingencies</div>
+
+      <div class="field">
+        <label>Include contingencies <span class="opt">(select all that apply)</span></label>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" id="contingency_inspection" name="contingency_inspection">
+            <span>Inspection contingency</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="contingency_financing" name="contingency_financing">
+            <span>Financing contingency</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="contingency_appraisal" name="contingency_appraisal">
+            <span>Appraisal contingency</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="contingency_sale_of_home" name="contingency_sale_of_home">
+            <span>Sale of current home contingency</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="section-label">Message</div>
+
+      <div class="field">
+        <label for="buyer_notes">Notes for the agent <span class="opt">(optional)</span></label>
+        <textarea id="buyer_notes" name="buyer_notes" placeholder="Anything you'd like the agent to know — timeline, flexibility, questions..."></textarea>
+      </div>
+
+      <div id="status" class="status" role="alert"></div>
+
+      <button type="submit" id="submit-btn">Submit Offer Interest →</button>
+
+    </form>
+
+    <footer>
+      <p>Norr AI &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+    </footer>
+  </div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/weichert-offer-submit';
+
+  const params          = new URLSearchParams(window.location.search);
+  const propertyAddress = params.get('address')     || '';
+  const listingUrl      = params.get('listing_url') || '';
+  const agentName       = params.get('agent')       || '';
+  const agentEmail      = params.get('agent_email') || '';
+  const agentPhone      = params.get('agent_phone') || '';
+
+  if (!propertyAddress) {
+    document.getElementById('missing-params').style.display = 'block';
+  } else {
+    document.getElementById('main-content').style.display = 'block';
+    document.getElementById('property-display').textContent = propertyAddress;
+  }
+
+  const form   = document.getElementById('offer-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const fd = new FormData(form);
+
+    const payload = {
+      buyer_name:               fd.get('buyer_name')         || '',
+      buyer_phone:              fd.get('buyer_phone')         || '',
+      buyer_email:              fd.get('buyer_email')         || '',
+      offer_amount:             Number(fd.get('offer_amount')) || 0,
+      financing_type:           fd.get('financing_type')      || '',
+      proposed_close_date:      fd.get('proposed_close_date') || '',
+      contingency_inspection:   fd.get('contingency_inspection')   === 'on',
+      contingency_financing:    fd.get('contingency_financing')    === 'on',
+      contingency_appraisal:    fd.get('contingency_appraisal')    === 'on',
+      contingency_sale_of_home: fd.get('contingency_sale_of_home') === 'on',
+      buyer_notes:              fd.get('buyer_notes')         || '',
+      property_address:         propertyAddress,
+      listing_url:              listingUrl,
+      agent_name:               agentName,
+      agent_email:              agentEmail,
+      agent_phone:              agentPhone,
+      submitted_at:             new Date().toISOString(),
+      source_form:              'weichert_offer_form',
+    };
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': '8F68D963-7060-4033-BD04-7593E4B203CB',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      status.textContent = `Your offer interest has been submitted. ${agentName ? agentName + ' will' : 'The agent will'} be in touch shortly to walk you through the next steps.`;
+      status.className = 'status success show';
+      form.style.display = 'none';
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or ask the agent directly.`;
+      status.className = 'status error show';
+      btn.disabled = false;
+      btn.textContent = 'Submit Offer Interest →';
+    }
+  });
+</script>
+</body>
+</html>

@@ -104,6 +104,33 @@ test.describe('Payload shape', () => {
     expect(body.source_form).toBe('open_house_setup');
   });
 
+  test('listing_url is empty string in payload when not filled', async ({ page }) => {
+    await mockWebhook(page);
+    await page.goto(FORM_URL);
+    await fillRequired(page);
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.listing_url).toBe('');
+  });
+
+  test('listing_url appears in payload when provided', async ({ page }) => {
+    await mockWebhook(page);
+    await page.goto(FORM_URL);
+    await fillRequired(page);
+    await page.fill('#listing_url', 'https://www.zillow.com/homedetails/123-maple-st');
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.listing_url).toBe('https://www.zillow.com/homedetails/123-maple-st');
+  });
+
   test('X-Norr-Token header is present', async ({ page }) => {
     await mockWebhook(page);
     await page.goto(FORM_URL);
