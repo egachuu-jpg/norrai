@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Open House Setup — Norr AI</title>
+<title>Open House Setup — Weichert Realty</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -183,7 +183,7 @@
 
 <header class="site-header">
   <div class="site-header-inner">
-    <div class="eyebrow">Open House Setup</div>
+    <div class="eyebrow">Open House Setup · Weichert Realty</div>
     <h1>Generate your<br><span class="accent">sign-in QR code.</span></h1>
     <p>Paste your listing description and we'll extract the highlights. Attendees scan the code at the door — you get a personalized follow-up sent automatically the next morning.</p>
   </div>
@@ -233,7 +233,7 @@
       </div>
     </div>
 
-    <div class="section-label">Listing Description</div>
+    <div class="section-label">Listing Details</div>
 
     <div class="field">
       <label for="listing_description">MLS description <span class="req">*</span></label>
@@ -244,7 +244,7 @@
     <div class="field">
       <label for="listing_url">MLS listing URL <span class="opt">(optional)</span></label>
       <input type="url" id="listing_url" name="listing_url" placeholder="https://www.zillow.com/homedetails/...">
-      <div class="hint">If provided, attendees can tap a link to view the full listing after signing in.</div>
+      <div class="hint">If provided, attendees can tap a link to view the full listing and make an offer after signing in.</div>
     </div>
 
     <div id="status" class="status" role="alert"></div>
@@ -298,7 +298,7 @@
       property_address:    propertyAddress,
       listing_description: fd.get('listing_description') || '',
       listing_url:         fd.get('listing_url')         || '',
-      source_form:         'open_house_setup',
+      source_form:         'weichert_open_house_setup',
       agent_token:         localStorage.getItem(AGENT_TOKEN_KEY) || '',
     };
 

@@ -4,6 +4,7 @@ const { mockWebhook } = require('./helpers');
 const BASE_URL = '/open_house.html';
 
 const FAKE_SEARCH = 'address=123+Maple+St%2C+Faribault%2C+MN&agent=Jane+Smith&agent_email=jane%40brokerage.com&agent_phone=5071234567&notes=Updated+kitchen%2C+new+roof+2022';
+const FAKE_SEARCH_WITH_LISTING = FAKE_SEARCH + '&listing_url=https%3A%2F%2Fzillow.com%2Fhomedetails%2F123-maple';
 
 async function gotoWithParams(page) {
   await page.addInitScript((fakeSearch) => {
@@ -17,12 +18,29 @@ async function gotoWithParams(page) {
   await page.goto(BASE_URL);
 }
 
+async function clickAgentToggle(page, value) {
+  await page.locator(`label.toggle-option:has(input[name="has_agent"][value="${value}"]) span`).click();
+}
+
+async function gotoWithListingUrl(page) {
+  await page.addInitScript((fakeSearch) => {
+    const Orig = window.URLSearchParams;
+    window.URLSearchParams = class extends Orig {
+      constructor(init) {
+        super(!init ? fakeSearch : init);
+      }
+    };
+  }, FAKE_SEARCH_WITH_LISTING);
+  await page.goto(BASE_URL);
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function fillRequired(page) {
   await page.fill('#attendee_name', 'Sarah Johnson');
   await page.fill('#phone', '5075551234');
   await page.fill('#email', 'sarah@gmail.com');
+  await clickAgentToggle(page, 'no');
   await page.check('#sms_consent');
 }
 
@@ -233,5 +251,123 @@ test.describe('Success and error banners', () => {
     await page.click('#submit-btn');
 
     await expect(page.locator('#status.error')).toBeVisible({ timeout: 5000 });
+  });
+});
+
+// ─── 5. Agent representation toggle ──────────────────────────────────────────
+
+test.describe('Agent representation toggle', () => {
+  test('agent section is hidden by default', async ({ page }) => {
+    await gotoWithParams(page);
+    await expect(page.locator('#agent-section')).not.toBeVisible();
+  });
+
+  test('agent section appears when Yes is selected', async ({ page }) => {
+    await gotoWithParams(page);
+    await clickAgentToggle(page, 'yes');
+    await expect(page.locator('#agent-section')).toBeVisible();
+  });
+
+  test('agent section hides again when No is re-selected', async ({ page }) => {
+    await gotoWithParams(page);
+    await clickAgentToggle(page, 'yes');
+    await expect(page.locator('#agent-section')).toBeVisible();
+    await clickAgentToggle(page, 'no');
+    await expect(page.locator('#agent-section')).not.toBeVisible();
+  });
+
+  test('blocks submit when Yes is selected but agent name is empty', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await clickAgentToggle(page, 'yes');
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
+
+  test('has_agent is false in payload when No is selected', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.has_agent).toBe(false);
+    expect(body.representing_agent_name).toBe('');
+    expect(body.representing_agent_brokerage).toBe('');
+  });
+
+  test('has_agent is true and agent fields appear in payload when Yes is selected', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await page.fill('#attendee_name', 'Sarah Johnson');
+    await page.fill('#phone', '5075551234');
+    await page.fill('#email', 'sarah@gmail.com');
+    await clickAgentToggle(page, 'yes');
+    await page.fill('#representing_agent_name', 'Mike Brown');
+    await page.fill('#representing_agent_brokerage', 'Re/Max');
+    await page.check('#sms_consent');
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(body.has_agent).toBe(true);
+    expect(body.representing_agent_name).toBe('Mike Brown');
+    expect(body.representing_agent_brokerage).toBe('Re/Max');
+  });
+});
+
+// ─── 6. Post sign-in action buttons ──────────────────────────────────────────
+
+test.describe('Post sign-in action buttons', () => {
+  test('action buttons do not appear after sign-in when listing_url is absent', async ({ page }) => {
+    await mockWebhook(page, 200);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#signin-form')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#post-signin-actions')).not.toBeVisible();
+  });
+
+  test('MLS and Offer buttons appear after sign-in when listing_url is present', async ({ page }) => {
+    await mockWebhook(page, 200);
+    await gotoWithListingUrl(page);
+    await fillRequired(page);
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#signin-form')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#post-signin-actions')).toBeVisible();
+    await expect(page.locator('#mls-btn')).toBeVisible();
+    await expect(page.locator('#offer-btn')).toBeVisible();
+  });
+
+  test('MLS button href matches listing_url param', async ({ page }) => {
+    await mockWebhook(page, 200);
+    await gotoWithListingUrl(page);
+    await fillRequired(page);
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#signin-form')).not.toBeVisible({ timeout: 5000 });
+    const href = await page.locator('#mls-btn').getAttribute('href');
+    expect(href).toBe('https://zillow.com/homedetails/123-maple');
+  });
+
+  test('Offer button href contains property address', async ({ page }) => {
+    await mockWebhook(page, 200);
+    await gotoWithListingUrl(page);
+    await fillRequired(page);
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#signin-form')).not.toBeVisible({ timeout: 5000 });
+    const href = await page.locator('#offer-btn').getAttribute('href');
+    expect(href).toContain('address=');
+    expect(href).toContain('weichert_offer_form.html');
   });
 });
