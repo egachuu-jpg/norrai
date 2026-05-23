@@ -3,28 +3,38 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "GET",
         "path": "nurture-prompt-confirm",
         "responseMode": "responseNode",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
-      "id": "npc00001-0001-4000-8000-000000000001",
+      "position": [
+        0,
+        0
+      ],
+      "id": "83283e39-32b1-48ee-91e1-a6242fbc096e",
       "name": "Receive Click",
       "webhookId": "nurture-prompt-confirm-001"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
           "conditions": [
             {
               "id": "npc-token-001",
               "leftValue": "={{ $json.query.token }}",
               "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -34,8 +44,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [448, 144],
-      "id": "npc00001-0002-4000-8000-000000000002",
+      "position": [
+        208,
+        0
+      ],
+      "id": "1bd55c47-7234-4ac8-90af-6faca3215af4",
       "name": "Token Check"
     },
     {
@@ -44,13 +57,23 @@
         "responseBody": "<!DOCTYPE html><html><head><title>Invalid Request</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}</style></head><body><h2>Invalid request.</h2><p>This link is not valid. If you think something's wrong, reach out to hello@norrai.co.</p></body></html>",
         "options": {
           "responseCode": 403,
-          "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "text/html" }] }
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [656, 300],
-      "id": "npc00001-0003-4000-8000-000000000003",
+      "position": [
+        416,
+        160
+      ],
+      "id": "2271952d-4dc5-43e6-b752-23eef605f1d7",
       "name": "Respond: Bad Token"
     },
     {
@@ -61,13 +84,19 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [656, 144],
-      "id": "npc00001-0004-4000-8000-000000000004",
+      "position": [
+        416,
+        0
+      ],
+      "id": "dd9ce75b-014c-4375-b2ac-d87e401da15c",
       "name": "Log Triggered",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -75,36 +104,53 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [864, 144],
-      "id": "npc00001-0005-4000-8000-000000000005",
+      "position": [
+        624,
+        0
+      ],
+      "id": "26176286-b640-496c-aad8-73a015bec2cc",
       "name": "Build Lead Query"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.query }}",
-        "options": { "alwaysOutputData": true }
+        "query": "{{ $json.query }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1072, 144],
-      "id": "npc00001-0006-4000-8000-000000000006",
+      "position": [
+        832,
+        0
+      ],
+      "id": "92addeca-6ca4-44e7-80b0-55149e535f74",
       "name": "Lookup Lead",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
           "conditions": [
             {
               "id": "npc-lead-found-001",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -114,8 +160,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1280, 144],
-      "id": "npc00001-0007-4000-8000-000000000007",
+      "position": [
+        1040,
+        0
+      ],
+      "id": "a7db6dd2-ccb8-4d58-a37f-08cb1ce3030d",
       "name": "Lead Found?"
     },
     {
@@ -124,25 +173,43 @@
         "responseBody": "<!DOCTYPE html><html><head><title>Not Found</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}</style></head><body><h2>Lead not found.</h2><p>This link is invalid or has expired. If you think something's wrong, reach out to hello@norrai.co.</p></body></html>",
         "options": {
           "responseCode": 404,
-          "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "text/html" }] }
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1488, 300],
-      "id": "npc00001-0008-4000-8000-000000000008",
+      "position": [
+        1248,
+        160
+      ],
+      "id": "3ee7fe8a-2a01-410a-94b6-3185f16a521e",
       "name": "Respond: Not Found"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
           "conditions": [
             {
               "id": "npc-not-enrolled-001",
               "leftValue": "={{ $json.nurture_enrolled_at }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "isEmpty" }
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -152,8 +219,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1488, 144],
-      "id": "npc00001-0009-4000-8000-000000000009",
+      "position": [
+        1248,
+        0
+      ],
+      "id": "5a1fa185-ccb9-4853-ad8d-97265340edc7",
       "name": "Not Enrolled?"
     },
     {
@@ -162,13 +232,23 @@
         "responseBody": "={{ '<!DOCTYPE html><html><head><title>Already Enrolled</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}</style></head><body><h2>Already enrolled.</h2><p>' + ($json.lead_name || 'This lead') + ' was already enrolled in the cold nurture sequence.</p></body></html>' }}",
         "options": {
           "responseCode": 200,
-          "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "text/html" }] }
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1696, 300],
-      "id": "npc00001-0010-4000-8000-000000000010",
+      "position": [
+        1456,
+        160
+      ],
+      "id": "c7a17da1-1310-4bb1-9c4e-1ac571b99916",
       "name": "Respond: Already Enrolled"
     },
     {
@@ -177,14 +257,17 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1696, 144],
-      "id": "npc00001-0011-4000-8000-000000000011",
+      "position": [
+        1456,
+        0
+      ],
+      "id": "31ddd194-2229-4a51-9f2e-9cca6ae08af7",
       "name": "Build Enrollment Payload"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://norrai.app.n8n.cloud/webhook/nurture-enroll-slack",
+        "url": "https://norrai.app.n8n.cloud/webhook/nurture-enroll",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -192,51 +275,69 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1904, 144],
-      "id": "npc00001-0012-4000-8000-000000000012",
+      "position": [
+        1664,
+        0
+      ],
+      "id": "5f44497b-e7e0-4f3e-a4cb-1fac971e8b40",
       "name": "Fire Nurture Enrollment"
     },
     {
       "parameters": {
-        "jsCode": "const lead = $('Lookup Lead').first().json;\nconst enroll = $('Build Enrollment Payload').first().json;\nreturn [{ json: {\n  update_query: `UPDATE leads SET nurture_enrolled_at = now(), updated_at = now() WHERE id = '${enroll.lead_id}'`,\n  log_query:    `INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('${enroll.client_id}'::uuid, 'nurture_prompt_confirm', 'completed', '{\"lead_id\": \"${enroll.lead_id}\"}'::jsonb)`,\n  lead_name:    lead.lead_name || 'This lead'\n} }];"
+        "jsCode": "const lead = $('Lookup Lead').first().json;\nconst enroll = $('Build Enrollment Payload').first().json;\nreturn [{ json: {\n  update_query: `UPDATE leads SET nurture_enrolled_at = now(), status = 'nurturing', updated_at = now() WHERE id = '${enroll.lead_id}'`,\n  log_query:    `INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('${enroll.client_id}'::uuid, 'nurture_prompt_confirm', 'completed', '{\"lead_id\": \"${enroll.lead_id}\"}'::jsonb)`,\n  lead_name:    lead.lead_name || 'This lead'\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2112, 144],
-      "id": "npc00001-0013-4000-8000-000000000013",
+      "position": [
+        1872,
+        0
+      ],
+      "id": "4895336a-0b07-4511-b972-f54a31a0afa8",
       "name": "Prep Completion"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.update_query }}",
+        "query": "{{ $json.update_query }}",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2320, 144],
-      "id": "npc00001-0014-4000-8000-000000000014",
+      "position": [
+        2080,
+        0
+      ],
+      "id": "6813c383-f7dd-492b-a6d7-aa1a793a10dc",
       "name": "Update Lead",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $('Prep Completion').first().json.log_query }}",
+        "query": "{{ $('Prep Completion').first().json.log_query }}",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2528, 144],
-      "id": "npc00001-0015-4000-8000-000000000015",
+      "position": [
+        2288,
+        0
+      ],
+      "id": "da2d4a14-271c-4115-acf2-90bbd795b3fb",
       "name": "Log Completed",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -244,71 +345,203 @@
         "responseBody": "={{ '<!DOCTYPE html><html><head><title>Done</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Done.</h2><p>' + $(\\'Prep Completion\\').first().json.lead_name + ' has been enrolled in the cold nurture sequence. The first touch goes out shortly.</p></body></html>' }}",
         "options": {
           "responseCode": 200,
-          "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "text/html" }] }
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2736, 144],
-      "id": "npc00001-0016-4000-8000-000000000016",
+      "position": [
+        2496,
+        0
+      ],
+      "id": "07fb7058-cbbe-4660-af5e-e9097d13970e",
       "name": "Respond: Success"
     }
   ],
   "pinData": {},
   "connections": {
     "Receive Click": {
-      "main": [[{ "node": "Token Check", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Token Check": {
       "main": [
-        [{ "node": "Log Triggered", "type": "main", "index": 0 }],
-        [{ "node": "Respond: Bad Token", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Bad Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Log Triggered": {
-      "main": [[{ "node": "Build Lead Query", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Lead Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Lead Query": {
-      "main": [[{ "node": "Lookup Lead", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Lookup Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Lookup Lead": {
-      "main": [[{ "node": "Lead Found?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Lead Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Lead Found?": {
       "main": [
-        [{ "node": "Not Enrolled?", "type": "main", "index": 0 }],
-        [{ "node": "Respond: Not Found", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Not Enrolled?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Not Enrolled?": {
       "main": [
-        [{ "node": "Build Enrollment Payload", "type": "main", "index": 0 }],
-        [{ "node": "Respond: Already Enrolled", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Build Enrollment Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Already Enrolled",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Build Enrollment Payload": {
-      "main": [[{ "node": "Fire Nurture Enrollment", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Fire Nurture Enrollment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Fire Nurture Enrollment": {
-      "main": [[{ "node": "Prep Completion", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Prep Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prep Completion": {
-      "main": [[{ "node": "Update Lead", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Update Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Update Lead": {
-      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Log Completed": {
-      "main": [[{ "node": "Respond: Success", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond: Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "versionId": "nurture-prompt-confirm-v1-001",
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "7967537d-32ef-455a-a072-9618f8ab4823",
   "meta": {
-    "templateCredsSetupCompleted": false,
+    "templateCredsSetupCompleted": true,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
   },
-  "id": "",
-  "tags": []
+  "id": "trbeKbG4GrYaDCBZ",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }

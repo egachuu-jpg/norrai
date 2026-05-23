@@ -5,14 +5,20 @@
       "parameters": {
         "rule": {
           "interval": [
-            { "field": "cronExpression", "expression": "0 13 * * *" }
+            {
+              "field": "cronExpression",
+              "expression": "0 13 * * *"
+            }
           ]
         }
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 144],
-      "id": "nps00001-0001-4000-8000-000000000001",
+      "position": [
+        -1040,
+        96
+      ],
+      "id": "9041a38f-8f83-4b4d-8cde-cd2c32c5b0a8",
       "name": "Schedule 8am CT"
     },
     {
@@ -23,29 +29,41 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [448, 144],
-      "id": "nps00001-0002-4000-8000-000000000002",
+      "position": [
+        -832,
+        96
+      ],
+      "id": "57bdc26c-c5f6-4a24-8be6-effc766aa7c2",
       "name": "Log Triggered",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.id, l.lead_name, l.email, l.phone, l.source, l.metadata, l.created_at, c.primary_contact_email AS agent_email, c.primary_contact_name AS agent_name, c.business_name FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.nurture_enrolled_at IS NULL AND l.created_at < now() - INTERVAL '7 days' AND l.status NOT IN ('converted', 'dead') AND c.status = 'active' ORDER BY c.id, l.created_at",
-        "options": { "alwaysOutputData": true }
+        "query": "SELECT l.id, l.lead_name, l.email, l.phone, l.source, l.metadata, l.created_at, c.primary_contact_email AS agent_email, c.primary_contact_name AS agent_name, c.business_name FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.nurture_enrolled_at IS NULL AND l.created_at < now() - INTERVAL '7 days' AND l.status NOT IN ('converted', 'unenrolled', 'dead') AND c.status = 'active' ORDER BY c.id, l.created_at",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [656, 144],
-      "id": "nps00001-0003-4000-8000-000000000003",
+      "position": [
+        -624,
+        96
+      ],
+      "id": "19904e7d-bb33-4295-95fc-08f82ae9fa2f",
       "name": "Query Eligible Leads",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -53,20 +71,31 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [864, 144],
-      "id": "nps00001-0004-4000-8000-000000000004",
+      "position": [
+        -416,
+        96
+      ],
+      "id": "fe8c78ed-f02e-4c53-aae0-a5333f77cf02",
       "name": "Group by Agent"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
           "conditions": [
             {
               "id": "nps-has-leads-001",
               "leftValue": "={{ $json.has_leads }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
             }
           ],
           "combinator": "and"
@@ -76,19 +105,30 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1072, 144],
-      "id": "nps00001-0005-4000-8000-000000000005",
+      "position": [
+        -208,
+        96
+      ],
+      "id": "22b22d25-d2b6-421c-98b9-a37875ad1040",
       "name": "Has Eligible Leads?"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $vars.SENDGRID_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SENDGRID_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -98,9 +138,18 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1280, 60],
-      "id": "nps00001-0006-4000-8000-000000000006",
-      "name": "Send Digest Email"
+      "position": [
+        0,
+        0
+      ],
+      "id": "d658b505-8aed-49ea-ba85-7976d3e8bbe5",
+      "name": "Send Digest Email",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
     },
     {
       "parameters": {
@@ -110,46 +159,124 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1488, 60],
-      "id": "nps00001-0007-4000-8000-000000000007",
+      "position": [
+        208,
+        0
+      ],
+      "id": "636783a0-d299-472b-b310-ce751fb10bcd",
       "name": "Log Completed",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Group by Agent": [
+      {
+        "json": {
+          "has_leads": true,
+          "to_email": "egachuu@gmail.com",
+          "subject": "🔔 7 leads ready for nurture — May 22, 2026",
+          "html_body": "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head><body style=\"font-family:'Inter',sans-serif;background:#FAFAF7;margin:0;padding:0;\"><div style=\"max-width:540px;margin:0 auto;padding:40px 24px;\"><p style=\"font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#9EA3AA;margin:0 0 24px;\">Norr AI</p><h2 style=\"font-size:22px;font-weight:700;color:#0A0F1A;margin:0 0 8px;letter-spacing:-0.02em;\">Hi Evan,</h2><p style=\"font-size:15px;color:#3A3F48;margin:0 0 28px;line-height:1.6;\">These leads received your first message but haven't been enrolled in your follow-up sequence yet. One click to enroll:</p><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;\"><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">Jenn Paulson (huckleberryrow)</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=e49da2aa-0f49-4b4b-b894-4895da896ddb&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">Kassi Deegerman</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website &middot; 718 6th Street NW, Faribault, MN, 55021</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=d3472e4e-9064-487f-be70-3e9f36d5adfd&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">cjprohaski</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website &middot; 711 3rd Street NW, Faribault, MN, 55021</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=bf261c32-216b-40f8-8c62-c1e359fcc58b&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">Trenten Fritz</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=3ac33786-c431-496c-970b-37765d833e08&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">Hayley Fogelson</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=3121146d-921f-4585-87be-19a551bf6ebb&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">Grace Hoover</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=65e1bdb8-a032-483f-93db-690a30fe0e5f&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr><tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">Nic Rudolph</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">Added: May 14 &middot; Source: Organic Website</p><a href=\"https://norrai.app.n8n.cloud/webhook/nurture-prompt-confirm?lead_id=c7695c5f-7a68-4deb-933d-2ca8b2aa409b&token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"display:inline-block;background:#0A0F1A;color:#FAFAF7;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Enroll in Cold Nurture</a></td></tr></table><p style=\"font-size:13px;color:#9EA3AA;margin:32px 0 0;line-height:1.6;\">If you're already in conversation with someone, ignore their button — it will expire once they're enrolled or marked inactive.</p><p style=\"font-size:13px;color:#9EA3AA;margin:16px 0 0;\">— Norr AI</p></div></body></html>",
+          "lead_count": 7,
+          "agent_name": "Evan Knutson"
+        }
+      }
+    ]
+  },
   "connections": {
     "Schedule 8am CT": {
-      "main": [[{ "node": "Log Triggered", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Log Triggered": {
-      "main": [[{ "node": "Query Eligible Leads", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Query Eligible Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Query Eligible Leads": {
-      "main": [[{ "node": "Group by Agent", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Group by Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Group by Agent": {
-      "main": [[{ "node": "Has Eligible Leads?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Eligible Leads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Eligible Leads?": {
       "main": [
-        [{ "node": "Send Digest Email", "type": "main", "index": 0 }],
-        []
+        [
+          {
+            "node": "Send Digest Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Send Digest Email": {
-      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "versionId": "nurture-prompt-scheduler-v1-001",
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "8722fe54-119c-42a0-b662-593ac084827c",
   "meta": {
-    "templateCredsSetupCompleted": false,
+    "templateCredsSetupCompleted": true,
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
   },
-  "id": "",
-  "tags": []
+  "id": "qivCrM2M9Y0RjoVY",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }
