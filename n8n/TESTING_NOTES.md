@@ -424,3 +424,88 @@ Expected: response body is `TESTCHALLENGE123` (plain text, 200).
 ### Known Gaps
 - Cron `0 13 * * 1,4` fires at 8am CST (winter) / 7am CDT (summer) — one hour drift in summer due to DST. Acceptable for internal reminders.
 - No retry logic if GitHub API or Slack is temporarily unavailable.
+
+---
+
+## Security: Rate Limiting
+
+n8n Cloud doesn't have per-webhook rate limiting out of the box. Two layers protect against abuse:
+
+### Layer 1: n8n Max Concurrent Executions (configure now)
+In n8n, for each production workflow:
+1. Open the workflow → **Settings** (top right gear icon)
+2. Set **Max concurrent executions** to `5`
+3. Set **Timeout** to `120` seconds
+4. Save
+
+This prevents a burst flood from queueing infinite executions.
+
+### Layer 2: Neon-based rate tracking (future — migration 006 ready)
+Migration `db/migrations/006_rate_limits.sql` adds a `webhook_rate_limits` table.
+When you want per-token rate limiting in a workflow, add these nodes after Token Check:
+
+**Node: Rate Check** (Code node)
+```javascript
+const token = $json.headers?.['x-norr-token'] || '';
+const crypto = require('crypto');
+const tokenHash = crypto.createHash('sha256').update(token).digest('hex').slice(0, 16);
+const windowStart = new Date();
+windowStart.setMinutes(0, 0, 0); // floor to current hour
+return [{ json: {
+  rate_query: `INSERT INTO webhook_rate_limits (token_hash, endpoint, window_start, request_count)
+    VALUES ('${tokenHash}', '${$workflow.name.replace(/'/g, "''")}', '${windowStart.toISOString()}', 1)
+    ON CONFLICT (token_hash, endpoint, window_start)
+    DO UPDATE SET request_count = webhook_rate_limits.request_count + 1
+    RETURNING request_count`,
+}}];
+```
+
+**Node: Log Rate** (Postgres node, executeQuery, `{{ $json.rate_query }}`, continueOnFail: true)
+
+**Node: Over Limit?** (IF node, `{{ $json.request_count }} > 60` → true branch: Respond 429)
+
+Apply migration 006 to Neon before adding these nodes to workflows.
+
+---
+
+## Security: PII Encryption
+
+Migration `db/migrations/002_pii_encryption.sql` adds encrypted shadow columns for PII.
+Workflows dual-write to both plaintext and encrypted columns (when `PII_ENCRYPTION_KEY` is set).
+
+### Steps to activate
+
+1. **Generate a strong key:**
+   ```
+   openssl rand -base64 32
+   ```
+   Store it in Bitwarden. You'll need it in two places.
+
+2. **Apply the migration to Neon:**
+   ```
+   psql <your-neon-connection-string> -v PII_KEY='your-key-here' -f db/migrations/002_pii_encryption.sql
+   ```
+   This adds shadow columns (`email_enc`, `phone_enc`, etc.) and encrypts existing rows.
+
+3. **Set the n8n environment variable:**
+   In n8n Cloud → Settings → Environment Variables, add:
+   ```
+   PII_ENCRYPTION_KEY = your-key-here
+   ```
+   Re-import workflows after setting this — they read `$env.PII_ENCRYPTION_KEY` at runtime.
+
+4. **Verify dual-write is working:**
+   Trigger a lead through the Lead Cleanser, then run in Neon:
+   ```sql
+   SELECT id, email, email_enc IS NOT NULL AS encrypted FROM leads ORDER BY created_at DESC LIMIT 5;
+   ```
+   Both `email` and `email_enc` should be populated.
+
+5. **Drop plaintext columns (when ready):**
+   Uncomment the `DROP COLUMN` statements in `002_pii_encryption.sql` and re-run.
+   Before doing this, verify all workflows that filter by email use `pgp_sym_decrypt(email_enc, 'KEY') = 'value'` instead of `email = 'value'`. The Dedupe Check in Lead Cleanser is the main query to update.
+
+### Workflows updated for dual-write
+- `Real Estate Lead Cleanser.json` — Build Insert Query
+- `Real Estate Instant Lead Response.json` — Build Lead Insert
+- `Real Estate Instant Lead Response with Research.json` — Build Lead Insert
