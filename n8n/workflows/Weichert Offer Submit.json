@@ -1,0 +1,206 @@
+{
+  "name": "Weichert Offer Submit",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weichert-offer-submit",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "wos-001-receive",
+      "name": "Receive Offer",
+      "webhookId": "weichert-offer-submit-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wos-token-check-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [224, 0],
+      "id": "wos-002-token",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}' LIMIT 1",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [448, 0],
+      "id": "wos-003-lookup-client",
+      "name": "Lookup Client",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id || \"e2f9934c-4d28-4bb4-ac90-4284c1123517\" }}',\n  'weichert_offer_submit',\n  'triggered',\n  json_build_object(\n    'agent_email',      '{{ $('Receive Offer').first().json.body.agent_email }}',\n    'property_address', '{{ $('Receive Offer').first().json.body.property_address }}'\n  )::jsonb\n)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [672, 0],
+      "id": "wos-004-log-triggered",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Receive Offer').first().json.body;\n\nconst offerAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(body.offer_amount || 0);\n\nconst financingLabels = {\n  conventional: 'Conventional (pre-approved)',\n  fha:          'FHA',\n  va:           'VA',\n  cash:         'Cash',\n  other:        'Other',\n};\nconst financing = financingLabels[body.financing_type] || body.financing_type || 'Not specified';\n\nconst contingencies = [\n  body.contingency_inspection   ? 'Inspection'    : null,\n  body.contingency_financing    ? 'Financing'     : null,\n  body.contingency_appraisal    ? 'Appraisal'     : null,\n  body.contingency_sale_of_home ? 'Sale of home'  : null,\n].filter(Boolean);\nconst contingencyText = contingencies.length ? contingencies.join(', ') : 'None';\n\nconst closeDate = body.proposed_close_date\n  ? new Date(body.proposed_close_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })\n  : 'Not specified';\n\nconst mlsLink = body.listing_url\n  ? `<a href=\"${body.listing_url}\" style=\"color: #7FA9B8;\">${body.listing_url}</a>`\n  : 'Not provided';\n\nconst buyerNotesHtml = body.buyer_notes\n  ? `<p style=\"font-size: 13px; color: #3A3F48; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE; margin: 0;\">${body.buyer_notes}</p>`\n  : '<p style=\"font-size: 13px; color: #9EA3AA; margin: 0;\">No notes provided.</p>';\n\nconst emailHtml = [\n  '<div style=\"font-family: \\'Inter\\', Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #0A0F1A;\">',\n  '  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Offer Interest · Weichert Realty</p>',\n  '    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">New offer interest received.</h1>',\n  '  </div>',\n  '  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">',\n  '',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 4px;\">Property</p>',\n  '    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 20px;\">' + (body.property_address || 'Unknown') + '</p>',\n  '',\n  '    <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px;\">',\n  '      <tr>',\n  '        <td style=\"width: 50%; padding: 12px 14px; background: #FAFAF7; border: 1px solid #E5E4DE; vertical-align: top;\">',\n  '          <p style=\"font-size: 11px; color: #9EA3AA; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;\">Offer Amount</p>',\n  '          <p style=\"font-size: 18px; font-weight: 700; color: #0A0F1A; margin: 0;\">' + offerAmount + '</p>',\n  '        </td>',\n  '        <td style=\"width: 50%; padding: 12px 14px; background: #FAFAF7; border: 1px solid #E5E4DE; border-left: none; vertical-align: top;\">',\n  '          <p style=\"font-size: 11px; color: #9EA3AA; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;\">Financing</p>',\n  '          <p style=\"font-size: 15px; font-weight: 600; color: #0A0F1A; margin: 0;\">' + financing + '</p>',\n  '        </td>',\n  '      </tr>',\n  '      <tr>',\n  '        <td style=\"padding: 12px 14px; background: #FAFAF7; border: 1px solid #E5E4DE; border-top: none; vertical-align: top;\">',\n  '          <p style=\"font-size: 11px; color: #9EA3AA; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;\">Proposed Close Date</p>',\n  '          <p style=\"font-size: 15px; font-weight: 600; color: #0A0F1A; margin: 0;\">' + closeDate + '</p>',\n  '        </td>',\n  '        <td style=\"padding: 12px 14px; background: #FAFAF7; border: 1px solid #E5E4DE; border-top: none; border-left: none; vertical-align: top;\">',\n  '          <p style=\"font-size: 11px; color: #9EA3AA; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;\">Contingencies</p>',\n  '          <p style=\"font-size: 15px; font-weight: 600; color: #0A0F1A; margin: 0;\">' + contingencyText + '</p>',\n  '        </td>',\n  '      </tr>',\n  '    </table>',\n  '',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 6px;\">Buyer Info</p>',\n  '    <p style=\"font-size: 14px; color: #0A0F1A; margin: 0 0 4px;\"><strong>' + (body.buyer_name || '') + '</strong></p>',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 4px;\">' + (body.buyer_phone || '') + '</p>',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 20px;\">' + (body.buyer_email || '') + '</p>',\n  '',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 8px;\">Notes from Buyer</p>',\n  '    ' + buyerNotesHtml,\n  '    <div style=\"margin-top: 24px;\"></div>',\n  '',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 6px;\">MLS Listing</p>',\n  '    <p style=\"font-size: 13px; color: #3A3F48; margin: 0 0 24px; word-break: break-all;\">' + mlsLink + '</p>',\n  '',\n  '    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;\\u00b7&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    email_html:       emailHtml,\n    buyer_name:       body.buyer_name       || '',\n    buyer_email:      body.buyer_email      || '',\n    buyer_phone:      body.buyer_phone      || '',\n    offer_amount:     offerAmount,\n    property_address: body.property_address || '',\n    agent_name:       body.agent_name       || '',\n    agent_email:      body.agent_email      || '',\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [896, 0],
+      "id": "wos-005-build-email",
+      "name": "Build Notification Email"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{\n    \"to\": [\n      {\"email\": \"eknutson@teamyellownow.com\", \"name\": \"Evan Knutson\"}\n    ],\n    \"cc\": [\n      {\"email\": \"{{ $json.agent_email }}\"}\n    ]\n  }],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"reply_to\": {\"email\": \"{{ $json.buyer_email }}\", \"name\": \"{{ $json.buyer_name }}\"},\n  \"subject\": \"Offer interest: {{ $json.property_address }} \\u2014 {{ $json.offer_amount }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1120, 0],
+      "id": "wos-006-send-email",
+      "name": "Email to Evan",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Receive Offer').first().json.body.agent_email }}' LIMIT 1),\n  'weichert_offer_submit',\n  'completed',\n  json_build_object(\n    'buyer_email',      '{{ $('Build Notification Email').first().json.buyer_email }}',\n    'property_address', '{{ $('Build Notification Email').first().json.property_address }}',\n    'offer_amount',     '{{ $('Build Notification Email').first().json.offer_amount }}'\n  )::jsonb\n)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1344, 0],
+      "id": "wos-007-log-completed",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Offer": {
+      "main": [
+        [{ "node": "Token Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [{ "node": "Lookup Client", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [{ "node": "Log Triggered", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [{ "node": "Build Notification Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Notification Email": {
+      "main": [
+        [{ "node": "Email to Evan", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email to Evan": {
+      "main": [
+        [{ "node": "Log Completed", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "weichert-offer-submit-v1-001",
+  "meta": {
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
+}
