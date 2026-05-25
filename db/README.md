@@ -34,7 +34,7 @@ Find your connection string in the Neon dashboard under **Connection Details**. 
 | `service_contracts` | Billing history per client |
 | `twilio_subaccounts` | One Twilio subaccount + phone number per client |
 | `norrai_meetings` | NorrAI's own discovery/onboarding/check-in calls |
-| `leads` | End-customer leads across all verticals; vertical-specific fields go in `metadata` jsonb |
+| `leads` | End-customer leads across all verticals; vertical-specific fields go in `metadata` jsonb. Status values: `new`, `contacted`, `qualified`, `nurturing`, `converted`, `unenrolled`, `dead` |
 | `appointments` | End-customer appointments; tracks reminder/follow-up/review-request timestamps |
 | `workflow_events` | Raw audit log of every n8n workflow trigger/completion/failure |
 

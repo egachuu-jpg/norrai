@@ -1,0 +1,322 @@
+{
+  "name": "Nurture De-Enroll Confirm",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "nurture-deenroll-confirm",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "ndec-001-receive",
+      "name": "Receive Click",
+      "webhookId": "nurture-deenroll-confirm-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ndec-token-001",
+              "leftValue": "={{ $json.query.token }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [208, 0],
+      "id": "ndec-002-token",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!DOCTYPE html><html><head><title>Invalid Request</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Invalid request.</h2><p>This link is not valid. If you think something's wrong, reach out to hello@norrai.co.</p></body></html>",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [{ "name": "Content-Type", "value": "text/html" }]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [416, 160],
+      "id": "ndec-003-bad-token",
+      "name": "Respond: Bad Token"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'nurture_deenroll_confirm', 'triggered', json_build_object('execution_id', '{{ $execution.id }}', 'lead_id', '{{ $json.query.lead_id }}')::jsonb)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [416, 0],
+      "id": "ndec-004-log-triggered",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead_id = ($('Receive Click').first().json.query.lead_id || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nif (!uuidRe.test(lead_id)) throw new Error('Invalid lead_id format');\nreturn [{ json: {\n  query: `SELECT l.id, l.lead_name, l.status, l.client_id FROM leads l WHERE l.id = '${lead_id}' LIMIT 1`,\n  lead_id\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [624, 0],
+      "id": "ndec-005-build-query",
+      "name": "Build Lead Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [832, 0],
+      "id": "ndec-006-lookup",
+      "name": "Lookup Lead",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ndec-found-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1040, 0],
+      "id": "ndec-007-found",
+      "name": "Lead Found?"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!DOCTYPE html><html><head><title>Not Found</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Lead not found.</h2><p>This link is invalid or has expired.</p></body></html>",
+        "options": {
+          "responseCode": 404,
+          "responseHeaders": {
+            "entries": [{ "name": "Content-Type", "value": "text/html" }]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1248, 160],
+      "id": "ndec-008-not-found",
+      "name": "Respond: Not Found"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ndec-nurturing-001",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "nurturing",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1248, 0],
+      "id": "ndec-009-still-nurturing",
+      "name": "Still Nurturing?"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ '<!DOCTYPE html><html><head><title>Already Removed</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Already removed.</h2><p>' + ($json.lead_name || 'This lead') + ' has already been removed from nurture.</p></body></html>' }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [{ "name": "Content-Type", "value": "text/html" }]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1456, 160],
+      "id": "ndec-010-already-removed",
+      "name": "Respond: Already Removed"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = 'unenrolled', updated_at = now() WHERE id = '{{ $json.id }}'",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1456, 0],
+      "id": "ndec-011-unenroll",
+      "name": "Set Unenrolled",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Lookup Lead').first().json.client_id }}'::uuid, 'nurture_deenroll_confirm', 'completed', json_build_object('lead_id', '{{ $('Lookup Lead').first().json.id }}')::jsonb)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1664, 0],
+      "id": "ndec-012-log-completed",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ '<!DOCTYPE html><html><head><title>Done</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Done.</h2><p>' + ($(\\'Lookup Lead\\').first().json.lead_name || 'This lead') + ' has been removed from nurture. No further follow-ups will be sent.</p></body></html>' }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [{ "name": "Content-Type", "value": "text/html" }]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1872, 0],
+      "id": "ndec-013-success",
+      "name": "Respond: Success"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Click": {
+      "main": [[{ "node": "Token Check", "type": "main", "index": 0 }]]
+    },
+    "Token Check": {
+      "main": [
+        [{ "node": "Log Triggered", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Bad Token", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Triggered": {
+      "main": [[{ "node": "Build Lead Query", "type": "main", "index": 0 }]]
+    },
+    "Build Lead Query": {
+      "main": [[{ "node": "Lookup Lead", "type": "main", "index": 0 }]]
+    },
+    "Lookup Lead": {
+      "main": [[{ "node": "Lead Found?", "type": "main", "index": 0 }]]
+    },
+    "Lead Found?": {
+      "main": [
+        [{ "node": "Still Nurturing?", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Not Found", "type": "main", "index": 0 }]
+      ]
+    },
+    "Still Nurturing?": {
+      "main": [
+        [{ "node": "Set Unenrolled", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Already Removed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Set Unenrolled": {
+      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+    },
+    "Log Completed": {
+      "main": [[{ "node": "Respond: Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "nurture-deenroll-confirm-v1-001",
+  "meta": {
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
+}
