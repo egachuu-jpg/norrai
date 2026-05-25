@@ -1,0 +1,198 @@
+{
+  "name": "Nurture De-Enroll Prompt",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-1040, 96],
+      "id": "ndep-001-schedule",
+      "name": "Schedule Monday 10am CT"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'nurture_deenroll_prompt', 'triggered', json_build_object('execution_id', '{{ $execution.id }}')::jsonb)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-832, 96],
+      "id": "ndep-002-log-triggered",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.id, l.lead_name, l.email, l.phone, l.source, l.metadata, l.nurture_enrolled_at, c.primary_contact_email AS agent_email, c.primary_contact_name AS agent_name FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.status = 'nurturing' AND c.status = 'active' ORDER BY c.id, l.nurture_enrolled_at",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-624, 96],
+      "id": "ndep-003-query-leads",
+      "name": "Query Nurturing Leads",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(r => r.json);\n\nif (!rows.length || !rows[0].id) {\n  return [{ json: { has_leads: false } }];\n}\n\nconst CONFIRM_BASE = 'https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm';\nconst TOKEN = '8F68D963-7060-4033-BD04-7593E4B203CB';\n\nconst agents = {};\nfor (const row of rows) {\n  const key = row.agent_email;\n  if (!agents[key]) {\n    agents[key] = {\n      agent_email: row.agent_email,\n      agent_name:  row.agent_name || '',\n      leads: []\n    };\n  }\n  agents[key].leads.push(row);\n}\n\nconst results = [];\nfor (const data of Object.values(agents)) {\n  const { agent_email, agent_name, leads } = data;\n  const first_name = agent_name.split(' ')[0] || 'there';\n  const n = leads.length;\n  const today = new Date().toLocaleDateString('en-US', {\n    timeZone: 'America/Chicago',\n    month: 'long', day: 'numeric', year: 'numeric'\n  });\n\n  const lead_blocks = leads.map(lead => {\n    const enrolled = new Date(lead.nurture_enrolled_at).toLocaleDateString('en-US', {\n      timeZone: 'America/Chicago',\n      month: 'short', day: 'numeric'\n    });\n    const meta = (typeof lead.metadata === 'string' ? JSON.parse(lead.metadata || '{}') : lead.metadata) || {};\n    const parts = [`Enrolled: ${enrolled}`, `Source: ${lead.source || 'unknown'}`];\n    if (meta.property_address) parts.push(meta.property_address);\n    if (meta.price_range)       parts.push(meta.price_range);\n    if (meta.beds)              parts.push(`${meta.beds}bd`);\n    const details = parts.join(' &middot; ');\n    const remove_url = `${CONFIRM_BASE}?lead_id=${lead.id}&token=${TOKEN}`;\n    const lead_name_escaped = (lead.lead_name || 'Unknown Lead').replace(/[<>&\"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','\"':'&quot;'}[c]));\n\n    return `<tr><td style=\"padding:20px 0;border-top:1px solid #E5E4DE;\"><p style=\"margin:0 0 4px;font-size:16px;font-weight:600;color:#0A0F1A;font-family:'Inter',sans-serif;\">${lead_name_escaped}</p><p style=\"margin:0 0 14px;font-size:13px;color:#9EA3AA;font-family:'Inter',sans-serif;\">${details}</p><a href=\"${remove_url}\" style=\"display:inline-block;background:#B91C1C;color:#FFFFFF;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;\">Remove from Nurture</a></td></tr>`;\n  }).join('');\n\n  const html_body = `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head><body style=\"font-family:'Inter',sans-serif;background:#FAFAF7;margin:0;padding:0;\"><div style=\"max-width:540px;margin:0 auto;padding:40px 24px;\"><p style=\"font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#9EA3AA;margin:0 0 24px;\">Norr AI</p><h2 style=\"font-size:22px;font-weight:700;color:#0A0F1A;margin:0 0 8px;letter-spacing:-0.02em;\">Hi ${first_name},</h2><p style=\"font-size:15px;color:#3A3F48;margin:0 0 28px;line-height:1.6;\">These leads are currently in your nurture sequence. If you're already in conversation with someone, or they've gone cold, click Remove to stop their follow-ups.</p><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;\">${lead_blocks}</table><p style=\"font-size:13px;color:#9EA3AA;margin:32px 0 0;line-height:1.6;\">Removing a lead stops all future nurture touches. It does not affect leads you've already responded to manually.</p><p style=\"font-size:13px;color:#9EA3AA;margin:16px 0 0;\">— Norr AI</p></div></body></html>`;\n\n  results.push({ json: {\n    has_leads:  true,\n    to_email:   agent_email,\n    subject:    `Weekly nurture review \\u2014 ${n} active lead${n > 1 ? 's' : ''} \\u2014 ${today}`,\n    html_body,\n    lead_count: n,\n    agent_name\n  }});\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-416, 96],
+      "id": "ndep-004-group-by-agent",
+      "name": "Group by Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ndep-has-leads-001",
+              "leftValue": "={{ $json.has_leads }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [-208, 96],
+      "id": "ndep-005-has-leads",
+      "name": "Has Active Leads?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.to_email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: 'Norr AI' }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [0, 0],
+      "id": "ndep-006-send-email",
+      "name": "Send Digest Email",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'nurture_deenroll_prompt', 'completed', json_build_object('lead_count', {{ $json.lead_count }}, 'agent_email', '{{ $json.to_email }}')::jsonb)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [208, 0],
+      "id": "ndep-007-log-completed",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Monday 10am CT": {
+      "main": [[{ "node": "Log Triggered", "type": "main", "index": 0 }]]
+    },
+    "Log Triggered": {
+      "main": [[{ "node": "Query Nurturing Leads", "type": "main", "index": 0 }]]
+    },
+    "Query Nurturing Leads": {
+      "main": [[{ "node": "Group by Agent", "type": "main", "index": 0 }]]
+    },
+    "Group by Agent": {
+      "main": [[{ "node": "Has Active Leads?", "type": "main", "index": 0 }]]
+    },
+    "Has Active Leads?": {
+      "main": [
+        [{ "node": "Send Digest Email", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Send Digest Email": {
+      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "nurture-deenroll-prompt-v1-001",
+  "meta": {
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
+}
