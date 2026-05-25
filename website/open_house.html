@@ -393,10 +393,13 @@
 
 <script>
   // ─── Config ───────────────────────────────────────────────────────────────
-  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/open-house-signin';
+  const params = new URLSearchParams(window.location.search);
+  const wf = params.get('wf') || '';
+  const WEBHOOK_URL = wf === 'weichert'
+    ? 'https://norrai.app.n8n.cloud/webhook/weichert-open-house-signin'
+    : 'https://norrai.app.n8n.cloud/webhook/open-house-signin';
 
   // ─── Read URL params ───────────────────────────────────────────────────────
-  const params = new URLSearchParams(window.location.search);
   const propertyAddress = params.get('address')     || '';
   const agentName       = params.get('agent')       || '';
   const agentEmail      = params.get('agent_email') || '';
