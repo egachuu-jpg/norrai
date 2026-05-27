@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open House Setup — Weichert Realty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; min-height: 100dvh; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 40px 24px 36px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 560px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 12px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--bone);
+    margin-bottom: 10px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 420px;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 36px 24px 72px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 20px; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  /* ── Fields ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-row { display: grid; gap: 12px; }
+  .field-row.col-2 { grid-template-columns: 1fr 1fr; }
+  .field-row.col-3 { grid-template-columns: 2fr 1fr 1fr; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+  label .opt { font-weight: 400; color: var(--muted); margin-left: 4px; }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+  }
+  textarea { resize: vertical; min-height: 180px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Submit ── */
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 16px 24px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 4px;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  @media (max-width: 540px) {
+    .site-header { padding: 32px 18px 28px; }
+    .wrap { padding: 28px 18px 60px; }
+    .field-row.col-2,
+    .field-row.col-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Open House Setup · Weichert Realty</div>
+    <h1>Generate your<br><span class="accent">sign-in QR code.</span></h1>
+    <p>Paste your listing description and we'll extract the highlights. Attendees scan the code at the door — you get a personalized follow-up sent automatically the next morning.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="setup-form" novalidate>
+
+    <div class="section-label">Your Info</div>
+
+    <div class="field-row col-2">
+      <div class="field">
+        <label for="agent_name">Your name <span class="req">*</span></label>
+        <input type="text" id="agent_name" name="agent_name" autocomplete="name" placeholder="Jane Smith" required>
+      </div>
+      <div class="field">
+        <label for="agent_phone">Your phone <span class="req">*</span></label>
+        <input type="tel" id="agent_phone" name="agent_phone" autocomplete="tel" placeholder="507-555-1234" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="agent_email">Your email <span class="req">*</span></label>
+      <input type="email" id="agent_email" name="agent_email" autocomplete="email" placeholder="jane@example.com" required>
+      <div class="hint">The QR code will be sent here.</div>
+    </div>
+
+    <div class="section-label">Property</div>
+
+    <div class="field">
+      <label for="street_address">Street address <span class="req">*</span></label>
+      <input type="text" id="street_address" name="street_address" autocomplete="address-line1" placeholder="123 Maple St" required>
+    </div>
+
+    <div class="field-row col-3">
+      <div class="field">
+        <label for="city">City <span class="req">*</span></label>
+        <input type="text" id="city" name="city" autocomplete="address-level2" placeholder="Faribault" required>
+      </div>
+      <div class="field">
+        <label for="state">State</label>
+        <input type="text" id="state" name="state" autocomplete="address-level1" placeholder="MN" maxlength="2" value="MN">
+      </div>
+      <div class="field">
+        <label for="zip">ZIP</label>
+        <input type="text" id="zip" name="zip" autocomplete="postal-code" placeholder="55021" maxlength="10">
+      </div>
+    </div>
+
+    <div class="section-label">Listing Details</div>
+
+    <div class="field">
+      <label for="listing_description">MLS description <span class="req">*</span></label>
+      <textarea id="listing_description" name="listing_description" placeholder="Paste your MLS listing description here. Claude will extract the key highlights and weave them into each attendee's follow-up message." required></textarea>
+      <div class="hint">The full description — the more detail, the better the follow-up.</div>
+    </div>
+
+    <div class="field">
+      <label for="listing_url">MLS listing URL <span class="opt">(optional)</span></label>
+      <input type="url" id="listing_url" name="listing_url" placeholder="https://www.zillow.com/homedetails/...">
+      <div class="hint">If provided, attendees can tap a link to view the full listing and make an offer after signing in.</div>
+    </div>
+
+    <div id="status" class="status" role="alert"></div>
+
+    <button type="submit" id="submit-btn">Generate QR Code →</button>
+
+  </form>
+
+  <footer>
+    <p>Norr AI &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+  </footer>
+</div>
+
+<script>
+  const WEBHOOK_URL     = 'https://norrai.app.n8n.cloud/webhook/open-house-setup';
+  const AGENT_TOKEN_KEY = 'norrai_agent_token';
+  (function () {
+    const t = new URLSearchParams(window.location.search).get('agent_token');
+    if (t) localStorage.setItem(AGENT_TOKEN_KEY, t);
+  }());
+
+  const form   = document.getElementById('setup-form');
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const fd = new FormData(form);
+
+    const street  = fd.get('street_address') || '';
+    const city    = fd.get('city')           || '';
+    const state   = fd.get('state')          || 'MN';
+    const zip     = fd.get('zip')            || '';
+    const parts   = [street, city, state, zip].filter(Boolean);
+    const propertyAddress = parts.join(', ');
+
+    const payload = {
+      agent_name:          fd.get('agent_name')          || '',
+      agent_email:         fd.get('agent_email')         || '',
+      agent_phone:         fd.get('agent_phone')         || '',
+      street_address:      street,
+      city,
+      state,
+      zip,
+      property_address:    propertyAddress,
+      listing_description: fd.get('listing_description') || '',
+      listing_url:         fd.get('listing_url')         || '',
+      source_form:         'weichert_open_house_setup',
+      agent_token:         localStorage.getItem(AGENT_TOKEN_KEY) || '',
+    };
+
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': '8F68D963-7060-4033-BD04-7593E4B203CB',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const _s1 = document.createElement('strong');
+      _s1.textContent = 'QR code on its way.';
+      const _s2 = document.createElement('strong');
+      _s2.textContent = payload.agent_email;
+      status.textContent = '';
+      status.append(_s1, ' Check your email at ', _s2, ' — it should arrive within a minute. Print it and tape it to the door before the open house.');
+      status.className = 'status success show';
+      form.style.display = 'none';
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or contact hello@norrai.co.`;
+      status.className = 'status error show';
+      btn.disabled = false;
+      btn.textContent = 'Generate QR Code →';
+    }
+  });
+</script>
+</body>
+</html>

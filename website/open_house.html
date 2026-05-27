@@ -187,6 +187,83 @@
   footer a { color: var(--muted); text-decoration: none; }
   footer a:hover { color: var(--secondary); }
 
+  /* ── Agent toggle ── */
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+  }
+  .toggle-option {
+    position: relative;
+    cursor: pointer;
+  }
+  .toggle-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .toggle-option span {
+    display: inline-block;
+    padding: 9px 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface);
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .toggle-option input[type="radio"]:checked + span {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--bone);
+  }
+
+  #agent-section {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+
+  /* ── Post sign-in actions ── */
+  #post-signin-actions {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .action-btn {
+    display: block;
+    width: 100%;
+    padding: 16px 24px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+  }
+  .action-btn:active { transform: scale(0.99); }
+  .mls-btn {
+    background: var(--glacial);
+    color: var(--ink);
+    border: none;
+  }
+  .mls-btn:hover { background: #6898a7; }
+  .offer-btn {
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--ink);
+  }
+  .offer-btn:hover { background: var(--ink); color: var(--bone); }
+
   /* ── Consent checkbox ── */
   .consent-field {
     display: flex;
@@ -264,6 +341,31 @@
       </div>
 
       <div class="field">
+        <label>Working with an agent? <span class="req">*</span></label>
+        <div class="toggle-group" role="radiogroup" aria-label="Working with an agent?">
+          <label class="toggle-option">
+            <input type="radio" name="has_agent" value="no" required>
+            <span>No</span>
+          </label>
+          <label class="toggle-option">
+            <input type="radio" name="has_agent" value="yes">
+            <span>Yes</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="agent-section" aria-live="polite">
+        <div class="field">
+          <label for="representing_agent_name">Agent's name <span class="req">*</span></label>
+          <input type="text" id="representing_agent_name" name="representing_agent_name" placeholder="Mike Johnson" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="representing_agent_brokerage">Brokerage <span class="opt">(optional)</span></label>
+          <input type="text" id="representing_agent_brokerage" name="representing_agent_brokerage" placeholder="Re/Max or Edina Realty" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
         <div class="consent-field">
           <input type="checkbox" id="sms_consent" name="sms_consent" required>
           <label class="consent-label" for="sms_consent">
@@ -278,6 +380,11 @@
 
     </form>
 
+    <div id="post-signin-actions">
+      <a id="mls-btn" href="#" target="_blank" rel="noopener noreferrer" class="action-btn mls-btn" style="display:none;">Take me to the MLS Listing →</a>
+      <a id="offer-btn" href="#" class="action-btn offer-btn" style="display:none;">Make an Offer →</a>
+    </div>
+
     <footer>
       <p>Norr AI &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
     </footer>
@@ -286,15 +393,19 @@
 
 <script>
   // ─── Config ───────────────────────────────────────────────────────────────
-  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/open-house-signin';
+  const params = new URLSearchParams(window.location.search);
+  const wf = params.get('wf') || '';
+  const WEBHOOK_URL = wf === 'weichert'
+    ? 'https://norrai.app.n8n.cloud/webhook/weichert-open-house-signin'
+    : 'https://norrai.app.n8n.cloud/webhook/open-house-signin';
 
   // ─── Read URL params ───────────────────────────────────────────────────────
-  const params = new URLSearchParams(window.location.search);
   const propertyAddress = params.get('address')     || '';
   const agentName       = params.get('agent')       || '';
   const agentEmail      = params.get('agent_email') || '';
   const agentPhone      = params.get('agent_phone') || '';
   const propertyNotes   = params.get('notes')       || '';
+  const listingUrl      = params.get('listing_url') || '';
 
   if (!propertyAddress) {
     document.getElementById('missing-params').style.display = 'block';
@@ -302,6 +413,17 @@
     document.getElementById('main-content').style.display = 'block';
     document.getElementById('property-display').textContent = propertyAddress;
   }
+
+  // ─── Agent toggle ─────────────────────────────────────────────────────────
+  const agentSection = document.getElementById('agent-section');
+  const agentNameInput = document.getElementById('representing_agent_name');
+  document.querySelectorAll('input[name="has_agent"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const show = radio.value === 'yes' && radio.checked;
+      agentSection.style.display = show ? 'flex' : 'none';
+      agentNameInput.required = show;
+    });
+  });
 
   // ─── Form submission ──────────────────────────────────────────────────────
   const form   = document.getElementById('signin-form');
@@ -318,19 +440,25 @@
 
     const fd = new FormData(form);
 
+    const hasAgent = fd.get('has_agent') === 'yes';
+
     const payload = {
-      attendee_name:    fd.get('attendee_name') || '',
-      phone:            fd.get('phone')         || '',
-      email:            fd.get('email')         || '',
-      brought_you_in:   fd.get('brought_you_in') || '',
-      sms_consent:      fd.get('sms_consent') === 'on',
-      property_address: propertyAddress,
-      property_notes:   propertyNotes,
-      agent_name:       agentName,
-      agent_email:      agentEmail,
-      agent_phone:      agentPhone,
-      submitted_at:     new Date().toISOString(),
-      source_form:      'open_house_web',
+      attendee_name:                 fd.get('attendee_name') || '',
+      phone:                         fd.get('phone')         || '',
+      email:                         fd.get('email')         || '',
+      brought_you_in:                fd.get('brought_you_in') || '',
+      sms_consent:                   fd.get('sms_consent') === 'on',
+      has_agent:                     hasAgent,
+      representing_agent_name:       hasAgent ? (fd.get('representing_agent_name') || '') : '',
+      representing_agent_brokerage:  hasAgent ? (fd.get('representing_agent_brokerage') || '') : '',
+      property_address:              propertyAddress,
+      property_notes:                propertyNotes,
+      listing_url:                   listingUrl,
+      agent_name:                    agentName,
+      agent_email:                   agentEmail,
+      agent_phone:                   agentPhone,
+      submitted_at:                  new Date().toISOString(),
+      source_form:                   'open_house_web',
     };
 
     status.className = 'status';
@@ -352,6 +480,25 @@
       status.textContent = `You're signed in — enjoy the tour. ${agentName ? agentName + ' will' : "The agent will"} follow up tomorrow morning.`;
       status.className = 'status success show';
       form.style.display = 'none';
+
+      if (listingUrl) {
+        const mlsBtn = document.getElementById('mls-btn');
+        mlsBtn.href = listingUrl;
+        mlsBtn.style.display = 'block';
+
+        const offerParams = new URLSearchParams({
+          address:     propertyAddress,
+          listing_url: listingUrl,
+          agent:       agentName,
+          agent_email: agentEmail,
+          agent_phone: agentPhone,
+        });
+        const offerBtn = document.getElementById('offer-btn');
+        offerBtn.href = `/weichert_offer_form.html?${offerParams.toString()}`;
+        offerBtn.style.display = 'block';
+
+        document.getElementById('post-signin-actions').style.display = 'flex';
+      }
 
     } catch (err) {
       status.textContent = `Something went wrong: ${err.message}. Try again or ask the agent to add you manually.`;
