@@ -47,6 +47,8 @@
 - Multiple nurture variants exist (standard, email-only, slack-preview, with-research) each with their own webhook path — always verify form `WEBHOOK_URL` and confirm workflow `Fire Nurture Enrollment` URL both point to the intended variant; mismatches are silent
 - The email-only nurture variant (`nurture-enroll-email-only`) has the research agent built in; the standard variant (`nurture-enroll`) does not — they differ in more than just SMS vs. email
 - When `lead_id` is not in the enrollment payload (manual form submissions never include it), set `nurture_enrolled_at` by matching on `email` with `continueOnFail: true` — silently no-ops if the lead isn't in Neon yet
+- Two active n8n webhooks cannot share the same path — the later-imported one takes over; client-variant workflows must use distinct paths (e.g., `weichert-open-house-signin` vs. `open-house-signin`)
+- Mid-sequence enrollment check without `lead_id` in payload: look up `leads.status` by joining `leads.email` + `clients.primary_contact_email` — the email+agent pair uniquely identifies the enrollment when `lead_id` is not threaded through the sequence
 
 ## SendGrid
 - HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`
@@ -87,6 +89,8 @@
 ## Playwright / Testing
 - `npx serve` strips `.html` extension AND drops query params in clean-URL redirects — always navigate to the clean path (no `.html`) in Playwright tests when query params are needed
 - `"0".trim()` is truthy — `setup_fee=0` passes a non-empty string check; add an explicit test for zero-value numeric fields to prevent silent regression if validation logic changes
+- CSS-hidden radio buttons (`opacity:0; width:0; height:0`) cannot be interacted with via `page.check()` even with `force:true` — must click the visible `<span>` label using a `:has(input[value="..."])` locator
+- `type="number" step="1000"` silently prevents form submission when the value is not a valid step multiple — use `step="any"` to accept any numeric value and validate range server-side
 
 ## BoldTrail / kvCORE
 - Lead Dropbox API key is inbound-only — `GET /contacts` returns 401; it pushes leads into BoldTrail, not out; Zapier uses OAuth separately
@@ -103,6 +107,9 @@
 - Fetching a view URL directly (`view://...`) is not supported by the fetch tool — results in a validation error
 - Notion workspace search returns the database itself as a result, not the individual rows inside it — workspace search is not a substitute for a database query
 
+## HTML / JavaScript
+- Single HTML file can serve multiple workflow variants via a `wf` URL param — QR code generator injects the param at setup time (`wf=weichert`) so no separate HTML file is needed per client; downstream webhook routing is a one-liner: `const WEBHOOK_URL = wf === 'weichert' ? '.../weichert-open-house-signin' : '.../open-house-signin'`
+
 ## Architecture Decisions
 - Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
@@ -115,6 +122,8 @@
 - Task `category` is the dispatch routing key: research/analysis → Claude API via n8n (fully autonomous); dev/testing → formatted prompt for Claude Code (human in loop); ops → neither
 - `agent_working` is a distinct task status from `in_progress` — signals an automated process is running, prevents concurrent edits, gives the board a clear in-flight indicator
 - Tasks are tracked in Neon (`stories` + `tasks` tables), not in CLAUDE.md — the Open Tasks section in CLAUDE.md is stale; always query Neon for current task state
+- `stories` table status CHECK constraint accepts `active | paused | done | cancelled` — NOT `completed`; always use `done` when marking a story finished
+- `leads` table has no UNIQUE constraint on `(client_id, email)` — dedupe for webhook-driven inserts requires a SELECT-then-conditional-INSERT/UPDATE pattern in a Code node, not ON CONFLICT
 - Zapier free tier Zaps pause after 2 weeks of inactivity — no programmatic workaround for BoldTrail-triggered Zaps (can't synthetically fire BoldTrail events); accept the risk for active agents or pay $20/mo Starter
 - For delayed-send workflows (form submit now, send on a future scheduled day), use two workflows: an intake webhook that writes to a Neon queue table + a separate scheduled workflow that reads and executes — a single workflow with a multi-day Wait node leaves executions open and is unreliable
 - Per-lead SendGrid sends are required when opt-out tokens must be personalized per recipient; at 2,000+ sends switch to Marketing Campaigns API with substitution tags — run `SELECT client_id, COUNT(*) FROM leads WHERE email IS NOT NULL AND communication_opted_out != true GROUP BY client_id` before go-live to determine the right approach
