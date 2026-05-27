@@ -812,6 +812,192 @@
     },
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.status FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [940, 300],
+      "id": "chk-enroll-t1-postgres",
+      "name": "Check Enrolled T1",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "chk-t1-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [990, 300],
+      "id": "chk-enroll-t1-if",
+      "name": "IF Enrolled T1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.status FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1940, 300],
+      "id": "chk-enroll-t2-postgres",
+      "name": "Check Enrolled T2",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "chk-t2-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1990, 300],
+      "id": "chk-enroll-t2-if",
+      "name": "IF Enrolled T2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.status FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2940, 300],
+      "id": "chk-enroll-t3-postgres",
+      "name": "Check Enrolled T3",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "chk-t3-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2990, 300],
+      "id": "chk-enroll-t3-if",
+      "name": "IF Enrolled T3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.status FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [3940, 300],
+      "id": "chk-enroll-t4-postgres",
+      "name": "Check Enrolled T4",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "chk-t4-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [3990, 300],
+      "id": "chk-enroll-t4-if",
+      "name": "IF Enrolled T4"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.status FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [4940, 300],
+      "id": "chk-enroll-t5-postgres",
+      "name": "Check Enrolled T5",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "chk-t5-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [4990, 300],
+      "id": "chk-enroll-t5-if",
+      "name": "IF Enrolled T5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.status FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [5940, 300],
+      "id": "chk-enroll-t6-postgres",
+      "name": "Check Enrolled T6",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "chk-t6-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [5990, 300],
+      "id": "chk-enroll-t6-if",
+      "name": "IF Enrolled T6"
+    },
+    {
+      "parameters": {
         "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
       },
       "type": "n8n-nodes-base.code",
@@ -933,11 +1119,34 @@
       "main": [
         [
           {
-            "node": "Build Prompt T1",
+            "node": "Check Enrolled T1",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Check Enrolled T1": {
+      "main": [
+        [
+          {
+            "node": "IF Enrolled T1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Enrolled T1": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Build Prompt T1": {
@@ -988,11 +1197,34 @@
       "main": [
         [
           {
-            "node": "Build Prompt T2",
+            "node": "Check Enrolled T2",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Check Enrolled T2": {
+      "main": [
+        [
+          {
+            "node": "IF Enrolled T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Enrolled T2": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Build Prompt T2": {
@@ -1043,11 +1275,34 @@
       "main": [
         [
           {
-            "node": "Build Prompt T3",
+            "node": "Check Enrolled T3",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Check Enrolled T3": {
+      "main": [
+        [
+          {
+            "node": "IF Enrolled T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Enrolled T3": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Build Prompt T3": {
@@ -1098,11 +1353,34 @@
       "main": [
         [
           {
-            "node": "Build Prompt T4",
+            "node": "Check Enrolled T4",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Check Enrolled T4": {
+      "main": [
+        [
+          {
+            "node": "IF Enrolled T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Enrolled T4": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Build Prompt T4": {
@@ -1153,11 +1431,34 @@
       "main": [
         [
           {
-            "node": "Build Prompt T5",
+            "node": "Check Enrolled T5",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Check Enrolled T5": {
+      "main": [
+        [
+          {
+            "node": "IF Enrolled T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Enrolled T5": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Build Prompt T5": {
@@ -1208,11 +1509,34 @@
       "main": [
         [
           {
-            "node": "Build Prompt T6",
+            "node": "Check Enrolled T6",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Check Enrolled T6": {
+      "main": [
+        [
+          {
+            "node": "IF Enrolled T6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Enrolled T6": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt T6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Build Prompt T6": {

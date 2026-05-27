@@ -269,3 +269,21 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Updated `obsidian/clients/evan-knutson-weichert.md` — corrected Michelle from "potential future client" to "active client"; added Active Stories table with all 4 stories
 - Identified SendGrid volume risk for marketing drip — per-lead sends require personalized opt-out URLs; documented threshold query + fallback to Marketing Campaigns API at 2,000+ sends; noted in PRD
 - Drafted client-facing email to Evan + Michelle summarizing 4 upcoming features in non-technical language
+
+### 2026-05-26
+**Open House Enhancements story (completed):**
+- Modified `website/open_house.html`: added `wf` URL param routing — `wf=weichert` routes to `weichert-open-house-signin` webhook; default routes to `open-house-signin`
+- Modified `n8n/workflows/Real Estate Open House Setup.json`: `Build QR URL` detects `source_form = 'weichert_open_house_setup'` and injects `wf=weichert` + `listing_url` into QR code URL
+- Created `n8n/workflows/Real Estate Open House Follow-Up Weichert.json` — webhook: `weichert-open-house-signin`; Weichert-specific prompt (unagented representation angle), email-only delivery, dedupe via SELECT→conditional INSERT/UPDATE pattern (no unique constraint on leads table)
+- Created `n8n/workflows/Weichert Offer Submit.json` — webhook: `weichert-offer-submit`; formatted HTML offer email to `eknutson@teamyellownow.com`, agent CC'd, reply-to set to buyer email
+- Updated `Norr AI Workflow Error Logger.json`: added `open_house_follow_up_weichert`, `weichert_offer_submit`, `nurture_deenroll_prompt`, `nurture_deenroll_confirm` to WORKFLOW_NAME_MAP
+- Created `obsidian/PRDs/2026-05-24-open-house-enhancements-testing.md` — 4-section smoke test checklist
+- Marked Open House Enhancements story as `done` in Neon
+
+**Cold Nurture Enhancements (code complete, testing pending):**
+- Modified `n8n/workflows/Real Estate 7-Touch Cold Nurture.json`: added enrollment guard for T1–T6 — each Wait node now feeds `Check Enrolled T{n}` (Postgres SELECT status by email+agent_email join) → `IF Enrolled T{n}` (status = 'nurturing') → `Build Prompt T{n}`; stops execution mid-sequence when lead is de-enrolled
+- Created `n8n/workflows/Nurture De-Enroll Prompt.json` — Monday 10am CT cron; queries `status = 'nurturing'` leads joined to active clients; groups by agent; Polar Modern digest with red "Remove from Nurture" button per lead
+- Created `n8n/workflows/Nurture De-Enroll Confirm.json` — GET `/webhook/nurture-deenroll-confirm`; shared token + UUID regex validation; idempotency via `Still Nurturing?` IF; sets `status = 'unenrolled'`; returns HTML success/already-removed/not-found pages
+- Updated `db/schema.sql` and `db/README.md`: documented `unenrolled` and `nurturing` statuses
+- Updated `CLAUDE.md` workflow registry: added `nurture_deenroll_prompt` and `nurture_deenroll_confirm`
+- Created `obsidian/PRDs/2026-05-26-nurture-enhancements-testing.md` — pre-flight + 5-section smoke test checklist
