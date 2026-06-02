@@ -1,0 +1,195 @@
+{
+  "name": "Twilio STOP Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "twilio-inbound-sms",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "stop-0001-0001-4000-8000-000000000001",
+      "name": "Receive Inbound SMS",
+      "webhookId": "twilio-inbound-sms-webhook-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "stop-check-001",
+              "leftValue": "={{ ($json.body.Body || $json.Body || '').trim() }}",
+              "rightValue": "STOP",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "stop-check-002",
+              "leftValue": "={{ ($json.body.Body || $json.Body || '').trim() }}",
+              "rightValue": "STOPALL",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "stop-check-003",
+              "leftValue": "={{ ($json.body.Body || $json.Body || '').trim() }}",
+              "rightValue": "UNSUBSCRIBE",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "stop-check-004",
+              "leftValue": "={{ ($json.body.Body || $json.Body || '').trim() }}",
+              "rightValue": "CANCEL",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "stop-check-005",
+              "leftValue": "={{ ($json.body.Body || $json.Body || '').trim() }}",
+              "rightValue": "END",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "stop-check-006",
+              "leftValue": "={{ ($json.body.Body || $json.Body || '').trim() }}",
+              "rightValue": "QUIT",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [460, 300],
+      "id": "stop-0002-0002-4000-8000-000000000002",
+      "name": "Is STOP Keyword?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst from = (body.From || '').replace(/[^\\d+]/g, '');\nconst normalized = from.startsWith('+') ? from : (from.length === 11 && from.startsWith('1') ? from.slice(1) : from);\nreturn [{ json: {\n  from_raw: body.From || '',\n  phone_normalized: normalized,\n  update_query: `UPDATE leads SET sms_opt_out = TRUE, opted_out_at = NOW() WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = '${normalized.replace(/'/g, \"''\")}' AND sms_opt_out = FALSE`\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 220],
+      "id": "stop-0003-0003-4000-8000-000000000003",
+      "name": "Build Opt-Out Update",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.update_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 220],
+      "id": "stop-0004-0004-4000-8000-000000000004",
+      "name": "Set SMS Opt-Out",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'sms_opt_out_handler',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'from', '{{ $('Build Opt-Out Update').first().json.from_raw }}')::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 380],
+      "id": "stop-0005-0005-4000-8000-000000000005",
+      "name": "Log Triggered",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'sms_opt_out_handler',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1340, 220],
+      "id": "stop-0007-0007-4000-8000-000000000007",
+      "name": "Log Completed",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+18XXXXXXXXXX",
+        "to": "={{ $('Build Opt-Out Update').first().json.from_raw }}",
+        "message": "You've been unsubscribed and won't receive further texts."
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1120, 220],
+      "id": "stop-0006-0006-4000-8000-000000000006",
+      "name": "Send Confirmation SMS",
+      "credentials": {
+        "twilioApi": {
+          "id": "TWILIO_CREDENTIAL_ID",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Inbound SMS": {
+      "main": [[{ "node": "Is STOP Keyword?", "type": "main", "index": 0 }]]
+    },
+    "Is STOP Keyword?": {
+      "main": [
+        [{ "node": "Build Opt-Out Update", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Build Opt-Out Update": {
+      "main": [[
+        { "node": "Set SMS Opt-Out", "type": "main", "index": 0 },
+        { "node": "Log Triggered", "type": "main", "index": 0 }
+      ]]
+    },
+    "Set SMS Opt-Out": {
+      "main": [[{ "node": "Send Confirmation SMS", "type": "main", "index": 0 }]]
+    },
+    "Send Confirmation SMS": {
+      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "twilio-stop-handler-v1",
+  "meta": { "instanceId": "norrai" },
+  "id": "twilio-stop-handler-001",
+  "tags": []
+}

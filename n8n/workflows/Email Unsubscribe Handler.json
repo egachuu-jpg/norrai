@@ -1,0 +1,172 @@
+{
+  "name": "Email Unsubscribe Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "email-unsubscribe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "euh-0001-0001-4000-8000-000000000001",
+      "name": "Receive Unsubscribe",
+      "webhookId": "email-unsubscribe-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = (body.email || '').trim().toLowerCase();\nconst emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRe.test(email)) {\n  return [{ json: { valid: false, email: '', update_query: '' } }];\n}\nreturn [{ json: {\n  valid: true,\n  email,\n  update_query: `UPDATE leads SET email_opt_out = TRUE, opted_out_at = NOW() WHERE LOWER(email) = '${email.replace(/'/g, \"''\")}' AND email_opt_out = FALSE`\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "euh-0002-0002-4000-8000-000000000002",
+      "name": "Validate + Build Query",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "valid-email-001",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [680, 300],
+      "id": "euh-0003-0003-4000-8000-000000000003",
+      "name": "Email Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"error\", \"message\": \"invalid email\" }",
+        "options": { "responseCode": 400 }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 420],
+      "id": "euh-0004-0004-4000-8000-000000000004",
+      "name": "Respond Invalid"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.update_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 220],
+      "id": "euh-0005-0005-4000-8000-000000000005",
+      "name": "Set Email Opt-Out",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'email_opt_out_handler',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'email', '{{ $('Validate + Build Query').first().json.email }}')::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 60],
+      "id": "euh-0006-0006-4000-8000-000000000006",
+      "name": "Log Triggered",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\" }",
+        "options": { "responseCode": 200 }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 220],
+      "id": "euh-0007-0007-4000-8000-000000000007",
+      "name": "Respond OK"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'email_opt_out_handler',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1340, 220],
+      "id": "euh-0008-0008-4000-8000-000000000008",
+      "name": "Log Completed",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon Postgres"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Unsubscribe": {
+      "main": [[{ "node": "Validate + Build Query", "type": "main", "index": 0 }]]
+    },
+    "Validate + Build Query": {
+      "main": [[{ "node": "Email Valid?", "type": "main", "index": 0 }]]
+    },
+    "Email Valid?": {
+      "main": [
+        [
+          { "node": "Set Email Opt-Out", "type": "main", "index": 0 },
+          { "node": "Log Triggered", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Respond Invalid", "type": "main", "index": 0 }]
+      ]
+    },
+    "Set Email Opt-Out": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    },
+    "Respond OK": {
+      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "email-unsubscribe-handler-v1",
+  "meta": { "instanceId": "norrai" },
+  "id": "email-unsubscribe-handler-001",
+  "tags": []
+}

@@ -184,17 +184,85 @@
     },
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT sms_opt_out FROM leads WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = REGEXP_REPLACE('{{ $json.lead_phone }}', '[^0-9]', '', 'g') LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1440, 60],
+      "id": "ah-sms-optout-01-4000-8000-000000000001",
+      "name": "Check SMS Opt-Out",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "ah-sms-optout-cond", "leftValue": "={{ ($input.first().json.sms_opt_out || false) }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true, "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1640, 60],
+      "id": "ah-sms-optout-02-4000-8000-000000000002",
+      "name": "SMS Opted Out?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $json.lead_email }}') LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1640, 300],
+      "id": "ah-email-optout-01-4000-8000-000000000001",
+      "name": "Check Email Opt-Out",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [{ "id": "ah-email-optout-cond", "leftValue": "={{ ($input.first().json.email_opt_out || false) }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true" } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true, "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1840, 300],
+      "id": "ah-email-optout-02-4000-8000-000000000002",
+      "name": "Email Opted Out?"
+    },
+    {
+      "parameters": {
         "resource": "mail",
         "fromEmail": "hello@norrai.co",
         "fromName": "Norr AI",
         "toEmail": "={{ $json.lead_email }}",
         "subject": "=Re: Your inquiry",
-        "contentValue": "={{ $json.email_content }}",
+        "contentValue": "={{ $json.email_content + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.lead_email) }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [1640, 300],
+      "position": [2040, 300],
       "id": "ah000001-0012-4000-8000-000000000012",
       "name": "Send Email to Lead",
       "credentials": {
@@ -279,16 +347,30 @@
     "Route Action": {"main": [[{"node": "Send SMS?", "type": "main", "index": 0}]]},
     "Send SMS?": {
       "main": [
-        [{"node": "Send SMS", "type": "main", "index": 0}],
+        [{"node": "Check SMS Opt-Out", "type": "main", "index": 0}],
         [{"node": "Send Email?", "type": "main", "index": 0}]
+      ]
+    },
+    "Check SMS Opt-Out": {"main": [[{"node": "SMS Opted Out?", "type": "main", "index": 0}]]},
+    "SMS Opted Out?": {
+      "main": [
+        [],
+        [{"node": "Send SMS", "type": "main", "index": 0}]
       ]
     },
     "Send SMS": {"main": [[{"node": "Mark Sent + Update Lead", "type": "main", "index": 0}]]},
     "Mark Sent + Update Lead": {"main": [[{"node": "Respond SMS Sent", "type": "main", "index": 0}]]},
     "Send Email?": {
       "main": [
-        [{"node": "Send Email to Lead", "type": "main", "index": 0}],
+        [{"node": "Check Email Opt-Out", "type": "main", "index": 0}],
         [{"node": "Bump Next Action Due", "type": "main", "index": 0}]
+      ]
+    },
+    "Check Email Opt-Out": {"main": [[{"node": "Email Opted Out?", "type": "main", "index": 0}]]},
+    "Email Opted Out?": {
+      "main": [
+        [],
+        [{"node": "Send Email to Lead", "type": "main", "index": 0}]
       ]
     },
     "Send Email to Lead": {"main": [[{"node": "Mark Email Sent", "type": "main", "index": 0}]]},
