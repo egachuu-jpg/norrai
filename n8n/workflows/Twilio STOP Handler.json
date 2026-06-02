@@ -105,7 +105,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'sms_opt_out_handler',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'from', '{{ $('Build Opt-Out Update').first().json.from_raw }}')::jsonb\n)",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'sms_opt_out_handler',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'from', '{{ $('Build Opt-Out Update').first().json.phone_normalized }}')::jsonb\n)",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",

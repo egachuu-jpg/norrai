@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = (body.email || '').trim().toLowerCase();\nconst emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRe.test(email)) {\n  return [{ json: { valid: false, email: '', update_query: '' } }];\n}\nreturn [{ json: {\n  valid: true,\n  email,\n  update_query: `UPDATE leads SET email_opt_out = TRUE, opted_out_at = NOW() WHERE LOWER(email) = '${email.replace(/'/g, \"''\")}' AND email_opt_out = FALSE`\n} }];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = (body.email || '').trim().toLowerCase();\nconst emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRe.test(email)) {\n  return [{ json: { valid: false, email: '', email_sql: '', update_query: '' } }];\n}\nconst email_sql = email.replace(/'/g, \"''\");\nreturn [{ json: {\n  valid: true,\n  email,\n  email_sql,\n  update_query: `UPDATE leads SET email_opt_out = TRUE, opted_out_at = NOW() WHERE LOWER(email) = '${email_sql}' AND email_opt_out = FALSE`\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -88,7 +88,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'email_opt_out_handler',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'email', '{{ $('Validate + Build Query').first().json.email }}')::jsonb\n)",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  'e2f9934c-4d28-4bb4-ac90-4284c1123517',\n  'email_opt_out_handler',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'email', '{{ $('Validate + Build Query').first().json.email_sql }}')::jsonb\n)",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
