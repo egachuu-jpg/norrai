@@ -119,6 +119,45 @@
       "continueOnFail": true
     },
 
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $json.email }}') LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1040, 300],
+      "id": "eo-optout-01-postgres",
+      "name": "Check Email Opt-Out",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [
+            {
+              "id": "eo-optout-01-cond",
+              "leftValue": "={{ ($input.first().json.email_opt_out || false) }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1240, 300],
+      "id": "eo-optout-01-if",
+      "name": "Email Opted Out?"
+    },
     { "parameters": { "resume": "timeInterval", "amount": 1, "unit": "days" }, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [840, 300], "id": "eo000001-0007-4000-8000-000000000007", "name": "Wait Day 1" },
     {
       "parameters": {
@@ -163,7 +202,7 @@
       "name": "Extract T1"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [1640, 300],
@@ -216,7 +255,7 @@
       "name": "Extract T2"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [2640, 300],
@@ -267,7 +306,7 @@
       "name": "Extract T3"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [3640, 300],
@@ -320,7 +359,7 @@
       "name": "Extract T4"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [4640, 300],
@@ -371,7 +410,7 @@
       "name": "Extract T5"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [5640, 300],
@@ -424,7 +463,7 @@
       "name": "Extract T6"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [6640, 300],
@@ -445,7 +484,16 @@
       "main": [[ { "node": "Mark Nurture Enrolled", "type": "main", "index": 0 } ]]
     },
     "Mark Nurture Enrolled": {
-      "main": [[ { "node": "Call Research Agent", "type": "main", "index": 0 } ]]
+      "main": [[ { "node": "Check Email Opt-Out", "type": "main", "index": 0 } ]]
+    },
+    "Check Email Opt-Out": {
+      "main": [[ { "node": "Email Opted Out?", "type": "main", "index": 0 } ]]
+    },
+    "Email Opted Out?": {
+      "main": [
+        [],
+        [ { "node": "Call Research Agent", "type": "main", "index": 0 } ]
+      ]
     },
     "Call Research Agent": {
       "main": [[ { "node": "Enrich with Research", "type": "main", "index": 0 } ]]

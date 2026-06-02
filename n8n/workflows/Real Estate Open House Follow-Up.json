@@ -176,6 +176,45 @@
     },
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $json.email }}') LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [128, 192],
+      "id": "ohf-optout-01-postgres",
+      "name": "Check Email Opt-Out",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [
+            {
+              "id": "ohf-optout-01-cond",
+              "leftValue": "={{ ($input.first().json.email_opt_out || false) }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [352, 192],
+      "id": "ohf-optout-01-if",
+      "name": "Email Opted Out?"
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": false,
@@ -225,7 +264,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Thanks for stopping by {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.message_html) }}}]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Thanks for stopping by {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.message_html + '<br><br><hr style=\"border:none;border-top:1px solid #ccc;\"><p style=\"font-size:12px;color:#999;\">To stop receiving these emails: <a href=\\'https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) + '\\'>unsubscribe</a></p>') }}}]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -390,6 +429,29 @@
             "type": "main",
             "index": 0
           },
+          {
+            "node": "Check Email Opt-Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Email Opt-Out": {
+      "main": [
+        [
+          {
+            "node": "Email Opted Out?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Opted Out?": {
+      "main": [
+        [],
+        [
           {
             "node": "Has Email?",
             "type": "main",
