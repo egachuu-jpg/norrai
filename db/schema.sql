@@ -93,6 +93,9 @@ CREATE TABLE leads (
   status              text NOT NULL DEFAULT 'new', -- new | contacted | qualified | nurturing | converted | unenrolled | dead
   metadata            jsonb,                    -- vertical-specific fields (property info, policy type, etc.)
   nurture_enrolled_at timestamptz,              -- set when lead enters cold nurture sequence
+  sms_opt_out         boolean NOT NULL DEFAULT FALSE,
+  email_opt_out       boolean NOT NULL DEFAULT FALSE,
+  opted_out_at        timestamptz,
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now()
 );
