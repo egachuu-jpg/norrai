@@ -195,7 +195,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.lead_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Re: {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/plain\", \"value\": {{ JSON.stringify($json.message) }}}]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.lead_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Re: {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/plain\", \"value\": {{ JSON.stringify($json.message + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.lead_email)) }}}]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -427,6 +427,43 @@
       ],
       "id": "cv-c423bf348c0b43da",
       "name": "Client Valid?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $json.lead_email }}') LIMIT 1",
+        "options": { "alwaysOutputData": true }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [368, 48],
+      "id": "ilr-optout-01-4000-8000-000000000001",
+      "name": "Check Email Opt-Out",
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
+          "conditions": [
+            {
+              "id": "ilr-optout-cond-01",
+              "leftValue": "={{ ($input.first().json.email_opt_out || false) }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [592, 48],
+      "id": "ilr-optout-02-4000-8000-000000000002",
+      "name": "Email Opted Out?"
     }
   ],
   "pinData": {
@@ -604,16 +641,23 @@
     "Extract Message": {
       "main": [
         [
-          {
-            "node": "Email to Lead",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Email Preview to Agent",
-            "type": "main",
-            "index": 0
-          }
+          { "node": "Check Email Opt-Out", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Check Email Opt-Out": {
+      "main": [
+        [
+          { "node": "Email Opted Out?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Email Opted Out?": {
+      "main": [
+        [],
+        [
+          { "node": "Email to Lead", "type": "main", "index": 0 },
+          { "node": "Email Preview to Agent", "type": "main", "index": 0 }
         ]
       ]
     },

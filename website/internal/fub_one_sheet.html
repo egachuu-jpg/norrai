@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoldTrail → Follow Up Boss — Migration Overview | Norr AI</title>
+  <link rel="icon" type="image/svg+xml" href="../norr_ai_favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bone:      #FAFAF7;
+      --ink:       #0A0F1A;
+      --glacial:   #7FA9B8;
+      --graphite:  #3A3F48;
+      --blush:     #E8D4C4;
+      --surface:   #FFFFFF;
+      --border:    #E5E4DE;
+      --muted:     #9EA3AA;
+      --secondary: #6A6F78;
+      --font-display: 'Inter Tight', sans-serif;
+      --font-body:    'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bone);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── Page shell ── */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 32px 64px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .header-left {}
+    .eyebrow {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--glacial);
+      margin-bottom: 8px;
+    }
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+    .header h1 span {
+      color: var(--glacial);
+    }
+    .header-sub {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--secondary);
+    }
+    .header-badge {
+      flex-shrink: 0;
+      background: var(--ink);
+      color: var(--surface);
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: 6px;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .header-badge .badge-num {
+      display: block;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--glacial);
+    }
+
+    /* ── Section titles ── */
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Two-column layout ── */
+    .cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .cols-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--ink);
+    }
+    .card.accent {
+      border-color: var(--glacial);
+      background: #f0f6f9;
+    }
+    .card.dark {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--surface);
+    }
+    .card.dark .card-title { color: var(--glacial); }
+
+    /* ── Check / X lists ── */
+    ul.check, ul.ex, ul.neutral {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    ul.check li, ul.ex li, ul.neutral li {
+      font-size: 13px;
+      line-height: 1.45;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      color: var(--secondary);
+    }
+    ul.check li::before { content: "✓"; color: #4caf87; font-weight: 700; flex-shrink: 0; }
+    ul.ex li::before   { content: "✗"; color: #c0392b; font-weight: 700; flex-shrink: 0; }
+    ul.neutral li::before { content: "→"; color: var(--glacial); font-weight: 700; flex-shrink: 0; }
+
+    /* ── Timeline ── */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .tl-step {
+      padding: 14px 12px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .tl-step:last-child { border-right: none; }
+    .tl-week {
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--glacial);
+      margin-bottom: 4px;
+    }
+    .tl-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+      font-family: var(--font-display);
+    }
+    .tl-desc {
+      font-size: 11px;
+      color: var(--secondary);
+      line-height: 1.4;
+    }
+    .tl-step.highlight {
+      background: var(--ink);
+    }
+    .tl-step.highlight .tl-label { color: var(--surface); }
+    .tl-step.highlight .tl-desc  { color: var(--muted); }
+
+    /* ── Cost table ── */
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+    .cost-table th {
+      background: var(--ink);
+      color: var(--surface);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      text-align: left;
+    }
+    .cost-table td {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      color: var(--secondary);
+    }
+    .cost-table tr.total td {
+      font-weight: 600;
+      color: var(--ink);
+      background: #f5f5f2;
+    }
+    .cost-table .good { color: #4caf87; font-weight: 600; }
+    .cost-table .label { color: var(--ink); font-weight: 500; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    /* ── Bottom callout ── */
+    .callout {
+      background: var(--ink);
+      color: var(--surface);
+      border-radius: 8px;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      margin-top: 28px;
+    }
+    .callout-text {}
+    .callout-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .callout-sub {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .callout-contact {
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .callout-contact a {
+      color: var(--glacial);
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .callout-contact .contact-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { background: white; }
+      .page { padding: 24px 24px 32px; }
+      .callout { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="eyebrow">Norr AI · Platform Migration</div>
+      <h1>BoldTrail → <span>Follow Up Boss</span></h1>
+      <div class="header-sub">Migration overview for Weicher Realty — prepared by Norr AI</div>
+    </div>
+    <div class="header-badge">
+      <span class="badge-num">6–8</span>
+      weeks to full<br>cutover
+    </div>
+  </div>
+
+  <!-- What changes / what stays -->
+  <div class="section">
+    <div class="section-title">What Changes · What Stays</div>
+    <div class="cols-2">
+      <div class="card accent">
+        <div class="card-title">Follow Up Boss handles</div>
+        <ul class="check">
+          <li>Contact &amp; lead management for all 20 agents</li>
+          <li>Lead routing — by agent, zip code, or source</li>
+          <li>Email + SMS communication from agents</li>
+          <li>Native Zillow, Realtor.com &amp; Facebook lead intake</li>
+          <li>Pipeline tracking (buyers, listings, closed)</li>
+          <li>Team reporting &amp; activity logs</li>
+          <li>Opt-out webhooks — Norr AI catches these in real time</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">What FUB does not include</div>
+        <ul class="ex">
+          <li>IDX / MLS listing search (solved separately — see below)</li>
+        </ul>
+        <div style="margin-top:14px;" class="card-title">Norr AI automation layer stays</div>
+        <ul class="check">
+          <li>Instant AI-personalized lead response</li>
+          <li>Automated SMS drip campaigns</li>
+          <li>Open house follow-up</li>
+          <li>Buyer briefings &amp; research agent</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- IDX Solution -->
+  <div class="section">
+    <div class="section-title">Solving the IDX Gap</div>
+    <div class="cols-3">
+      <div class="card dark">
+        <div class="card-title">Recommended: Showcase IDX</div>
+        <ul class="neutral" style="color:#9EA3AA;">
+          <li>Embeds into existing brokerage website via script</li>
+          <li>Native FUB integration — leads route automatically</li>
+          <li>~$60–80/mo for the brokerage</li>
+          <li>Website stays up throughout migration</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Alternative: IDX Broker</div>
+        <ul class="neutral">
+          <li>Similar embed approach</li>
+          <li>FUB integration via Zapier or direct</li>
+          <li>~$50–70/mo</li>
+          <li>Slightly lighter feature set</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Not recommended: Keep BoldTrail for IDX</div>
+        <ul class="ex">
+          <li>Paying for two CRM platforms</li>
+          <li>Dual-maintenance continues</li>
+          <li>Messy for agents during transition</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="section">
+    <div class="section-title">Migration Timeline</div>
+    <div class="timeline">
+      <div class="tl-step">
+        <div class="tl-week">Wk 1–2</div>
+        <div class="tl-label">FUB Setup</div>
+        <div class="tl-desc">Account, team structure, agent seats, lead routing rules</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-week">Wk 2–3</div>
+        <div class="tl-label">IDX + Website</div>
+        <div class="tl-desc">Showcase IDX installed, lead capture tested, website live</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-week">Wk 2–3</div>
+        <div class="tl-label">Contact Import</div>
+        <div class="tl-desc">BoldTrail export, deduped, imported to FUB with tags preserved</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-week">Wk 3–4</div>
+        <div class="tl-label">Lead Sources</div>
+        <div class="tl-desc">Zillow, Realtor.com, Facebook + Norr AI webhooks wired to FUB</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-week">Wk 4</div>
+        <div class="tl-label">Agent Training</div>
+        <div class="tl-desc">~2–3 hrs per agent. FUB provides onboarding materials.</div>
+      </div>
+      <div class="tl-step highlight">
+        <div class="tl-week">Wk 5–8</div>
+        <div class="tl-label">Parallel → Cutover</div>
+        <div class="tl-desc">Both systems live, agents building habit, BoldTrail off at week 8</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cost Comparison -->
+  <div class="section">
+    <div class="section-title">Monthly Cost Comparison · 20 Agents</div>
+    <table class="cost-table">
+      <thead>
+        <tr>
+          <th>Line item</th>
+          <th>BoldTrail (current)</th>
+          <th>FUB + IDX (new)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="label">CRM platform</td>
+          <td>~$500–900/mo</td>
+          <td>~$300–500/mo</td>
+        </tr>
+        <tr>
+          <td class="label">IDX / listing search</td>
+          <td>Included</td>
+          <td>+$60–80/mo (Showcase IDX)</td>
+        </tr>
+        <tr>
+          <td class="label">Zapier (for Norr AI integration)</td>
+          <td>Required (~$50–100/mo)</td>
+          <td class="good">Not needed — native FUB webhooks</td>
+        </tr>
+        <tr class="total">
+          <td>Estimated total</td>
+          <td>~$550–1,000/mo</td>
+          <td class="good">~$360–580/mo</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- What Norr AI Handles -->
+  <div class="section">
+    <div class="section-title">What Norr AI Handles</div>
+    <div class="cols-2">
+      <div class="card">
+        <div class="card-title">Migration work included</div>
+        <ul class="neutral">
+          <li>FUB account setup and team configuration</li>
+          <li>Showcase IDX install and FUB integration</li>
+          <li>Contact export, cleanup, and import</li>
+          <li>Lead source connections (Zillow, Realtor.com, etc.)</li>
+          <li>Norr AI webhook re-wiring to FUB</li>
+          <li>Parallel run monitoring through cutover</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">What gets better for agents</div>
+        <ul class="check">
+          <li>All leads from all sources in one place automatically</li>
+          <li>Opt-outs handled in real time — no compliance gaps</li>
+          <li>No more Zapier middle layer — fewer points of failure</li>
+          <li>FUB mobile app — agents respond faster from the field</li>
+          <li>Norr AI AI automation continues working, just more reliably</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="callout">
+    <div class="callout-text">
+      <div class="callout-title">Ready to move forward?</div>
+      <div class="callout-sub">Norr AI manages the full migration. One-time setup fee: $1,500–$3,000.<br>Timeline starts the week you sign off.</div>
+    </div>
+    <div class="callout-contact">
+      <div class="contact-label">Egan · Norr AI</div>
+      <a href="mailto:hello@norrai.co">hello@norrai.co</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    norrai.co · Prepared for Weicher Realty · June 2026
+  </div>
+
+</div>
+</body>
+</html>
