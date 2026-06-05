@@ -126,8 +126,7 @@
             {
               "id": "ndec-found-001",
               "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
             }
           ],
           "combinator": "and"
@@ -226,8 +225,11 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Lookup Lead').first().json.client_id }}'::uuid, 'nurture_deenroll_confirm', 'completed', json_build_object('lead_id', '{{ $('Lookup Lead').first().json.id }}')::jsonb)",
-        "options": {}
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ($1::uuid, 'nurture_deenroll_confirm', 'completed', json_build_object('lead_id', $2)::jsonb)",
+        "options": {
+          "queryBatching": "independently",
+          "queryParams": "={{ [$('Lookup Lead').first().json.client_id, $('Lookup Lead').first().json.id] }}"
+        }
       },
       "onError": "continueRegularOutput",
       "type": "n8n-nodes-base.postgres",
