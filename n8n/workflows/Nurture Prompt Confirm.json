@@ -267,7 +267,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://norrai.app.n8n.cloud/webhook/nurture-enroll",
+        "url": "https://norrai.app.n8n.cloud/webhook/cn-enroll",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
