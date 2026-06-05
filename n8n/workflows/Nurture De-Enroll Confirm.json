@@ -224,13 +224,30 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: {\n  client_id: $('Lookup Lead').first().json.client_id,\n  lead_id: $('Lookup Lead').first().json.id\n} }];"
+        "jsCode": "return [{ json: {\n  client_id: $('Lookup Lead').first().json.client_id,\n  lead_id: $('Lookup Lead').first().json.id,\n  lead_name: $('Lookup Lead').first().json.lead_name\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1612, 0],
       "id": "ndec-012b-prep-log",
       "name": "Prep Log Values"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ '<!DOCTYPE html><html><head><title>Done</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Done.</h2><p>' + ($json.lead_name || 'This lead') + ' has been removed from nurture. No further follow-ups will be sent.</p></body></html>' }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [{ "name": "Content-Type", "value": "text/html" }]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1820, 0],
+      "id": "ndec-013-success",
+      "name": "Respond: Success"
     },
     {
       "parameters": {
@@ -241,7 +258,7 @@
       "onError": "continueRegularOutput",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1820, 0],
+      "position": [2028, 0],
       "id": "ndec-012-log-completed",
       "name": "Log Completed",
       "continueOnFail": true,
@@ -251,23 +268,6 @@
           "name": "Postgres account"
         }
       }
-    },
-    {
-      "parameters": {
-        "respondWith": "text",
-        "responseBody": "={{ '<!DOCTYPE html><html><head><title>Done</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Done.</h2><p>' + ($(\\'Lookup Lead\\').first().json.lead_name || 'This lead') + ' has been removed from nurture. No further follow-ups will be sent.</p></body></html>' }}",
-        "options": {
-          "responseCode": 200,
-          "responseHeaders": {
-            "entries": [{ "name": "Content-Type", "value": "text/html" }]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [2028, 0],
-      "id": "ndec-013-success",
-      "name": "Respond: Success"
     }
   ],
   "pinData": {},
@@ -306,10 +306,10 @@
       "main": [[{ "node": "Prep Log Values", "type": "main", "index": 0 }]]
     },
     "Prep Log Values": {
-      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
-    },
-    "Log Completed": {
       "main": [[{ "node": "Respond: Success", "type": "main", "index": 0 }]]
+    },
+    "Respond: Success": {
+      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
     }
   },
   "active": true,
