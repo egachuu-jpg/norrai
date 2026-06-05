@@ -78,8 +78,8 @@
       "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
@@ -108,8 +108,8 @@
       "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
@@ -126,8 +126,7 @@
             {
               "id": "ndec-found-001",
               "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
             }
           ],
           "combinator": "and"
@@ -218,35 +217,25 @@
       "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Lookup Lead').first().json.client_id }}'::uuid, 'nurture_deenroll_confirm', 'completed', json_build_object('lead_id', '{{ $('Lookup Lead').first().json.id }}')::jsonb)",
-        "options": {}
+        "jsCode": "return [{ json: {\n  client_id: $('Lookup Lead').first().json.client_id,\n  lead_id: $('Lookup Lead').first().json.id,\n  lead_name: $('Lookup Lead').first().json.lead_name\n} }];"
       },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [1664, 0],
-      "id": "ndec-012-log-completed",
-      "name": "Log Completed",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1612, 0],
+      "id": "ndec-012b-prep-log",
+      "name": "Prep Log Values"
     },
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "={{ '<!DOCTYPE html><html><head><title>Done</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Done.</h2><p>' + ($(\\'Lookup Lead\\').first().json.lead_name || 'This lead') + ' has been removed from nurture. No further follow-ups will be sent.</p></body></html>' }}",
+        "responseBody": "={{ '<!DOCTYPE html><html><head><title>Done</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Done.</h2><p>' + ($json.lead_name || 'This lead') + ' has been removed from nurture. No further follow-ups will be sent.</p></body></html>' }}",
         "options": {
           "responseCode": 200,
           "responseHeaders": {
@@ -256,9 +245,29 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1872, 0],
+      "position": [1820, 0],
       "id": "ndec-013-success",
       "name": "Respond: Success"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $json.client_id }}'::uuid, 'nurture_deenroll_confirm', 'completed', json_build_object('lead_id', '{{ $json.lead_id }}')::jsonb)",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2028, 0],
+      "id": "ndec-012-log-completed",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -294,10 +303,13 @@
       ]
     },
     "Set Unenrolled": {
-      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Prep Log Values", "type": "main", "index": 0 }]]
     },
-    "Log Completed": {
+    "Prep Log Values": {
       "main": [[{ "node": "Respond: Success", "type": "main", "index": 0 }]]
+    },
+    "Respond: Success": {
+      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
     }
   },
   "active": true,
