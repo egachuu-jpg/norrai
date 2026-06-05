@@ -287,3 +287,13 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Updated `db/schema.sql` and `db/README.md`: documented `unenrolled` and `nurturing` statuses
 - Updated `CLAUDE.md` workflow registry: added `nurture_deenroll_prompt` and `nurture_deenroll_confirm`
 - Created `obsidian/PRDs/2026-05-26-nurture-enhancements-testing.md` — pre-flight + 5-section smoke test checklist
+
+### 2026-06-04
+- Built `n8n/workflows/Weichert Nurture Auto-Scheduler.json` — Monday 8am CT cron; queries Weichert leads (Evan + Michelle) with `nurture_enrolled_at IS NULL`; marks `status = 'nurturing'` per lead; fires `cn-enroll` per lead; sends FYI digest email per agent listing enrolled leads with per-lead red "Remove from Nurture" button; registered `weichert_nurture_auto_scheduler` in CLAUDE.md and Error Logger WORKFLOW_NAME_MAP
+- Changed enrollment webhook from `nurture-enroll` to `cn-enroll` in `Nurture Prompt Confirm.json` and `website/clients/nurture_enroll.html`
+- Changed Email T1–T6 nodes in `Real Estate 7-Touch Cold Nurture.json` from SendGrid native node to HTTP Request → SendGrid v3 API — enables `text/html` content type and explicit `click_tracking: false`
+- Added `business_name` field to Prep Fields and Extract T1–T6 code nodes — appended as styled `<p>` signature line when non-empty; omitted cleanly when absent (non-Weichert enrollments unaffected)
+- Added `business_name` to Weichert Auto-Scheduler Fire Nurture Sequence payload
+- Diagnosed `Mark Nurture Enrolled` credential error — n8n Cloud project credential scoping; credentials visible in node UI are not usable at runtime until explicitly shared via Credentials → Sharing → add project; no code change
+- Fixed "invalid sequence" in `Nurture De-Enroll Confirm` Log Completed — n8n API silently drops `queryParams` from Postgres nodes; added `Prep Log Values` Code node extracting `client_id`, `lead_id`, `lead_name` into `$json`; reordered tail to Prep Log Values → Respond: Success → Log Completed so all three use plain `{{ $json.field }}` references
+- `Nurture De-Enroll Confirm` unsubscribe flow confirmed working end to end
