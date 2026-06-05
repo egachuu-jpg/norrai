@@ -157,6 +157,7 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Nurture Prompt Confirm | `nurture_prompt_confirm` |
 | Nurture De-Enroll Prompt | `nurture_deenroll_prompt` |
 | Nurture De-Enroll Confirm | `nurture_deenroll_confirm` |
+| Weichert Nurture Auto-Scheduler | `weichert_nurture_auto_scheduler` |
 | Birthday & Anniversary Outreach | `bday_anniversary_outreach` |
 | Real Estate BoldTrail Intake | `boldtrail_intake` |
 | Norr AI Contract Signed | `contract_signed` |
