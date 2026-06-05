@@ -168,7 +168,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Following up';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Following up';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nconst lead_id = $('Check Enrolled T1').first().json.lead_id || '';\nconst html_body = '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>';\nreturn [{ json: { subject, body, html_body, ...p } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -181,18 +181,26 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.subject }}",
-        "contentValue": "={{ $json.body + '\\n\\nTo stop receiving these emails, visit:\\nhttps://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T1').first().json.lead_id + '&token=8F68D963-7060-4033-BD04-7593E4B203CB' }}",
-        "additionalFields": {
-          "htmlBody": "={{ '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + $json.body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T1').first().json.lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>' }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         1640,
         300
@@ -200,11 +208,12 @@
       "id": "c3d4e5f6-0009-4000-8000-000000000009",
       "name": "Email T1",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -288,7 +297,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Quick thought';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Quick thought';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nconst lead_id = $('Check Enrolled T2').first().json.lead_id || '';\nconst html_body = '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>';\nreturn [{ json: { subject, body, html_body, ...p } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -301,18 +310,26 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.subject }}",
-        "contentValue": "={{ $json.body + '\\n\\nTo stop receiving these emails, visit:\\nhttps://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T2').first().json.lead_id + '&token=8F68D963-7060-4033-BD04-7593E4B203CB' }}",
-        "additionalFields": {
-          "htmlBody": "={{ '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + $json.body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T2').first().json.lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>' }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         2640,
         300
@@ -320,11 +337,12 @@
       "id": "c3d4e5f6-0014-4000-8000-000000000014",
       "name": "Email T2",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -408,7 +426,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Market update';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Market update';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nconst lead_id = $('Check Enrolled T3').first().json.lead_id || '';\nconst html_body = '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>';\nreturn [{ json: { subject, body, html_body, ...p } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -421,18 +439,26 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.subject }}",
-        "contentValue": "={{ $json.body + '\\n\\nTo stop receiving these emails, visit:\\nhttps://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T3').first().json.lead_id + '&token=8F68D963-7060-4033-BD04-7593E4B203CB' }}",
-        "additionalFields": {
-          "htmlBody": "={{ '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + $json.body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T3').first().json.lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>' }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         3640,
         300
@@ -440,11 +466,12 @@
       "id": "c3d4e5f6-0019-4000-8000-000000000019",
       "name": "Email T3",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -528,7 +555,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Still here';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Still here';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nconst lead_id = $('Check Enrolled T4').first().json.lead_id || '';\nconst html_body = '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>';\nreturn [{ json: { subject, body, html_body, ...p } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -541,18 +568,26 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.subject }}",
-        "contentValue": "={{ $json.body + '\\n\\nTo stop receiving these emails, visit:\\nhttps://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T4').first().json.lead_id + '&token=8F68D963-7060-4033-BD04-7593E4B203CB' }}",
-        "additionalFields": {
-          "htmlBody": "={{ '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + $json.body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T4').first().json.lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>' }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         4640,
         300
@@ -560,11 +595,12 @@
       "id": "c3d4e5f6-0024-4000-8000-000000000024",
       "name": "Email T4",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -648,7 +684,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'No rush';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'No rush';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nconst lead_id = $('Check Enrolled T5').first().json.lead_id || '';\nconst html_body = '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>';\nreturn [{ json: { subject, body, html_body, ...p } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -661,18 +697,26 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.subject }}",
-        "contentValue": "={{ $json.body + '\\n\\nTo stop receiving these emails, visit:\\nhttps://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T5').first().json.lead_id + '&token=8F68D963-7060-4033-BD04-7593E4B203CB' }}",
-        "additionalFields": {
-          "htmlBody": "={{ '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + $json.body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T5').first().json.lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>' }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         5640,
         300
@@ -680,11 +724,12 @@
       "id": "c3d4e5f6-0029-4000-8000-000000000029",
       "name": "Email T5",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -768,7 +813,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Take care';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nreturn [{ json: { subject, body, ...p } }];"
+        "jsCode": "const text = $input.first().json.content[0].text.trim();\nconst subjectMatch = text.split('SUBJECT:')[1];\nconst bodyMatch = text.split('BODY:')[1];\nconst subject = subjectMatch ? subjectMatch.split('BODY:')[0].trim() : 'Take care';\nconst body = bodyMatch ? bodyMatch.trim() : text;\nconst p = $('Prep Fields').first().json;\nconst lead_id = $('Check Enrolled T6').first().json.lead_id || '';\nconst html_body = '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>';\nreturn [{ json: { subject, body, html_body, ...p } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -781,18 +826,26 @@
     },
     {
       "parameters": {
-        "resource": "mail",
-        "fromEmail": "hello@norrai.co",
-        "fromName": "={{ $json.agent_name }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.subject }}",
-        "contentValue": "={{ $json.body + '\\n\\nTo stop receiving these emails, visit:\\nhttps://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T6').first().json.lead_id + '&token=8F68D963-7060-4033-BD04-7593E4B203CB' }}",
-        "additionalFields": {
-          "htmlBody": "={{ '<p style=\"font-family:Inter,sans-serif;color:#3A3F48;line-height:1.6;\">' + $json.body.replace(/\\n/g, '<br>') + '</p><p style=\"font-size:12px;color:#9EA3AA;border-top:1px solid #E5E4DE;padding-top:16px;margin-top:24px;\">To stop receiving these emails, <a href=\"https://norrai.app.n8n.cloud/webhook/nurture-deenroll-confirm?lead_id=' + $('Check Enrolled T6').first().json.lead_id + '&amp;token=8F68D963-7060-4033-BD04-7593E4B203CB\" style=\"color:#9EA3AA;\">click here</a>.</p>' }}"
-        }
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.sendGrid",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
       "position": [
         6640,
         300
@@ -800,11 +853,12 @@
       "id": "c3d4e5f6-0034-4000-8000-000000000034",
       "name": "Email T6",
       "credentials": {
-        "sendGridApi": {
-          "id": "A5ypmjiRLAUMUm9O",
-          "name": "SendGrid account"
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
