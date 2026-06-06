@@ -395,6 +395,42 @@ Expected: response body is `TESTCHALLENGE123` (plain text, 200).
 
 ---
 
+## PropertyBoost Intake + Parser
+
+**Workflows:** `n8n/workflows/PropertyBoost Intake.json` + `n8n/workflows/PropertyBoost Parser.json`
+
+**Intake trigger:** Gmail trigger on hello@norrai.co, filter: `{from:eknutson@teamyellownow.com from:mjasinski@teamyellownow.com} subject:"New Lead Email"`
+
+**Credential required:** "Gmail - Norr AI" (Gmail OAuth2 for hello@norrai.co) — create in n8n and wire into Gmail Trigger node.
+
+**Parser credential required:** "Neon account" (already exists) + "Anthropic account 2" (already exists).
+
+### Gmail forwarding behavior — important
+
+Gmail auto-forwarding rules (Settings → Filters) forward emails **preserving the original `From:` header** (`no-reply@boldtrail.com`), not the forwarder's address. If Evan/Michelle set up a filter-based auto-forward, the Gmail query `from:eknutson@...` will **not match** the forwarded emails.
+
+**If that happens, two options:**
+
+1. **(Recommended) Use subaddresses:** Have Evan forward to `hello+evan@norrai.co` and Michelle to `hello+michelle@norrai.co`. Update the Gmail trigger query to: `{to:hello+evan@norrai.co to:hello+michelle@norrai.co} subject:"New Lead Email"`. Update Resolve Agent code to route on `to` field instead of `from`.
+
+2. **Fallback query:** Change Gmail trigger filter to `to:hello@norrai.co subject:"New Lead Email"` (catches all forwarded leads). Route agent by checking email body for agent-specific patterns, or hardcode to one agent if only one is forwarding.
+
+### Smoke test sequence
+
+1. Have Evan or Michelle forward a test BoldTrail "New Lead Email" to hello@norrai.co manually
+2. Watch PropertyBoost Intake trigger in n8n → Resolve Agent should set the correct client_id
+3. Confirm PropertyBoost Parser receives POST → runs Haiku → checks dedupe → inserts lead
+4. Confirm `workflow_events` rows: `property_boost_intake` triggered+completed, `property_boost_parser` triggered+completed
+5. Confirm instant lead response fires (SMS + email to lead)
+
+### Known gaps
+| Gap | Priority |
+|-----|----------|
+| Gmail forwarding may preserve original From header — query filter may need adjustment after first live test (see note above) | High — test before go-live |
+| Forwarded email HTML may contain "Forwarded message" wrapper around BoldTrail content — Haiku handles this gracefully but validate against a real forwarded email | Medium |
+
+---
+
 ## Norr AI Chief of Staff
 
 **Workflow:** `Norr AI Chief of Staff.json`

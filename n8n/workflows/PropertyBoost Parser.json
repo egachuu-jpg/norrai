@@ -1,0 +1,301 @@
+{
+  "name": "PropertyBoost Parser",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "property-boost-parser",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "pbp00001-0001-4000-8000-000000000001",
+      "name": "Receive HTML Email",
+      "webhookId": "property-boost-parser-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body || {};\nconst clientId = (b.client_id || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id, primary_contact_name, primary_contact_phone, business_name FROM clients WHERE id = '${clientId}'`,\n    client_id: b.client_id || '',\n    agent_email: b.agent_email || '',\n    html_body: b.html_body || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "id": "pbp00001-0002-4000-8000-000000000002",
+      "name": "Build Lookup Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "continueOnFail": true
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 300],
+      "id": "pbp00001-0003-4000-8000-000000000003",
+      "name": "Lookup Client",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Receive HTML Email').first().json.body.client_id }}', 'property_boost_parser', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\", \"agent_email\": \"{{ $('Receive HTML Email').first().json.body.agent_email }}\"}'::jsonb)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [840, 300],
+      "id": "pbp00001-0004-4000-8000-000000000004",
+      "name": "Log Triggered",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lookup = $('Lookup Client').first().json;\nconst ctx = $('Build Lookup Query').first().json;\n\nconst prompt = 'Extract the following fields from this BoldTrail New Lead Notification HTML email.\\nReturn valid JSON only. No explanation.\\n\\nFields:\\n- lead_name (string)\\n- phone (string, digits only, no formatting)\\n- email (string)\\n- property_interest (string — city, price, beds, baths as-is)\\n- source (string)\\n- referrer (string)\\n- listing_url (string — the URL from the Notes field, or null if absent)\\n\\nHTML:\\n' + ctx.html_body;\n\nreturn [{\n  json: {\n    prompt,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: lookup.primary_contact_name || '',\n    agent_phone: lookup.primary_contact_phone || '',\n    brokerage: lookup.business_name || '',\n    db_client_id: lookup.id || ctx.client_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300],
+      "id": "pbp00001-0005-4000-8000-000000000005",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 512,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }}}]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1240, 300],
+      "id": "pbp00001-0006-4000-8000-000000000006",
+      "name": "Call Claude Haiku",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text.trim();\nconst ctx = $('Build Prompt').first().json;\n\nlet parsed;\ntry {\n  const fenceMatch = text.match(/```(?:json)?\\s*([\\s\\S]+?)```/);\n  const objMatch = text.match(/(\\{[\\s\\S]+\\})/);\n  parsed = JSON.parse(fenceMatch ? fenceMatch[1] : objMatch ? objMatch[1] : text);\n} catch(e) {\n  parsed = {};\n}\n\nreturn [{\n  json: {\n    lead_name: parsed.lead_name || '',\n    phone: (parsed.phone || '').replace(/\\D/g, ''),\n    email: parsed.email || '',\n    property_interest: parsed.property_interest || '',\n    source: parsed.source || 'property_boost',\n    referrer: parsed.referrer || '',\n    listing_url: parsed.listing_url || null,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    agent_phone: ctx.agent_phone,\n    brokerage: ctx.brokerage,\n    db_client_id: ctx.db_client_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 300],
+      "id": "pbp00001-0007-4000-8000-000000000007",
+      "name": "Parse Haiku Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst email = (d.email || '').replace(/'/g, \"''\");\nconst phone = (d.phone || '').replace(/'/g, \"''\");\nconst clientId = (d.db_client_id || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${clientId}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    ...d\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 300],
+      "id": "pbp00001-0008-4000-8000-000000000008",
+      "name": "Build Dedupe Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1840, 300],
+      "id": "pbp00001-0009-4000-8000-000000000009",
+      "name": "Dedupe Check",
+      "alwaysOutputData": true,
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [
+            {
+              "id": "lead-exists-pbp-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "notEmpty"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2040, 300],
+      "id": "pbp00001-0010-4000-8000-000000000010",
+      "name": "Lead Exists?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Receive HTML Email').first().json.body.client_id }}', 'property_boost_parser', 'skipped', '{\"execution_id\": \"{{ $execution.id }}\", \"reason\": \"duplicate\", \"email\": \"{{ $('Build Dedupe Query').first().json.email }}\"}'::jsonb)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2240, 180],
+      "id": "pbp00001-0011-4000-8000-000000000011",
+      "name": "Log Duplicate",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  listing_url: ctx.listing_url || null,\n  referrer: ctx.referrer || null\n}).replace(/'/g, \"''\");\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, metadata) VALUES ('${esc(ctx.db_client_id)}', '${esc(ctx.lead_name)}', '${esc(ctx.email)}', '${esc(ctx.phone)}', 'property_boost', '${esc(ctx.property_interest)}', 'new', '${metadata}'::jsonb) RETURNING id`,\n    ctx\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2240, 420],
+      "id": "pbp00001-0012-4000-8000-000000000012",
+      "name": "Build Insert Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2440, 420],
+      "id": "pbp00001-0013-4000-8000-000000000013",
+      "name": "Insert Lead",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const insertResult = $input.first().json;\nconst ctx = $('Build Dedupe Query').first().json;\n\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    lead_name: ctx.lead_name,\n    email: ctx.email,\n    phone: ctx.phone,\n    source: ctx.source || 'property_boost',\n    lead_message: ctx.property_interest || 'PropertyBoost Facebook Lead Ad inquiry',\n    property_address: ctx.property_interest || '',\n    agent_name: ctx.agent_name,\n    agent_email: ctx.agent_email,\n    agent_phone: ctx.agent_phone || '',\n    brokerage: ctx.brokerage || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 420],
+      "id": "pbp00001-0014-4000-8000-000000000014",
+      "name": "Build ILR Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://norrai.app.n8n.cloud/webhook/lead-response",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "x-norr-token", "value": "8F68D963-7060-4033-BD04-7593E4B203CB"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2840, 420],
+      "id": "pbp00001-0015-4000-8000-000000000015",
+      "name": "Fire Instant Lead Response"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Receive HTML Email').first().json.body.client_id }}', 'property_boost_parser', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [3040, 420],
+      "id": "pbp00001-0016-4000-8000-000000000016",
+      "name": "Log Completed",
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive HTML Email": {"main": [[{"node": "Build Lookup Query", "type": "main", "index": 0}]]},
+    "Build Lookup Query": {"main": [[{"node": "Lookup Client", "type": "main", "index": 0}]]},
+    "Lookup Client": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]},
+    "Log Triggered": {"main": [[{"node": "Build Prompt", "type": "main", "index": 0}]]},
+    "Build Prompt": {"main": [[{"node": "Call Claude Haiku", "type": "main", "index": 0}]]},
+    "Call Claude Haiku": {"main": [[{"node": "Parse Haiku Response", "type": "main", "index": 0}]]},
+    "Parse Haiku Response": {"main": [[{"node": "Build Dedupe Query", "type": "main", "index": 0}]]},
+    "Build Dedupe Query": {"main": [[{"node": "Dedupe Check", "type": "main", "index": 0}]]},
+    "Dedupe Check": {"main": [[{"node": "Lead Exists?", "type": "main", "index": 0}]]},
+    "Lead Exists?": {
+      "main": [
+        [{"node": "Log Duplicate", "type": "main", "index": 0}],
+        [{"node": "Build Insert Query", "type": "main", "index": 0}]
+      ]
+    },
+    "Build Insert Query": {"main": [[{"node": "Insert Lead", "type": "main", "index": 0}]]},
+    "Insert Lead": {"main": [[{"node": "Build ILR Payload", "type": "main", "index": 0}]]},
+    "Build ILR Payload": {"main": [[{"node": "Fire Instant Lead Response", "type": "main", "index": 0}]]},
+    "Fire Instant Lead Response": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "versionId": "property-boost-parser-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}

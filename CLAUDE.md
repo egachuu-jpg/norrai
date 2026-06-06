@@ -159,6 +159,8 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Nurture De-Enroll Confirm | `nurture_deenroll_confirm` |
 | Weichert Nurture Auto-Scheduler | `weichert_nurture_auto_scheduler` |
 | Birthday & Anniversary Outreach | `bday_anniversary_outreach` |
+| PropertyBoost Intake | `property_boost_intake` |
+| PropertyBoost Parser | `property_boost_parser` |
 | Real Estate BoldTrail Intake | `boldtrail_intake` |
 | Norr AI Contract Signed | `contract_signed` |
 | Email Triage Sweep | `email_triage_sweep` |
