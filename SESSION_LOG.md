@@ -288,6 +288,14 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Updated `CLAUDE.md` workflow registry: added `nurture_deenroll_prompt` and `nurture_deenroll_confirm`
 - Created `obsidian/PRDs/2026-05-26-nurture-enhancements-testing.md` — pre-flight + 5-section smoke test checklist
 
+### 2026-06-06
+- Queried task list for "Weichert Realty — Boosted Property Lead Ingestion" story from PRD + codebase (Neon and mission-control inaccessible in remote env — no DATABASE_URL, webhook host not in n8n allowlist)
+- Built `n8n/workflows/PropertyBoost Parser.json` — webhook subworkflow at `/webhook/property-boost-parser`; input: `{html_body, client_id, agent_email}`; looks up agent name/phone/brokerage from Neon; Claude Haiku (`claude-haiku-4-5-20251001`) parses BoldTrail HTML → structured JSON (lead_name, phone, email, property_interest, source, referrer, listing_url); dedupes on `(email OR phone) AND client_id`; inserts new lead with `source='property_boost'`, `listing_url + referrer` in metadata jsonb; fires POST to `/webhook/lead-response`; logs `triggered`/`completed`/`skipped` for `property_boost_parser`; error workflow set
+- Changed intake architecture: instead of per-agent Gmail OAuth on Evan/Michelle's teamyellownow.com accounts, agents forward BoldTrail emails to hello@norrai.co; single workflow monitors the Norr AI inbox
+- Built `n8n/workflows/PropertyBoost Intake.json` — Gmail trigger on hello@norrai.co; filter: `{from:eknutson@teamyellownow.com from:mjasinski@teamyellownow.com} subject:"New Lead Email"`; Resolve Agent Code node parses from address → sets `client_id` + `agent_email` (Evan: `ded234e3`, Michelle: `451306d1`); throws on unknown sender; logs `triggered`/`completed` for `property_boost_intake`; POSTs to `/webhook/property-boost-parser`
+- Registered `property_boost_intake` and `property_boost_parser` in CLAUDE.md workflow name registry
+- Added PropertyBoost Intake + Parser section to `n8n/TESTING_NOTES.md` — credential requirements, Gmail forwarding behavior warning (auto-forward preserves original From: header), subaddress workaround, smoke test sequence
+
 ### 2026-06-04
 - Built `n8n/workflows/Weichert Nurture Auto-Scheduler.json` — Monday 8am CT cron; queries Weichert leads (Evan + Michelle) with `nurture_enrolled_at IS NULL`; marks `status = 'nurturing'` per lead; fires `cn-enroll` per lead; sends FYI digest email per agent listing enrolled leads with per-lead red "Remove from Nurture" button; registered `weichert_nurture_auto_scheduler` in CLAUDE.md and Error Logger WORKFLOW_NAME_MAP
 - Changed enrollment webhook from `nurture-enroll` to `cn-enroll` in `Nurture Prompt Confirm.json` and `website/clients/nurture_enroll.html`
