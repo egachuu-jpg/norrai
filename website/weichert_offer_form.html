@@ -117,7 +117,7 @@
   label .req { color: var(--glacial); margin-left: 2px; }
   label .opt { font-weight: 400; color: var(--muted); margin-left: 4px; }
 
-  input, textarea, select {
+  input, textarea {
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -130,12 +130,11 @@
     appearance: none;
   }
   input::placeholder, textarea::placeholder { color: var(--muted); }
-  input:focus, textarea:focus, select:focus {
+  input:focus, textarea:focus {
     outline: none;
     border-color: var(--glacial);
     box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
   }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239EA3AA' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
   textarea { resize: vertical; min-height: 100px; }
 
   .hint {
@@ -144,30 +143,21 @@
     line-height: 1.5;
   }
 
-  /* ── Contingency checkboxes ── */
-  .checkbox-group { display: flex; flex-direction: column; gap: 10px; }
-  .checkbox-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    cursor: pointer;
-  }
-  .checkbox-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    margin-top: 1px;
+  /* ── Disclaimer ── */
+  .disclaimer {
+    background: #F5F5F2;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    accent-color: var(--ink);
-    cursor: pointer;
-    padding: 0;
-  }
-  .checkbox-item span {
-    font-size: 14px;
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    font-size: 12px;
     color: var(--secondary);
-    line-height: 1.5;
+    line-height: 1.6;
+  }
+  .disclaimer strong {
+    display: block;
+    color: var(--ink);
+    margin-bottom: 4px;
+    font-size: 12px;
   }
 
   /* ── Submit ── */
@@ -271,60 +261,21 @@
         </div>
       </div>
 
-      <div class="section-label">Offer Details</div>
+      <div class="section-label">Offer</div>
 
       <div class="field">
-        <label for="offer_amount">Offer amount <span class="req">*</span></label>
-        <input type="number" id="offer_amount" name="offer_amount" placeholder="275000" min="1" step="any" required>
-        <div class="hint">Enter the full purchase price in dollars (no commas).</div>
+        <label for="offer_amount_display">Offer amount <span class="req">*</span></label>
+        <input type="text" id="offer_amount_display" name="offer_amount_display" inputmode="numeric" placeholder="$275,000" autocomplete="off" required>
       </div>
-
-      <div class="field">
-        <label for="financing_type">Financing type <span class="req">*</span></label>
-        <select id="financing_type" name="financing_type" required>
-          <option value="" disabled selected>Select one…</option>
-          <option value="conventional">Conventional (pre-approved)</option>
-          <option value="fha">FHA</option>
-          <option value="va">VA</option>
-          <option value="cash">Cash</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="proposed_close_date">Preferred closing date <span class="req">*</span></label>
-        <input type="date" id="proposed_close_date" name="proposed_close_date" required>
-      </div>
-
-      <div class="section-label">Contingencies</div>
-
-      <div class="field">
-        <label>Include contingencies <span class="opt">(select all that apply)</span></label>
-        <div class="checkbox-group">
-          <label class="checkbox-item">
-            <input type="checkbox" id="contingency_inspection" name="contingency_inspection">
-            <span>Inspection contingency</span>
-          </label>
-          <label class="checkbox-item">
-            <input type="checkbox" id="contingency_financing" name="contingency_financing">
-            <span>Financing contingency</span>
-          </label>
-          <label class="checkbox-item">
-            <input type="checkbox" id="contingency_appraisal" name="contingency_appraisal">
-            <span>Appraisal contingency</span>
-          </label>
-          <label class="checkbox-item">
-            <input type="checkbox" id="contingency_sale_of_home" name="contingency_sale_of_home">
-            <span>Sale of current home contingency</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="section-label">Message</div>
 
       <div class="field">
         <label for="buyer_notes">Notes for the agent <span class="opt">(optional)</span></label>
         <textarea id="buyer_notes" name="buyer_notes" placeholder="Anything you'd like the agent to know — timeline, flexibility, questions..."></textarea>
+      </div>
+
+      <div class="disclaimer">
+        <strong>Not a legally binding offer</strong>
+        Submitting this form is not a legally binding offer to purchase. It expresses your interest and the price you have in mind. Your agent will follow up to walk you through the formal offer process.
       </div>
 
       <div id="status" class="status" role="alert"></div>
@@ -356,6 +307,20 @@
     document.getElementById('property-display').textContent = propertyAddress;
   }
 
+  // Dollar amount formatting
+  const offerInput = document.getElementById('offer_amount_display');
+
+  offerInput.addEventListener('input', () => {
+    const raw = offerInput.value.replace(/[^0-9]/g, '');
+    if (raw === '') { offerInput.value = ''; return; }
+    offerInput.value = '$' + Number(raw).toLocaleString('en-US');
+  });
+
+  offerInput.addEventListener('blur', () => {
+    const raw = offerInput.value.replace(/[^0-9]/g, '');
+    if (raw && Number(raw) === 0) offerInput.value = '';
+  });
+
   const form   = document.getElementById('offer-form');
   const btn    = document.getElementById('submit-btn');
   const status = document.getElementById('status');
@@ -363,32 +328,33 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    if (!form.checkValidity()) {
+    const fd = new FormData(form);
+
+    const offerRaw = (fd.get('offer_amount_display') || '').replace(/[^0-9]/g, '');
+    const offerNum = Number(offerRaw);
+
+    if (!fd.get('buyer_name').trim() || !fd.get('buyer_phone').trim() || !fd.get('buyer_email').trim()) {
       form.reportValidity();
       return;
     }
-
-    const fd = new FormData(form);
+    if (!offerNum) {
+      offerInput.focus();
+      return;
+    }
 
     const payload = {
-      buyer_name:               fd.get('buyer_name')         || '',
-      buyer_phone:              fd.get('buyer_phone')         || '',
-      buyer_email:              fd.get('buyer_email')         || '',
-      offer_amount:             Number(fd.get('offer_amount')) || 0,
-      financing_type:           fd.get('financing_type')      || '',
-      proposed_close_date:      fd.get('proposed_close_date') || '',
-      contingency_inspection:   fd.get('contingency_inspection')   === 'on',
-      contingency_financing:    fd.get('contingency_financing')    === 'on',
-      contingency_appraisal:    fd.get('contingency_appraisal')    === 'on',
-      contingency_sale_of_home: fd.get('contingency_sale_of_home') === 'on',
-      buyer_notes:              fd.get('buyer_notes')         || '',
-      property_address:         propertyAddress,
-      listing_url:              listingUrl,
-      agent_name:               agentName,
-      agent_email:              agentEmail,
-      agent_phone:              agentPhone,
-      submitted_at:             new Date().toISOString(),
-      source_form:              'weichert_offer_form',
+      buyer_name:       fd.get('buyer_name')  || '',
+      buyer_phone:      fd.get('buyer_phone') || '',
+      buyer_email:      fd.get('buyer_email') || '',
+      offer_amount:     offerNum,
+      buyer_notes:      fd.get('buyer_notes') || '',
+      property_address: propertyAddress,
+      listing_url:      listingUrl,
+      agent_name:       agentName,
+      agent_email:      agentEmail,
+      agent_phone:      agentPhone,
+      submitted_at:     new Date().toISOString(),
+      source_form:      'weichert_offer_form',
     };
 
     status.className = 'status';
