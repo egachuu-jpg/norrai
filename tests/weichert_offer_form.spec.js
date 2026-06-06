@@ -21,9 +21,7 @@ async function fillRequired(page) {
   await page.fill('#buyer_name', 'Sarah Johnson');
   await page.fill('#buyer_phone', '5075551234');
   await page.fill('#buyer_email', 'sarah@gmail.com');
-  await page.fill('#offer_amount', '275000');
-  await page.selectOption('#financing_type', 'conventional');
-  await page.fill('#proposed_close_date', '2026-07-15');
+  await page.fill('#offer_amount_display', '275000');
 }
 
 // ─── 1. URL param handling ─────────────────────────────────────────────────────
@@ -50,41 +48,63 @@ test.describe('URL param handling', () => {
 // ─── 2. Required field validation ─────────────────────────────────────────────
 
 test.describe('Required field validation', () => {
-  const requiredFields = [
-    { id: 'buyer_name',          fill: async (p) => p.fill('#buyer_name', '') },
-    { id: 'buyer_phone',         fill: async (p) => p.fill('#buyer_phone', '') },
-    { id: 'buyer_email',         fill: async (p) => p.fill('#buyer_email', '') },
-    { id: 'offer_amount',        fill: async (p) => p.fill('#offer_amount', '') },
-    { id: 'proposed_close_date', fill: async (p) => p.fill('#proposed_close_date', '') },
-  ];
-
-  for (const field of requiredFields) {
-    test(`blocks submit when ${field.id} is empty`, async ({ page }) => {
-      await mockWebhook(page);
-      await gotoWithParams(page);
-      await fillRequired(page);
-      await field.fill(page);
-      await page.click('#submit-btn');
-
-      await expect(page.locator('#status.success')).not.toBeVisible();
-    });
-  }
-
-  test('blocks submit when financing_type is not selected', async ({ page }) => {
+  test('blocks submit when buyer_name is empty', async ({ page }) => {
     await mockWebhook(page);
     await gotoWithParams(page);
-    await page.fill('#buyer_name', 'Sarah Johnson');
-    await page.fill('#buyer_phone', '5075551234');
-    await page.fill('#buyer_email', 'sarah@gmail.com');
-    await page.fill('#offer_amount', '275000');
-    await page.fill('#proposed_close_date', '2026-07-15');
+    await fillRequired(page);
+    await page.fill('#buyer_name', '');
     await page.click('#submit-btn');
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
 
+  test('blocks submit when buyer_phone is empty', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.fill('#buyer_phone', '');
+    await page.click('#submit-btn');
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
+
+  test('blocks submit when buyer_email is empty', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.fill('#buyer_email', '');
+    await page.click('#submit-btn');
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
+
+  test('blocks submit when offer_amount is empty', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.fill('#offer_amount_display', '');
+    await page.click('#submit-btn');
     await expect(page.locator('#status.success')).not.toBeVisible();
   });
 });
 
-// ─── 3. Field type enforcement ────────────────────────────────────────────────
+// ─── 3. Dollar amount formatting ──────────────────────────────────────────────
+
+test.describe('Dollar amount formatting', () => {
+  test('formats typed digits as $xxx,xxx on input', async ({ page }) => {
+    await gotoWithParams(page);
+    await page.fill('#offer_amount_display', '275000');
+    const value = await page.locator('#offer_amount_display').inputValue();
+    expect(value).toBe('$275,000');
+  });
+
+  test('clears display when input is emptied', async ({ page }) => {
+    await gotoWithParams(page);
+    await page.fill('#offer_amount_display', '100000');
+    await page.fill('#offer_amount_display', '');
+    const value = await page.locator('#offer_amount_display').inputValue();
+    expect(value).toBe('');
+  });
+});
+
+// ─── 4. Field type enforcement ────────────────────────────────────────────────
 
 test.describe('Field type enforcement', () => {
   test('rejects invalid buyer email format', async ({ page }) => {
@@ -93,12 +113,11 @@ test.describe('Field type enforcement', () => {
     await fillRequired(page);
     await page.fill('#buyer_email', 'notanemail');
     await page.click('#submit-btn');
-
     await expect(page.locator('#status.success')).not.toBeVisible();
   });
 });
 
-// ─── 4. Payload shape ─────────────────────────────────────────────────────────
+// ─── 5. Payload shape ─────────────────────────────────────────────────────────
 
 test.describe('Payload shape', () => {
   test('required buyer fields present in payload', async ({ page }) => {
@@ -116,8 +135,19 @@ test.describe('Payload shape', () => {
     expect(body.buyer_phone).toBe('5075551234');
     expect(body.buyer_email).toBe('sarah@gmail.com');
     expect(body.offer_amount).toBe(275000);
-    expect(body.financing_type).toBe('conventional');
-    expect(body.proposed_close_date).toBe('2026-07-15');
+  });
+
+  test('offer_amount is submitted as a number not a string', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+
+    const [req] = await Promise.all([
+      page.waitForRequest('**/webhook/**'),
+      page.click('#submit-btn'),
+    ]);
+    const body = JSON.parse(req.postData());
+    expect(typeof body.offer_amount).toBe('number');
   });
 
   test('property_address from URL appears in payload', async ({ page }) => {
@@ -174,36 +204,6 @@ test.describe('Payload shape', () => {
     expect(body.source_form).toBe('weichert_offer_form');
   });
 
-  test('contingency fields are false when unchecked', async ({ page }) => {
-    await mockWebhook(page);
-    await gotoWithParams(page);
-    await fillRequired(page);
-
-    const [req] = await Promise.all([
-      page.waitForRequest('**/webhook/**'),
-      page.click('#submit-btn'),
-    ]);
-    const body = JSON.parse(req.postData());
-    expect(body.contingency_inspection).toBe(false);
-    expect(body.contingency_financing).toBe(false);
-    expect(body.contingency_appraisal).toBe(false);
-    expect(body.contingency_sale_of_home).toBe(false);
-  });
-
-  test('contingency_inspection is true when checked', async ({ page }) => {
-    await mockWebhook(page);
-    await gotoWithParams(page);
-    await fillRequired(page);
-    await page.check('#contingency_inspection');
-
-    const [req] = await Promise.all([
-      page.waitForRequest('**/webhook/**'),
-      page.click('#submit-btn'),
-    ]);
-    const body = JSON.parse(req.postData());
-    expect(body.contingency_inspection).toBe(true);
-  });
-
   test('submitted_at is a valid ISO timestamp', async ({ page }) => {
     await mockWebhook(page);
     await gotoWithParams(page);
@@ -230,7 +230,7 @@ test.describe('Payload shape', () => {
   });
 });
 
-// ─── 5. Submit UI states ──────────────────────────────────────────────────────
+// ─── 6. Submit UI states ──────────────────────────────────────────────────────
 
 test.describe('Submit UI states', () => {
   test('button disables and shows Submitting… while in-flight', async ({ page }) => {
@@ -261,7 +261,7 @@ test.describe('Submit UI states', () => {
   });
 });
 
-// ─── 6. Success and error banners ─────────────────────────────────────────────
+// ─── 7. Success and error banners ─────────────────────────────────────────────
 
 test.describe('Success and error banners', () => {
   test('shows success banner and hides form on 200', async ({ page }) => {
