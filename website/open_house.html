@@ -374,6 +374,15 @@
         </div>
       </div>
 
+      <div class="field">
+        <div class="consent-field">
+          <input type="checkbox" id="email_consent" name="email_consent" required>
+          <label class="consent-label" for="email_consent">
+            I agree to receive email from the agent about this property and related real estate inquiries. Reply UNSUBSCRIBE at any time to opt out.
+          </label>
+        </div>
+      </div>
+
       <div id="status" class="status" role="alert"></div>
 
       <button type="submit" id="submit-btn">Sign In →</button>
@@ -400,12 +409,13 @@
     : 'https://norrai.app.n8n.cloud/webhook/open-house-signin';
 
   // ─── Read URL params ───────────────────────────────────────────────────────
-  const propertyAddress = params.get('address')     || '';
-  const agentName       = params.get('agent')       || '';
-  const agentEmail      = params.get('agent_email') || '';
-  const agentPhone      = params.get('agent_phone') || '';
-  const propertyNotes   = params.get('notes')       || '';
-  const listingUrl      = params.get('listing_url') || '';
+  const propertyAddress = params.get('address')       || '';
+  const agentName       = params.get('agent')         || '';
+  const agentEmail      = params.get('agent_email')   || '';
+  const agentPhone      = params.get('agent_phone')   || '';
+  const agentCompany    = params.get('agent_company') || '';
+  const propertyNotes   = params.get('notes')         || '';
+  const listingUrl      = params.get('listing_url')   || '';
 
   if (!propertyAddress) {
     document.getElementById('missing-params').style.display = 'block';
@@ -448,6 +458,7 @@
       email:                         fd.get('email')         || '',
       brought_you_in:                fd.get('brought_you_in') || '',
       sms_consent:                   fd.get('sms_consent') === 'on',
+      email_consent:                 fd.get('email_consent') === 'on',
       has_agent:                     hasAgent,
       representing_agent_name:       hasAgent ? (fd.get('representing_agent_name') || '') : '',
       representing_agent_brokerage:  hasAgent ? (fd.get('representing_agent_brokerage') || '') : '',
@@ -457,6 +468,7 @@
       agent_name:                    agentName,
       agent_email:                   agentEmail,
       agent_phone:                   agentPhone,
+      agent_company:                 agentCompany,
       submitted_at:                  new Date().toISOString(),
       source_form:                   'open_house_web',
     };
