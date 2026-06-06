@@ -3,7 +3,7 @@ const { mockWebhook } = require('./helpers');
 
 const BASE_URL = '/open_house.html';
 
-const FAKE_SEARCH = 'address=123+Maple+St%2C+Faribault%2C+MN&agent=Jane+Smith&agent_email=jane%40brokerage.com&agent_phone=5071234567&notes=Updated+kitchen%2C+new+roof+2022';
+const FAKE_SEARCH = 'address=123+Maple+St%2C+Faribault%2C+MN&agent=Jane+Smith&agent_email=jane%40brokerage.com&agent_phone=5071234567&notes=Updated+kitchen%2C+new+roof+2022&agent_company=Smith+Realty';
 const FAKE_SEARCH_WITH_LISTING = FAKE_SEARCH + '&listing_url=https%3A%2F%2Fzillow.com%2Fhomedetails%2F123-maple';
 
 async function gotoWithParams(page) {
@@ -42,6 +42,7 @@ async function fillRequired(page) {
   await page.fill('#email', 'sarah@gmail.com');
   await clickAgentToggle(page, 'no');
   await page.check('#sms_consent');
+  await page.check('#email_consent');
 }
 
 // ─── 1. URL param handling ─────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ test.describe('URL param handling', () => {
     expect(body.agent_name).toBe('Jane Smith');
     expect(body.agent_email).toBe('jane@brokerage.com');
     expect(body.agent_phone).toBe('5071234567');
+    expect(body.agent_company).toBe('Smith Realty');
     expect(body.property_address).toBe('123 Maple St, Faribault, MN');
   });
 });
@@ -136,6 +138,16 @@ test.describe('Required field validation', () => {
 
     await expect(page.locator('#status.success')).not.toBeVisible();
   });
+
+  test('blocks submit when email_consent is unchecked', async ({ page }) => {
+    await mockWebhook(page);
+    await gotoWithParams(page);
+    await fillRequired(page);
+    await page.uncheck('#email_consent');
+    await page.click('#submit-btn');
+
+    await expect(page.locator('#status.success')).not.toBeVisible();
+  });
 });
 
 // ─── 3. Payload shape ─────────────────────────────────────────────────────────
@@ -155,6 +167,7 @@ test.describe('Payload shape', () => {
     expect(body.attendee_name).toBe('Sarah Johnson');
     expect(body.phone).toBe('5075551234');
     expect(body.source_form).toBe('open_house_web');
+    expect(body.email_consent).toBe(true);
   });
 
   test('submitted_at is a valid ISO timestamp', async ({ page }) => {
@@ -311,6 +324,7 @@ test.describe('Agent representation toggle', () => {
     await page.fill('#representing_agent_name', 'Mike Brown');
     await page.fill('#representing_agent_brokerage', 'Re/Max');
     await page.check('#sms_consent');
+    await page.check('#email_consent');
 
     const [req] = await Promise.all([
       page.waitForRequest('**/webhook/**'),

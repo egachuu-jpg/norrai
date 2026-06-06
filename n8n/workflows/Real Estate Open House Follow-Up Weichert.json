@@ -1,20 +1,27 @@
 {
+  "id": "kiwvKR6T8Z6hBSBA",
   "name": "Real Estate Open House Follow-Up Weichert",
+  "active": true,
   "nodes": [
     {
+      "id": "woh-001-receive",
+      "name": "Receive Sign-In",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-1440, 96],
       "parameters": {
         "httpMethod": "POST",
         "path": "weichert-open-house-signin",
         "options": {}
       },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [-1440, 96],
-      "id": "woh-001-receive",
-      "name": "Receive Sign-In",
       "webhookId": "weichert-open-house-signin-webhook-001"
     },
     {
+      "id": "woh-002-token",
+      "name": "Token Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [-1216, 96],
       "parameters": {
         "conditions": {
           "options": {
@@ -38,66 +45,64 @@
         },
         "looseTypeValidation": true,
         "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [-1216, 96],
-      "id": "woh-002-token",
-      "name": "Token Check"
+      }
     },
     {
+      "id": "woh-003-lookup-client",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-992, 96],
+      "continueOnFail": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}' LIMIT 1",
+        "query": "=SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}' LIMIT 1",
         "options": {
           "alwaysOutputData": true
         }
       },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [-992, 96],
-      "id": "woh-003-lookup-client",
-      "name": "Lookup Client",
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id || \"e2f9934c-4d28-4bb4-ac90-4284c1123517\" }}',\n  'open_house_follow_up_weichert',\n  'triggered',\n  json_build_object('agent_email', '{{ $('Receive Sign-In').first().json.body.agent_email }}'  )::jsonb\n)",
-        "options": {}
-      },
-      "onError": "continueRegularOutput",
+      "id": "woh-004-log-triggered",
+      "name": "Log Triggered",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [-768, 96],
-      "id": "woh-004-log-triggered",
-      "name": "Log Triggered",
       "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id || \"e2f9934c-4d28-4bb4-ac90-4284c1123517\" }}',\n  'open_house_follow_up_weichert',\n  'triggered',\n  json_build_object('agent_email', '{{ $('Receive Sign-In').first().json.body.agent_email }}')::jsonb\n)",
+        "options": {}
+      },
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
     {
-      "parameters": {
-        "jsCode": "// Compute resume time: tomorrow at 9am CT (UTC-5 CST / UTC-6 CDT)\nconst now = new Date();\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\ntomorrow.setUTCHours(15, 0, 0, 0);\n\nconst body = $('Receive Sign-In').first().json.body;\n\n// Required field validation\nconst required = ['attendee_name', 'phone', 'agent_name', 'agent_email', 'agent_phone', 'property_address'];\nfor (const field of required) {\n  if (!body[field] || !String(body[field]).trim()) {\n    throw new Error(`Missing required field: ${field}`);\n  }\n}\n\n// Length caps\nconst maxLengths = { attendee_name: 100, brought_you_in: 500, property_notes: 1000 };\nfor (const [field, max] of Object.entries(maxLengths)) {\n  if (body[field] && String(body[field]).length > max) {\n    throw new Error(`Field too long: ${field} (max ${max} chars)`);\n  }\n}\n\nreturn [{\n  json: {\n    resume_at:                    tomorrow.toISOString(),\n    attendee_name:                body.attendee_name    || '',\n    phone:                        body.phone            || '',\n    email:                        body.email            || '',\n    brought_you_in:               body.brought_you_in   || '',\n    property_address:             body.property_address || '',\n    property_notes:               body.property_notes   || '',\n    listing_url:                  body.listing_url      || '',\n    has_agent:                    body.has_agent === true || body.has_agent === 'true',\n    representing_agent_name:      body.representing_agent_name      || '',\n    representing_agent_brokerage: body.representing_agent_brokerage || '',\n    agent_name:                   body.agent_name       || '',\n    agent_email:                  body.agent_email      || '',\n    agent_phone:                  body.agent_phone      || '',\n  }\n}];"
-      },
+      "id": "woh-005-prep",
+      "name": "Prep Wait Time",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [-544, 96],
-      "id": "woh-005-prep",
-      "name": "Prep Wait Time"
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\ntomorrow.setUTCHours(15, 0, 0, 0);\n\nconst body = $('Receive Sign-In').first().json.body;\n\nconst required = ['attendee_name', 'phone', 'agent_name', 'agent_email', 'agent_phone', 'property_address'];\nfor (const field of required) {\n  if (!body[field] || !String(body[field]).trim()) {\n    throw new Error(`Missing required field: ${field}`);\n  }\n}\n\nconst maxLengths = { attendee_name: 100, brought_you_in: 500, property_notes: 1000 };\nfor (const [field, max] of Object.entries(maxLengths)) {\n  if (body[field] && String(body[field]).length > max) {\n    throw new Error(`Field too long: ${field} (max ${max} chars)`);\n  }\n}\n\nreturn [{\n  json: {\n    resume_at:                    tomorrow.toISOString(),\n    attendee_name:                body.attendee_name    || '',\n    phone:                        body.phone            || '',\n    email:                        body.email            || '',\n    brought_you_in:               body.brought_you_in   || '',\n    property_address:             body.property_address || '',\n    property_notes:               body.property_notes   || '',\n    listing_url:                  body.listing_url      || '',\n    has_agent:                    body.has_agent === true || body.has_agent === 'true',\n    representing_agent_name:      body.representing_agent_name      || '',\n    representing_agent_brokerage: body.representing_agent_brokerage || '',\n    agent_name:                   body.agent_name       || '',\n    agent_email:                  body.agent_email      || '',\n    agent_phone:                  body.agent_phone      || '',\n    agent_company:                body.agent_company    || '',\n  }\n}];"
+      }
     },
     {
+      "id": "woh-006-has-agent",
+      "name": "Has Agent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [-320, 96],
       "parameters": {
         "conditions": {
           "options": {
@@ -110,10 +115,10 @@
             {
               "id": "woh-has-agent-check-001",
               "leftValue": "={{ $json.has_agent }}",
-              "rightValue": false,
               "operator": {
                 "type": "boolean",
-                "operation": "false"
+                "operation": "false",
+                "singleValue": true
               }
             }
           ],
@@ -121,78 +126,76 @@
         },
         "looseTypeValidation": true,
         "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [-320, 96],
-      "id": "woh-006-has-agent",
-      "name": "Has Agent?"
+      }
     },
     {
+      "id": "woh-007-dedupe",
+      "name": "Dedupe Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-96, 0],
+      "continueOnFail": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM leads\nWHERE email = '{{ $json.email }}'\n  AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $json.agent_email }}' LIMIT 1)\nLIMIT 1",
+        "query": "=SELECT id FROM leads\nWHERE email = '{{ $json.email }}'\n  AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $json.agent_email }}' LIMIT 1)\nLIMIT 1",
         "options": {
           "alwaysOutputData": true
         }
       },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [-96, 0],
-      "id": "woh-007-dedupe",
-      "name": "Dedupe Check",
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
     {
-      "parameters": {
-        "jsCode": "const dedupeRow = $input.first().json;\nconst prev = $('Prep Wait Time').first().json;\n\nif (dedupeRow.id) {\n  // Lead exists — UPDATE\n  return [{\n    json: {\n      ...prev,\n      lead_query: `UPDATE leads SET\n    phone = '${prev.phone.replace(/'/g, \"''\")}',\n    metadata = metadata || jsonb_build_object(\n      'property_address', '${prev.property_address.replace(/'/g, \"''\")}',\n      'open_house_notes', '${prev.brought_you_in.replace(/'/g, \"''\")}'\n    ),\n    updated_at = NOW()\n  WHERE id = '${dedupeRow.id}'`,\n    }\n  }];\n} else {\n  // New lead — INSERT\n  const clientSubquery = `(SELECT id FROM clients WHERE primary_contact_email = '${prev.agent_email.replace(/'/g, \"''\")}' LIMIT 1)`;\n  return [{\n    json: {\n      ...prev,\n      lead_query: `INSERT INTO leads (client_id, lead_name, email, phone, source, vertical, metadata)\n  VALUES (\n    ${clientSubquery},\n    '${prev.attendee_name.replace(/'/g, \"''\")}',\n    '${prev.email.replace(/'/g, \"''\")}',\n    '${prev.phone.replace(/'/g, \"''\")}',\n    'open_house_web',\n    'real_estate',\n    jsonb_build_object(\n      'property_address', '${prev.property_address.replace(/'/g, \"''\")}',\n      'open_house_notes', '${prev.brought_you_in.replace(/'/g, \"''\")}'\n    )\n  )`,\n    }\n  }];\n}"
-      },
+      "id": "woh-008-build-upsert",
+      "name": "Build Upsert Query",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [128, 0],
-      "id": "woh-008-build-upsert",
-      "name": "Build Upsert Query"
+      "parameters": {
+        "jsCode": "const dedupeRow = $input.first().json;\nconst prev = $('Prep Wait Time').first().json;\n\nif (dedupeRow.id) {\n  return [{\n    json: {\n      ...prev,\n      lead_query: `UPDATE leads SET\n    phone = '${prev.phone.replace(/'/g, \"''\")}',\n    metadata = metadata || jsonb_build_object(\n      'property_address', '${prev.property_address.replace(/'/g, \"''\")}',\n      'open_house_notes', '${prev.brought_you_in.replace(/'/g, \"''\")}'\n    ),\n    updated_at = NOW()\n  WHERE id = '${dedupeRow.id}'`,\n    }\n  }];\n} else {\n  const clientSubquery = `(SELECT id FROM clients WHERE primary_contact_email = '${prev.agent_email.replace(/'/g, \"''\")}' LIMIT 1)`;\n  return [{\n    json: {\n      ...prev,\n      lead_query: `INSERT INTO leads (client_id, lead_name, email, phone, source, vertical, metadata)\n  VALUES (\n    ${clientSubquery},\n    '${prev.attendee_name.replace(/'/g, \"''\")}',\n    '${prev.email.replace(/'/g, \"''\")}',\n    '${prev.phone.replace(/'/g, \"''\")}',\n    'open_house_web',\n    'real_estate',\n    jsonb_build_object(\n      'property_address', '${prev.property_address.replace(/'/g, \"''\")}',\n      'open_house_notes', '${prev.brought_you_in.replace(/'/g, \"''\")}'\n    )\n  )`,\n    }\n  }];\n}"
+      }
     },
     {
+      "id": "woh-009-upsert",
+      "name": "Upsert Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [352, 0],
+      "continueOnFail": true,
       "parameters": {
         "operation": "executeQuery",
         "query": "={{ $json.lead_query }}",
         "options": {}
       },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [352, 0],
-      "id": "woh-009-upsert",
-      "name": "Upsert Lead",
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
     {
+      "id": "woh-010-wait",
+      "name": "Wait Until 9am CT",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [576, 96],
       "parameters": {
         "resume": "specificTime",
         "dateTime": "={{ $json.resume_at }}"
       },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [576, 96],
-      "id": "woh-010-wait",
-      "name": "Wait Until 9am CT",
       "webhookId": "weichert-open-house-wait-webhook-001"
     },
     {
+      "id": "woh-011-build-prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, 96],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -205,14 +208,17 @@
           ]
         },
         "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [800, 96],
-      "id": "woh-011-build-prompt",
-      "name": "Build Prompt"
+      }
     },
     {
+      "id": "woh-012-claude",
+      "name": "Draft Follow-Up (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1024, 96],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
@@ -221,14 +227,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
           ]
         },
         "sendBody": true,
@@ -236,14 +236,6 @@
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 250,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [1024, 96],
-      "id": "woh-012-claude",
-      "name": "Draft Follow-Up (Claude)",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",
@@ -252,30 +244,86 @@
       }
     },
     {
-      "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst message = response.content[0].text.trim();\n\nconst prev = $('Wait Until 9am CT').first().json;\n\nconst message_html = '<div style=\"font-family: Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #222;\">' +\n  message.replace(/\\n/g, '<br>') +\n  '</div>';\n\nreturn [{\n  json: {\n    message,\n    message_html,\n    attendee_name:    prev.attendee_name,\n    phone:            prev.phone,\n    email:            prev.email,\n    property_address: prev.property_address,\n    property_notes:   prev.property_notes,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    agent_phone:      prev.agent_phone,\n    has_email:        (prev.email || '').trim().length > 0,\n  }\n}];"
-      },
+      "id": "woh-013-extract",
+      "name": "Extract Message",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1248, 96],
-      "id": "woh-013-extract",
-      "name": "Extract Message"
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst message = response.content[0].text.trim();\n\nconst prev = $('Wait Until 9am CT').first().json;\n\nconst sig = prev.agent_company\n  ? '<p style=\"font-size:13px;color:#3A3F48;font-family:Arial,sans-serif;margin-top:8px;margin-bottom:0;\">' + prev.agent_company + '</p>'\n  : '';\n\nconst message_html = '<div style=\"font-family: Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #222;\">' +\n  message.replace(/\\n/g, '<br>') +\n  sig +\n  '</div>';\n\nreturn [{\n  json: {\n    message,\n    message_html,\n    attendee_name:    prev.attendee_name,\n    phone:            prev.phone,\n    email:            prev.email,\n    property_address: prev.property_address,\n    property_notes:   prev.property_notes,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    agent_phone:      prev.agent_phone,\n    agent_company:    prev.agent_company,\n    has_email:        (prev.email || '').trim().length > 0,\n  }\n}];"
+      }
     },
     {
+      "id": "woh-014-sms",
+      "name": "SMS to Attendee",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1472, 0],
+      "disabled": true,
       "parameters": {
         "from": "+18XXXXXXXXXX",
         "to": "=+1{{ $json.phone.replace(/\\D/g, '') }}",
         "message": "={{ $json.message }}",
         "options": {}
-      },
-      "type": "n8n-nodes-base.twilio",
-      "typeVersion": 1,
-      "position": [1472, 0],
-      "id": "woh-014-sms",
-      "name": "SMS to Attendee",
-      "disabled": true
+      }
     },
     {
+      "id": "woh-check-opt-out-001",
+      "name": "Check Email Opt-Out",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1472, 192],
+      "alwaysOutputData": true,
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $json.email }}') LIMIT 1",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "woh-email-opted-out-001",
+      "name": "Email Opted Out?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1696, 192],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "woh-email-opted-out-cond-001",
+              "leftValue": "={{ ($input.first().json.email_opt_out || false) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "woh-015-has-email",
+      "name": "Has Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1920, 192],
       "parameters": {
         "conditions": {
           "options": {
@@ -287,11 +335,11 @@
           "conditions": [
             {
               "id": "woh-has-email-001",
-              "leftValue": "={{ $json.has_email }}",
-              "rightValue": true,
+              "leftValue": "={{ $('Extract Message').first().json.has_email }}",
               "operator": {
                 "type": "boolean",
-                "operation": "true"
+                "operation": "true",
+                "singleValue": true
               }
             }
           ],
@@ -299,14 +347,14 @@
         },
         "looseTypeValidation": true,
         "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [1472, 192],
-      "id": "woh-015-has-email",
-      "name": "Has Email?"
+      }
     },
     {
+      "id": "woh-016-email",
+      "name": "Email to Attendee",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2144, 192],
       "parameters": {
         "method": "POST",
         "url": "https://api.sendgrid.com/v3/mail/send",
@@ -315,22 +363,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Thanks for stopping by {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.message_html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $('Extract Message').first().json.email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $('Extract Message').first().json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $('Extract Message').first().json.agent_email }}\"},\n  \"subject\": \"Thanks for stopping by {{ $('Extract Message').first().json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($('Extract Message').first().json.message_html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [1696, 192],
-      "id": "woh-016-email",
-      "name": "Email to Attendee",
       "credentials": {
         "httpHeaderAuth": {
           "id": "d2B1Q0ceGNVDwjqs",
@@ -339,127 +379,155 @@
       }
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Wait Time').first().json.agent_email }}' LIMIT 1),\n  'open_house_follow_up_weichert',\n  'completed',\n  json_build_object('attendee_email', '{{ $json.email }}'  )::jsonb\n)",
-        "options": {}
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [1920, 192],
       "id": "woh-017-log-completed",
       "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2368, 192],
       "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Wait Time').first().json.agent_email }}' LIMIT 1),\n  'open_house_follow_up_weichert',\n  'completed',\n  json_build_object('attendee_email', '{{ $('Extract Message').first().json.email }}')::jsonb\n)",
+        "options": {}
+      },
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "woh-018-build-rep-alert",
+      "name": "Build Rep Buyer Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-96, 320],
+      "parameters": {
+        "jsCode": "const p = $('Prep Wait Time').first().json;\n\nconst repName      = p.representing_agent_name      || 'Not provided';\nconst repBrokerage = p.representing_agent_brokerage || 'Not provided';\nconst attendeeEmail = p.email || 'Not provided';\n\nconst html = '<div style=\"font-family: Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #222;\">'\n  + '<p>Hi ' + p.agent_name + ',</p>'\n  + '<p>A buyer who is already working with an agent signed in at your open house at <strong>' + p.property_address + '</strong>. No follow-up email has been sent to this attendee.</p>'\n  + '<table style=\"border-collapse:collapse; margin:8px 0;\">'\n  + '<tr><td colspan=\"2\" style=\"padding-bottom:4px;\"><strong>Attendee</strong></td></tr>'\n  + '<tr><td style=\"padding:2px 12px 2px 0;color:#666;\">Name</td><td>' + p.attendee_name + '</td></tr>'\n  + '<tr><td style=\"padding:2px 12px 2px 0;color:#666;\">Phone</td><td>' + p.phone + '</td></tr>'\n  + '<tr><td style=\"padding:2px 12px 2px 0;color:#666;\">Email</td><td>' + attendeeEmail + '</td></tr>'\n  + '</table>'\n  + '<table style=\"border-collapse:collapse; margin:8px 0;\">'\n  + '<tr><td colspan=\"2\" style=\"padding-bottom:4px;\"><strong>Their Agent</strong></td></tr>'\n  + '<tr><td style=\"padding:2px 12px 2px 0;color:#666;\">Name</td><td>' + repName + '</td></tr>'\n  + '<tr><td style=\"padding:2px 12px 2px 0;color:#666;\">Brokerage</td><td>' + repBrokerage + '</td></tr>'\n  + '</table>'\n  + '<p style=\"font-size:13px;color:#666;margin-top:16px;\">You may want to reach out to their agent directly if you\\'d like to discuss the property.<br>— Norr AI</p>'\n  + '</div>';\n\nreturn [{\n  json: {\n    agent_name:       p.agent_name,\n    agent_email:      p.agent_email,\n    property_address: p.property_address,\n    subject:          'Represented buyer at your open house — ' + p.property_address,\n    email_html:       html,\n  }\n}];"
+      }
+    },
+    {
+      "id": "woh-019-email-hosting-agent",
+      "name": "Email Hosting Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [128, 320],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"Norr AI\"},\n  \"reply_to\": {\"email\": \"hello@norrai.co\"},\n  \"subject\": \"{{ $json.subject }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "woh-020-log-completed-rep",
+      "name": "Log Completed (Represented)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [352, 320],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Wait Time').first().json.agent_email }}' LIMIT 1),\n  'open_house_follow_up_weichert',\n  'completed',\n  json_build_object('path', 'represented_buyer', 'attendee_email', '{{ $('Prep Wait Time').first().json.email }}')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Receive Sign-In": {
-      "main": [
-        [{ "node": "Token Check", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Token Check", "type": "main", "index": 0}]]
     },
     "Token Check": {
-      "main": [
-        [{ "node": "Lookup Client", "type": "main", "index": 0 }],
-        []
-      ]
+      "main": [[{"node": "Lookup Client", "type": "main", "index": 0}], []]
     },
     "Lookup Client": {
-      "main": [
-        [{ "node": "Log Triggered", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]
     },
     "Log Triggered": {
-      "main": [
-        [{ "node": "Prep Wait Time", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Prep Wait Time", "type": "main", "index": 0}]]
     },
     "Prep Wait Time": {
-      "main": [
-        [{ "node": "Has Agent?", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Has Agent?", "type": "main", "index": 0}]]
     },
     "Has Agent?": {
       "main": [
-        [{ "node": "Dedupe Check", "type": "main", "index": 0 }],
-        [{ "node": "Wait Until 9am CT", "type": "main", "index": 0 }]
+        [{"node": "Dedupe Check", "type": "main", "index": 0}],
+        [{"node": "Build Rep Buyer Alert", "type": "main", "index": 0}]
       ]
     },
     "Dedupe Check": {
-      "main": [
-        [{ "node": "Build Upsert Query", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Build Upsert Query", "type": "main", "index": 0}]]
     },
     "Build Upsert Query": {
-      "main": [
-        [{ "node": "Upsert Lead", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Upsert Lead", "type": "main", "index": 0}]]
     },
     "Upsert Lead": {
-      "main": [
-        [{ "node": "Wait Until 9am CT", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Wait Until 9am CT", "type": "main", "index": 0}]]
     },
     "Wait Until 9am CT": {
-      "main": [
-        [{ "node": "Build Prompt", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Build Prompt", "type": "main", "index": 0}]]
     },
     "Build Prompt": {
-      "main": [
-        [{ "node": "Draft Follow-Up (Claude)", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Draft Follow-Up (Claude)", "type": "main", "index": 0}]]
     },
     "Draft Follow-Up (Claude)": {
-      "main": [
-        [{ "node": "Extract Message", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Extract Message", "type": "main", "index": 0}]]
     },
     "Extract Message": {
-      "main": [
-        [
-          { "node": "SMS to Attendee", "type": "main", "index": 0 },
-          { "node": "Has Email?", "type": "main", "index": 0 }
-        ]
-      ]
+      "main": [[
+        {"node": "SMS to Attendee", "type": "main", "index": 0},
+        {"node": "Check Email Opt-Out", "type": "main", "index": 0}
+      ]]
+    },
+    "Check Email Opt-Out": {
+      "main": [[{"node": "Email Opted Out?", "type": "main", "index": 0}]]
+    },
+    "Email Opted Out?": {
+      "main": [[], [{"node": "Has Email?", "type": "main", "index": 0}]]
     },
     "Has Email?": {
-      "main": [
-        [{ "node": "Email to Attendee", "type": "main", "index": 0 }],
-        []
-      ]
+      "main": [[{"node": "Email to Attendee", "type": "main", "index": 0}], []]
     },
     "Email to Attendee": {
-      "main": [
-        [{ "node": "Log Completed", "type": "main", "index": 0 }]
-      ]
+      "main": [[{"node": "Log Completed", "type": "main", "index": 0}]]
+    },
+    "Build Rep Buyer Alert": {
+      "main": [[{"node": "Email Hosting Agent", "type": "main", "index": 0}]]
+    },
+    "Email Hosting Agent": {
+      "main": [[{"node": "Log Completed (Represented)", "type": "main", "index": 0}]]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
     "errorWorkflow": "Norr AI Workflow Error Logger"
   },
-  "versionId": "weichert-open-house-follow-up-v1-001",
+  "versionId": "e5adcf28-7006-435e-9999-3e0413a0d06b",
   "meta": {
     "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
   },
-  "id": "",
-  "tags": [
-    {
-      "updatedAt": "2026-05-01T01:39:33.838Z",
-      "createdAt": "2026-05-01T01:39:33.838Z",
-      "id": "hF4YeAdcnZuVMhqJ",
-      "name": "real estate"
-    }
-  ]
+  "tags": []
 }

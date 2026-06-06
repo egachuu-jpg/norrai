@@ -53,7 +53,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body;\n\nreturn [{\n  json: {\n    agent_name:          body.agent_name          || '',\n    agent_email:         body.agent_email         || '',\n    agent_phone:         body.agent_phone         || '',\n    property_address:    body.property_address    || '',\n    listing_description: body.listing_description || '',\n    listing_url:         body.listing_url         || '',\n    source_form:         body.source_form         || '',\n  }\n}];"
+        "jsCode": "const body = $('Receive Setup').first().json.body;\n\nreturn [{\n  json: {\n    agent_name:          body.agent_name          || '',\n    agent_email:         body.agent_email         || '',\n    agent_phone:         body.agent_phone         || '',\n    property_address:    body.property_address    || '',\n    listing_description: (body.listing_description || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n'),\n    listing_url:         body.listing_url         || '',\n    source_form:         body.source_form         || '',\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -66,20 +66,10 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "set-prompt-setup-001",
-              "name": "prompt",
-              "value": "=You are a real estate assistant. Extract the 3-5 most compelling property highlights from this listing description. These will be used to personalize follow-up messages to open house attendees.\n\nReturn ONLY a short comma-separated list. Each item should be 2-5 words, specific, and factual \u2014 only include details explicitly stated in the description. Never invent or assume details.\n\nExample output: vaulted ceilings, updated kitchen, large fenced backyard, 2-car garage, main floor primary\n\nListing description:\n{{ $json.listing_description }}\n\nReturn ONLY the comma-separated list. No labels, no explanation.",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "const prev = $input.first().json;\nconst prompt =\n  'You are a real estate assistant. Extract the 3-5 most compelling property highlights from this listing description. These will be used to personalize follow-up messages to open house attendees.\\n\\n' +\n  'Return ONLY a short comma-separated list. Each item should be 2-5 words, specific, and factual \\u2014 only include details explicitly stated in the description. Never invent or assume details.\\n\\n' +\n  'Example output: vaulted ceilings, updated kitchen, large fenced backyard, 2-car garage, main floor primary\\n\\n' +\n  'Listing description:\\n' + prev.listing_description + '\\n\\n' +\n  'Return ONLY the comma-separated list. No labels, no explanation.';\nreturn [{ json: { ...prev, prompt } }];"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         608,
         0
@@ -131,7 +121,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst highlights = (response.content[0].text || '').trim();\n\nconst prev = $('Prep Fields').first().json;\nconst isWeichert = prev.source_form === 'weichert_open_house_setup';\n\nconst baseUrl = 'https://tools.norrai.co/open_house.html';\nconst qsParts = [\n  'address='     + encodeURIComponent(prev.property_address),\n  'agent='       + encodeURIComponent(prev.agent_name),\n  'agent_email=' + encodeURIComponent(prev.agent_email),\n  'agent_phone=' + encodeURIComponent(prev.agent_phone),\n  'notes='       + encodeURIComponent(highlights),\n];\nif (isWeichert) {\n  qsParts.push('wf=weichert');\n  if (prev.listing_url) qsParts.push('listing_url=' + encodeURIComponent(prev.listing_url));\n}\nconst qs = qsParts.join('&');\nconst signinUrl = baseUrl + '?' + qs;\nconst qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(signinUrl);\n\n// Escape & in URLs used inside HTML attributes\nconst qrUrlSafe     = qrUrl.replace(/&/g, '&amp;');\nconst signinUrlSafe = signinUrl.replace(/&/g, '&amp;');\n\nconst emailHtml = [\n  '<div style=\"font-family: \\'Inter\\', Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #0A0F1A;\">',\n  '  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Open House Setup</p>',\n  '    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">Your QR code is ready.</h1>',\n  '  </div>',\n  '  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 6px;\">Property</p>',\n  '    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 24px;\">' + prev.property_address + '</p>',\n  '    <p style=\"font-size: 14px; color: #6A6F78; margin: 0 0 16px;\">Print this and tape it to the front door. Attendees scan it to sign in \\u2014 you\\'ll get a personalized follow-up sent to each of them at 9am the next morning.</p>',\n  '    <div style=\"text-align: center; margin: 28px 0;\">',\n  '      <img src=\"' + qrUrlSafe + '\" width=\"300\" height=\"300\" alt=\"Open House Sign-In QR Code\" style=\"display: inline-block; border: 1px solid #E5E4DE; border-radius: 8px; padding: 12px; background: #fff;\">',\n  '    </div>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Property highlights Claude will reference in follow-ups:</p>',\n  '    <p style=\"font-size: 13px; color: #3A3F48; font-style: italic; margin: 0 0 24px; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE;\">' + highlights + '</p>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Direct link (if you need to share digitally):</p>',\n  '    <p style=\"font-size: 12px; margin: 0 0 28px; word-break: break-all;\"><a href=\"' + signinUrlSafe + '\" style=\"color: #7FA9B8;\">' + signinUrl + '</a></p>',\n  '    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;\\u00b7&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    highlights,\n    signin_url:       signinUrl,\n    qr_url:           qrUrl,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    property_address: prev.property_address,\n    listing_url:      prev.listing_url,\n    email_html:       emailHtml,\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst highlights = (response.content[0].text || '').trim();\n\nconst prev = $('Prep Fields').first().json;\nconst isWeichert = prev.source_form === 'weichert_open_house_setup';\nconst businessName = ($('Validate Client Token').first().json.business_name || '').trim();\n\nconst baseUrl = 'https://tools.norrai.co/open_house.html';\nconst qsParts = [\n  'address='     + encodeURIComponent(prev.property_address),\n  'agent='       + encodeURIComponent(prev.agent_name),\n  'agent_email=' + encodeURIComponent(prev.agent_email),\n  'agent_phone=' + encodeURIComponent(prev.agent_phone),\n  'notes='       + encodeURIComponent(highlights),\n];\nif (businessName) qsParts.push('agent_company=' + encodeURIComponent(businessName));\nif (isWeichert) {\n  qsParts.push('wf=weichert');\n  if (prev.listing_url) qsParts.push('listing_url=' + encodeURIComponent(prev.listing_url));\n}\nconst qs = qsParts.join('&');\nconst signinUrl = baseUrl + '?' + qs;\nconst qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(signinUrl);\n\n// Escape & in URLs used inside HTML attributes\nconst qrUrlSafe     = qrUrl.replace(/&/g, '&amp;');\nconst signinUrlSafe = signinUrl.replace(/&/g, '&amp;');\n\nconst emailHtml = [\n  '<div style=\"font-family: \\'Inter\\', Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #0A0F1A;\">',\n  '  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Open House Setup</p>',\n  '    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">Your QR code is ready.</h1>',\n  '  </div>',\n  '  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 6px;\">Property</p>',\n  '    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 24px;\">' + prev.property_address + '</p>',\n  '    <p style=\"font-size: 14px; color: #6A6F78; margin: 0 0 16px;\">Print this and tape it to the front door. Attendees scan it to sign in \\u2014 you\\'ll get a personalized follow-up sent to each of them at 9am the next morning.</p>',\n  '    <div style=\"text-align: center; margin: 28px 0;\">',\n  '      <img src=\"' + qrUrlSafe + '\" width=\"300\" height=\"300\" alt=\"Open House Sign-In QR Code\" style=\"display: inline-block; border: 1px solid #E5E4DE; border-radius: 8px; padding: 12px; background: #fff;\">',\n  '    </div>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Property highlights Claude will reference in follow-ups:</p>',\n  '    <p style=\"font-size: 13px; color: #3A3F48; font-style: italic; margin: 0 0 24px; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE;\">' + highlights + '</p>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Direct link (if you need to share digitally):</p>',\n  '    <p style=\"font-size: 12px; margin: 0 0 28px; word-break: break-all;\"><a href=\"' + signinUrlSafe + '\" style=\"color: #7FA9B8;\">' + signinUrl + '</a></p>',\n  '    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;\\u00b7&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    highlights,\n    signin_url:       signinUrl,\n    qr_url:           qrUrl,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    property_address: prev.property_address,\n    listing_url:      prev.listing_url,\n    email_html:       emailHtml,\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -179,7 +169,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id FROM clients WHERE token = '${token}'::uuid AND status = 'active' LIMIT 1`\n  : 'SELECT null::uuid AS id WHERE false';\nreturn [{ json: { client_query: query } }];"
+        "jsCode": "const body = ($input.first().json.body || {});\nconst token = (body.agent_token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst query = uuidRe.test(token)\n  ? `SELECT id, business_name FROM clients WHERE token = '${token}' AND status = 'active' LIMIT 1`\n  : `SELECT null::uuid AS id, null::text AS business_name WHERE false`;\nreturn [{ json: { client_query: query } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -210,8 +200,8 @@
       "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
@@ -228,10 +218,10 @@
             {
               "id": "8d25f37a-6180-4b65-971e-139acd8b774a",
               "leftValue": "={{ $json.id }}",
-              "rightValue": "",
               "operator": {
                 "type": "string",
-                "operation": "notEmpty"
+                "operation": "notEmpty",
+                "singleValue": true
               }
             }
           ],
@@ -241,7 +231,7 @@
         "options": {}
       },
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "typeVersion": 2.3,
       "position": [
         832,
         340
