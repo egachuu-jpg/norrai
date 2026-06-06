@@ -39,9 +39,14 @@
 - Token Check false branch must have a Respond Unauthorized node (401) — a dead-end false branch leaves HTTP connections hanging indefinitely
 - Upsert with CTE: `WITH existing AS (SELECT id FROM t WHERE ...), inserted AS (INSERT INTO t ... WHERE NOT EXISTS (SELECT 1 FROM existing) RETURNING id) SELECT COALESCE((SELECT id FROM existing), (SELECT id FROM inserted))` — single round-trip that returns id regardless of insert vs. existing
 - Sanitize Input Code node between Token Check and Postgres is the right place to escape single quotes (`.replace(/'/g, "''")`), cast numerics with `parseFloat()`, and output a flat clean object; downstream nodes reference it by name, not `$json`
+- When a Wait node resumes, `$json` = the output of the last node before execution paused — if that node was a Postgres INSERT/UPDATE without `RETURNING`, `$json` is the empty query result; all nodes after the Wait (including the Wait node's `dateTime` expression itself) must reference upstream named Code nodes with `$('NodeName').first().json`
+- Unary boolean IF operators (`true`/`false`) require `singleValue: true` in the operator object and no `rightValue` field — omitting `singleValue` or including `rightValue: false` causes n8n to treat it as a binary comparison and fail validation
 
 ## n8n — Workflow Management
 - After editing a workflow JSON file locally, re-import is required in n8n — it does not auto-sync from the file
+- `n8n_update_partial_workflow` MCP tool cannot update archived workflows — unarchive first via REST API: `POST /api/v1/workflows/{id}/unarchive` with `X-N8N-API-KEY` header (key stored in `.env` as `Norr-ai-api-key-1`)
+- Importing a workflow that already exists in n8n creates a second copy (new ID), not a replacement — both copies compete for the same webhook path; archive the duplicate and always patch the original by ID
+- `updateNode` in `n8n_update_partial_workflow` requires an `updates` object with dot-path keys: `{"type": "updateNode", "name": "...", "updates": {"parameters.fieldPath": value}}` — passing a top-level `parameters` object directly fails with "Missing required parameter 'updates'"
 - When restructuring HTML file paths (e.g., into subfolders), n8n workflow webhook URLs are unaffected — only Playwright test file paths need updating
 - "With Research" workflow variants use distinct webhook paths (e.g., `lead-response-research`) so originals and new variants coexist in n8n during smoke testing — swap to original paths when promoting to production
 - Email-only demo variants are a useful pattern when Twilio is not provisioned — swap SMS nodes for SendGrid, update prompts to SUBJECT/BODY format, use a distinct webhook path
@@ -85,6 +90,7 @@
 - Session durations: clients group = 7 days, internal group = 1 day
 
 ## HTML / JavaScript
+- For dollar amount inputs, use `type="text"` + `inputmode="numeric"` + live JS formatting (strip non-numeric, reformat with `'$' + Number(raw).toLocaleString('en-US')`); submit raw integer to webhook — avoids `type="number"` step/validation quirks while showing a formatted `$275,000` display
 - When creating a new Polar Modern HTML page, start by copying the full `:root` CSS block from an existing page in the same directory — partial copies silently omit canonical tokens (e.g. `--blush`) that may be needed for components added later
 - `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
 - `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
