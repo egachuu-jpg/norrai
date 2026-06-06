@@ -114,14 +114,14 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\n    \"to\": [\n      {\"email\": \"eknutson@teamyellownow.com\", \"name\": \"Evan Knutson\"}\n    ],\n    \"cc\": [\n      {\"email\": \"{{ $json.agent_email }}\"}\n    ]\n  }],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"reply_to\": {\"email\": \"{{ $json.buyer_email }}\", \"name\": \"{{ $json.buyer_name }}\"},\n  \"subject\": \"Offer interest: {{ $json.property_address }} \\u2014 {{ $json.offer_amount }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\n    \"to\": [\n      {\"email\": \"{{ $json.agent_email }}\", \"name\": \"{{ $json.agent_name }}\"}\n    ]\n  }],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"reply_to\": {\"email\": \"{{ $json.buyer_email }}\", \"name\": \"{{ $json.buyer_name }}\"},\n  \"subject\": \"Offer interest: {{ $json.property_address }} \\u2014 {{ $json.offer_amount }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}],\n  \"tracking_settings\": {\"click_tracking\": {\"enable\": false}}\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [1120, 0],
       "id": "wos-006-send-email",
-      "name": "Email to Evan",
+      "name": "Email Agent",
       "credentials": {
         "httpHeaderAuth": {
           "id": "d2B1Q0ceGNVDwjqs",
@@ -132,7 +132,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Receive Offer').first().json.body.agent_email }}' LIMIT 1),\n  'weichert_offer_submit',\n  'completed',\n  json_build_object(\n    'buyer_email',      '{{ $('Build Notification Email').first().json.buyer_email }}',\n    'property_address', '{{ $('Build Notification Email').first().json.property_address }}',\n    'offer_amount',     '{{ $('Build Notification Email').first().json.offer_amount }}'\n  )::jsonb\n)",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Lookup Client').first().json.id || \"e2f9934c-4d28-4bb4-ac90-4284c1123517\" }}',\n  'weichert_offer_submit',\n  'completed',\n  json_build_object(\n    'buyer_email',      '{{ $('Build Notification Email').first().json.buyer_email }}',\n    'property_address', '{{ $('Build Notification Email').first().json.property_address }}',\n    'offer_amount',     '{{ $('Build Notification Email').first().json.offer_amount }}'\n  )::jsonb\n)",
         "options": {}
       },
       "onError": "continueRegularOutput",
@@ -175,10 +175,10 @@
     },
     "Build Notification Email": {
       "main": [
-        [{ "node": "Email to Evan", "type": "main", "index": 0 }]
+        [{ "node": "Email Agent", "type": "main", "index": 0 }]
       ]
     },
-    "Email to Evan": {
+    "Email Agent": {
       "main": [
         [{ "node": "Log Completed", "type": "main", "index": 0 }]
       ]
