@@ -106,6 +106,10 @@ CREATE TRIGGER leads_updated_at
 
 CREATE INDEX idx_leads_client_status ON leads(client_id, status);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_email_phone
+  ON leads(email, phone)
+  WHERE email IS NOT NULL AND phone IS NOT NULL;
+
 
 CREATE TABLE appointments (
   id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
