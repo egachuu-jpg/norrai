@@ -306,6 +306,15 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Fixed "invalid sequence" in `Nurture De-Enroll Confirm` Log Completed — n8n API silently drops `queryParams` from Postgres nodes; added `Prep Log Values` Code node extracting `client_id`, `lead_id`, `lead_name` into `$json`; reordered tail to Prep Log Values → Respond: Success → Log Completed so all three use plain `{{ $json.field }}` references
 - `Nurture De-Enroll Confirm` unsubscribe flow confirmed working end to end
 
+### 2026-06-07
+- Fixed PropertyBoost duplicate lead insertion: `Build Lead Insert` in ILR now checks `body.lead_id` and returns no-op `SELECT 1` when the Parser already inserted the lead
+- Fixed ILR unsubscribe link: was incorrectly pointing at `nurture-deenroll-confirm?lead_id=`; changed to `tools.norrai.co/unsubscribe?email=` (Email Unsubscribe Handler via webpage)
+- Clarified unsubscribe routing split: `nurture-deenroll-confirm` is for nurture sequence removal only (`status = 'unenrolled'`); `Email Unsubscribe Handler` (POST, called by `tools.norrai.co/unsubscribe` webpage) handles all one-off email opt-outs (`email_opt_out = TRUE`)
+- Discovered `norrai.co/unsubscribe` 404ing — website is deployed at `tools.norrai.co`, not apex `norrai.co`; updated all workflow unsubscribe links (ILR, Review Request, Open House Follow-Up, Birthday & Anniversary, Lead Action Handler, ILR with Research, 7-Touch Email Only)
+- Pushed unsubscribe URL fix to live n8n: ILR (`aN9vvdXo9k1IKLXq`) and Review Request (`JPOPWcKVzheC9YXs`); also backfilled unsubscribe footer into Review Request which was never in the live n8n version
+- Added `email_opt_out BOOLEAN NOT NULL DEFAULT FALSE` and `opted_out_at TIMESTAMPTZ` columns to Neon `leads` table — both were in `db/schema.sql` but the ALTER TABLE had never been run against production
+- End-to-end unsubscribe flow confirmed working: ILR email → `tools.norrai.co/unsubscribe` → POST to handler → `leads.email_opt_out = TRUE` in Neon
+
 ### 2026-06-05
 - Simplified `website/weichert_offer_form.html`: removed financing type, closing date, and contingencies sections; added live dollar-formatted offer amount field (`type="text"` + `inputmode="numeric"` + JS `toLocaleString`); added "Not a legally binding offer" disclaimer block; pushed to `main` for testing
 - Fixed `Wait Until 9am CT` node in Weichert Open House Follow-Up workflow: `$json.resume_at` → `$('Prep Wait Time').first().json.resume_at` — `Upsert Lead` (Postgres INSERT) overwrites `$json`, so `resume_at` was gone by the time the Wait node evaluated it
