@@ -3,49 +3,89 @@
   "nodes": [
     {
       "parameters": {
-        "filters": {
-          "q": "{from:eknutson@teamyellownow.com from:mjasinski@teamyellownow.com} subject:\"New Lead Email\""
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
         },
-        "options": {}
+        "filters": {
+          "q": "{from:eknutson@teamyellownow.com from:hello@norrai.co from:mjasinski@teamyellownow.com from:hello@norrai.co} subject:\"New Lead Email\""
+        }
       },
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1,
-      "position": [240, 300],
-      "id": "pbpi0001-0001-4000-8000-000000000001",
+      "position": [2688, 656],
+      "id": "79a73228-c1f4-40e5-8e61-6163f853f7c6",
       "name": "Gmail Trigger",
       "webhookId": "property-boost-intake-gmail-001",
       "credentials": {
         "gmailOAuth2": {
-          "id": "GMAIL_NORRAI_CREDENTIAL_ID",
-          "name": "Gmail - Norr AI"
+          "id": "CnAFJFl5wssmBuho",
+          "name": "Gmail account hello norr"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const from = $input.first().json.from || '';\n// Handle both 'Name <email>' and plain email formats\nconst match = from.match(/<([^>]+)>/) || from.match(/([^\\s]+@[^\\s]+)/);\nconst fromEmail = (match ? match[1] : from).toLowerCase().trim();\n\nconst agents = {\n  'eknutson@teamyellownow.com': {\n    client_id: 'ded234e3-1c78-45c3-8924-6036e1fcaf60',\n    agent_email: 'eknutson@teamyellownow.com'\n  },\n  'mjasinski@teamyellownow.com': {\n    client_id: '451306d1-6437-42b8-8ffe-c16f28803490',\n    agent_email: 'mjasinski@teamyellownow.com'\n  }\n};\n\nconst agent = agents[fromEmail];\nif (!agent) {\n  throw new Error(`Unrecognized forwarding address: ${fromEmail}`);\n}\n\nreturn [{\n  json: {\n    client_id: agent.client_id,\n    agent_email: agent.agent_email,\n    html_body: $input.first().json.html || $input.first().json.text || '',\n    subject: $input.first().json.subject || '',\n    from_raw: from\n  }\n}];"
+        "url": "=https://www.googleapis.com/gmail/v1/users/me/messages/{{$json.id}}?format=full",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2912, 656],
+      "id": "pbpi0001-gfe2-4000-8000-000000000099",
+      "name": "Get Full Email",
+      "credentials": {
+        "gmailOAuth2Api": {
+          "id": "CnAFJFl5wssmBuho",
+          "name": "Gmail account hello norr"
+        },
+        "gmailOAuth2": {
+          "id": "CnAFJFl5wssmBuho",
+          "name": "Gmail account hello norr"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json;\n\nif (msg.html || msg.text) {\n  return [{ json: { html_body: msg.html || msg.text } }];\n}\n\nfunction findPart(parts, mimeType) {\n  if (!Array.isArray(parts)) return null;\n  for (const p of parts) {\n    if (p.mimeType === mimeType && p.body?.data) return p.body.data;\n    if (p.parts) {\n      const found = findPart(p.parts, mimeType);\n      if (found) return found;\n    }\n  }\n  return null;\n}\n\nconst parts = msg.payload?.parts || [];\nconst b64 = findPart(parts, 'text/html') || findPart(parts, 'text/plain') || '';\nconst html_body = b64\n  ? Buffer.from(b64.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8')\n  : msg.snippet || '';\n\nreturn [{ json: { html_body } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 300],
-      "id": "pbpi0001-0002-4000-8000-000000000002",
+      "position": [3136, 656],
+      "id": "pbpi0001-deb1-4000-8000-000000000008",
+      "name": "Decode Email Body"
+    },
+    {
+      "parameters": {
+        "jsCode": "const trigger = $('Gmail Trigger').first().json;\nconst from = trigger.From || '';\nconst match = from.match(/<([^>]+)>/) || from.match(/([^\\s]+@[^\\s]+)/);\nconst fromEmail = (match ? match[1] : from).toLowerCase().trim();\n\nconst agents = {\n  'eknutson@teamyellownow.com': {\n    client_id: 'ded234e3-1c78-45c3-8924-6036e1fcaf60',\n    agent_email: 'eknutson@teamyellownow.com'\n  },\n  'mjasinski@teamyellownow.com': {\n    client_id: '451306d1-6437-42b8-8ffe-c16f28803490',\n    agent_email: 'mjasinski@teamyellownow.com'\n  },\n  'hello@norrai.co': {\n    client_id: '94f4a987-c64c-4252-989c-41af296e732f',\n    agent_email: 'hello@norrai.co'\n  }\n};\n\nconst agent = agents[fromEmail];\nif (!agent) {\n  throw new Error(`Unrecognized forwarding address: ${fromEmail}`);\n}\n\nreturn [{\n  json: {\n    client_id: agent.client_id,\n    agent_email: agent.agent_email,\n    html_body: $('Decode Email Body').first().json.html_body || '',\n    subject: trigger.Subject || '',\n    from_raw: from\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3360, 656],
+      "id": "9b9d9e22-59aa-4649-bd52-ff78a934675f",
       "name": "Resolve Agent"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $json.client_id }}', 'property_boost_intake', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\", \"agent_email\": \"{{ $json.agent_email }}\", \"subject\": \"{{ $json.subject }}\"}'::jsonb)"
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $json.client_id }}', 'property_boost_intake', 'triggered', json_build_object('execution_id', '{{ $execution.id }}', 'agent_email', '{{ $json.agent_email }}', 'subject', '{{ $json.subject }}')::jsonb)",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [640, 300],
-      "id": "pbpi0001-0003-4000-8000-000000000003",
+      "position": [3584, 656],
+      "id": "3ad22542-f5bb-4bdd-a158-fa64798b5bbf",
       "name": "Log Triggered",
       "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     },
@@ -55,8 +95,8 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [840, 300],
-      "id": "pbpi0001-0004-4000-8000-000000000004",
+      "position": [3808, 656],
+      "id": "b772ba1f-2207-41f1-a727-089562880c4d",
       "name": "Build Parser Request"
     },
     {
@@ -76,32 +116,35 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1040, 300],
-      "id": "pbpi0001-0005-4000-8000-000000000005",
+      "position": [4032, 656],
+      "id": "5ed8e902-405c-41ce-a30a-09c39c63c27f",
       "name": "Call PropertyBoost Parser"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Resolve Agent').first().json.client_id }}', 'property_boost_intake', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)"
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('{{ $('Resolve Agent').first().json.client_id }}', 'property_boost_intake', 'completed', json_build_object('execution_id', '{{ $execution.id }}')::jsonb)",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1240, 300],
-      "id": "pbpi0001-0006-4000-8000-000000000006",
+      "position": [4256, 656],
+      "id": "c06716c5-001c-46ae-b230-8e1a141f6e36",
       "name": "Log Completed",
       "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
       }
     }
   ],
   "pinData": {},
   "connections": {
-    "Gmail Trigger": {"main": [[{"node": "Resolve Agent", "type": "main", "index": 0}]]},
+    "Gmail Trigger": {"main": [[{"node": "Get Full Email", "type": "main", "index": 0}]]},
+    "Get Full Email": {"main": [[{"node": "Decode Email Body", "type": "main", "index": 0}]]},
+    "Decode Email Body": {"main": [[{"node": "Resolve Agent", "type": "main", "index": 0}]]},
     "Resolve Agent": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]},
     "Log Triggered": {"main": [[{"node": "Build Parser Request", "type": "main", "index": 0}]]},
     "Build Parser Request": {"main": [[{"node": "Call PropertyBoost Parser", "type": "main", "index": 0}]]},
@@ -110,13 +153,16 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "Norr AI Workflow Error Logger"
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "binaryMode": "separate"
   },
-  "versionId": "property-boost-intake-v1-001",
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
-  },
+  "versionId": "519681ee-03e1-48ce-941e-7f89c705a77e",
+  "meta": null,
   "id": "",
-  "tags": []
+  "tags": [
+    {
+      "id": "1em2yJdCKJ7vT0la",
+      "name": "internal"
+    }
+  ]
 }

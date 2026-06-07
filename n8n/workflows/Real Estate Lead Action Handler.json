@@ -257,7 +257,7 @@
         "fromName": "Norr AI",
         "toEmail": "={{ $json.lead_email }}",
         "subject": "=Re: Your inquiry",
-        "contentValue": "={{ $json.email_content + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.lead_email) }}",
+        "contentValue": "={{ $json.email_content + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.lead_email) }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.sendGrid",
