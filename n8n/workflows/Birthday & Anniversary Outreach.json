@@ -273,7 +273,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "contentType": "raw",
-        "body": "={{ JSON.stringify({personalizations: [{to: [{email: $('Parse Response').first().json.email, name: $('Parse Response').first().json.lead_name}]}], from: {email: 'hello@norrai.co', name: $('Set Agent Config').first().json.agent_name}, reply_to: {email: $('Set Agent Config').first().json.agent_email}, subject: $('Parse Response').first().json.email_subject, content: [{type: 'text/plain', value: $('Parse Response').first().json.email_body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($('Parse Response').first().json.email)}], tracking_settings: {click_tracking: {enable: false}, open_tracking: {enable: false}}}) }}"
+        "body": "={{ JSON.stringify({personalizations: [{to: [{email: $('Parse Response').first().json.email, name: $('Parse Response').first().json.lead_name}]}], from: {email: 'hello@norrai.co', name: $('Set Agent Config').first().json.agent_name}, reply_to: {email: $('Set Agent Config').first().json.agent_email}, subject: $('Parse Response').first().json.email_subject, content: [{type: 'text/plain', value: $('Parse Response').first().json.email_body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($('Parse Response').first().json.email)}], tracking_settings: {click_tracking: {enable: false}, open_tracking: {enable: false}}}) }}"
       },
       "credentials": {
         "httpHeaderAuth": {

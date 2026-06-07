@@ -202,7 +202,7 @@
       "name": "Extract T1"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [1640, 300],
@@ -255,7 +255,7 @@
       "name": "Extract T2"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [2640, 300],
@@ -306,7 +306,7 @@
       "name": "Extract T3"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [3640, 300],
@@ -359,7 +359,7 @@
       "name": "Extract T4"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [4640, 300],
@@ -410,7 +410,7 @@
       "name": "Extract T5"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [5640, 300],
@@ -463,7 +463,7 @@
       "name": "Extract T6"
     },
     {
-      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
+      "parameters": { "resource": "mail", "fromEmail": "hello@norrai.co", "fromName": "={{ $json.agent_name }}", "toEmail": "={{ $json.email }}", "subject": "={{ $json.subject }}", "contentValue": "={{ $json.body + '\\n\\n---\\nTo stop receiving these emails: https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) }}", "additionalFields": {} },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
       "position": [6640, 300],

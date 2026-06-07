@@ -264,7 +264,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Thanks for stopping by {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.message_html + '<br><br><hr style=\"border:none;border-top:1px solid #ccc;\"><p style=\"font-size:12px;color:#999;\">To stop receiving these emails: <a href=\\'https://norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) + '\\'>unsubscribe</a></p>') }}}]\n}",
+        "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"{{ $json.agent_name }}\"},\n  \"reply_to\": {\"email\": \"{{ $json.agent_email }}\"},\n  \"subject\": \"Thanks for stopping by {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.message_html + '<br><br><hr style=\"border:none;border-top:1px solid #ccc;\"><p style=\"font-size:12px;color:#999;\">To stop receiving these emails: <a href=\\'https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent($json.email) + '\\'>unsubscribe</a></p>') }}}]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
