@@ -33,6 +33,10 @@
     .status { margin-top: 16px; padding: 12px 16px; border-radius: 4px; font-size: 14px; display: none; }
     .status.success { background: #e8f5e9; color: #2e7d32; display: block; }
     .status.error { background: #fdecea; color: #c62828; display: block; }
+    .optout-section { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); display: none; }
+    #optout-btn { background: none; border: 1px solid #c0392b; color: #c0392b; padding: 9px 20px; font-family: 'Inter', sans-serif; font-size: 13px; border-radius: 4px; cursor: pointer; }
+    #optout-btn:hover { background: #fdecea; }
+    #optout-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -52,6 +56,9 @@
       </div>
     </form>
     <div class="status" id="status-msg"></div>
+    <div class="optout-section" id="optout-section">
+      <button type="button" id="optout-btn">Stop texting this lead</button>
+    </div>
   </main>
   <script>
     const params = new URLSearchParams(window.location.search);
@@ -60,6 +67,7 @@
     const draft = params.get('draft') || '';
     const leadName = params.get('lead_name') || 'this lead';
     const isSms = action === 'send_sms';
+    const phone = params.get('phone') || '';
     const SMS_LIMIT = 155;
 
     document.getElementById('page-title').textContent = isSms ? 'Edit SMS' : 'Edit Email';
@@ -81,6 +89,41 @@
     }
     textarea.addEventListener('input', updateCount);
     updateCount();
+
+    if (isSms && phone) {
+      document.getElementById('optout-section').style.display = 'block';
+    }
+
+    document.getElementById('optout-btn').addEventListener('click', async () => {
+      const confirmed = window.confirm(
+        `Mark ${leadName} as opted out? They will no longer receive automated texts from Norr AI.`
+      );
+      if (!confirmed) return;
+
+      const btn = document.getElementById('optout-btn');
+      const status = document.getElementById('status-msg');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('https://norrai.app.n8n.cloud/webhook/manual-optout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, agent_token: token }),
+        });
+        if (res.ok) {
+          document.getElementById('edit-form').style.display = 'none';
+          document.getElementById('optout-section').style.display = 'none';
+          status.textContent = `${leadName} has been opted out. No further texts will be sent.`;
+          status.className = 'status success';
+        } else {
+          throw new Error('Request failed');
+        }
+      } catch {
+        status.textContent = 'Something went wrong marking opt-out. Try again or contact support.';
+        status.className = 'status error';
+        btn.disabled = false;
+      }
+    });
 
     document.getElementById('edit-form').addEventListener('submit', async (e) => {
       e.preventDefault();
