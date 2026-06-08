@@ -161,6 +161,8 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Birthday & Anniversary Outreach | `bday_anniversary_outreach` |
 | PropertyBoost Intake | `property_boost_intake` |
 | PropertyBoost Parser | `property_boost_parser` |
+| BoldTrail CSV Import | `boldtrail_csv_import` |
+| Manual Opt-Out Handler | `manual_optout_handler` |
 | Real Estate BoldTrail Intake | `boldtrail_intake` |
 | Norr AI Contract Signed | `contract_signed` |
 | Email Triage Sweep | `email_triage_sweep` |
