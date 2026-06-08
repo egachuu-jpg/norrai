@@ -1371,7 +1371,13 @@
     },
     "SMS Opted Out T2?": {
       "main": [
-        [],
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "SMS T2",
@@ -1394,7 +1400,13 @@
     },
     "SMS Opted Out T4?": {
       "main": [
-        [],
+        [
+          {
+            "node": "Wait Day 14",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "SMS T4",
