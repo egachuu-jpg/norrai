@@ -17,9 +17,7 @@
           ]
         },
         "filters": {
-          "readStatus": "unread",
-          "sender": "jpiller@teamyellownow.com",
-          "subject": "Fwd: A Lead Export Has Been Shared With You"
+          "q": "subject:\"A Lead Export Has Been Shared With You\""
         }
       },
       "type": "n8n-nodes-base.gmailTrigger",
