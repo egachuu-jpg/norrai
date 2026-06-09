@@ -1,65 +1,45 @@
 {
+  "updatedAt": "2026-05-17T02:03:06.397Z",
+  "createdAt": "2026-05-17T01:19:54.506Z",
+  "id": "IVbvZemDi5vZCFsu",
   "name": "Mission Control Mutate",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "mc-mutate",
-        "responseMode": "responseNode",
-        "options": {}
-      },
+      "parameters": {"httpMethod": "POST", "path": "mc-mutate", "responseMode": "responseNode", "options": {}},
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
-      "id": "mc-mutate-node-0001",
+      "position": [-1120, 592],
+      "id": "4022e90a-bba4-4739-bb6d-7b9a51acd258",
       "name": "Webhook",
       "webhookId": "mc-mutate-webhook-001"
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose"
-          },
-          "conditions": [
-            {
-              "id": "mc-mutate-token-001",
-              "leftValue": "={{ $json.headers['x-norr-token'] }}",
-              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 1},
+          "conditions": [{"id": "mc-mutate-token-001", "leftValue": "={{ $json.headers['x-norr-token'] }}", "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "equals"}}],
           "combinator": "and"
         },
         "options": {}
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [432, 144],
-      "id": "mc-mutate-node-0002",
+      "position": [-928, 592],
+      "id": "f963ef35-c3fb-4cdd-8964-d5868cd783b0",
       "name": "Token Check"
     },
     {
       "parameters": {
         "dataType": "string",
         "value1": "={{ $json.body.action }}",
-        "rules": {
-          "rules": [
-            { "value2": "update_task" },
-            { "value2": "create_task" },
-            { "value2": "create_story" }
-          ]
-        }
+        "rules": {"rules": [{"value2": "update_task"}, {"value2": "create_task"}, {"value2": "create_story"}]}
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 2,
-      "position": [640, 144],
-      "id": "mc-mutate-node-0003",
+      "position": [-720, 592],
+      "id": "9e237806-a7cc-4c96-9c25-becf6ed4f40b",
       "name": "Route Action"
     },
     {
@@ -70,15 +50,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 48],
-      "id": "mc-mutate-node-0004",
+      "position": [-512, 496],
+      "id": "96f66710-a114-4bad-8074-4fccfd954e27",
       "name": "Update Task",
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
     },
     {
       "parameters": {
@@ -88,15 +63,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 192],
-      "id": "mc-mutate-node-0005",
+      "position": [-512, 640],
+      "id": "1ee2db74-13b8-4e8c-8cea-d8cae993df3a",
       "name": "Create Task",
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
     },
     {
       "parameters": {
@@ -106,88 +76,43 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [848, 336],
-      "id": "mc-mutate-node-0006",
+      "position": [-512, 784],
+      "id": "f9f7e301-4911-440c-a803-0de32dd40ad4",
       "name": "Create Story",
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "{\"success\": true}",
-        "options": {}
-      },
+      "parameters": {"respondWith": "json", "responseBody": "{\"success\": true}", "options": {}},
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1056, 192],
-      "id": "mc-mutate-node-0007",
+      "position": [-304, 640],
+      "id": "ae4da02f-5c3b-4144-b80c-cebe78da420c",
       "name": "Respond"
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "{\"error\": \"Unauthorized\"}",
-        "options": {
-          "responseCode": 401
-        }
-      },
+      "parameters": {"respondWith": "json", "responseBody": "{\"error\": \"Unauthorized\"}", "options": {"responseCode": 401}},
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [640, 320],
-      "id": "mc-mutate-node-0008",
+      "position": [-720, 768],
+      "id": "b1135cdb-d6d8-406b-96df-8a2d3d4b77d8",
       "name": "Respond 401"
     }
   ],
-  "pinData": {},
   "connections": {
-    "Webhook": {
-      "main": [
-        [{ "node": "Token Check", "type": "main", "index": 0 }]
-      ]
-    },
-    "Token Check": {
-      "main": [
-        [{ "node": "Route Action", "type": "main", "index": 0 }],
-        [{ "node": "Respond 401", "type": "main", "index": 0 }]
-      ]
-    },
-    "Route Action": {
-      "main": [
-        [{ "node": "Update Task", "type": "main", "index": 0 }],
-        [{ "node": "Create Task", "type": "main", "index": 0 }],
-        [{ "node": "Create Story", "type": "main", "index": 0 }]
-      ]
-    },
-    "Update Task": {
-      "main": [
-        [{ "node": "Respond", "type": "main", "index": 0 }]
-      ]
-    },
-    "Create Task": {
-      "main": [
-        [{ "node": "Respond", "type": "main", "index": 0 }]
-      ]
-    },
-    "Create Story": {
-      "main": [
-        [{ "node": "Respond", "type": "main", "index": 0 }]
-      ]
-    }
+    "Webhook": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
+    "Token Check": {"main": [[{"node": "Route Action", "type": "main", "index": 0}], [{"node": "Respond 401", "type": "main", "index": 0}]]},
+    "Route Action": {"main": [[{"node": "Update Task", "type": "main", "index": 0}], [{"node": "Create Task", "type": "main", "index": 0}], [{"node": "Create Story", "type": "main", "index": 0}]]},
+    "Update Task": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Create Task": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Create Story": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]}
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "mc-mutate-v1-002",
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
-  },
-  "id": "",
-  "tags": []
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "timeSavedMode": "fixed", "errorWorkflow": "Al6gagYmiq1feOWq", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": false},
+  "staticData": null,
+  "meta": {"templateCredsSetupCompleted": true},
+  "pinData": {},
+  "versionId": "1c92072f-1ce5-4286-a5d1-86bd1384100e",
+  "activeVersionId": "1c92072f-1ce5-4286-a5d1-86bd1384100e",
+  "versionCounter": 38,
+  "triggerCount": 1,
+  "tags": [{"id": "1em2yJdCKJ7vT0la", "name": "internal"}]
 }

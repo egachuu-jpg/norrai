@@ -1,32 +1,25 @@
 {
+  "updatedAt": "2026-05-27T19:30:35.623Z",
+  "createdAt": "2026-05-08T19:17:27.624Z",
+  "id": "QggnWbivDrMFMPyJ",
   "name": "Norr AI Client Health Query",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "GET",
-        "path": "client-health",
-        "responseMode": "responseNode",
-        "options": {}
-      },
+      "parameters": {"path": "client-health", "responseMode": "responseNode", "options": {}},
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 144],
-      "id": "d1e2f3a4-0001-4000-8000-000000000001",
+      "position": [0, 0],
+      "id": "a9fc1a0e-79a1-4189-844b-1b3f3f8f1a08",
       "name": "Receive Request",
       "webhookId": "client-health-webhook-001"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3 },
-          "conditions": [
-            {
-              "id": "token-check-health-001",
-              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
-              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
-              "operator": { "type": "string", "operation": "startsWith" }
-            }
-          ],
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "token-check-health-001", "leftValue": "={{ $json.headers[\"x-norr-token\"] }}", "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "startsWith"}}],
           "combinator": "or"
         },
         "looseTypeValidation": true,
@@ -34,8 +27,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [432, 144],
-      "id": "d1e2f3a4-0002-4000-8000-000000000002",
+      "position": [192, 0],
+      "id": "101bf7f0-e695-4f41-89d6-3d1ffa39a21b",
       "name": "Token Check"
     },
     {
@@ -46,49 +39,43 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [640, 144],
-      "id": "d1e2f3a4-0003-4000-8000-000000000003",
+      "position": [400, 0],
+      "id": "b36dd756-83b0-4e0b-b666-f00e3d946a5b",
       "name": "Query Neon",
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all().map(r => r.json);\nconst SCHEDULED = ['chief_of_staff'];\nconst RANK = { red: 2, yellow: 1, green: 0 };\nconst now = new Date();\n\nconst map = {};\nfor (const row of rows) {\n  const key = row.id;\n  if (!map[key]) {\n    map[key] = { id: row.id, business_name: row.business_name, vertical: row.vertical, tier: row.tier, workflows: [] };\n  }\n  if (!row.workflow_name) continue;\n  const isScheduled = SCHEDULED.some(n => row.workflow_name.toLowerCase().includes(n));\n  const days = isScheduled ? 2 : 7;\n  const threshold = new Date(now - days * 86400000);\n  const lastTriggered = row.last_triggered_at ? new Date(row.last_triggered_at) : null;\n  const failures = parseInt(row.failures_7d) || 0;\n  let status = 'green';\n  if (failures > 0) status = 'red';\n  else if (!lastTriggered || lastTriggered < threshold) status = 'yellow';\n  map[key].workflows.push({\n    workflow_name: row.workflow_name,\n    status,\n    last_triggered_at: row.last_triggered_at || null,\n    last_failed_at: row.last_failed_at || null,\n    failures_7d: failures\n  });\n}\n\nconst clients = Object.values(map).map(c => {\n  const worst = c.workflows.reduce((w, wf) => RANK[wf.status] > RANK[w] ? wf.status : w, 'green');\n  return { ...c, status: worst };\n});\n\nclients.sort((a, b) => {\n  const d = RANK[b.status] - RANK[a.status];\n  return d !== 0 ? d : a.business_name.localeCompare(b.business_name);\n});\n\nreturn [{ json: { generated_at: now.toISOString(), clients } }];"
+        "jsCode": "const rows = $input.all().map(r => r.json);\nconst SCHEDULED = ['chief_of_staff'];\nconst RANK = { red: 2, yellow: 1, green: 0 };\nconst now = new Date();\n\nconst map = {};\nfor (const row of rows) {\n  const key = row.id;\n  if (!map[key]) {\n    map[key] = { id: row.id, business_name: row.business_name, vertical: row.vertical, tier: row.tier, workflows: [] };\n  }\n  if (!row.workflow_name) continue;\n  const isScheduled = SCHEDULED.some(n => row.workflow_name.toLowerCase().includes(n));\n  const days = isScheduled ? 2 : 7;\n  const threshold = new Date(now - days * 86400000);\n  const lastTriggered = row.last_triggered_at ? new Date(row.last_triggered_at) : null;\n  const failures = parseInt(row.failures_7d) || 0;\n  let status = 'green';\n  if (failures > 0) status = 'red';\n  else if (!lastTriggered || lastTriggered < threshold) status = 'yellow';\n  map[key].workflows.push({ workflow_name: row.workflow_name, status, last_triggered_at: row.last_triggered_at || null, last_failed_at: row.last_failed_at || null, failures_7d: failures });\n}\n\nconst clients = Object.values(map).map(c => {\n  const worst = c.workflows.reduce((w, wf) => RANK[wf.status] > RANK[w] ? wf.status : w, 'green');\n  return { ...c, status: worst };\n});\n\nclients.sort((a, b) => {\n  const d = RANK[b.status] - RANK[a.status];\n  return d !== 0 ? d : a.business_name.localeCompare(b.business_name);\n});\n\nreturn [{ json: { generated_at: now.toISOString(), clients } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [848, 144],
-      "id": "d1e2f3a4-0004-4000-8000-000000000004",
+      "position": [608, 0],
+      "id": "e0a662a7-8d2d-4036-9890-3286a28f91be",
       "name": "Apply Health Logic"
     },
     {
-      "parameters": {
-        "respondWith": "firstIncomingItem",
-        "options": {}
-      },
+      "parameters": {"options": {}},
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1056, 144],
-      "id": "d1e2f3a4-0005-4000-8000-000000000005",
+      "position": [816, 0],
+      "id": "8b8071d7-2392-4118-81a7-e8536c6dbf46",
       "name": "Return Health JSON"
     }
   ],
-  "pinData": {},
   "connections": {
-    "Receive Request": { "main": [[{ "node": "Token Check", "type": "main", "index": 0 }]] },
-    "Token Check": { "main": [[{ "node": "Query Neon", "type": "main", "index": 0 }]] },
-    "Query Neon": { "main": [[{ "node": "Apply Health Logic", "type": "main", "index": 0 }]] },
-    "Apply Health Logic": { "main": [[{ "node": "Return Health JSON", "type": "main", "index": 0 }]] }
+    "Receive Request": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
+    "Token Check": {"main": [[{"node": "Query Neon", "type": "main", "index": 0}]]},
+    "Query Neon": {"main": [[{"node": "Apply Health Logic", "type": "main", "index": 0}]]},
+    "Apply Health Logic": {"main": [[{"node": "Return Health JSON", "type": "main", "index": 0}]]}
   },
-  "active": false,
-  "settings": { "executionOrder": "v1", "binaryMode": "separate" },
-  "versionId": "client-health-query-v1-001",
-  "meta": { "templateCredsSetupCompleted": false, "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914" },
-  "id": "",
-  "tags": []
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "errorWorkflow": "Al6gagYmiq1feOWq"},
+  "staticData": null,
+  "meta": {"templateCredsSetupCompleted": true},
+  "pinData": {},
+  "versionId": "c00a8de1-6eb4-462d-83be-139061f89e55",
+  "activeVersionId": "c00a8de1-6eb4-462d-83be-139061f89e55",
+  "versionCounter": 14,
+  "triggerCount": 1,
+  "tags": [{"id": "1em2yJdCKJ7vT0la", "name": "internal"}]
 }

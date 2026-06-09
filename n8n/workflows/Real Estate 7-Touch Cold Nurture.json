@@ -1,18 +1,16 @@
 {
+  "updatedAt": "2026-06-07T00:50:55.669Z",
+  "createdAt": "2026-06-04T02:05:48.275Z",
+  "id": "LNVSsULAW1WrIHz1",
   "name": "Real Estate 7-Touch Cold Nurture",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "cn-enroll",
-        "options": {}
-      },
+      "parameters": {"httpMethod": "POST", "path": "cn-enroll", "options": {}},
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [
-        240,
-        300
-      ],
+      "position": [240, 304],
       "id": "c3d4e5f6-0001-4000-8000-000000000001",
       "name": "Manual Enrollment",
       "webhookId": "a3f7c291-4e82-4b1d-9c5a-8d6e2f0b3471"
@@ -20,23 +18,8 @@
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "token-check-nurture-001",
-              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
-              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
-              "operator": {
-                "type": "string",
-                "operation": "startsWith"
-              }
-            }
-          ],
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "token-check-nurture-001", "leftValue": "={{ $json.headers[\"x-norr-token\"] }}", "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "startsWith"}}],
           "combinator": "or"
         },
         "looseTypeValidation": true,
@@ -44,23 +27,17 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [
-        440,
-        380
-      ],
+      "position": [464, 304],
       "id": "c3d4e5f6-0003-4000-8000-000000000003",
       "name": "Token Check"
     },
     {
       "parameters": {
-        "jsCode": "const body = $('Manual Enrollment').first().json.body;\n\nconst lead_name        = body.lead_name        || '';\nconst phone            = body.phone            || '';\nconst email            = body.email            || '';\nconst source           = body.source           || '';\nconst lead_message     = body.lead_message     || '';\nconst property_address = body.property_address || '';\nconst price_range      = body.price_range      || '';\nconst beds             = body.beds             || '';\nconst baths            = body.baths            || '';\nconst agent_name       = body.agent_name       || '';\nconst agent_email      = body.agent_email      || '';\nconst agent_phone      = body.agent_phone      || '';\nconst business_name    = body.business_name    || '';\n\nconst lines = [];\nif (property_address) lines.push(`Property of interest: ${property_address}`);\nif (price_range)      lines.push(`Price range: ${price_range}`);\nif (beds !== '' || baths !== '')    lines.push(`Beds/baths: ${beds || '?'} bed / ${baths || '?'} bath`);\nif (lead_message)     lines.push(`Original message: \\\"${lead_message}\\\"`);\n\nconst context_block = lines.length\n  ? lines.join('\\n')\n  : 'General buyer inquiry — no details or message on file.';\n\nreturn [{\n  json: {\n    lead_name,\n    phone,\n    email,\n    source,\n    lead_message,\n    property_address,\n    price_range,\n    beds,\n    baths,\n    agent_name,\n    agent_email,\n    agent_phone,\n    business_name,\n    has_email: email.trim().length > 0,\n    context_block,\n    channel: 'email',\n  }\n}];"
+        "jsCode": "const body = $('Manual Enrollment').first().json.body;\n\nconst lead_name        = body.lead_name        || '';\nconst phone            = body.phone            || '';\nconst email            = body.email            || '';\nconst source           = body.source           || '';\nconst lead_message     = body.lead_message     || '';\nconst property_address = body.property_address || '';\nconst price_range      = body.price_range      || '';\nconst beds             = body.beds             || '';\nconst baths            = body.baths            || '';\nconst agent_name       = body.agent_name       || '';\nconst agent_email      = body.agent_email      || '';\nconst agent_phone      = body.agent_phone      || '';\nconst business_name    = body.business_name    || '';\n\nconst lines = [];\nif (property_address) lines.push(`Property of interest: ${property_address}`);\nif (price_range)      lines.push(`Price range: ${price_range}`);\nif (beds !== '' || baths !== '')    lines.push(`Beds/baths: ${beds || '?'} bed / ${baths || '?'} bath`);\nif (lead_message)     lines.push(`Original message: \\\"${lead_message}\\\"`);\n\nconst context_block = lines.length\n  ? lines.join('\\n')\n  : 'General buyer inquiry — no details or message on file.';\n\nreturn [{\n  json: {\n    lead_name, phone, email, source, lead_message, property_address, price_range, beds, baths,\n    agent_name, agent_email, agent_phone, business_name,\n    has_email: email.trim().length > 0,\n    context_block,\n    channel: 'email',\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        640,
-        300
-      ],
+      "position": [1360, 304],
       "id": "c3d4e5f6-0004-4000-8000-000000000004",
       "name": "Prep Fields"
     },
@@ -72,55 +49,92 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [
-        840,
-        300
-      ],
+      "position": [1584, 304],
       "id": "c3d4e5f6-0004-4000-8000-000000000099",
       "name": "Mark Nurture Enrolled",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "alwaysOutputData": true,
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "resume": "timeInterval",
-        "amount": 1,
-        "unit": "days"
+        "operation": "executeQuery",
+        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $('Prep Fields').item.json.email }}') LIMIT 1",
+        "options": {}
       },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1808, 304],
+      "id": "cn-optout-01-postgres",
+      "name": "Check Email Opt-Out",
+      "alwaysOutputData": true,
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "cn-optout-01-cond", "leftValue": "={{ ($input.first().json.email_opt_out || false) }}", "operator": {"type": "boolean", "operation": "true", "singleValue": true}}],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2032, 304],
+      "id": "cn-optout-01-if",
+      "name": "Email Opted Out?"
+    },
+    {
+      "parameters": {"amount": 1, "unit": "days"},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        1040,
-        300
-      ],
+      "position": [2256, 304],
       "id": "c3d4e5f6-0005-4000-8000-000000000005",
-      "name": "Wait Day 1"
+      "name": "Wait Day 1",
+      "webhookId": "3a47532e-27fc-4406-abd6-a02c4fa33954"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "prompt-t1",
-              "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent following up with a lead who went quiet.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nSource: {{ $('Prep Fields').first().json.source }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 1 of 6 — Day 1. Channel: EMAIL.\nAngle: Warm follow-up. You reached out once and didn't hear back. Keep it short. Reference what you know about their search — if a property is listed use it specifically, otherwise speak to their search stage based on the context available. Only reference details you have been given — do not invent specifics you weren't told. If context is minimal, focus entirely on warmth and availability — skip property-specific references. No pressure. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nKeep the body under 80 words. Warm and personal.",
-              "type": "string"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2480, 304],
+      "id": "chk-enroll-t1-postgres",
+      "name": "Check Enrolled T1",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "chk-t1-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": {"type": "string", "operation": "equals"}}],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2704, 304],
+      "id": "chk-enroll-t1-if",
+      "name": "IF Enrolled T1"
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "prompt-t1", "name": "prompt", "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent following up with a lead who went quiet.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nSource: {{ $('Prep Fields').first().json.source }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 1 of 6 — Day 1. Channel: EMAIL.\nAngle: Warm follow-up. You reached out once and didn't hear back. Keep it short. Reference what you know about their search — if a property is listed use it specifically, otherwise speak to their search stage based on the context available. Only reference details you have been given — do not invent specifics you weren't told. If context is minimal, focus entirely on warmth and availability — skip property-specific references. No pressure. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nKeep the body under 80 words. Warm and personal.", "type": "string"}]},
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        1040,
-        300
-      ],
+      "position": [2928, 304],
       "id": "c3d4e5f6-0006-4000-8000-000000000006",
       "name": "Build Prompt T1"
     },
@@ -131,18 +145,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
@@ -150,21 +153,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        1240,
-        300
-      ],
+      "position": [3152, 304],
       "id": "c3d4e5f6-0007-4000-8000-000000000007",
       "name": "Claude T1",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "anthropicApi": {
-          "id": "gXqu8TiqvDY4mUPZ",
-          "name": "Anthropic account 2"
-        }
-      }
+      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
     },
     {
       "parameters": {
@@ -172,10 +167,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1440,
-        300
-      ],
+      "position": [3376, 304],
       "id": "c3d4e5f6-0008-4000-8000-000000000008",
       "name": "Extract T1"
     },
@@ -186,14 +178,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
@@ -201,55 +186,60 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        1640,
-        300
-      ],
+      "position": [3600, 304],
       "id": "c3d4e5f6-0009-4000-8000-000000000009",
       "name": "Email T1",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "d2B1Q0ceGNVDwjqs",
-          "name": "Header Auth account"
-        }
-      },
+      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}},
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 2,
-        "unit": "days"
-      },
+      "parameters": {"amount": 2, "unit": "days"},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        1840,
-        300
-      ],
+      "position": [3824, 304],
       "id": "c3d4e5f6-0010-4000-8000-000000000010",
-      "name": "Wait Day 3"
+      "name": "Wait Day 3",
+      "webhookId": "46c76d7a-8c31-4734-b442-59730fdea0ff"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "prompt-t2",
-              "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 2 of 6 — Day 3. Channel: EMAIL.\nAngle: Different angle from the first message. Pick one compelling angle — a specific detail about the property if listed, a sharp market observation if you have a price range, or a genuine question about what they're prioritizing if you have neither. Only reference property details you have been given — do not invent specifics you weren't told. Make it feel like a genuine tip, not a follow-up. No \"just checking in.\" Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 80 words. Sharp and useful.",
-              "type": "string"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [4048, 304],
+      "id": "chk-enroll-t2-postgres",
+      "name": "Check Enrolled T2",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "chk-t2-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": {"type": "string", "operation": "equals"}}],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [4272, 304],
+      "id": "chk-enroll-t2-if",
+      "name": "IF Enrolled T2"
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "prompt-t2", "name": "prompt", "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 2 of 6 — Day 3. Channel: EMAIL.\nAngle: Different angle from the first message. Pick one compelling angle — a specific detail about the property if listed, a sharp market observation if you have a price range, or a genuine question about what they're prioritizing if you have neither. Only reference property details you have been given — do not invent specifics you weren't told. Make it feel like a genuine tip, not a follow-up. No \"just checking in.\" Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 80 words. Sharp and useful.", "type": "string"}]},
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        2040,
-        300
-      ],
+      "position": [4496, 304],
       "id": "c3d4e5f6-0011-4000-8000-000000000011",
       "name": "Build Prompt T2"
     },
@@ -260,18 +250,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
@@ -279,21 +258,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        2240,
-        300
-      ],
+      "position": [4720, 304],
       "id": "c3d4e5f6-0012-4000-8000-000000000012",
       "name": "Claude T2",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "anthropicApi": {
-          "id": "gXqu8TiqvDY4mUPZ",
-          "name": "Anthropic account 2"
-        }
-      }
+      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
     },
     {
       "parameters": {
@@ -301,10 +272,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        2440,
-        300
-      ],
+      "position": [4944, 304],
       "id": "c3d4e5f6-0013-4000-8000-000000000013",
       "name": "Extract T2"
     },
@@ -315,14 +283,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
@@ -330,55 +291,60 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        2640,
-        300
-      ],
+      "position": [5168, 304],
       "id": "c3d4e5f6-0014-4000-8000-000000000014",
       "name": "Email T2",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "d2B1Q0ceGNVDwjqs",
-          "name": "Header Auth account"
-        }
-      },
+      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}},
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 4,
-        "unit": "days"
-      },
+      "parameters": {"amount": 4, "unit": "days"},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        2840,
-        300
-      ],
+      "position": [5392, 304],
       "id": "c3d4e5f6-0015-4000-8000-000000000015",
-      "name": "Wait Day 7"
+      "name": "Wait Day 7",
+      "webhookId": "a8601cde-ef8b-4e82-b024-718b2e75a3c7"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "prompt-t3",
-              "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 3 of 6 — Day 7. Channel: EMAIL.\nAngle: Value-add. Value-add touch. If you have specific context (price range, property), share a relevant market observation. If context is minimal, acknowledge that real estate timing is everything and offer a genuine, no-pressure check-in — something that feels useful, not like a follow-up. Make them feel like you're giving them useful intel, not chasing them. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words. Informative, not salesy.",
-              "type": "string"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [5616, 304],
+      "id": "chk-enroll-t3-postgres",
+      "name": "Check Enrolled T3",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "chk-t3-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": {"type": "string", "operation": "equals"}}],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [5840, 304],
+      "id": "chk-enroll-t3-if",
+      "name": "IF Enrolled T3"
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "prompt-t3", "name": "prompt", "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 3 of 6 — Day 7. Channel: EMAIL.\nAngle: Value-add. If you have specific context (price range, property), share a relevant market observation. If context is minimal, acknowledge that real estate timing is everything and offer a genuine, no-pressure check-in. Make them feel like you're giving them useful intel, not chasing them. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words. Informative, not salesy.", "type": "string"}]},
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        3040,
-        300
-      ],
+      "position": [6064, 304],
       "id": "c3d4e5f6-0016-4000-8000-000000000016",
       "name": "Build Prompt T3"
     },
@@ -389,18 +355,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
@@ -408,21 +363,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        3240,
-        300
-      ],
+      "position": [6288, 304],
       "id": "c3d4e5f6-0017-4000-8000-000000000017",
       "name": "Claude T3",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "anthropicApi": {
-          "id": "gXqu8TiqvDY4mUPZ",
-          "name": "Anthropic account 2"
-        }
-      }
+      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
     },
     {
       "parameters": {
@@ -430,10 +377,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        3440,
-        300
-      ],
+      "position": [6512, 304],
       "id": "c3d4e5f6-0018-4000-8000-000000000018",
       "name": "Extract T3"
     },
@@ -444,14 +388,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
@@ -459,55 +396,60 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        3640,
-        300
-      ],
+      "position": [6736, 304],
       "id": "c3d4e5f6-0019-4000-8000-000000000019",
       "name": "Email T3",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "d2B1Q0ceGNVDwjqs",
-          "name": "Header Auth account"
-        }
-      },
+      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}},
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 3,
-        "unit": "days"
-      },
+      "parameters": {"amount": 3, "unit": "days"},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        3840,
-        300
-      ],
+      "position": [6960, 304],
       "id": "c3d4e5f6-0020-4000-8000-000000000020",
-      "name": "Wait Day 10"
+      "name": "Wait Day 10",
+      "webhookId": "94a6c329-3970-46ae-9a94-867956fd5993"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "prompt-t4",
-              "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 4 of 6 — Day 10. Channel: EMAIL.\nAngle: Soft check-in. Are they still searching? Maybe their situation changed. Keep it genuinely curious, not needy. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words. Casual and brief.",
-              "type": "string"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [7184, 304],
+      "id": "chk-enroll-t4-postgres",
+      "name": "Check Enrolled T4",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "chk-t4-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": {"type": "string", "operation": "equals"}}],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [7408, 304],
+      "id": "chk-enroll-t4-if",
+      "name": "IF Enrolled T4"
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "prompt-t4", "name": "prompt", "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 4 of 6 — Day 10. Channel: EMAIL.\nAngle: Soft check-in. Are they still searching? Maybe their situation changed. Keep it genuinely curious, not needy. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words. Casual and brief.", "type": "string"}]},
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        4040,
-        300
-      ],
+      "position": [7632, 304],
       "id": "c3d4e5f6-0021-4000-8000-000000000021",
       "name": "Build Prompt T4"
     },
@@ -518,18 +460,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
@@ -537,21 +468,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        4240,
-        300
-      ],
+      "position": [7856, 304],
       "id": "c3d4e5f6-0022-4000-8000-000000000022",
       "name": "Claude T4",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "anthropicApi": {
-          "id": "gXqu8TiqvDY4mUPZ",
-          "name": "Anthropic account 2"
-        }
-      }
+      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
     },
     {
       "parameters": {
@@ -559,10 +482,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        4440,
-        300
-      ],
+      "position": [8080, 304],
       "id": "c3d4e5f6-0023-4000-8000-000000000023",
       "name": "Extract T4"
     },
@@ -573,14 +493,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
@@ -588,55 +501,60 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        4640,
-        300
-      ],
+      "position": [8304, 304],
       "id": "c3d4e5f6-0024-4000-8000-000000000024",
       "name": "Email T4",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "d2B1Q0ceGNVDwjqs",
-          "name": "Header Auth account"
-        }
-      },
+      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}},
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 4,
-        "unit": "days"
-      },
+      "parameters": {"amount": 4, "unit": "days"},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        4840,
-        300
-      ],
+      "position": [8528, 304],
       "id": "c3d4e5f6-0025-4000-8000-000000000025",
-      "name": "Wait Day 14"
+      "name": "Wait Day 14",
+      "webhookId": "845b6683-5490-45be-91f4-1023f2a41516"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "prompt-t5",
-              "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 5 of 6 — Day 14. Channel: EMAIL.\nAngle: No pressure at all. Acknowledge that timing is everything in real estate and people's situations change. You're not going anywhere. Offer to answer any questions whenever they're ready — even if it's months from now. Warm and genuinely patient tone. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words.",
-              "type": "string"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [8752, 304],
+      "id": "chk-enroll-t5-postgres",
+      "name": "Check Enrolled T5",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "chk-t5-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": {"type": "string", "operation": "equals"}}],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [8976, 304],
+      "id": "chk-enroll-t5-if",
+      "name": "IF Enrolled T5"
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "prompt-t5", "name": "prompt", "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 5 of 6 — Day 14. Channel: EMAIL.\nAngle: No pressure at all. Acknowledge that timing is everything in real estate and people's situations change. You're not going anywhere. Offer to answer any questions whenever they're ready — even if it's months from now. Warm and genuinely patient tone. Sign off with your name and phone: {{ $('Prep Fields').first().json.agent_phone }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 100 words.", "type": "string"}]},
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        5040,
-        300
-      ],
+      "position": [9200, 304],
       "id": "c3d4e5f6-0026-4000-8000-000000000026",
       "name": "Build Prompt T5"
     },
@@ -647,18 +565,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
@@ -666,21 +573,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        5240,
-        300
-      ],
+      "position": [9424, 304],
       "id": "c3d4e5f6-0027-4000-8000-000000000027",
       "name": "Claude T5",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "anthropicApi": {
-          "id": "gXqu8TiqvDY4mUPZ",
-          "name": "Anthropic account 2"
-        }
-      }
+      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
     },
     {
       "parameters": {
@@ -688,10 +587,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        5440,
-        300
-      ],
+      "position": [9648, 304],
       "id": "c3d4e5f6-0028-4000-8000-000000000028",
       "name": "Extract T5"
     },
@@ -702,14 +598,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
@@ -717,55 +606,60 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        5640,
-        300
-      ],
+      "position": [9872, 304],
       "id": "c3d4e5f6-0029-4000-8000-000000000029",
       "name": "Email T5",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "d2B1Q0ceGNVDwjqs",
-          "name": "Header Auth account"
-        }
-      },
+      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}},
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 7,
-        "unit": "days"
-      },
+      "parameters": {"amount": 7, "unit": "days"},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        5840,
-        300
-      ],
+      "position": [10096, 304],
       "id": "c3d4e5f6-0030-4000-8000-000000000030",
-      "name": "Wait Day 21"
+      "name": "Wait Day 21",
+      "webhookId": "67f73f42-6113-438b-be0d-3c3c65d64ffb"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "prompt-t6",
-              "name": "prompt",
-              "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 6 of 6 — Day 21. Channel: EMAIL. This is the last message.\nAngle: Final touch. Low pressure, door wide open. Something like: you won't keep reaching out, but you're here whenever they're ready. Leave a genuinely warm impression. No guilt, no urgency. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words.",
-              "type": "string"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [10320, 304],
+      "id": "chk-enroll-t6-postgres",
+      "name": "Check Enrolled T6",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "chk-t6-001", "leftValue": "={{ $json.status }}", "rightValue": "nurturing", "operator": {"type": "string", "operation": "equals"}}],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [10544, 304],
+      "id": "chk-enroll-t6-if",
+      "name": "IF Enrolled T6"
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "prompt-t6", "name": "prompt", "value": "=You are {{ $('Prep Fields').first().json.agent_name }}, a real estate agent.\n\nLEAD: {{ $('Prep Fields').first().json.lead_name }}\nLEAD CONTEXT:\n{{ $('Prep Fields').first().json.context_block }}\n\nThis is TOUCH 6 of 6 — Day 21. Channel: EMAIL. This is the last message.\nAngle: Final touch. Low pressure, door wide open. Something like: you won't keep reaching out, but you're here whenever they're ready. Leave a genuinely warm impression. No guilt, no urgency. Sign off with your name: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite a subject line and email body. Format exactly as:\nSUBJECT: [subject here]\nBODY: [email body here]\n\nBody under 60 words.", "type": "string"}]},
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        6040,
-        300
-      ],
+      "position": [10768, 304],
       "id": "c3d4e5f6-0031-4000-8000-000000000031",
       "name": "Build Prompt T6"
     },
@@ -776,18 +670,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
@@ -795,21 +678,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        6240,
-        300
-      ],
+      "position": [10992, 304],
       "id": "c3d4e5f6-0032-4000-8000-000000000032",
       "name": "Claude T6",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "anthropicApi": {
-          "id": "gXqu8TiqvDY4mUPZ",
-          "name": "Anthropic account 2"
-        }
-      }
+      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
     },
     {
       "parameters": {
@@ -817,10 +692,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        6440,
-        300
-      ],
+      "position": [11216, 304],
       "id": "c3d4e5f6-0033-4000-8000-000000000033",
       "name": "Extract T6"
     },
@@ -831,14 +703,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email }], subject: $json.subject }], from: { email: 'hello@norrai.co', name: $json.agent_name }, content: [{ type: 'text/html', value: $json.html_body }], tracking_settings: { click_tracking: { enable: false } } } }}",
@@ -846,431 +711,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        6640,
-        300
-      ],
+      "position": [11440, 304],
       "id": "c3d4e5f6-0034-4000-8000-000000000034",
       "name": "Email T6",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "d2B1Q0ceGNVDwjqs",
-          "name": "Header Auth account"
-        }
-      },
+      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}},
       "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        940,
-        300
-      ],
-      "id": "chk-enroll-t1-postgres",
-      "name": "Check Enrolled T1",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "chk-t1-001",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "nurturing",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        990,
-        300
-      ],
-      "id": "chk-enroll-t1-if",
-      "name": "IF Enrolled T1"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        1940,
-        300
-      ],
-      "id": "chk-enroll-t2-postgres",
-      "name": "Check Enrolled T2",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "chk-t2-001",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "nurturing",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1990,
-        300
-      ],
-      "id": "chk-enroll-t2-if",
-      "name": "IF Enrolled T2"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        2940,
-        300
-      ],
-      "id": "chk-enroll-t3-postgres",
-      "name": "Check Enrolled T3",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "chk-t3-001",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "nurturing",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        2990,
-        300
-      ],
-      "id": "chk-enroll-t3-if",
-      "name": "IF Enrolled T3"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        3940,
-        300
-      ],
-      "id": "chk-enroll-t4-postgres",
-      "name": "Check Enrolled T4",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "chk-t4-001",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "nurturing",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        3990,
-        300
-      ],
-      "id": "chk-enroll-t4-if",
-      "name": "IF Enrolled T4"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        4940,
-        300
-      ],
-      "id": "chk-enroll-t5-postgres",
-      "name": "Check Enrolled T5",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "chk-t5-001",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "nurturing",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        4990,
-        300
-      ],
-      "id": "chk-enroll-t5-if",
-      "name": "IF Enrolled T5"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "onError": "continueRegularOutput",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        5940,
-        300
-      ],
-      "id": "chk-enroll-t6-postgres",
-      "name": "Check Enrolled T6",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "chk-t6-001",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "nurturing",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        5990,
-        300
-      ],
-      "id": "chk-enroll-t6-if",
-      "name": "IF Enrolled T6"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $('Prep Fields').item.json.email }}') LIMIT 1",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        1040,
-        300
-      ],
-      "id": "cn-optout-01-postgres",
-      "name": "Check Email Opt-Out",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "cn-optout-01-cond",
-              "leftValue": "={{ ($input.first().json.email_opt_out || false) }}",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1240,
-        300
-      ],
-      "id": "cn-optout-01-if",
-      "name": "Email Opted Out?"
     },
     {
       "parameters": {
@@ -1278,644 +723,96 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        640,
-        640
-      ],
+      "position": [688, 304],
       "id": "btq-039ffbe7e7a64585",
       "name": "Build Token Query",
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ $json.client_query }}",
-        "options": {
-          "alwaysOutputData": true
-        }
-      },
+      "parameters": {"operation": "executeQuery", "query": "{{ $json.client_query }}", "options": {}},
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [
-        860,
-        640
-      ],
+      "position": [912, 304],
       "id": "vct-9fdb88404d7a4b47",
       "name": "Validate Client Token",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "24f4927d-7db3-4e9e-a376-22e95cd69014",
-              "leftValue": "={{ $json.id }}",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            }
-          ],
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
+          "conditions": [{"id": "24f4927d-7db3-4e9e-a376-22e95cd69014", "leftValue": "={{ $json.id }}", "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}}],
           "combinator": "or"
         },
-        "looseTypeValidation": true,
         "options": {}
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [
-        1080,
-        640
-      ],
+      "position": [1136, 304],
       "id": "cv-f070c5b0ec9e4b40",
       "name": "Client Valid?"
     }
   ],
-  "pinData": {},
   "connections": {
-    "Manual Enrollment": {
-      "main": [
-        [
-          {
-            "node": "Token Check",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Token Check": {
-      "main": [
-        [
-          {
-            "node": "Build Token Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prep Fields": {
-      "main": [
-        [
-          {
-            "node": "Mark Nurture Enrolled",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mark Nurture Enrolled": {
-      "main": [
-        [
-          {
-            "node": "Check Email Opt-Out",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Email Opt-Out": {
-      "main": [
-        [
-          {
-            "node": "Email Opted Out?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email Opted Out?": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Wait Day 1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Day 1": {
-      "main": [
-        [
-          {
-            "node": "Check Enrolled T1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Enrolled T1": {
-      "main": [
-        [
-          {
-            "node": "IF Enrolled T1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Enrolled T1": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt T1",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Build Prompt T1": {
-      "main": [
-        [
-          {
-            "node": "Claude T1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Claude T1": {
-      "main": [
-        [
-          {
-            "node": "Extract T1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract T1": {
-      "main": [
-        [
-          {
-            "node": "Email T1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T1": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Day 3": {
-      "main": [
-        [
-          {
-            "node": "Check Enrolled T2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Enrolled T2": {
-      "main": [
-        [
-          {
-            "node": "IF Enrolled T2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Enrolled T2": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt T2",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Build Prompt T2": {
-      "main": [
-        [
-          {
-            "node": "Claude T2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Claude T2": {
-      "main": [
-        [
-          {
-            "node": "Extract T2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract T2": {
-      "main": [
-        [
-          {
-            "node": "Email T2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T2": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 7",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Day 7": {
-      "main": [
-        [
-          {
-            "node": "Check Enrolled T3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Enrolled T3": {
-      "main": [
-        [
-          {
-            "node": "IF Enrolled T3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Enrolled T3": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt T3",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Build Prompt T3": {
-      "main": [
-        [
-          {
-            "node": "Claude T3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Claude T3": {
-      "main": [
-        [
-          {
-            "node": "Extract T3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract T3": {
-      "main": [
-        [
-          {
-            "node": "Email T3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T3": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 10",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Day 10": {
-      "main": [
-        [
-          {
-            "node": "Check Enrolled T4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Enrolled T4": {
-      "main": [
-        [
-          {
-            "node": "IF Enrolled T4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Enrolled T4": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt T4",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Build Prompt T4": {
-      "main": [
-        [
-          {
-            "node": "Claude T4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Claude T4": {
-      "main": [
-        [
-          {
-            "node": "Extract T4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract T4": {
-      "main": [
-        [
-          {
-            "node": "Email T4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T4": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 14",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Day 14": {
-      "main": [
-        [
-          {
-            "node": "Check Enrolled T5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Enrolled T5": {
-      "main": [
-        [
-          {
-            "node": "IF Enrolled T5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Enrolled T5": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt T5",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Build Prompt T5": {
-      "main": [
-        [
-          {
-            "node": "Claude T5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Claude T5": {
-      "main": [
-        [
-          {
-            "node": "Extract T5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract T5": {
-      "main": [
-        [
-          {
-            "node": "Email T5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T5": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 21",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Day 21": {
-      "main": [
-        [
-          {
-            "node": "Check Enrolled T6",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Enrolled T6": {
-      "main": [
-        [
-          {
-            "node": "IF Enrolled T6",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Enrolled T6": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt T6",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Build Prompt T6": {
-      "main": [
-        [
-          {
-            "node": "Claude T6",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Claude T6": {
-      "main": [
-        [
-          {
-            "node": "Extract T6",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract T6": {
-      "main": [
-        [
-          {
-            "node": "Email T6",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Token Query": {
-      "main": [
-        [
-          {
-            "node": "Validate Client Token",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Validate Client Token": {
-      "main": [
-        [
-          {
-            "node": "Client Valid?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Client Valid?": {
-      "main": [
-        [
-          {
-            "node": "Prep Fields",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    }
+    "Manual Enrollment": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
+    "Token Check": {"main": [[{"node": "Build Token Query", "type": "main", "index": 0}]]},
+    "Build Token Query": {"main": [[{"node": "Validate Client Token", "type": "main", "index": 0}]]},
+    "Validate Client Token": {"main": [[{"node": "Client Valid?", "type": "main", "index": 0}]]},
+    "Client Valid?": {"main": [[{"node": "Prep Fields", "type": "main", "index": 0}], []]},
+    "Prep Fields": {"main": [[{"node": "Mark Nurture Enrolled", "type": "main", "index": 0}]]},
+    "Mark Nurture Enrolled": {"main": [[{"node": "Check Email Opt-Out", "type": "main", "index": 0}]]},
+    "Check Email Opt-Out": {"main": [[{"node": "Email Opted Out?", "type": "main", "index": 0}]]},
+    "Email Opted Out?": {"main": [[], [{"node": "Wait Day 1", "type": "main", "index": 0}]]},
+    "Wait Day 1": {"main": [[{"node": "Check Enrolled T1", "type": "main", "index": 0}]]},
+    "Check Enrolled T1": {"main": [[{"node": "IF Enrolled T1", "type": "main", "index": 0}]]},
+    "IF Enrolled T1": {"main": [[{"node": "Build Prompt T1", "type": "main", "index": 0}], []]},
+    "Build Prompt T1": {"main": [[{"node": "Claude T1", "type": "main", "index": 0}]]},
+    "Claude T1": {"main": [[{"node": "Extract T1", "type": "main", "index": 0}]]},
+    "Extract T1": {"main": [[{"node": "Email T1", "type": "main", "index": 0}]]},
+    "Email T1": {"main": [[{"node": "Wait Day 3", "type": "main", "index": 0}]]},
+    "Wait Day 3": {"main": [[{"node": "Check Enrolled T2", "type": "main", "index": 0}]]},
+    "Check Enrolled T2": {"main": [[{"node": "IF Enrolled T2", "type": "main", "index": 0}]]},
+    "IF Enrolled T2": {"main": [[{"node": "Build Prompt T2", "type": "main", "index": 0}], []]},
+    "Build Prompt T2": {"main": [[{"node": "Claude T2", "type": "main", "index": 0}]]},
+    "Claude T2": {"main": [[{"node": "Extract T2", "type": "main", "index": 0}]]},
+    "Extract T2": {"main": [[{"node": "Email T2", "type": "main", "index": 0}]]},
+    "Email T2": {"main": [[{"node": "Wait Day 7", "type": "main", "index": 0}]]},
+    "Wait Day 7": {"main": [[{"node": "Check Enrolled T3", "type": "main", "index": 0}]]},
+    "Check Enrolled T3": {"main": [[{"node": "IF Enrolled T3", "type": "main", "index": 0}]]},
+    "IF Enrolled T3": {"main": [[{"node": "Build Prompt T3", "type": "main", "index": 0}], []]},
+    "Build Prompt T3": {"main": [[{"node": "Claude T3", "type": "main", "index": 0}]]},
+    "Claude T3": {"main": [[{"node": "Extract T3", "type": "main", "index": 0}]]},
+    "Extract T3": {"main": [[{"node": "Email T3", "type": "main", "index": 0}]]},
+    "Email T3": {"main": [[{"node": "Wait Day 10", "type": "main", "index": 0}]]},
+    "Wait Day 10": {"main": [[{"node": "Check Enrolled T4", "type": "main", "index": 0}]]},
+    "Check Enrolled T4": {"main": [[{"node": "IF Enrolled T4", "type": "main", "index": 0}]]},
+    "IF Enrolled T4": {"main": [[{"node": "Build Prompt T4", "type": "main", "index": 0}], []]},
+    "Build Prompt T4": {"main": [[{"node": "Claude T4", "type": "main", "index": 0}]]},
+    "Claude T4": {"main": [[{"node": "Extract T4", "type": "main", "index": 0}]]},
+    "Extract T4": {"main": [[{"node": "Email T4", "type": "main", "index": 0}]]},
+    "Email T4": {"main": [[{"node": "Wait Day 14", "type": "main", "index": 0}]]},
+    "Wait Day 14": {"main": [[{"node": "Check Enrolled T5", "type": "main", "index": 0}]]},
+    "Check Enrolled T5": {"main": [[{"node": "IF Enrolled T5", "type": "main", "index": 0}]]},
+    "IF Enrolled T5": {"main": [[{"node": "Build Prompt T5", "type": "main", "index": 0}], []]},
+    "Build Prompt T5": {"main": [[{"node": "Claude T5", "type": "main", "index": 0}]]},
+    "Claude T5": {"main": [[{"node": "Extract T5", "type": "main", "index": 0}]]},
+    "Extract T5": {"main": [[{"node": "Email T5", "type": "main", "index": 0}]]},
+    "Email T5": {"main": [[{"node": "Wait Day 21", "type": "main", "index": 0}]]},
+    "Wait Day 21": {"main": [[{"node": "Check Enrolled T6", "type": "main", "index": 0}]]},
+    "Check Enrolled T6": {"main": [[{"node": "IF Enrolled T6", "type": "main", "index": 0}]]},
+    "IF Enrolled T6": {"main": [[{"node": "Build Prompt T6", "type": "main", "index": 0}], []]},
+    "Build Prompt T6": {"main": [[{"node": "Claude T6", "type": "main", "index": 0}]]},
+    "Claude T6": {"main": [[{"node": "Extract T6", "type": "main", "index": 0}]]},
+    "Extract T6": {"main": [[{"node": "Email T6", "type": "main", "index": 0}]]}
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
-  },
-  "versionId": "cold-nurture-v1-001",
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
-  },
-  "id": "",
-  "tags": []
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "timeSavedMode": "fixed", "errorWorkflow": "Al6gagYmiq1feOWq", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": false},
+  "staticData": null,
+  "meta": {"templateCredsSetupCompleted": true},
+  "pinData": {},
+  "versionId": "242e2341-13d5-4daf-8e3d-4b599e0b817a",
+  "activeVersionId": "242e2341-13d5-4daf-8e3d-4b599e0b817a",
+  "versionCounter": 141,
+  "triggerCount": 1,
+  "tags": [{"id": "hF4YeAdcnZuVMhqJ", "name": "real estate"}]
 }

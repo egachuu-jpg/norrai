@@ -1,0 +1,646 @@
+{
+  "updatedAt": "2026-05-17T03:07:49.123Z",
+  "createdAt": "2026-05-01T01:41:48.394Z",
+  "id": "iRIUfLsGHDYqbnW1",
+  "name": "B&B Lead Generator v1",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yHLDx3QWGfUsm4VTp5rORPVt5L1Zpwz62ZjCsxNIcVE",
+          "mode": "list",
+          "cachedResultName": "bnb_customers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yHLDx3QWGfUsm4VTp5rORPVt5L1Zpwz62ZjCsxNIcVE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yHLDx3QWGfUsm4VTp5rORPVt5L1Zpwz62ZjCsxNIcVE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2864,
+        96
+      ],
+      "id": "32884ec5-de15-41ac-8d5f-bb4d6098f653",
+      "name": "Read Exclusion Sheet",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "S4rGaoxctip8ec4l",
+          "name": "Google Sheets OAuth2 API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get Apollo contacts (from Search Apollo, two nodes back)\nconst apolloData = $('Search Apollo').first().json;\n//const contacts = apolloData.people || [];\nconst contacts = $('Search Apollo').all().map(item => item.json);\n// Get exclusion rows from Google Sheets (direct input to this node)\nconst exclusionRows = $input.all().map(item => item.json);\n\n// Build exclusion sets (lowercase for case-insensitive matching)\nconst excludedNames = exclusionRows\n  .map(r => (r.company_name || '').toLowerCase().trim())\n  .filter(Boolean);\nconst excludedDomains = exclusionRows\n  .map(r => (r.domain || '').toLowerCase().replace(/^www\\./, '').trim())\n  .filter(Boolean);\n\nfunction isExcluded(contact) {\n  const name = (contact.organization_name || '').toLowerCase();\n  const rawUrl = (contact.organization_website_url || '').toLowerCase();\n  const domain = rawUrl\n    .replace(/^https?:\\/\\//, '')\n    .replace(/^www\\./, '')\n    .split('/')[0];\n  return (\n    excludedNames.some(n => n && name.includes(n)) ||\n    excludedDomains.some(d => d && domain.includes(d))\n  );\n}\n\nreturn contacts.filter(c => !isExcluded(c)).map(c => ({\n  json: {\n    first_name: c.first_name || '',\n    last_name: c.last_name || '',\n    full_name: `${c.first_name || ''} ${c.last_name || ''}`.trim(),\n    title: c.title || '',\n    email: c.email || '',\n    company: c.organization_name || '',\n    website: c.organization_website_url || '',\n    city: c.city || '',\n    state: c.state || ''\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2640,
+        96
+      ],
+      "id": "0f47f048-053a-470f-821b-ed1e70fc7954",
+      "name": "Filter and Dedup"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { first_name: \"Mark\", last_name: \"Hendricks\", title: \"Procurement Manager\", email: \"m.hendricks@prairiemetalworks.com\", organization_name: \"Prairie Metal Works\", organization_website_url: \"https://prairiemetalworks.com\", city: \"Owatonna\", state: \"MN\" } },\n  { json: { first_name: \"Lisa\", last_name: \"Tauer\", title: \"Operations Manager\", email: \"ltauer@agritechfab.com\", organization_name: \"AgriTech Fabrication\", organization_website_url: \"https://agritechfab.com\", city: \"Mankato\", state: \"MN\" } },\n  { json: { first_name: \"Dave\", last_name: \"Schroeder\", title: \"Plant Manager\", email: \"d.schroeder@northernmfg.com\", organization_name: \"Northern Manufacturing\", organization_website_url: \"https://northernmfg.com\", city: \"Rochester\", state: \"MN\" } },\n  { json: { first_name: \"Karen\", last_name: \"Olson\", title: \"Sourcing Manager\", email: \"kolson@midwestoem.com\", organization_name: \"Midwest OEM Solutions\", organization_website_url: \"https://midwestoem.com\", city: \"Faribault\", state: \"MN\" } },\n  { json: { first_name: \"Tom\", last_name: \"Braun\", title: \"Procurement Manager\", email: \"tbraun@steelfabinc.com\", organization_name: \"Steel Fab Inc\", organization_website_url: \"https://steelfabinc.com\", city: \"Albert Lea\", state: \"MN\" } }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3088,
+        96
+      ],
+      "id": "e67667a8-358c-473a-81be-2202ef89cdfd",
+      "name": "Search Apollo"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 11
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3088,
+        320
+      ],
+      "id": "111349fa-28d5-4382-8cd4-1530fdbedd86",
+      "name": "Every Monday 6am CT"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2416,
+        96
+      ],
+      "id": "33be408f-2022-4942-9788-5f88602597ea",
+      "name": "Split by Lead"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 150,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(\"You are a lead qualifier for B&B Manufacturing and Assembly, a custom metal fabrication shop in Faribault, MN. Score this lead from 1-10.\\n\\nLead:\\nName: \" + $json.full_name + \"\\nTitle: \" + $json.title + \"\\nCompany: \" + $json.company + \"\\nLocation: \" + $json.city + \", \" + $json.state + \"\\n\\nReturn ONLY valid JSON: {\\\"score\\\": 8, \\\"reason\\\": \\\"one sentence\\\"}\") }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2192,
+        -48
+      ],
+      "id": "5653871e-d41b-48b2-b964-83a2a1918cd3",
+      "name": "Score with Claude",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nlet score = 0;\nlet reason = 'Claude returned malformed JSON';\ntry {\n  const text = claudeResponse.content[0].text.trim();\n  const parsed = JSON.parse(text);\n  score = parsed.score;\n  reason = parsed.reason;\n} catch (e) {}\n\nconst lead = $('Split by Lead').item.json;\n\nreturn [{ json: { first_name: lead.first_name, last_name: lead.last_name, full_name: lead.full_name, title: lead.title, email: lead.email, company: lead.company, website: lead.website, city: lead.city, state: lead.state, score, reason } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1968,
+        -48
+      ],
+      "id": "2c663187-4eb5-43a6-aedd-de09f86ad90a",
+      "name": "Parse Score"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "score-check-001",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 8,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1744,
+        -48
+      ],
+      "id": "4410bc5a-cc32-4bf0-9899-022ca23b0aac",
+      "name": "Score 8 or Above?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(\"Write a cold outreach email from B&B Manufacturing and Assembly (Faribault, MN) to \" + $json.first_name + \" \" + $json.last_name + \", \" + $json.title + \" at \" + $json.company + \". Under 100 words. CTA: 15-minute discovery call. Sign off: B&B Manufacturing and Assembly. Return ONLY the email body.\") }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1520,
+        -48
+      ],
+      "id": "914d632e-7380-4179-a5b3-089b9241a6b5",
+      "name": "Draft Outreach",
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nconst draft = claudeResponse.content[0].text.trim();\nconst lead = $('Parse Score').item.json;\nreturn [{ json: { first_name: lead.first_name, last_name: lead.last_name, full_name: lead.full_name, title: lead.title, email: lead.email, company: lead.company, city: lead.city, state: lead.state, score: lead.score, reason: lead.reason, draft } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        -48
+      ],
+      "id": "e25a9e5f-9be4-4e69-bfd6-441fc1b7132a",
+      "name": "Parse Draft"
+    },
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@norrai.co",
+        "fromName": "Norr AI",
+        "toEmail": "egachuu@gmail.com",
+        "subject": "=Lead Review — {{ $json.full_name }}, {{ $json.company }} (Score: {{ $json.score }}/10)",
+        "contentValue": "=Lead: {{ $json.full_name }} — {{ $json.title }} at {{ $json.company }}, {{ $json.city }}, {{ $json.state }}\nScore: {{ $json.score }}/10 — {{ $json.reason }}\nEmail: {{ $json.email }}\n\nDrafted outreach:\n---\n{{ $json.draft }}\n---",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        -48
+      ],
+      "id": "f0372d46-0427-41ca-a933-409beacecd92",
+      "name": "Send Review Email",
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (client_id, lead_name, email, phone, source, metadata, lead_message, created_at)\nVALUES (\n  '86a01b94-ddab-4594-8afc-8212fb18fdd0',\n  '{{ $json.full_name.replace(/''/g, \"''\") }}',\n  '{{ $json.email.replace(/''/g, \"''\") }}',\n  NULL,\n  'bnb_lead_generator',\n  '{{ JSON.stringify({company: $json.company, title: $json.title, location: $json.city + \", \" + $json.state, apollo_score: $json.score, score_reason: $json.reason, draft_sent: true}).replace(/''/g, \"''\") }}'::jsonb,\n  '{{ $json.lead_message.replace(/''/g, \"''\") }}',\n  NOW()\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -640,
+        32
+      ],
+      "id": "79b025ea-9b37-494c-8e6c-74ff88b9ed5b",
+      "name": "Log Lead to Neon",
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/v1/mixed_people/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"person_locations\": [\"Faribault, Minnesota\"],\n  \"person_location_radius_miles\": 250,\n  \"organization_industry_tag_ids\": [\"Machinery Manufacturing\", \"Fabricated Metal Products\", \"Industrial Machinery\"],\n  \"person_titles\": [\"Sourcing Manager\", \"Procurement Manager\", \"Operations Manager\", \"Plant Manager\"],\n  \"contact_email_status\": [\"verified\"],\n  \"per_page\": 15\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2864,
+        320
+      ],
+      "id": "0770a89e-5482-490d-907f-f6676cd391a3",
+      "name": "Search Apollo1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WBXsFC6W24Txk9Pl",
+          "name": "Header Auth account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const apolloData = $('Search Apollo1').first().json;\nconst contacts = apolloData.people || [];\nconst exclusionRows = $input.all().map(item => item.json);\nconst excludedNames = exclusionRows.map(r => (r.company_name || '').toLowerCase().trim()).filter(Boolean);\nconst excludedDomains = exclusionRows.map(r => (r.domain || '').toLowerCase().replace(/^www\\./, '').trim()).filter(Boolean);\nfunction isExcluded(contact) {\n  const name = (contact.organization_name || '').toLowerCase();\n  const rawUrl = (contact.organization_website_url || '').toLowerCase();\n  const domain = rawUrl.replace(/^https?:\\/\\//, '').replace(/^www\\./, '').split('/')[0];\n  return excludedNames.some(n => n && name.includes(n)) || excludedDomains.some(d => d && domain.includes(d));\n}\nreturn contacts.filter(c => !isExcluded(c)).map(c => ({ json: { first_name: c.first_name || '', last_name: c.last_name || '', full_name: `${c.first_name || ''} ${c.last_name || ''}`.trim(), title: c.title || '', email: c.email || '', company: c.organization_name || '', website: c.organization_website_url || '', city: c.city || '', state: c.state || '' } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2416,
+        320
+      ],
+      "id": "0b96059e-6e1b-4a8f-8255-2b2171ea4d20",
+      "name": "Filter and Dedup1"
+    },
+    {
+      "parameters": {
+        "operation": "readAllRows",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2640,
+        320
+      ],
+      "id": "8c5c7a54-4d66-48f6-aa2b-88b29eb2f03d",
+      "name": "Read Exclusion Sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "S4rGaoxctip8ec4l",
+          "name": "Google Sheets OAuth2 API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ed7768dc-c435-4725-90be-94bc97b227c3",
+              "name": "full_name",
+              "value": "={{ $('Parse Draft').item.json.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "bf59d006-afa3-4d69-a1e1-893be06bb516",
+              "name": "email",
+              "value": "={{ $('Parse Draft').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "474a2aca-ed35-431e-b23f-017ba95cbb75",
+              "name": "company",
+              "value": "={{ $('Parse Draft').item.json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "3d531743-31be-4635-a1a9-71837dd239c0",
+              "name": "title",
+              "value": "={{ $('Parse Draft').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "896f8c7c-ce1a-4e1a-8c2c-0a6994fd9563",
+              "name": "city",
+              "value": "={{ $('Parse Draft').item.json.city }}",
+              "type": "string"
+            },
+            {
+              "id": "a5a2ca4c-e199-4609-877a-8e0ea343e9ae",
+              "name": "state",
+              "value": "={{ $('Parse Draft').item.json.state }}",
+              "type": "string"
+            },
+            {
+              "id": "b32ca870-6557-4183-8a81-89c23041caf3",
+              "name": "score",
+              "value": "={{ $('Parse Draft').item.json.score }}",
+              "type": "string"
+            },
+            {
+              "id": "f7f50b52-ac36-464c-a978-5b4b3b3ac96e",
+              "name": "reason",
+              "value": "={{ $('Parse Draft').item.json.reason }}",
+              "type": "string"
+            },
+            {
+              "id": "f6d07038-6624-4247-8b7b-050dd92adbec",
+              "name": "lead_message",
+              "value": "={{ $('Parse Draft').item.json.draft }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -864,
+        -48
+      ],
+      "id": "a6c8a6ed-8db7-4203-b2f8-1893b1c3eb2f",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Read Exclusion Sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter and Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and Dedup": {
+      "main": [
+        [
+          {
+            "node": "Split by Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Apollo": {
+      "main": [
+        [
+          {
+            "node": "Read Exclusion Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Monday 6am CT": {
+      "main": [
+        [
+          {
+            "node": "Search Apollo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split by Lead": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Score with Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score with Claude": {
+      "main": [
+        [
+          {
+            "node": "Parse Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Score": {
+      "main": [
+        [
+          {
+            "node": "Score 8 or Above?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score 8 or Above?": {
+      "main": [
+        [
+          {
+            "node": "Draft Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split by Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Outreach": {
+      "main": [
+        [
+          {
+            "node": "Parse Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Draft": {
+      "main": [
+        [
+          {
+            "node": "Send Review Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Review Email": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Lead to Neon": {
+      "main": [
+        [
+          {
+            "node": "Split by Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Apollo1": {
+      "main": [
+        [
+          {
+            "node": "Read Exclusion Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and Dedup1": {
+      "main": [
+        []
+      ]
+    },
+    "Read Exclusion Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Filter and Dedup1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Log Lead to Neon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "ecfae068-1f4c-4887-bafe-62f4d04e5306",
+  "activeVersionId": "54c85bac-5441-4f73-a3e9-fdb4306c5d57",
+  "versionCounter": 171,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:12.325Z",
+      "createdAt": "2026-05-01T01:39:12.325Z",
+      "id": "a0VJrMAK4rSgN6Xi",
+      "name": "metcon"
+    }
+  ]
+}

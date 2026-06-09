@@ -1,0 +1,618 @@
+{
+  "updatedAt": "2026-05-17T15:20:36.329Z",
+  "createdAt": "2026-05-17T15:19:49.924Z",
+  "id": "6Vipz0Hgx0dPKQ27",
+  "name": "Birthday & Anniversary Outreach - Evan",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 14 * * *"
+            }
+          ]
+        }
+      },
+      "id": "51115217-0835-482d-84b1-61ef5eeee724",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2416,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bday-assign-001",
+              "name": "agent_name",
+              "value": "AGENT_FIRST_NAME",
+              "type": "string"
+            },
+            {
+              "id": "bday-assign-002",
+              "name": "agent_email",
+              "value": "AGENT_EMAIL_HERE",
+              "type": "string"
+            },
+            {
+              "id": "bday-assign-003",
+              "name": "client_id",
+              "value": "CLIENT_UUID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4c36451a-3b4f-4168-a510-992c0d60bae2",
+      "name": "Set Agent Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2208,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('CLIENT_UUID_HERE', 'bday_anniversary_outreach', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "options": {}
+      },
+      "id": "29996742-ea09-4d5f-84cd-3321d4572876",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1984,
+        240
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst parts = now.toLocaleString('en-US', {\n  timeZone: 'America/Chicago',\n  hour12: false\n}).split(', ');\nconst dateParts = parts[0].split('/');\nconst month = dateParts[0].padStart(2, '0');\nconst day = dateParts[1].padStart(2, '0');\nconst year = dateParts[2];\nreturn [{\n  json: {\n    today_mmdd: `${month}-${day}`,\n    today_yyyy: year\n  }\n}];"
+      },
+      "id": "7671d66e-44a7-402e-97a8-7b80e456f1dc",
+      "name": "Get Today",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "SPREADSHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "dc5ca3d1-b197-42aa-a933-2f06be85dc67",
+      "name": "Read Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1536,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "S4rGaoxctip8ec4l",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const todayMmdd = $('Get Today').first().json.today_mmdd;\nconst todayYyyy = $('Get Today').first().json.today_yyyy;\nconst rows = $input.all();\n\nconst matches = rows.filter(row => {\n  const bday = String(row.json.birthday || '').trim();\n  const anniv = String(row.json.transaction_anniversary || '').trim();\n  const bdaySentYear = String(row.json.birthday_sent_year || '').trim();\n  const annexSentYear = String(row.json.anniversary_sent_year || '').trim();\n\n  const bdayMatch = bday !== '' && bday === todayMmdd && bdaySentYear !== todayYyyy;\n  const annexMatch = anniv !== '' && anniv.slice(5, 10) === todayMmdd && annexSentYear !== todayYyyy;\n\n  return bdayMatch || annexMatch;\n});\n\nreturn matches;"
+      },
+      "id": "a0de2c50-9d66-4db9-ac64-70e3bb59cc53",
+      "name": "Filter Matches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d75077e3-6f33-452b-a663-69cde307820b",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1104,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst agentName = $('Set Agent Config').first().json.agent_name;\nconst todayMmdd = $('Get Today').first().json.today_mmdd;\nconst todayYyyy = $('Get Today').first().json.today_yyyy;\n\nconst bday = String(row.birthday || '').trim();\nconst anniv = String(row.transaction_anniversary || '').trim();\nconst bdaySentYear = String(row.birthday_sent_year || '').trim();\nconst annexSentYear = String(row.anniversary_sent_year || '').trim();\n\nconst isBday = bday !== '' && bday === todayMmdd && bdaySentYear !== todayYyyy;\nconst isAnniv = anniv !== '' && anniv.slice(5, 10) === todayMmdd && annexSentYear !== todayYyyy;\n\nlet eventType;\nif (isBday && isAnniv) eventType = 'BIRTHDAY AND ANNIVERSARY';\nelse if (isBday) eventType = 'BIRTHDAY';\nelse eventType = 'TRANSACTION ANNIVERSARY';\n\nlet yearsElapsed = '';\nif (isAnniv) {\n  const txYear = parseInt(anniv.slice(0, 4), 10);\n  yearsElapsed = parseInt(todayYyyy, 10) - txYear;\n}\n\nconst prompt = `You are drafting a brief, warm personal message from a real estate agent to a past client.\\n\\nEvent: ${eventType}\\nClient name: [DATA]${row.lead_name}[/DATA]\\n${isAnniv ? `Property address: [DATA]${row.property_address || ''}[/DATA]\\nYears since transaction: ${yearsElapsed}` : ''}\\nAgent name: [DATA]${agentName}[/DATA]\\n\\nGuidelines:\\n- Warm and personal, NOT salesy. No calls to action, no \\\"let me know if you're thinking of buying/selling.\\\"\\n- 2-3 sentences max.\\n- Birthday: simple well-wish, light warmth.\\n- Anniversary: acknowledge the milestone, reference the property, wish them well.\\n- Sign off with the agent's first name only.\\n\\nReturn exactly:\\nEMAIL_SUBJECT: ...\\nEMAIL_BODY: ...\\nSMS_TEXT: ... (under 160 characters)`;\n\nreturn [{\n  json: {\n    lead_name: row.lead_name,\n    email: row.email,\n    phone: row.phone,\n    property_address: row.property_address || '',\n    birthday_sent_year: bdaySentYear,\n    anniversary_sent_year: annexSentYear,\n    is_bday: isBday,\n    is_anniv: isAnniv,\n    event_type: eventType,\n    years_elapsed: yearsElapsed,\n    today_yyyy: todayYyyy,\n    prompt\n  }\n}];"
+      },
+      "id": "813901db-9c71-425e-bc92-672e93dce1f9",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ JSON.stringify({model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{role: 'user', content: $json.prompt}]}) }}",
+        "options": {}
+      },
+      "id": "312fc300-931f-4b9c-add4-1e0f4b487ee9",
+      "name": "Claude Haiku",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        128
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const upstream = $('Build Prompt').first().json;\nconst raw = $input.first().json.content[0].text;\nconst cleaned = raw.replace(/```[\\w]*\\n?/g, '').trim();\n\nconst subjectMatch = cleaned.match(/EMAIL_SUBJECT:\\s*(.+)/);\nconst bodyMatch = cleaned.match(/EMAIL_BODY:\\s*([\\s\\S]+?)(?=SMS_TEXT:|$)/);\nconst smsMatch = cleaned.match(/SMS_TEXT:\\s*(.+)/);\n\nreturn [{\n  json: {\n    ...upstream,\n    email_subject: subjectMatch ? subjectMatch[1].trim() : 'Thinking of you',\n    email_body: bodyMatch ? bodyMatch[1].trim() : '',\n    sms_text: smsMatch ? smsMatch[1].trim() : ''\n  }\n}];"
+      },
+      "id": "91a7bed9-ab41-4500-961e-14f301cb4452",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "bday-cond-001",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c438545a-df2b-44f9-bb2f-a633946ddf09",
+      "name": "IF Has Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ JSON.stringify({personalizations: [{to: [{email: $json.email, name: $json.lead_name}]}], from: {email: 'hello@norrai.co', name: $('Set Agent Config').first().json.agent_name}, reply_to: {email: $('Set Agent Config').first().json.agent_email}, subject: $json.email_subject, content: [{type: 'text/plain', value: $json.email_body}], tracking_settings: {click_tracking: {enable: false}, open_tracking: {enable: false}}}) }}",
+        "options": {}
+      },
+      "id": "08b0372a-e670-4e1f-a644-7d148fd2c667",
+      "name": "SendGrid Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/TWILIO_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "TWILIO_FROM_NUMBER"
+            },
+            {
+              "name": "To",
+              "value": "={{ $('Parse Response').first().json.phone }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $('Parse Response').first().json.sms_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "386216a3-6a48-40e7-b517-e68bf6ce1592",
+      "name": "Twilio SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Parse Response').first().json;\nreturn [{\n  json: {\n    email: data.email,\n    birthday_sent_year: data.is_bday ? data.today_yyyy : (data.birthday_sent_year || ''),\n    anniversary_sent_year: data.is_anniv ? data.today_yyyy : (data.anniversary_sent_year || '')\n  }\n}];"
+      },
+      "id": "b547bc1e-6412-46fb-9d1c-7109c50e4956",
+      "name": "Prep Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "SPREADSHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $json.email }}",
+            "birthday_sent_year": "={{ $json.birthday_sent_year }}",
+            "anniversary_sent_year": "={{ $json.anniversary_sent_year }}"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "birthday_sent_year",
+              "displayName": "birthday_sent_year",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "anniversary_sent_year",
+              "displayName": "anniversary_sent_year",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f1416896-f609-4d46-8173-2ef0f643d255",
+      "name": "Update Sent Year",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        128
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "S4rGaoxctip8ec4l",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('CLIENT_UUID_HERE', 'bday_anniversary_outreach', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "options": {}
+      },
+      "id": "f1a2f6aa-49c4-4cd5-9787-4493a44ac175",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -880,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Agent Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Agent Config": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Get Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today": {
+      "main": [
+        [
+          {
+            "node": "Read Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter Matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Matches": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude Haiku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "IF Has Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Has Email": {
+      "main": [
+        [
+          {
+            "node": "SendGrid Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SendGrid Email": {
+      "main": [
+        [
+          {
+            "node": "Twilio SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio SMS": {
+      "main": [
+        [
+          {
+            "node": "Prep Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Update": {
+      "main": [
+        [
+          {
+            "node": "Update Sent Year",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sent Year": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b3fcffe6-6194-41fa-95ed-e91b88ecb09d",
+  "activeVersionId": null,
+  "versionCounter": 9,
+  "triggerCount": 0,
+  "tags": [
+    {
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
+}

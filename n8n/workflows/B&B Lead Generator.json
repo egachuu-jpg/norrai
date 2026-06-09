@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-05-08T16:51:49.046Z",
+  "createdAt": "2026-05-05T03:04:13.071Z",
+  "id": "2U1iBVRygXph5ITw",
   "name": "B&B Lead Generator",
+  "description": null,
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -7,18 +13,21 @@
           "interval": [
             {
               "field": "weeks",
-              "weeksInterval": 1,
-              "triggerAtDay": [1],
-              "triggerAtHour": 11,
-              "triggerAtMinute": 0
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 11
             }
           ]
         }
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300],
-      "id": "b3b4c5d6-0001-4000-8000-000000000001",
+      "position": [
+        -1920,
+        448
+      ],
+      "id": "dbdbbc95-1ef4-49c6-b08b-ac94074db086",
       "name": "Every Monday 6am CT"
     },
     {
@@ -27,8 +36,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [380, 300],
-      "id": "b3b4c5d6-0013-4000-8000-000000000013",
+      "position": [
+        -1696,
+        448
+      ],
+      "id": "b4b1485b-eece-4572-9fe3-e55b2f161e3a",
       "name": "Initialize Accumulator"
     },
     {
@@ -53,16 +65,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [560, 300],
-      "id": "b3b4c5d6-0002-4000-8000-000000000002",
+      "position": [
+        -1472,
+        448
+      ],
+      "id": "d7465284-d965-420d-8fce-05af715aca57",
       "name": "Search Apollo",
-      "continueOnFail": true,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "APOLLO_CREDENTIAL_ID",
-          "name": "Apollo API Key"
-        }
-      }
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -71,25 +80,17 @@
           "__rl": true,
           "value": "YOUR_SPREADSHEET_ID",
           "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Sheet1",
-          "mode": "name"
         }
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [760, 300],
-      "id": "b3b4c5d6-0003-4000-8000-000000000003",
+      "position": [
+        -1248,
+        448
+      ],
+      "id": "9ffe9ca1-fc17-44b8-ae24-19f8f5e869b7",
       "name": "Read Exclusion Sheet",
-      "continueOnFail": true,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets account"
-        }
-      }
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -97,20 +98,25 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 300],
-      "id": "b3b4c5d6-0004-4000-8000-000000000004",
+      "position": [
+        -1024,
+        448
+      ],
+      "id": "c402c160-9ec9-4aab-a639-c7d76447dd7b",
       "name": "Filter and Dedup",
       "continueOnFail": true
     },
     {
       "parameters": {
-        "batchSize": 1,
         "options": {}
       },
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [1160, 300],
-      "id": "b3b4c5d6-0005-4000-8000-000000000005",
+      "position": [
+        -1248,
+        224
+      ],
+      "id": "e6a9cd02-2a40-4621-b8c2-80ad29b403f8",
       "name": "Split by Lead"
     },
     {
@@ -139,19 +145,19 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1380, 300],
-      "id": "b3b4c5d6-0006-4000-8000-000000000006",
+      "position": [
+        -1024,
+        -48
+      ],
+      "id": "d9026849-50e8-4af0-871d-fa6fd92d23b2",
       "name": "Score with Claude",
-      "continueOnFail": true,
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",
           "name": "Anthropic account 2"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -159,8 +165,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1580, 300],
-      "id": "b3b4c5d6-0007-4000-8000-000000000007",
+      "position": [
+        -800,
+        -48
+      ],
+      "id": "d747b5c6-93fd-41a1-8e41-54bb51e1bd7b",
       "name": "Parse Score"
     },
     {
@@ -190,8 +199,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1780, 300],
-      "id": "b3b4c5d6-0008-4000-8000-000000000008",
+      "position": [
+        -576,
+        -48
+      ],
+      "id": "5d079d3c-11fe-453f-a372-4991ac5b9f33",
       "name": "Score 8 or Above?"
     },
     {
@@ -220,19 +232,19 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2000, 200],
-      "id": "b3b4c5d6-0009-4000-8000-000000000009",
+      "position": [
+        -352,
+        -48
+      ],
+      "id": "6fa984cd-220f-407c-b725-4100c4faf5c8",
       "name": "Draft Outreach",
-      "continueOnFail": true,
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000,
       "credentials": {
         "anthropicApi": {
           "id": "gXqu8TiqvDY4mUPZ",
           "name": "Anthropic account 2"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -240,8 +252,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2220, 200],
-      "id": "b3b4c5d6-0010-4000-8000-000000000010",
+      "position": [
+        -128,
+        -48
+      ],
+      "id": "9ae2adf9-ef64-46c1-bda9-5bc04ab279de",
       "name": "Parse Draft",
       "continueOnFail": true
     },
@@ -251,8 +266,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2440, 200],
-      "id": "b3b4c5d6-0014-4000-8000-000000000014",
+      "position": [
+        96,
+        128
+      ],
+      "id": "f77ba8f3-f2d9-4348-996a-907c2cb6fc24",
       "name": "Accumulate Lead"
     },
     {
@@ -261,8 +279,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1380, 500],
-      "id": "b3b4c5d6-0015-4000-8000-000000000015",
+      "position": [
+        -1024,
+        144
+      ],
+      "id": "eb60e1d7-0035-43d1-974e-eff06bfc3045",
       "name": "Build Summary Email"
     },
     {
@@ -270,23 +291,26 @@
         "resource": "mail",
         "fromEmail": "hello@norrai.co",
         "fromName": "Norr AI",
-        "toEmail": "egachuu@gmail.com",
+        "toEmail": "hunter.dienst@met-con.com",
         "subject": "={{ $json.subject }}",
         "contentValue": "={{ $json.body }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [1580, 500],
-      "id": "b3b4c5d6-0011-4000-8000-000000000011",
+      "position": [
+        -800,
+        144
+      ],
+      "id": "ed2a6dbc-6397-437b-bc65-698d437f3ed0",
       "name": "Send Review Email",
-      "continueOnFail": true,
       "credentials": {
         "sendGridApi": {
           "id": "A5ypmjiRLAUMUm9O",
           "name": "SendGrid account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -294,92 +318,320 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1780, 500],
-      "id": "b3b4c5d6-0016-4000-8000-000000000016",
+      "position": [
+        -576,
+        144
+      ],
+      "id": "7289fa7d-ce86-41bb-b8af-48545f484dd3",
       "name": "Build Neon Insert"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.query }}"
+        "query": "{{ $json.query }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1980, 500],
-      "id": "b3b4c5d6-0017-4000-8000-000000000017",
+      "position": [
+        -352,
+        144
+      ],
+      "id": "ce656a2b-a327-4e4c-8b7f-4e9e1f870c3e",
       "name": "Log All to Neon",
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
         }
-      }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yHLDx3QWGfUsm4VTp5rORPVt5L1Zpwz62ZjCsxNIcVE",
+          "mode": "list",
+          "cachedResultName": "bnb_customers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yHLDx3QWGfUsm4VTp5rORPVt5L1Zpwz62ZjCsxNIcVE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yHLDx3QWGfUsm4VTp5rORPVt5L1Zpwz62ZjCsxNIcVE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1696,
+        224
+      ],
+      "id": "799bfc79-82e3-4071-aea2-5d0723065f7c",
+      "name": "Read Exclusion Sheet1",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "S4rGaoxctip8ec4l",
+          "name": "Google Sheets OAuth2 API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get Apollo contacts (from Search Apollo, two nodes back)\nconst apolloData = $('Search Apollo1').first().json;\n//const contacts = apolloData.people || [];\nconst contacts = $('Search Apollo1').all().map(item => item.json);\n// Get exclusion rows from Google Sheets (direct input to this node)\nconst exclusionRows = $input.all().map(item => item.json);\n\n// Build exclusion sets (lowercase for case-insensitive matching)\nconst excludedNames = exclusionRows\n  .map(r => (r.company_name || '').toLowerCase().trim())\n  .filter(Boolean);\nconst excludedDomains = exclusionRows\n  .map(r => (r.domain || '').toLowerCase().replace(/^www\\./, '').trim())\n  .filter(Boolean);\n\nfunction isExcluded(contact) {\n  const name = (contact.organization_name || '').toLowerCase();\n  const rawUrl = (contact.organization_website_url || '').toLowerCase();\n  const domain = rawUrl\n    .replace(/^https?:\\/\\//, '')\n    .replace(/^www\\./, '')\n    .split('/')[0];\n  return (\n    excludedNames.some(n => n && name.includes(n)) ||\n    excludedDomains.some(d => d && domain.includes(d))\n  );\n}\n\n// TODO: replace Google Sheet check with JobBOSS API lookup when integration is ready\n\nreturn contacts.filter(c => !isExcluded(c)).map(c => ({\n  json: {\n    first_name: c.first_name || '',\n    last_name: c.last_name || '',\n    full_name: `${c.first_name || ''} ${c.last_name || ''}`.trim(),\n    title: c.title || '',\n    email: c.email || '',\n    company: c.organization_name || '',\n    website: c.organization_website_url || '',\n    city: c.city || '',\n    state: c.state || ''\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1472,
+        224
+      ],
+      "id": "b00200ba-04d1-4daa-b767-dba8d3857a39",
+      "name": "Filter and Dedup1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      first_name: \"Mark\",\n      last_name: \"Hendricks\",\n      title: \"Procurement Manager\",\n      email: \"m.hendricks@prairiemetalworks.com\",\n      organization_name: \"Prairie Metal Works\",\n      organization_website_url: \"https://prairiemetalworks.com\",\n      city: \"Owatonna\",\n      state: \"MN\"\n    }\n  },\n  {\n    json: {\n      first_name: \"Lisa\",\n      last_name: \"Tauer\",\n      title: \"Operations Manager\",\n      email: \"ltauer@agritechfab.com\",\n      organization_name: \"AgriTech Fabrication\",\n      organization_website_url: \"https://agritechfab.com\",\n      city: \"Mankato\",\n      state: \"MN\"\n    }\n  },\n  {\n    json: {\n      first_name: \"Dave\",\n      last_name: \"Schroeder\",\n      title: \"Plant Manager\",\n      email: \"d.schroeder@northernmfg.com\",\n      organization_name: \"Northern Manufacturing\",\n      organization_website_url: \"https://northernmfg.com\",\n      city: \"Rochester\",\n      state: \"MN\"\n    }\n  },\n  {\n    json: {\n      first_name: \"Karen\",\n      last_name: \"Olson\",\n      title: \"Sourcing Manager\",\n      email: \"kolson@midwestoem.com\",\n      organization_name: \"Midwest OEM Solutions\",\n      organization_website_url: \"https://midwestoem.com\",\n      city: \"Faribault\",\n      state: \"MN\"\n    }\n  },\n  {\n    json: {\n      first_name: \"Tom\",\n      last_name: \"Braun\",\n      title: \"Procurement Manager\",\n      email: \"tbraun@steelfabinc.com\",\n      organization_name: \"Steel Fab Inc\",\n      organization_website_url: \"https://steelfabinc.com\",\n      city: \"Albert Lea\",\n      state: \"MN\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        224
+      ],
+      "id": "e6b466e8-4d25-46c3-8d01-26868c6ea4a5",
+      "name": "Search Apollo1"
     }
   ],
   "connections": {
     "Every Monday 6am CT": {
-      "main": [[{"node": "Initialize Accumulator", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Initialize Accumulator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Initialize Accumulator": {
-      "main": [[{"node": "Search Apollo", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Search Apollo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Search Apollo": {
-      "main": [[{"node": "Read Exclusion Sheet", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Read Exclusion Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Read Exclusion Sheet": {
-      "main": [[{"node": "Filter and Dedup", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Filter and Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Filter and Dedup": {
-      "main": [[{"node": "Split by Lead", "type": "main", "index": 0}]]
+      "main": [
+        []
+      ]
     },
     "Split by Lead": {
       "main": [
-        [{"node": "Score with Claude", "type": "main", "index": 0}],
-        [{"node": "Build Summary Email", "type": "main", "index": 0}]
+        [
+          {
+            "node": "Build Summary Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Score with Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Score with Claude": {
-      "main": [[{"node": "Parse Score", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Parse Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Score": {
-      "main": [[{"node": "Score 8 or Above?", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Score 8 or Above?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Score 8 or Above?": {
       "main": [
-        [{"node": "Draft Outreach", "type": "main", "index": 0}],
-        [{"node": "Split by Lead", "type": "main", "index": 0}]
+        [
+          {
+            "node": "Draft Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split by Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Draft Outreach": {
-      "main": [[{"node": "Parse Draft", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Parse Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Draft": {
-      "main": [[{"node": "Accumulate Lead", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Accumulate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Accumulate Lead": {
-      "main": [[{"node": "Split by Lead", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Split by Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Summary Email": {
-      "main": [[{"node": "Send Review Email", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Send Review Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Send Review Email": {
-      "main": [[{"node": "Build Neon Insert", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Build Neon Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Neon Insert": {
-      "main": [[{"node": "Log All to Neon", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Log All to Neon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Exclusion Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Filter and Dedup1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Apollo1": {
+      "main": [
+        [
+          {
+            "node": "Read Exclusion Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and Dedup1": {
+      "main": [
+        [
+          {
+            "node": "Split by Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true
+    "binaryMode": "separate"
   },
-  "versionId": "bnb-lead-gen-v2-001",
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
-  },
-  "id": "",
-  "tags": []
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "58fc604b-3529-4ec5-a6ed-dd51f41958f0",
+  "activeVersionId": null,
+  "versionCounter": 15,
+  "triggerCount": 0,
+  "tags": [
+    {
+      "id": "a0VJrMAK4rSgN6Xi",
+      "name": "metcon"
+    }
+  ]
 }

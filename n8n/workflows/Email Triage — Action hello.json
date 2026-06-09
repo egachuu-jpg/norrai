@@ -1,295 +1,100 @@
 {
+  "updatedAt": "2026-05-24T12:48:05.040Z",
+  "createdAt": "2026-05-20T20:52:00.765Z",
+  "id": "J52waG0hFXWco6bY",
   "name": "Email Triage — Action hello",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "id": "aw-0078-4000-8000-000000000000",
+      "parameters": {"inputSource": "passthrough"},
+      "id": "b9164da7-60f3-453e-ac9a-82f21dc8c022",
       "name": "When Called by Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [
-        240,
-        300
-      ],
-      "parameters": {}
+      "position": [-400, 224]
     },
     {
-      "id": "aw-0079-4000-8000-000000000000",
+      "parameters": {
+        "rules": {
+          "values": [
+            {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2}, "conditions": [{"id": "act-0", "leftValue": "={{ $json.proposed_action }}", "rightValue": "mark_read_archive", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}},
+            {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2}, "conditions": [{"id": "act-1", "leftValue": "={{ $json.proposed_action }}", "rightValue": "mark_read", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}},
+            {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2}, "conditions": [{"id": "act-2", "leftValue": "={{ $json.proposed_action }}", "rightValue": "trash", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}},
+            {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2}, "conditions": [{"id": "act-3", "leftValue": "={{ $json.proposed_action }}", "rightValue": "mark_important", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}}
+          ]
+        },
+        "options": {}
+      },
+      "id": "b83661b9-e5e8-499f-b38b-41bab291452a",
       "name": "Route by Action",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [
-        440,
-        300
-      ],
-      "parameters": {
-        "mode": "rules",
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "id": "act-0",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "mark_read_archive",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "id": "act-1",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "mark_read",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "id": "act-2",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "trash",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "id": "act-3",
-                    "leftValue": "={{ $json.proposed_action }}",
-                    "rightValue": "mark_important",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              }
-            }
-          ]
-        },
-        "fallbackOutput": 3,
-        "options": {}
-      }
+      "position": [-208, 224]
     },
     {
-      "id": "aw-0080-4000-8000-000000000000",
+      "parameters": {"operation": "markAsRead", "messageId": "={{ $json.message_id }}"},
+      "id": "b0d08e2e-b510-45f9-ab70-831cf1aa7ac0",
       "name": "Mark Read (archive path)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        640,
-        80
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "markAsRead",
-        "messageId": "={{ $json.message_id }}"
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — hello@norrai.co"
-        }
-      }
+      "position": [0, 0],
+      "webhookId": "96b63669-019b-4b61-b196-da423caf412f",
+      "credentials": {"gmailOAuth2": {"id": "CnAFJFl5wssmBuho", "name": "Gmail account hello norr"}}
     },
     {
-      "id": "aw-0081-4000-8000-000000000000",
+      "parameters": {"operation": "removeLabels", "messageId": "={{ $json.id }}", "labelIds": ["INBOX"]},
+      "id": "3dddae9d-8eac-4438-8ec5-d20e02da9465",
       "name": "Archive",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        840,
-        80
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "removeLabels",
-        "messageId": "={{ $json.message_id }}",
-        "labelIds": [
-          "INBOX"
-        ]
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — hello@norrai.co"
-        }
-      }
+      "position": [208, 0],
+      "webhookId": "80312b5e-5ee5-4546-9ee1-e11a4ed39ba9",
+      "credentials": {"gmailOAuth2": {"id": "CnAFJFl5wssmBuho", "name": "Gmail account hello norr"}}
     },
     {
-      "id": "aw-0082-4000-8000-000000000000",
+      "parameters": {"operation": "markAsRead", "messageId": "={{ $json.id }}"},
+      "id": "847d0f97-5416-4c27-9fe7-821679bb233f",
       "name": "Mark Read",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        640,
-        260
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "markAsRead",
-        "messageId": "={{ $json.message_id }}"
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — hello@norrai.co"
-        }
-      }
+      "position": [0, 192],
+      "webhookId": "068f2697-c064-4749-a5eb-64daafc3361c",
+      "credentials": {"gmailOAuth2": {"id": "CnAFJFl5wssmBuho", "name": "Gmail account hello norr"}}
     },
     {
-      "id": "aw-0083-4000-8000-000000000000",
+      "parameters": {"operation": "delete", "messageId": "={{ $json.message_id }}"},
+      "id": "032d9400-b747-4e4f-9b62-b73a05ed1bc5",
       "name": "Trash",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        640,
-        440
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "delete",
-        "messageId": "={{ $json.message_id }}"
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — hello@norrai.co"
-        }
-      }
+      "position": [0, 368],
+      "webhookId": "bad90629-918f-422c-b48f-07278f6489d3",
+      "credentials": {"gmailOAuth2": {"id": "CnAFJFl5wssmBuho", "name": "Gmail account hello norr"}}
     },
     {
-      "id": "aw-0084-4000-8000-000000000000",
+      "parameters": {"operation": "addLabels", "messageId": "={{ $json.message_id }}", "labelIds": ["IMPORTANT"]},
+      "id": "823a3c07-0073-4d5b-bc12-b0d9cb983fb0",
       "name": "Mark Important",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        640,
-        620
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "addLabels",
-        "messageId": "={{ $json.message_id }}",
-        "labelIds": [
-          "IMPORTANT"
-        ]
-      },
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GMAIL_CREDENTIAL_ID",
-          "name": "Gmail — hello@norrai.co"
-        }
-      }
+      "position": [0, 544],
+      "webhookId": "824eac2f-1e34-4fbe-8634-d9fb7e8038e3",
+      "credentials": {"gmailOAuth2": {"id": "CnAFJFl5wssmBuho", "name": "Gmail account hello norr"}}
     }
   ],
   "connections": {
-    "When Called by Another Workflow": {
-      "main": [
-        [
-          {
-            "node": "Route by Action",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Route by Action": {
-      "main": [
-        [
-          {
-            "node": "Mark Read (archive path)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Mark Read",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Trash",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Mark Important",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mark Read (archive path)": {
-      "main": [
-        [
-          {
-            "node": "Archive",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+    "When Called by Another Workflow": {"main": [[{"node": "Route by Action", "type": "main", "index": 0}]]},
+    "Route by Action": {"main": [[{"node": "Mark Read (archive path)", "type": "main", "index": 0}], [{"node": "Mark Read", "type": "main", "index": 0}], [{"node": "Trash", "type": "main", "index": 0}], [{"node": "Mark Important", "type": "main", "index": 0}]]},
+    "Mark Read (archive path)": {"main": [[{"node": "Archive", "type": "main", "index": 0}]]}
   },
-  "settings": {
-    "executionOrder": "v1",
-    "errorWorkflow": "Norr AI Workflow Error Logger"
-  },
-  "staticData": null
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "timeSavedMode": "fixed", "errorWorkflow": "Al6gagYmiq1feOWq", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": false},
+  "staticData": null,
+  "meta": {"templateCredsSetupCompleted": true},
+  "pinData": {},
+  "versionId": "10365b59-dd17-4383-a257-f72ecfaf0a9d",
+  "activeVersionId": "10365b59-dd17-4383-a257-f72ecfaf0a9d",
+  "versionCounter": 19,
+  "triggerCount": 0,
+  "tags": [{"id": "1em2yJdCKJ7vT0la", "name": "internal"}]
 }

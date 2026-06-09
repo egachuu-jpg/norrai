@@ -1,0 +1,206 @@
+{
+  "updatedAt": "2026-04-23T02:08:58.525Z",
+  "createdAt": "2026-04-23T00:55:52.430Z",
+  "id": "fLoa7VYSxrxtdHNC",
+  "name": "Event Ops Discovery → Claude Analysis",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "event-ops-discovery",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9aaa14e9-4be3-4fd3-82f7-c0d98dc26d1f",
+      "name": "Webhook — Form Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        -144
+      ],
+      "webhookId": "event-ops-discovery"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Build the Claude prompt from all form fields ─────────────────────────────────────\nconst d = $input.first().json.body;\n\nconst prompt = `You are an automation consultant analyzing a discovery questionnaire from a potential client in the event operations space. Your job is to identify the highest-impact automation opportunities and produce a prioritized, opinionated build list for a builder who uses n8n and the Claude API.\n\nHere is the completed discovery questionnaire:\n\n## ABOUT THE CLIENT\nName: ${d.name || 'Not provided'}\nRole: ${d.role || 'Not specified'}\nCompany: ${d.company || 'Not specified'}\nEmail: ${d.email || 'Not provided'}\nTeam size: ${d.team_size || 'Not specified'}\n\n## CAPACITY CONTEXT (they recently lost two team members)\n${d.capacity_gap || 'Not provided'}\n\n## EVENT VOLUME\nEvents per year: ${d.events_per_year || 'Not specified'}\nAverage attendees per event: ${d.avg_attendees || 'Not specified'}\nEvent types they run: ${d.event_types || 'Not specified'}\nBusiest season: ${d.busiest_season || 'Not specified'}\n\n## WHERE THEIR TIME GOES (1 = barely any · 5 = consumes their week)\nRegistration & intake: ${d.time_registration || 'Not rated'}/5\nAttendee communications: ${d.time_communications || 'Not rated'}/5\nVendor & venue coordination: ${d.time_vendor || 'Not rated'}/5\nScheduling & logistics: ${d.time_scheduling || 'Not rated'}/5\nPost-event follow-up: ${d.time_post_event || 'Not rated'}/5\nReporting & data: ${d.time_reporting || 'Not rated'}/5\nSocial media & marketing: ${d.time_social || 'Not rated'}/5\n\n## PAIN POINTS (in their own words)\nTask they dread most / biggest time sink:\n${d.biggest_time_sink || 'Not provided'}\n\nWhat's actually falling through the cracks since losing team members:\n${d.what_falls_through || 'Not provided'}\n\n## CURRENT TOOLS & STACK\nRegistration tools: ${d.registration_tools || 'Not specified'}\nCommunication tools: ${d.comms_tools || 'Not specified'}\nWhere data lives: ${d.data_tools || 'Not specified'}\nOpenness to new tools: ${d.open_to_new_tools || 'Not specified'}\n\nWhat happens manually after someone registers (their exact words):\n${d.manual_steps || 'Not provided'}\n\n## REPETITIVE WORK PATTERNS\nThings they copy-paste or reformat across systems:\n${d.copy_paste || 'Not provided'}\n\nTypes of emails they write over and over:\n${d.emails_written || 'Not provided'}\n\nRegular reports they produce and who gets them:\n${d.reports_created || 'Not provided'}\n\n## PRIORITIES & GOALS\nThe one thing they'd eliminate from their plate tomorrow:\n${d.biggest_pain || 'Not provided'}\n\nWhat success looks like in 90 days: ${d.success_looks_like || 'Not specified'}\n\nAnything else they want you to know:\n${d.anything_else || 'None'}\n\n---\n\nBased on this discovery, produce a structured analysis with exactly these sections:\n\n**SITUATION SUMMARY**\n3-4 sentences.\n\n**TOP AUTOMATION OPPORTUNITIES** (ranked by impact-to-effort ratio, highest first)\nFor each: name, manual work eliminated, time saved, complexity, stack, trigger, output.\n\n**RECOMMENDED BUILD ORDER**\nFirst, second, third with rationale.\n\n**QUICK WINS (live in under a week)**\n\n**STACK NOTES**\n\n**ONE QUESTION BEFORE BUILDING**\nOne question only.`;\n\nconst claude_request_body = JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 4096,\n  messages: [{ role: 'user', content: prompt }]\n});\n\nreturn [{\n  json: {\n    prompt,\n    claude_request_body,\n    submitter_name: d.name || 'Unknown',\n    submitter_email: d.email || '',\n    submitted_at: d.submitted_at || new Date().toISOString()\n  }\n}];"
+      },
+      "id": "26687160-888e-4389-98c8-e00ffbc443ae",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $vars.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: \"claude-sonnet-4-6\", max_tokens: 500, messages: [{ role: \"user\", content: $json.prompt }] } }}",
+        "options": {}
+      },
+      "id": "095b9acf-68f1-4ff8-8355-c80798f36618",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1664,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nconst analysis = claudeResponse.content?.[0]?.text ?? 'No response from Claude.';\nconst submitterName = $('Build Claude Prompt').first().json.submitter_name;\nconst submitterEmail = $('Build Claude Prompt').first().json.submitter_email;\nconst submittedAt = $('Build Claude Prompt').first().json.submitted_at;\nconst htmlBody = `<div style=\"font-family: 'Inter', sans-serif; max-width: 720px; color: #0A0F1A;\"><div style=\"background: #0A0F1A; padding: 32px;\"><div style=\"font-size: 22px; color: #FAFAF7;\">Event Ops Discovery — ${submitterName}</div><div style=\"font-size: 12px; color: #6A6F78; margin-top: 6px;\">Submitted: ${new Date(submittedAt).toLocaleString('en-US', { timeZone: 'America/Chicago' })} CT · ${submitterEmail}</div></div><div style=\"background: #FAFAF7; border: 1px solid #E5E4DE; padding: 32px;\"><div style=\"white-space: pre-wrap; font-size: 14px; line-height: 1.75; color: #3A3F48;\">${analysis.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>').replace(/\\n/g, '<br>')}</div></div></div>`;\nreturn [{ json: { analysis, html_body: htmlBody, submitter_name: submitterName, submitter_email: submitterEmail, subject: `Discovery analysis — ${submitterName} (Event Ops)` } }];"
+      },
+      "id": "319efd86-52d2-4ba3-8c31-c0d1565bad5a",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SENDGRID_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"studio@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }] } }}",
+        "options": {}
+      },
+      "id": "413206ed-329e-4459-ac5b-827b9edcb50c",
+      "name": "Send Analysis via SendGrid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2144,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"message\": \"Got it — we'll review your answers and reach out within one business day.\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "596481e1-621f-4c1d-abc9-eadf5c49613b",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        -144
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook — Form Intake": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Send Analysis via SendGrid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Analysis via SendGrid": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "4a8d04a2-878f-4dce-b579-f4b9cfecfe96",
+  "activeVersionId": null,
+  "versionCounter": 72,
+  "triggerCount": 1,
+  "tags": []
+}
