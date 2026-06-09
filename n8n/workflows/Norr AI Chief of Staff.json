@@ -1,22 +1,18 @@
 {
+  "updatedAt": "2026-05-27T19:30:33.505Z",
+  "createdAt": "2026-05-08T14:01:51.474Z",
+  "id": "75wL6u7AJ3pHEuPP",
   "name": "Norr AI Chief of Staff",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 13 * * 1,4"
-            }
-          ]
-        }
-      },
-      "id": "node-schedule-001",
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 13 * * 1,4"}]}},
+      "id": "1236ef31-1458-4f55-a308-9a39cf3434c5",
       "name": "Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300]
+      "position": [0, 0]
     },
     {
       "parameters": {
@@ -24,85 +20,85 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github.v3+json"
-            }
-          ]
-        },
+        "headerParameters": {"parameters": [{"name": "Accept", "value": "application/vnd.github.v3+json"}]},
         "options": {}
       },
-      "id": "node-github-001",
+      "id": "5fdf7594-d8ad-462d-9125-457b32c0b0a9",
       "name": "Fetch CLAUDE.md",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [460, 300],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GITHUB_CREDENTIAL_ID",
-          "name": "GitHub PAT"
-        }
-      }
+      "position": [224, 0],
+      "credentials": {"httpHeaderAuth": {"id": "CWOjXYtQUUT6WXv6", "name": "GitHub PAT Norr AI"}}
     },
     {
       "parameters": {
         "jsCode": "if (!$json.content) {\n  return [{ json: { sections: {} } }];\n}\n\nconst rawContent = Buffer.from($json.content, 'base64').toString('utf-8');\n\nconst openTasksMatch = rawContent.match(/## Open Tasks([\\s\\S]*?)(?=\\n#{1,2} |\\n---\\n|$)/);\nif (!openTasksMatch) {\n  return [{ json: { sections: {} } }];\n}\n\nconst openTasksContent = openTasksMatch[1];\nconst sections = {};\nlet currentSection = 'General';\n\nfor (const line of openTasksContent.split('\\n')) {\n  const trimmed = line.trim();\n  if (trimmed.startsWith('### ')) {\n    currentSection = trimmed.slice(4);\n  } else if (trimmed.startsWith('- [ ]')) {\n    const task = trimmed.replace(/^- \\[ \\] /, '');\n    if (!sections[currentSection]) sections[currentSection] = [];\n    sections[currentSection].push(task);\n  }\n}\n\nreturn [{ json: { sections } }];"
       },
-      "id": "node-parse-001",
+      "id": "a4cd83de-ff88-4bfe-8d1a-6c7e806d7fe0",
       "name": "Parse Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [448, 0]
     },
     {
       "parameters": {
         "jsCode": "const sections = $json.sections;\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'short',\n  year: 'numeric',\n  month: 'short',\n  day: 'numeric',\n  timeZone: 'America/Chicago'\n});\n\nconst MAX_ITEMS = 5;\n\nconst blocks = [\n  {\n    type: 'header',\n    text: { type: 'plain_text', text: `Norr AI — Open Tasks  |  ${today}`, emoji: false }\n  },\n  { type: 'divider' }\n];\n\nfor (const [sectionName, tasks] of Object.entries(sections)) {\n  if (!tasks || tasks.length === 0) continue;\n  const displayed = tasks.slice(0, MAX_ITEMS);\n  const remaining = tasks.length - MAX_ITEMS;\n  let text = `*${sectionName}*\\n`;\n  text += displayed.map(t => `• ${t}`).join('\\n');\n  if (remaining > 0) text += `\\n_+ ${remaining} more_`;\n  blocks.push({\n    type: 'section',\n    text: { type: 'mrkdwn', text }\n  });\n}\n\nif (blocks.length === 2) {\n  blocks.push({\n    type: 'section',\n    text: { type: 'mrkdwn', text: '_No open tasks — all caught up!_' }\n  });\n}\n\nreturn [{ json: { blocks } }];"
       },
-      "id": "node-slack-build-001",
+      "id": "c6dad56c-4487-4b00-b7e6-5930e96a03b3",
       "name": "Build Slack Message",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300]
+      "position": [672, 0]
     },
     {
       "parameters": {
-        "url": "SLACK_WEBHOOK_URL",
         "method": "POST",
+        "url": "https://hooks.slack.com/services/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",
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify({ blocks: $json.blocks }) }}",
         "options": {}
       },
-      "id": "node-slack-post-001",
+      "id": "677430a6-ac1f-43e5-8b2e-7169b98ec3e7",
       "name": "Post to Slack",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 300]
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1120, 0],
+      "id": "87ce4d64-3b40-4635-b109-6398f1751837",
+      "name": "Log All to Neon",
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     }
   ],
   "connections": {
-    "Schedule": {
-      "main": [[{"node": "Fetch CLAUDE.md", "type": "main", "index": 0}]]
-    },
-    "Fetch CLAUDE.md": {
-      "main": [[{"node": "Parse Tasks", "type": "main", "index": 0}]]
-    },
-    "Parse Tasks": {
-      "main": [[{"node": "Build Slack Message", "type": "main", "index": 0}]]
-    },
-    "Build Slack Message": {
-      "main": [[{"node": "Post to Slack", "type": "main", "index": 0}]]
-    }
+    "Schedule": {"main": [[{"node": "Fetch CLAUDE.md", "type": "main", "index": 0}]]},
+    "Fetch CLAUDE.md": {"main": [[{"node": "Parse Tasks", "type": "main", "index": 0}]]},
+    "Parse Tasks": {"main": [[{"node": "Build Slack Message", "type": "main", "index": 0}]]},
+    "Build Slack Message": {"main": [[{"node": "Post to Slack", "type": "main", "index": 0}]]},
+    "Post to Slack": {"main": [[{"node": "Log All to Neon", "type": "main", "index": 0}]]}
   },
-  "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "Al6gagYmiq1feOWq"
   },
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "pinData": {}
+  "staticData": {"node:Schedule": {"recurrenceRules": []}},
+  "meta": null,
+  "pinData": {},
+  "versionId": "39b26ae5-2128-4df2-b538-e6801404d7d8",
+  "activeVersionId": "39b26ae5-2128-4df2-b538-e6801404d7d8",
+  "versionCounter": 19,
+  "triggerCount": 1,
+  "tags": [{"id": "1em2yJdCKJ7vT0la", "name": "internal"}]
 }

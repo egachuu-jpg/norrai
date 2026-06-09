@@ -1,23 +1,39 @@
 {
+  "updatedAt": "2026-06-09T00:24:24.554Z",
+  "createdAt": "2026-06-08T01:06:33.227Z",
+  "id": "2ZqKNuyAeXZPvD1j",
   "name": "BoldTrail CSV Import",
+  "description": null,
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
-        "filters": { "readStatus": "unread" },
-        "downloadAttachments": true,
-        "dataPropertyAttachmentsPrefixName": "attachment_",
-        "options": {}
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread",
+          "sender": "jpiller@teamyellownow.com",
+          "subject": "Fwd: A Lead Export Has Been Shared With You"
+        }
       },
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300],
-      "id": "bc100001-0001-4000-8000-bc1000000001",
+      "position": [
+        1488,
+        144
+      ],
+      "id": "b28a6ef8-d5e8-4cf2-9abe-72f8ed14bb7d",
       "name": "Gmail Trigger",
       "credentials": {
         "gmailOAuth2": {
-          "id": "GMAIL_IMPORTS_CREDENTIAL_ID",
-          "name": "Gmail account (imports@norrai.co)"
+          "id": "CnAFJFl5wssmBuho",
+          "name": "Gmail account hello norr"
         }
       }
     },
@@ -27,100 +43,278 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300],
-      "id": "bc100001-0002-4000-8000-bc1000000002",
+      "position": [
+        1712,
+        144
+      ],
+      "id": "9a0dafdb-22b9-4f86-9244-6bca4aee7bc4",
       "name": "Parse CSV Rows"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM clients WHERE id = 'WEICHERT_CLIENT_ID'",
-        "continueOnFail": true
+        "query": "SELECT 'e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid AS id",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [680, 300],
-      "id": "bc100001-0003-4000-8000-bc1000000003",
+      "position": [
+        1936,
+        144
+      ],
+      "id": "0191cf62-8840-4cd9-91f0-954ffdeb8906",
       "name": "Lookup Client",
       "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
       }
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Lookup Client').first().json.id }}',\n  'boldtrail_csv_import',\n  'triggered',\n  jsonb_build_object(\n    'row_count', {{ $('Parse CSV Rows').first().json.row_count }},\n    'filename', '{{ $('Parse CSV Rows').first().json.filename }}'\n  )\n)",
-        "continueOnFail": true
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [900, 300],
-      "id": "bc100001-0004-4000-8000-bc1000000004",
+      "position": [
+        2160,
+        144
+      ],
+      "id": "5e8b7aa5-4b61-4ded-b6bb-cb315ec2291a",
       "name": "Log Triggered",
       "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
       }
     },
     {
       "parameters": {
-        "jsCode": "const clientId = $('Lookup Client').first().json.id;\nif (!clientId) {\n  throw new Error('Lookup Client returned no id — replace WEICHERT_CLIENT_ID placeholder before activating');\n}\nconst rows = $('Parse CSV Rows').first().json.rows;\n\nconst MAPPED_COLS = new Set([\n  'Contact Name','Full Name','Name',\n  'Email','Email Address',\n  'Phone','Phone Number','Mobile','Cell',\n  'Status','Assigned To','Agent','Agent Email',\n  'Source','Lead Source',\n  'Address','Property Address',\n  'Created Date','Date Added'\n]);\n\nreturn rows\n  .map(row => {\n    const rawName = (row['Contact Name'] || row['Full Name'] || row['Name'] || '').trim();\n    const emailRaw = (row['Email'] || row['Email Address'] || '').toLowerCase().trim();\n    const rawPhone = (row['Phone'] || row['Phone Number'] || row['Mobile'] || row['Cell'] || '').replace(/[^\\d]/g, '');\n    const phone = rawPhone.length === 11 && rawPhone.startsWith('1') ? rawPhone.slice(1) : rawPhone;\n    const validPhone = phone.length >= 10 ? phone : '';\n\n    if (!emailRaw && !validPhone) return null;\n\n    const metadata = {\n      boldtrail_status:     row['Status'] || '',\n      agent_email:          (row['Assigned To'] || row['Agent'] || row['Agent Email'] || '').trim(),\n      lead_source:          (row['Source'] || row['Lead Source'] || '').trim(),\n      property_address:     (row['Address'] || row['Property Address'] || '').trim(),\n      boldtrail_created_at: (row['Created Date'] || row['Date Added'] || '').trim(),\n    };\n    Object.keys(row).forEach(k => {\n      if (!MAPPED_COLS.has(k) && row[k]) metadata['raw_' + k] = row[k];\n    });\n\n    // Escape single quotes for safe SQL interpolation\n    const safeName    = rawName.replace(/'/g, \"''\");\n    const safeEmail   = emailRaw.replace(/'/g, \"''\");\n    const safePhone   = validPhone.replace(/'/g, \"''\");\n    const safeMeta    = JSON.stringify(metadata).replace(/'/g, \"''\");\n    const emailVal    = safeEmail ? `'${safeEmail}'` : 'NULL';\n    const phoneVal    = safePhone ? `'${safePhone}'` : 'NULL';\n\n    const upsertQuery = `INSERT INTO leads (client_id, lead_name, email, phone, source, metadata)\\nVALUES ('${clientId}', '${safeName}', ${emailVal}, ${phoneVal}, 'boldtrail', '${safeMeta}'::jsonb)\\nON CONFLICT (email, phone) WHERE email IS NOT NULL AND phone IS NOT NULL\\nDO UPDATE SET\\n  lead_name  = EXCLUDED.lead_name,\\n  metadata   = leads.metadata || EXCLUDED.metadata,\\n  updated_at = NOW()`;\n\n    return { json: { upsert_query: upsertQuery, client_id: clientId } };\n  })\n  .filter(Boolean);"
+        "jsCode": "const AGENT_MAP = {\n  'Evan Knutson':      'ded234e3-1c78-45c3-8924-6036e1fcaf60',\n  'Michelle Jasinski': '451306d1-6437-42b8-8ffe-c16f28803490'\n};\n\nconst rows = $('Parse CSV Rows').first().json.rows;\n\nconst MAPPED_COLS = new Set([\n  'Contact Name','Full Name','Name',\n  'Email','Email Address',\n  'Phone','Phone Number','Mobile','Cell',\n  'Status','Assigned To','Agent','Agent Email',\n  'Source','Lead Source',\n  'Address','Property Address',\n  'Created Date','Date Added',\n  'Email Optin',\n  'Assigned Agent Name'\n]);\n\nreturn rows\n  .map(row => {\n    const agentName = (row['Assigned Agent Name'] || '').trim();\n    const clientId = AGENT_MAP[agentName];\n    if (!clientId) return null;\n\n    const rawName = (row['Contact Name'] || row['Full Name'] || row['Name'] || '').trim();\n    const emailRaw = (row['Email'] || row['Email Address'] || '').toLowerCase().trim();\n    const rawPhone = (row['Phone'] || row['Phone Number'] || row['Mobile'] || row['Cell'] || '').replace(/[\\D]/g, '');\n    const phone = rawPhone.length === 11 && rawPhone.startsWith('1') ? rawPhone.slice(1) : rawPhone;\n    const validPhone = phone.length >= 10 ? phone : '';\n\n    if (!emailRaw && !validPhone) return null;\n\n    const metadata = {\n      boldtrail_status:     row['Status'] || '',\n      agent_email:          (row['Assigned To'] || row['Agent'] || row['Agent Email'] || '').trim(),\n      lead_source:          (row['Source'] || row['Lead Source'] || '').trim(),\n      property_address:     (row['Address'] || row['Property Address'] || '').trim(),\n      boldtrail_created_at: (row['Created Date'] || row['Date Added'] || '').trim(),\n    };\n    Object.keys(row).forEach(k => {\n      if (!MAPPED_COLS.has(k) && row[k]) metadata['raw_' + k] = row[k];\n    });\n\n    const safeName    = rawName.replace(/'/g, \"''\");\n    const safeEmail   = emailRaw.replace(/'/g, \"''\");\n    const safePhone   = validPhone.replace(/'/g, \"''\");\n    const safeMeta    = JSON.stringify(metadata).replace(/'/g, \"''\");\n    const emailVal    = safeEmail ? `'${safeEmail}'` : 'NULL';\n    const phoneVal    = safePhone ? `'${safePhone}'` : 'NULL';\n    const emailOptOut = row['Email Optin'] === '1' ? 'FALSE' : 'TRUE';\n\n    const upsertQuery = `INSERT INTO leads (client_id, lead_name, email, phone, source, email_opt_out, metadata)\\nVALUES ('${clientId}', '${safeName}', ${emailVal}, ${phoneVal}, 'boldtrail', ${emailOptOut}, '${safeMeta}'::jsonb)\\nON CONFLICT (email, phone) WHERE email IS NOT NULL AND phone IS NOT NULL\\nDO UPDATE SET\\n  lead_name     = EXCLUDED.lead_name,\\n  email_opt_out = EXCLUDED.email_opt_out,\\n  metadata      = leads.metadata || EXCLUDED.metadata,\\n  updated_at    = NOW()`;\n\n    return { json: { upsert_query: upsertQuery, client_id: clientId } };\n  })\n  .filter(Boolean);"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 300],
-      "id": "bc100001-0005-4000-8000-bc1000000005",
+      "position": [
+        2368,
+        144
+      ],
+      "id": "4108fe0f-ce8b-4d47-b392-132c13f2d786",
       "name": "Split Into Rows"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.upsert_query }}",
-        "continueOnFail": true
+        "query": "{{ $json.upsert_query }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1340, 300],
-      "id": "bc100001-0006-4000-8000-bc1000000006",
+      "position": [
+        2592,
+        144
+      ],
+      "id": "057b2308-678e-412b-b89f-dbee89fbac5d",
       "name": "Upsert Lead",
-      "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
-      }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.client_id }}',\n  'boldtrail_csv_import',\n  'completed',\n  '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb\n)",
-        "continueOnFail": true
+        "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1560, 300],
-      "id": "bc100001-0007-4000-8000-bc1000000007",
+      "position": [
+        2816,
+        144
+      ],
+      "id": "fd122d5e-c638-49b4-aa0b-dce15a99b499",
       "name": "Log Completed",
       "continueOnFail": true,
       "credentials": {
-        "postgres": { "id": "NEON_CREDENTIAL_ID", "name": "Neon Postgres" }
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
       }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "data",
+        "include": "allFields"
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3040,
+        144
+      ],
+      "id": "csv-agg-001-0000-0000-000000000001",
+      "name": "Aggregate All Rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "const AGENT_MAP = {\n  'Evan Knutson':      'ded234e3-1c78-45c3-8924-6036e1fcaf60',\n  'Michelle Jasinski': '451306d1-6437-42b8-8ffe-c16f28803490'\n};\n\nconst rows = $('Parse CSV Rows').first().json.rows;\n\nconst emailsByClient = {};\nfor (const row of rows) {\n  const agentName = (row['Assigned Agent Name'] || '').trim();\n  const clientId = AGENT_MAP[agentName];\n  if (!clientId) continue;\n  const email = (row['Email'] || row['Email Address'] || '').toLowerCase().trim();\n  if (!email) continue;\n  if (!emailsByClient[clientId]) emailsByClient[clientId] = [];\n  emailsByClient[clientId].push(email);\n}\n\nconst clauses = Object.entries(emailsByClient).map(([cid, emails]) => {\n  const emailList = emails.map(e => `'${e.replace(/'/g, \"''\")}'`).join(', ');\n  return `(client_id = '${cid}' AND email NOT IN (${emailList}))`;\n});\n\nif (!clauses.length) {\n  return [{ json: { cleanup_query: 'SELECT 1' } }];\n}\n\nconst query = `UPDATE leads\\nSET email_opt_out = TRUE, updated_at = NOW()\\nWHERE email IS NOT NULL\\n  AND (${clauses.join('\\n  OR ')})`;\n\nreturn [{ json: { cleanup_query: query } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        144
+      ],
+      "id": "csv-cleanup-code-0000-000000000002",
+      "name": "Build Cleanup Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.cleanup_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3488,
+        144
+      ],
+      "id": "csv-optout-pg-0000-000000000003",
+      "name": "Opt-Out Absent Leads",
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     }
   ],
   "connections": {
-    "Gmail Trigger":   { "main": [[{ "node": "Parse CSV Rows",  "type": "main", "index": 0 }]] },
-    "Parse CSV Rows":  { "main": [[{ "node": "Lookup Client",   "type": "main", "index": 0 }]] },
-    "Lookup Client":   { "main": [[{ "node": "Log Triggered",   "type": "main", "index": 0 }]] },
-    "Log Triggered":   { "main": [[{ "node": "Split Into Rows", "type": "main", "index": 0 }]] },
-    "Split Into Rows": { "main": [[{ "node": "Upsert Lead",     "type": "main", "index": 0 }]] },
-    "Upsert Lead":     { "main": [[{ "node": "Log Completed",   "type": "main", "index": 0 }]] }
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV Rows": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Split Into Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Rows": {
+      "main": [
+        [
+          {
+            "node": "Upsert Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Lead": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Cleanup Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cleanup Query": {
+      "main": [
+        [
+          {
+            "node": "Opt-Out Absent Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Opt-Out Absent Leads": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "settings": {
-    "errorWorkflow": "Norr AI Workflow Error Logger",
-    "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "none",
-    "saveManualExecutions": true
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "tags": [],
-  "triggerCount": 1,
-  "versionId": "boldtrail-csv-import-v1"
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "e2912418-5df1-4e20-b9a6-c82dbde625cb",
+  "activeVersionId": null,
+  "versionCounter": 13,
+  "triggerCount": 0,
+  "tags": []
 }

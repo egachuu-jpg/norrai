@@ -1,17 +1,17 @@
 {
+  "updatedAt": "2026-06-07T14:10:12.394Z",
+  "createdAt": "2026-06-05T01:59:23.143Z",
+  "id": "DqTxee5tHT3A04F6",
   "name": "Email Unsubscribe Handler",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "email-unsubscribe",
-        "responseMode": "responseNode",
-        "options": {}
-      },
+      "parameters": {"httpMethod": "POST", "path": "email-unsubscribe", "responseMode": "responseNode", "options": {}},
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 300],
-      "id": "euh-0001-0001-4000-8000-000000000001",
+      "position": [-656, 192],
+      "id": "02c4f968-e16d-4d04-900d-d66ba9147cbe",
       "name": "Receive Unsubscribe",
       "webhookId": "email-unsubscribe-webhook-001"
     },
@@ -21,28 +21,16 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300],
-      "id": "euh-0002-0002-4000-8000-000000000002",
+      "position": [-432, 192],
+      "id": "fe7cebbc-fdd6-45d4-a336-4d6526d44200",
       "name": "Validate + Build Query",
       "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "valid-email-001",
-              "leftValue": "={{ $json.valid }}",
-              "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
-            }
-          ],
+          "options": {"version": 3, "leftValue": "", "caseSensitive": true, "typeValidation": "loose"},
+          "conditions": [{"id": "valid-email-001", "leftValue": "={{ $json.valid }}", "operator": {"type": "boolean", "operation": "true", "singleValue": true}}],
           "combinator": "and"
         },
         "looseTypeValidation": true,
@@ -50,40 +38,27 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [680, 300],
-      "id": "euh-0003-0003-4000-8000-000000000003",
+      "position": [-208, 192],
+      "id": "9cac8dbc-b8c7-4f9f-a3b0-cb85b71b772a",
       "name": "Email Valid?"
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={ \"status\": \"error\", \"message\": \"invalid email\" }",
-        "options": { "responseCode": 400 }
-      },
+      "parameters": {"respondWith": "json", "responseBody": "={ \"status\": \"error\", \"message\": \"invalid email\" }", "options": {"responseCode": 400}},
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [900, 420],
-      "id": "euh-0004-0004-4000-8000-000000000004",
+      "position": [16, 384],
+      "id": "3a203943-4fde-41f9-8f72-51106ef83315",
       "name": "Respond Invalid"
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ $json.update_query }}",
-        "options": {}
-      },
+      "parameters": {"operation": "executeQuery", "query": "{{ $json.update_query }}", "options": {}},
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [900, 220],
-      "id": "euh-0005-0005-4000-8000-000000000005",
+      "position": [16, 192],
+      "id": "2dd1e5f9-e6b0-4d35-8893-7ac140ac742d",
       "name": "Set Email Opt-Out",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -93,27 +68,18 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [900, 60],
-      "id": "euh-0006-0006-4000-8000-000000000006",
+      "position": [16, 0],
+      "id": "b004bd11-6832-40ad-8149-0082cca8787c",
       "name": "Log Triggered",
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "onError": "continueRegularOutput"
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={ \"status\": \"ok\" }",
-        "options": { "responseCode": 200 }
-      },
+      "parameters": {"respondWith": "json", "responseBody": "={ \"status\": \"ok\" }", "options": {"responseCode": 200}},
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1120, 220],
-      "id": "euh-0007-0007-4000-8000-000000000007",
+      "position": [240, 192],
+      "id": "49343c12-7417-432e-860e-02d7c0304da2",
       "name": "Respond OK"
     },
     {
@@ -124,49 +90,34 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1340, 220],
-      "id": "euh-0008-0008-4000-8000-000000000008",
+      "position": [464, 192],
+      "id": "7ecf0841-a0c9-4b42-bdd8-274bce87f98c",
       "name": "Log Completed",
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon Postgres"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "onError": "continueRegularOutput"
     }
   ],
-  "pinData": {},
   "connections": {
-    "Receive Unsubscribe": {
-      "main": [[{ "node": "Validate + Build Query", "type": "main", "index": 0 }]]
-    },
-    "Validate + Build Query": {
-      "main": [[{ "node": "Email Valid?", "type": "main", "index": 0 }]]
-    },
-    "Email Valid?": {
-      "main": [
-        [
-          { "node": "Set Email Opt-Out", "type": "main", "index": 0 },
-          { "node": "Log Triggered", "type": "main", "index": 0 }
-        ],
-        [{ "node": "Respond Invalid", "type": "main", "index": 0 }]
-      ]
-    },
-    "Set Email Opt-Out": {
-      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
-    },
-    "Respond OK": {
-      "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]]
-    }
+    "Receive Unsubscribe": {"main": [[{"node": "Validate + Build Query", "type": "main", "index": 0}]]},
+    "Validate + Build Query": {"main": [[{"node": "Email Valid?", "type": "main", "index": 0}]]},
+    "Email Valid?": {"main": [[{"node": "Set Email Opt-Out", "type": "main", "index": 0}, {"node": "Log Triggered", "type": "main", "index": 0}], [{"node": "Respond Invalid", "type": "main", "index": 0}]]},
+    "Set Email Opt-Out": {"main": [[{"node": "Respond OK", "type": "main", "index": 0}]]},
+    "Respond OK": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "Norr AI Workflow Error Logger"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "versionId": "email-unsubscribe-handler-v1",
-  "meta": { "instanceId": "norrai" },
-  "id": "email-unsubscribe-handler-001",
-  "tags": []
+  "staticData": null,
+  "meta": {"templateCredsSetupCompleted": true},
+  "pinData": {},
+  "versionId": "44a32172-7524-45c2-8db3-10bfce71edcd",
+  "activeVersionId": "44a32172-7524-45c2-8db3-10bfce71edcd",
+  "versionCounter": 16,
+  "triggerCount": 1,
+  "tags": [{"id": "VREJzJaoNhKkCR6J", "name": "general"}]
 }

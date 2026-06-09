@@ -1,17 +1,17 @@
 {
+  "updatedAt": "2026-05-27T19:49:25.722Z",
+  "createdAt": "2026-05-14T12:28:00.661Z",
+  "id": "Oefs1c47JtXBzVUY",
   "name": "Real Estate Lead Cleanser",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "lead-cleanser",
-        "responseMode": "onReceived",
-        "options": {}
-      },
+      "parameters": {"httpMethod": "POST", "path": "lead-cleanser", "options": {}},
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 300],
-      "id": "lc000001-0001-4000-8000-000000000001",
+      "position": [-400, 624],
+      "id": "df80fe34-370d-4256-abe2-1136aec1504e",
       "name": "Receive Lead",
       "webhookId": "lead-cleanser-webhook-001"
     },
@@ -21,40 +21,25 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 300],
-      "id": "lc000001-0002-4000-8000-000000000002",
+      "position": [-192, 624],
+      "id": "0867f1f0-c0c2-4d4b-9575-807e552b9607",
       "name": "Build Token Query"
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ $json.query }}"
-      },
+      "parameters": {"operation": "executeQuery", "query": "{{ $json.query }}", "options": {}},
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [640, 300],
-      "id": "lc000001-0003-4000-8000-000000000003",
+      "position": [16, 624],
+      "id": "56d39c4c-fa7b-4111-adc9-b4a56468650a",
       "name": "Resolve Token",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [
-            {
-              "id": "token-found-001",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {"type": "string", "operation": "notEmpty"}
-            }
-          ],
+          "options": {"version": 3, "leftValue": "", "caseSensitive": true, "typeValidation": "loose"},
+          "conditions": [{"id": "token-found-001", "leftValue": "={{ $json.id }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}}],
           "combinator": "and"
         },
         "looseTypeValidation": true,
@@ -62,8 +47,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [840, 300],
-      "id": "lc000001-0004-4000-8000-000000000004",
+      "position": [208, 624],
+      "id": "c3637103-707b-4411-9b03-ace17ab4016f",
       "name": "Token Found?"
     },
     {
@@ -72,41 +57,26 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1040, 220],
-      "id": "lc000001-0005-4000-8000-000000000005",
+      "position": [416, 544],
+      "id": "f43ab225-1701-4ce3-87a0-a61f814dd255",
       "name": "Build Dedupe Query"
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ $json.query }}"
-      },
+      "parameters": {"operation": "executeQuery", "query": "{{ $json.query }}", "options": {}},
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1240, 220],
-      "id": "lc000001-0006-4000-8000-000000000006",
+      "position": [608, 544],
+      "id": "9a6c9ea1-2b44-4f64-9e2a-232fd34e9f9a",
       "name": "Dedupe Check",
       "alwaysOutputData": true,
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [
-            {
-              "id": "lead-exists-001",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {"type": "string", "operation": "notEmpty"}
-            }
-          ],
+          "options": {"version": 3, "leftValue": "", "caseSensitive": true, "typeValidation": "loose"},
+          "conditions": [{"id": "lead-exists-001", "leftValue": "={{ $json.id }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}}],
           "combinator": "and"
         },
         "looseTypeValidation": true,
@@ -114,88 +84,65 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1440, 220],
-      "id": "lc000001-0007-4000-8000-000000000007",
+      "position": [816, 544],
+      "id": "acf8d6f5-bbf5-4541-adc9-725e188ac0b1",
       "name": "Lead Exists?"
     },
     {
       "parameters": {
-        "jsCode": "// Lead already exists — update lead_message and stop\nconst existing_id = $input.first().json.id;\nconst ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\nconst msg = (p.lead_message || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `UPDATE leads SET lead_message = '${msg}', updated_at = now() WHERE id = '${existing_id}'`\n  }\n}];"
+        "jsCode": "const existing_id = $input.first().json.id;\nconst ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\nconst msg = (p.lead_message || '').replace(/'/g, \"''\");\nreturn [{ json: { query: `UPDATE leads SET lead_message = '${msg}', updated_at = now() WHERE id = '${existing_id}'` } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1640, 140],
-      "id": "lc000001-0008-4000-8000-000000000008",
+      "position": [1008, 464],
+      "id": "7072b99f-d74a-4933-9117-9334a828e0c1",
       "name": "Build Update Query"
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ $json.query }}"
-      },
+      "parameters": {"operation": "executeQuery", "query": "{{ $json.query }}", "options": {}},
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1840, 140],
-      "id": "lc000001-0009-4000-8000-000000000009",
+      "position": [1216, 464],
+      "id": "3fbaa1bb-678c-4a81-a624-6b90b0b33372",
       "name": "Update Existing Lead",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\n\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\n\nconst metadata = JSON.stringify({\n  property_address: p.property_address || null,\n  price_range: p.price_range || null,\n  beds: p.beds || null\n}).replace(/'/g, \"''\");\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, stage, next_action_due, metadata) VALUES ('${ctx.client_id}', '${esc(p.lead_name)}', '${esc(p.email)}', '${esc(p.phone)}', '${esc(p.source)}', '${esc(p.lead_message)}', 'new', 'new', '${today}', '${metadata}') RETURNING id`,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    agent_phone: ctx.agent_phone || '',\n    brokerage: ctx.brokerage || '',\n    payload: p\n  }\n}];"
+        "jsCode": "const ctx = $('Build Dedupe Query').first().json;\nconst p = ctx.payload;\nconst esc = v => (v || '').toString().replace(/'/g, \"''\");\nconst metadata = JSON.stringify({ property_address: p.property_address || null, price_range: p.price_range || null, beds: p.beds || null }).replace(/'/g, \"''\");\nconst today = new Date().toISOString().split('T')[0];\nreturn [{\n  json: {\n    query: `INSERT INTO leads (client_id, lead_name, email, phone, source, lead_message, status, stage, next_action_due, metadata) VALUES ('${ctx.client_id}', '${esc(p.lead_name)}', '${esc(p.email)}', '${esc(p.phone)}', '${esc(p.source)}', '${esc(p.lead_message)}', 'new', 'new', '${today}', '${metadata}') RETURNING id`,\n    client_id: ctx.client_id, agent_email: ctx.agent_email, agent_name: ctx.agent_name,\n    agent_phone: ctx.agent_phone || '', brokerage: ctx.brokerage || '', payload: p\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1640, 300],
-      "id": "lc000001-0010-4000-8000-000000000010",
+      "position": [1008, 624],
+      "id": "ab0c8dfa-d19a-4a19-a929-6d723cce5faa",
       "name": "Build Insert Query"
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ $json.query }}"
-      },
+      "parameters": {"operation": "executeQuery", "query": "{{ $json.query }}", "options": {}},
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1840, 300],
-      "id": "lc000001-0011-4000-8000-000000000011",
+      "position": [1216, 624],
+      "id": "5417c6bb-f00b-499e-9040-8d8a43d7336c",
       "name": "Insert New Lead",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "NEON_CREDENTIAL_ID",
-          "name": "Neon account"
-        }
-      }
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "// Combine lead_id from INSERT RETURNING with context fields\nconst insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id,\n    client_id: ctx.client_id,\n    agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name,\n    agent_phone: ctx.agent_phone || '',\n    brokerage: ctx.brokerage || '',\n    address_present: !!(ctx.payload && ctx.payload.property_address),\n    payload: ctx.payload\n  }\n}];"
+        "jsCode": "const insertResult = $input.first().json;\nconst ctx = $('Build Insert Query').first().json;\nreturn [{\n  json: {\n    lead_id: insertResult.id, client_id: ctx.client_id, agent_email: ctx.agent_email,\n    agent_name: ctx.agent_name, agent_phone: ctx.agent_phone || '', brokerage: ctx.brokerage || '',\n    address_present: !!(ctx.payload && ctx.payload.property_address), payload: ctx.payload\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2040, 300],
-      "id": "lc000001-0012-4000-8000-000000000012",
+      "position": [1408, 624],
+      "id": "4813d88a-386a-416c-8d9a-396595c1a1d0",
       "name": "Prepare Handoff"
     },
     {
       "parameters": {
         "conditions": {
           "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [
-            {
-              "id": "email-ok-001",
-              "leftValue": "={{ $json.payload.email_status }}",
-              "rightValue": "Unsubscribed",
-              "operator": {"type": "string", "operation": "notEquals"}
-            }
-          ],
+          "conditions": [{"id": "email-ok-001", "leftValue": "={{ $json.payload.email_status }}", "rightValue": "Unsubscribed", "operator": {"type": "string", "operation": "notEquals"}}],
           "combinator": "and"
         },
         "looseTypeValidation": true,
@@ -203,8 +150,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [2240, 300],
-      "id": "lc000001-0014-4000-8000-000000000014",
+      "position": [1616, 624],
+      "id": "a7cf75e9-5cbb-4a12-979d-fe11ef17ff0f",
       "name": "Email OK?"
     },
     {
@@ -218,43 +165,76 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2440, 300],
-      "id": "lc000001-0013-4000-8000-000000000013",
+      "position": [1808, 624],
+      "id": "70c4b3de-0652-4186-92a3-f32479ed77b1",
       "name": "Trigger Lead Response"
+    },
+    {
+      "id": "ebe51f77-2cea-4b5d-b771-2357fa9e4969",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [320, 700],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id }}',\n  'lead_cleanser',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
+    },
+    {
+      "id": "cbb35746-8961-4c7e-81a4-0e115c5e8af5",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2000, 624],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(NULLIF(NULLIF('{{ $(\"Resolve Token\").first().json.id }}', ''), 'null'), 'e2f9934c-4d28-4bb4-ac90-4284c1123517')::uuid,\n  'lead_cleanser',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
+    },
+    {
+      "id": "529294ad-236b-4c9d-a3e9-7da60b45001f",
+      "name": "Log Completed Dup",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1408, 464],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(NULLIF(NULLIF('{{ $(\"Resolve Token\").first().json.id }}', ''), 'null'), 'e2f9934c-4d28-4bb4-ac90-4284c1123517')::uuid,\n  'lead_cleanser',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}', 'result', 'duplicate_updated')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "continueOnFail": true
     }
   ],
-  "pinData": {},
   "connections": {
     "Receive Lead": {"main": [[{"node": "Build Token Query", "type": "main", "index": 0}]]},
     "Build Token Query": {"main": [[{"node": "Resolve Token", "type": "main", "index": 0}]]},
     "Resolve Token": {"main": [[{"node": "Token Found?", "type": "main", "index": 0}]]},
-    "Token Found?": {
-      "main": [
-        [{"node": "Build Dedupe Query", "type": "main", "index": 0}],
-        []
-      ]
-    },
+    "Token Found?": {"main": [[{"node": "Build Dedupe Query", "type": "main", "index": 0}, {"node": "Log Triggered", "type": "main", "index": 0}]]},
     "Build Dedupe Query": {"main": [[{"node": "Dedupe Check", "type": "main", "index": 0}]]},
     "Dedupe Check": {"main": [[{"node": "Lead Exists?", "type": "main", "index": 0}]]},
-    "Lead Exists?": {
-      "main": [
-        [{"node": "Build Update Query", "type": "main", "index": 0}],
-        [{"node": "Build Insert Query", "type": "main", "index": 0}]
-      ]
-    },
+    "Lead Exists?": {"main": [[{"node": "Build Update Query", "type": "main", "index": 0}], [{"node": "Build Insert Query", "type": "main", "index": 0}]]},
     "Build Update Query": {"main": [[{"node": "Update Existing Lead", "type": "main", "index": 0}]]},
     "Build Insert Query": {"main": [[{"node": "Insert New Lead", "type": "main", "index": 0}]]},
     "Insert New Lead": {"main": [[{"node": "Prepare Handoff", "type": "main", "index": 0}]]},
     "Prepare Handoff": {"main": [[{"node": "Email OK?", "type": "main", "index": 0}]]},
-    "Email OK?": {"main": [[{"node": "Trigger Lead Response", "type": "main", "index": 0}], []]}
+    "Email OK?": {"main": [[{"node": "Trigger Lead Response", "type": "main", "index": 0}]]},
+    "Trigger Lead Response": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]},
+    "Update Existing Lead": {"main": [[{"node": "Log Completed Dup", "type": "main", "index": 0}]]}
   },
-  "active": false,
-  "settings": {"executionOrder": "v1"},
-  "versionId": "lead-cleanser-v1-001",
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
-  },
-  "id": "",
-  "tags": []
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "timeSavedMode": "fixed", "errorWorkflow": "Al6gagYmiq1feOWq", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": false},
+  "staticData": null,
+  "meta": {"templateCredsSetupCompleted": true},
+  "pinData": {},
+  "versionId": "4ce0ef5a-069a-4dab-a5af-273ff410e662",
+  "activeVersionId": "4ce0ef5a-069a-4dab-a5af-273ff410e662",
+  "versionCounter": 49,
+  "triggerCount": 1,
+  "tags": [{"id": "hF4YeAdcnZuVMhqJ", "name": "real estate"}]
 }

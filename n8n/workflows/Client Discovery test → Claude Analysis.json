@@ -1,0 +1,293 @@
+{
+  "updatedAt": "2026-04-24T12:59:51.377Z",
+  "createdAt": "2026-04-24T12:20:27.111Z",
+  "id": "b9KeIvQzK6HBVj4L",
+  "name": "Client Discovery test → Claude Analysis",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding_form",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5a722edc-6663-4f9d-8f83-f99b452c05f6",
+      "name": "Webhook — Form Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        -336
+      ],
+      "webhookId": "d2cb954a-1e75-4fd9-85e5-18346030f341"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09c9c0dc-11bd-431f-93fe-eda5e92be7a6",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=21FB348E-12B4-41EF-B164-43188A647E9C",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1408,
+        -336
+      ],
+      "id": "c107b631-9962-4908-a5de-b56ce139e9ab",
+      "name": "Token Check"
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "QOSX5Gv13oKFmcaW",
+          "mode": "list",
+          "cachedResultName": "valid_emails",
+          "cachedResultUrl": "/projects/dHMe2aoOwTztDaWE/datatables/QOSX5Gv13oKFmcaW"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email_address",
+              "keyValue": "={{ $node[\"Get Listing Details\"].json.body.agent_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        -336
+      ],
+      "id": "03ef7e55-3c0a-4b17-9727-66be8a599dfa",
+      "name": "Valid Email Check"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.body;\nconst prompt = `Discovery analysis prompt for event ops...`;\nconst claude_request_body = JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4096, messages: [{ role: 'user', content: prompt }] });\nreturn [{ json: { prompt, claude_request_body, submitter_name: d.name || 'Unknown', submitter_email: d.email || '', submitted_at: d.submitted_at || new Date().toISOString() } }];"
+      },
+      "id": "18676b34-7773-47bc-b916-0f93d3ff50fc",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $vars.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: \"claude-sonnet-4-6\", max_tokens: 500, messages: [{ role: \"user\", content: $json.prompt }] } }}",
+        "options": {}
+      },
+      "id": "b9184aeb-5ab0-4bc8-9f2a-69a2055fc3bc",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nconst analysis = claudeResponse.content?.[0]?.text ?? 'No response.';\nconst submitterName = $('Build Claude Prompt').first().json.submitter_name;\nconst submitterEmail = $('Build Claude Prompt').first().json.submitter_email;\nconst submittedAt = $('Build Claude Prompt').first().json.submitted_at;\nconst htmlBody = `<div>${analysis}</div>`;\nreturn [{ json: { analysis, html_body: htmlBody, submitter_name: submitterName, submitter_email: submitterEmail, subject: `Discovery analysis — ${submitterName} (Event Ops)` } }];"
+      },
+      "id": "1c01f9f0-dee6-4b53-affc-7de2e4f598b2",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SENDGRID_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: \"hello@norrai.co\", name: \"Egan\" }], subject: $json.subject }], from: { email: \"studio@norrai.co\", name: \"Norr AI\" }, content: [{ type: \"text/html\", value: $json.html_body }] } }}",
+        "options": {}
+      },
+      "id": "39cfb0f7-3b32-49b8-9c66-4870ba585572",
+      "name": "Send Analysis via SendGrid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2528,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"message\": \"Got it — we'll review your answers and reach out within one business day.\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e9ee3aa4-8b8c-452e-8d5e-f9d75447ff93",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2752,
+        -336
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook — Form Intake": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Valid Email Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Email Check": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Send Analysis via SendGrid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Analysis via SendGrid": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "c2aa7360-52b3-4bb9-bdf8-66ace5c3a6a7",
+  "activeVersionId": null,
+  "versionCounter": 19,
+  "triggerCount": 0,
+  "tags": []
+}
