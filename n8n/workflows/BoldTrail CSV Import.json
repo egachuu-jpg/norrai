@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-09T00:50:02.864Z",
+  "updatedAt": "2026-06-09T01:29:19.720Z",
   "createdAt": "2026-06-08T01:06:33.227Z",
   "id": "2ZqKNuyAeXZPvD1j",
   "name": "BoldTrail CSV Import",
@@ -62,13 +62,13 @@
       ],
       "id": "0191cf62-8840-4cd9-91f0-954ffdeb8906",
       "name": "Lookup Client",
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
           "id": "2DDeKGMIP9Ijbd9R",
           "name": "Postgres account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -84,17 +84,17 @@
       ],
       "id": "5e8b7aa5-4b61-4ded-b6bb-cb315ec2291a",
       "name": "Log Triggered",
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
           "id": "2DDeKGMIP9Ijbd9R",
           "name": "Postgres account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const AGENT_MAP = {\n  'Evan Knutson':      'ded234e3-1c78-45c3-8924-6036e1fcaf60',\n  'Michelle Jasinski': '451306d1-6437-42b8-8ffe-c16f28803490'\n};\n\nconst rows = $('Parse CSV Rows').first().json.rows;\n\nconst MAPPED_COLS = new Set([\n  'Contact Name','Full Name','Name',\n  'Email','Email Address',\n  'Phone','Phone Number','Mobile','Cell',\n  'Status','Assigned To','Agent','Agent Email',\n  'Source','Lead Source',\n  'Address','Property Address',\n  'Created Date','Date Added',\n  'Email Optin',\n  'Assigned Agent Name'\n]);\n\nreturn rows\n  .map(row => {\n    const agentName = (row['Assigned Agent Name'] || '').trim();\n    const clientId = AGENT_MAP[agentName];\n    if (!clientId) return null;\n\n    const rawName = (row['Contact Name'] || row['Full Name'] || row['Name'] || '').trim();\n    const emailRaw = (row['Email'] || row['Email Address'] || '').toLowerCase().trim();\n    const rawPhone = (row['Phone'] || row['Phone Number'] || row['Mobile'] || row['Cell'] || '').replace(/[\\D]/g, '');\n    const phone = rawPhone.length === 11 && rawPhone.startsWith('1') ? rawPhone.slice(1) : rawPhone;\n    const validPhone = phone.length >= 10 ? phone : '';\n\n    if (!emailRaw && !validPhone) return null;\n\n    const metadata = {\n      boldtrail_status:     row['Status'] || '',\n      agent_email:          (row['Assigned To'] || row['Agent'] || row['Agent Email'] || '').trim(),\n      lead_source:          (row['Source'] || row['Lead Source'] || '').trim(),\n      property_address:     (row['Address'] || row['Property Address'] || '').trim(),\n      boldtrail_created_at: (row['Created Date'] || row['Date Added'] || '').trim(),\n    };\n    Object.keys(row).forEach(k => {\n      if (!MAPPED_COLS.has(k) && row[k]) metadata['raw_' + k] = row[k];\n    });\n\n    const safeName    = rawName.replace(/'/g, \"''\");\n    const safeEmail   = emailRaw.replace(/'/g, \"''\");\n    const safePhone   = validPhone.replace(/'/g, \"''\");\n    const safeMeta    = JSON.stringify(metadata).replace(/'/g, \"''\");\n    const emailVal    = safeEmail ? `'${safeEmail}'` : 'NULL';\n    const phoneVal    = safePhone ? `'${safePhone}'` : 'NULL';\n    const emailOptOut = row['Email Optin'] === '1' ? 'FALSE' : 'TRUE';\n\n    const upsertQuery = `INSERT INTO leads (client_id, lead_name, email, phone, source, email_opt_out, metadata)\\nVALUES ('${clientId}', '${safeName}', ${emailVal}, ${phoneVal}, 'boldtrail', ${emailOptOut}, '${safeMeta}'::jsonb)\\nON CONFLICT (email, phone) WHERE email IS NOT NULL AND phone IS NOT NULL\\nDO UPDATE SET\\n  lead_name     = EXCLUDED.lead_name,\\n  email_opt_out = EXCLUDED.email_opt_out,\\n  metadata      = leads.metadata || EXCLUDED.metadata,\\n  updated_at    = NOW()`;\n\n    return { json: { upsert_query: upsertQuery, client_id: clientId } };\n  })\n  .filter(Boolean);"
+        "jsCode": "const AGENT_MAP = {\n  'Evan Knutson':      'ded234e3-1c78-45c3-8924-6036e1fcaf60',\n  'Michelle Jasinski': '451306d1-6437-42b8-8ffe-c16f28803490'\n};\n\nconst rows = $('Parse CSV Rows').first().json.rows;\n\nconst MAPPED_COLS = new Set([\n  'Contact Name','Full Name','Name',\n  'Email','Email Address',\n  'Phone','Phone Number','Mobile','Cell',\n  'Status','Assigned To','Agent','Agent Email',\n  'Source','Lead Source',\n  'Address','Property Address',\n  'Created Date','Date Added',\n  'Email Optin',\n  'Assigned Agent Name'\n]);\n\nreturn rows\n  .map(row => {\n    const agentName = (row['Assigned Agent Name'] || '').trim();\n    const clientId = AGENT_MAP[agentName];\n    if (!clientId) return null;\n\n    const rawName = (row['Contact Name'] || row['Full Name'] || row['Name'] || ((row['First Name'] || '') + ' ' + (row['Last Name'] || '')).trim()).trim();\n    const emailRaw = (row['Email'] || row['Email Address'] || '').toLowerCase().trim();\n    const rawPhone = (row['Phone'] || row['Phone Number'] || row['Mobile'] || row['Cell'] || '').replace(/[\\D]/g, '');\n    const phone = rawPhone.length === 11 && rawPhone.startsWith('1') ? rawPhone.slice(1) : rawPhone;\n    const validPhone = phone.length >= 10 ? phone : '';\n\n    if (!emailRaw && !validPhone) return null;\n\n    const metadata = {\n      boldtrail_status:     row['Status'] || '',\n      agent_email:          (row['Assigned To'] || row['Agent'] || row['Agent Email'] || '').trim(),\n      lead_source:          (row['Source'] || row['Lead Source'] || '').trim(),\n      property_address:     (row['Address'] || row['Property Address'] || '').trim(),\n      boldtrail_created_at: (row['Created Date'] || row['Date Added'] || '').trim(),\n    };\n    Object.keys(row).forEach(k => {\n      if (!MAPPED_COLS.has(k) && row[k]) metadata['raw_' + k] = row[k];\n    });\n\n    const safeName    = rawName.replace(/'/g, \"''\");\n    const safeEmail   = emailRaw.replace(/'/g, \"''\");\n    const safePhone   = validPhone.replace(/'/g, \"''\");\n    const safeMeta    = JSON.stringify(metadata).replace(/'/g, \"''\");\n    const emailVal    = safeEmail ? `'${safeEmail}'` : 'NULL';\n    const phoneVal    = safePhone ? `'${safePhone}'` : 'NULL';\n    const emailOptOut = row['Email Optin'] === '1' ? 'FALSE' : 'TRUE';\n\n    let onConflict;\n    if (safeEmail && safePhone) {\n      onConflict = 'ON CONFLICT (email, phone) WHERE email IS NOT NULL AND phone IS NOT NULL';\n    } else if (safeEmail) {\n      onConflict = 'ON CONFLICT (email) WHERE email IS NOT NULL AND phone IS NULL';\n    } else {\n      onConflict = 'ON CONFLICT (phone) WHERE phone IS NOT NULL AND email IS NULL';\n    }\n\n    const upsertQuery = `INSERT INTO leads (client_id, lead_name, email, phone, source, email_opt_out, metadata)\\nVALUES ('${clientId}', '${safeName}', ${emailVal}, ${phoneVal}, 'boldtrail', ${emailOptOut}, '${safeMeta}'::jsonb)\\n${onConflict}\\nDO UPDATE SET\\n  lead_name     = EXCLUDED.lead_name,\\n  email_opt_out = EXCLUDED.email_opt_out,\\n  metadata      = leads.metadata || EXCLUDED.metadata,\\n  updated_at    = NOW()`;\n\n    return { json: { upsert_query: upsertQuery, client_id: clientId } };\n  })\n  .filter(Boolean);"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -129,31 +129,8 @@
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.client_id }}',\n  'boldtrail_csv_import',\n  'completed',\n  '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb\n)",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        3952,
-        144
-      ],
-      "id": "fd122d5e-c638-49b4-aa0b-dce15a99b499",
-      "name": "Log Completed",
-      "continueOnFail": true,
-      "credentials": {
-        "postgres": {
-          "id": "2DDeKGMIP9Ijbd9R",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "aggregate": "aggregateAllItemData",
-        "destinationFieldName": "data",
-        "include": "allFields"
+        "options": {}
       },
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
@@ -201,6 +178,28 @@
     },
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.client_id }}',\n  'boldtrail_csv_import',\n  'completed',\n  '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3952,
+        144
+      ],
+      "id": "fd122d5e-c638-49b4-aa0b-dce15a99b499",
+      "name": "Log Completed",
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
         "jsCode": "const email = $input.first().json;\n\n// Gmail trigger exposes body as text/html fields\nconst body = email.text || email.html || email.snippet || JSON.stringify(email);\n\nconst match = body.match(/https:\\/\\/kvcore-prod-exports\\.s3\\.amazonaws\\.com\\/[^\\s\"'<>]+\\.csv/);\nif (!match) {\n  throw new Error('No kvCore CSV URL found in email. Preview: ' + body.substring(0, 300));\n}\n\nreturn [{ json: { csv_url: match[0] } }];"
       },
       "type": "n8n-nodes-base.code",
@@ -214,7 +213,6 @@
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ $json.csv_url }}",
         "options": {
           "response": {
@@ -240,6 +238,28 @@
         [
           {
             "node": "Extract CSV URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract CSV URL": {
+      "main": [
+        [
+          {
+            "node": "Download CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download CSV": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV Rows",
             "type": "main",
             "index": 0
           }
@@ -333,28 +353,6 @@
           }
         ]
       ]
-    },
-    "Extract CSV URL": {
-      "main": [
-        [
-          {
-            "node": "Download CSV",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Download CSV": {
-      "main": [
-        [
-          {
-            "node": "Parse CSV Rows",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "settings": {
@@ -366,9 +364,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "e2912418-5df1-4e20-b9a6-c82dbde625cb",
+  "versionId": "c1c26ee2-ab0c-4510-a632-35351c6c8953",
   "activeVersionId": null,
-  "versionCounter": 13,
-  "triggerCount": 0,
-  "tags": []
+  "versionCounter": 27,
+  "triggerCount": 0
 }
