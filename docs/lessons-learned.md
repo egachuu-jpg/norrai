@@ -107,6 +107,7 @@
 - Confirmed Zapier trigger field names: `firstname`, `lastname`, `email`, `phone`, `street`, `city`, `state`, `zip`, `origin` (lead source), `is_seller`, `seller_full_address`, `seller_street`, `seller_city`, `seller_state`, `seller_zip`, `email_status`, `on_drip`, `starrating`, `leadid`; no price_range or beds exposed
 - Weichert-managed instances: outbound webhook config is brokerage-controlled; agent-level accounts have no access to configure it — Zapier is the only supported outbound path
 - BoldTrail sends automated listing alert emails to leads by default — Norr AI nurture should be SMS-dominant for BoldTrail clients to avoid channel overlap and differentiate value
+- BoldTrail CSV exports (email notification) use `First Name` / `Last Name` columns, not a combined `Contact Name` or `Full Name` — always add a first+last fallback (`(row['First Name'] || '') + ' ' + (row['Last Name'] || '')`) in Code nodes that look up lead name
 
 ## Zapier
 - Free tier pauses Zaps after 2 weeks of inactivity — always provision Starter ($20/mo) for live clients; silent lead drops are unacceptable
@@ -148,3 +149,7 @@
 - Website is deployed at `tools.norrai.co` (Cloudflare Pages custom domain), not the apex `norrai.co` — all external links in n8n workflows and emails must use `tools.norrai.co`
 - Schema drift risk: `db/schema.sql` can get ahead of production if ALTER TABLE migrations are never run — if a workflow fails on a missing column, check the schema file first and run the ALTER to catch up; both `email_opt_out` and `opted_out_at` were in the file but never applied
 - When a sub-workflow (PropertyBoost Parser) inserts the lead and passes `lead_id` downstream to ILR, ILR's Build Lead Insert must be gated: check `body.lead_id` first and return `SELECT 1` no-op if present — otherwise every PropertyBoost lead gets two `leads` rows
+- To dedup leads where either email or phone can be NULL, three separate partial unique indexes are needed: `(email, phone) WHERE both NOT NULL`, `(email) WHERE email NOT NULL AND phone NULL`, `(phone) WHERE phone NOT NULL AND email NULL` — `ON CONFLICT` only fires when the inserted row satisfies the index predicate; a row with email but null phone silently bypasses a both-not-null index
+- Before creating a unique index on an existing table, check for violating rows first: `SELECT col, count(*) FROM t WHERE col IS NOT NULL GROUP BY col HAVING count(*) > 1` — `CREATE UNIQUE INDEX` fails if duplicates already exist
+- Editing a JSON workflow file with the Edit tool to write multi-line JavaScript into a string value will corrupt the file — actual newline characters inside a JSON string are invalid; use Python `json.load` / modify the code string / `json.dump` for any Code node replacement that involves newlines
+- `patchNodeField find` requires an exact literal match including all escape sequences; for Code nodes with template literals containing `${...}` and embedded `\n` (backslash-n), the escaping is error-prone across JSON layers — build the replacement string in Python and push with `n8n_update_full_workflow` instead

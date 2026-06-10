@@ -325,3 +325,10 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Discovered duplicate Weichert Open House Follow-Up workflows: canonical ID `VzNYr7R5DdiTvni9` (May 11, active, holds the webhook) vs duplicate `kiwvKR6T8Z6hBSBA` (imported prior session); applied all fixes to canonical, archived the duplicate; updated local JSON file name/ID
 - Used n8n REST API directly to unarchive `kiwvKR6T8Z6hBSBA` when MCP tool was blocked: `POST /api/v1/workflows/{id}/unarchive` with `X-N8N-API-KEY` header
 - All workflow fixes tested and confirmed working end to end
+
+### 2026-06-09
+- Fixed `lead_name` blank in BoldTrail CSV Import: CSV uses `First Name` / `Last Name` columns, not `Contact Name` — added first+last fallback in `Split Into Rows`
+- Fixed upsert not matching existing rows when phone is blank: `ON CONFLICT (email, phone) WHERE both NOT NULL` partial index doesn't fire for email-only rows; added two new partial unique indexes to Neon (`idx_leads_email_only`, `idx_leads_phone_only`) and updated schema.sql
+- Deduplicated existing email-only rows in Neon (kept most recently updated) before index creation — ~20+ emails had duplicates from prior imports
+- Updated `Split Into Rows` to pick conflict target dynamically: both → `(email, phone)`, email-only → `(email) WHERE phone IS NULL`, phone-only → `(phone) WHERE email IS NULL`
+- Rebuilt `BoldTrail CSV Import.json` via Python after direct Edit tool write corrupted the JSON (unescaped newlines in string value); pushed via `n8n_update_full_workflow`

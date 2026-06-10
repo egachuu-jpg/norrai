@@ -110,6 +110,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_email_phone
   ON leads(email, phone)
   WHERE email IS NOT NULL AND phone IS NOT NULL;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_email_only
+  ON leads(email)
+  WHERE email IS NOT NULL AND phone IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_phone_only
+  ON leads(phone)
+  WHERE phone IS NOT NULL AND email IS NULL;
+
 
 CREATE TABLE appointments (
   id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
