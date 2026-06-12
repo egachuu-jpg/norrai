@@ -108,6 +108,9 @@
 - Weichert-managed instances: outbound webhook config is brokerage-controlled; agent-level accounts have no access to configure it — Zapier is the only supported outbound path
 - BoldTrail sends automated listing alert emails to leads by default — Norr AI nurture should be SMS-dominant for BoldTrail clients to avoid channel overlap and differentiate value
 - BoldTrail CSV exports (email notification) use `First Name` / `Last Name` columns, not a combined `Contact Name` or `Full Name` — always add a first+last fallback (`(row['First Name'] || '') + ' ' + (row['Last Name'] || '')`) in Code nodes that look up lead name
+- BoldTrail CSV phone column is `Cell Phone 1` (~23% fill) — `Phone`, `Mobile`, `Cell`, `Work Phone`, `Home Phone` columns are all empty in BoldTrail exports; check actual column names from a sample before writing extraction code
+- BoldTrail CSV `Agent Notes` can contain multiline quoted text (TCPA consent logs, timestamped entries) — `split('\n')` before parsing breaks column alignment for those rows; use a character-level parser that tracks quote state before treating `\n` as a row separator
+- When BoldTrail has no contact name on file, it writes the email username into `First Name` (e.g. `shellidwyer`, `ganschowlucas`) — ~15–20% of contacts in a typical CSV may have this; don't overwrite `lead_name` on re-import or manual corrections will be lost
 
 ## Zapier
 - Free tier pauses Zaps after 2 weeks of inactivity — always provision Starter ($20/mo) for live clients; silent lead drops are unacceptable
