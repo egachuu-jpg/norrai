@@ -332,3 +332,14 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Deduplicated existing email-only rows in Neon (kept most recently updated) before index creation — ~20+ emails had duplicates from prior imports
 - Updated `Split Into Rows` to pick conflict target dynamically: both → `(email, phone)`, email-only → `(email) WHERE phone IS NULL`, phone-only → `(phone) WHERE email IS NULL`
 - Rebuilt `BoldTrail CSV Import.json` via Python after direct Edit tool write corrupted the JSON (unescaped newlines in string value); pushed via `n8n_update_full_workflow`
+
+### 2026-06-11
+- Fixed BoldTrail CSV Import: replaced line-split parser with character-level parser that respects quote state — 41 leads with multiline `Agent Notes` were having their rows broken, causing column misalignment and dropped leads
+- Fixed phone extraction: added `Cell Phone 1` as primary lookup (`Phone`/`Mobile`/`Cell` columns are empty in BoldTrail CSV exports); `Cell Phone 1` fills ~23% of rows
+- Fixed `Log Completed` UUID error: `$json.client_id` undefined after Postgres UPDATE output; changed to `$('Lookup Client').first().json.id`
+- Added `boldtrail_entered_at` to metadata: reads `Registered` column first, falls back to first `YYYY-MM-DD` timestamp in `Agent Notes`
+- Identified and removed `lead_name` from `DO UPDATE SET` in upsert (user change) — BoldTrail names are unreliable; set on INSERT only to preserve manual corrections
+- Analyzed Michelle Jasinski CSV: 522 leads, all with email → 522 expected in Neon, 108 with phone
+- Analyzed Evan Knutson CSV: 372 leads, all with email → 372 expected in Neon, 95 with phone
+- Identified ~29 single-word/malformed names in Michelle's contacts; generated 27 Neon UPDATE statements (2 already fixed manually)
+- Identified ~27 single-word/malformed names in Evan's contacts; generated 27 Neon UPDATE statements (3 uncertain skipped for manual review)
