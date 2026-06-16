@@ -111,6 +111,7 @@
 - BoldTrail CSV phone column is `Cell Phone 1` (~23% fill) — `Phone`, `Mobile`, `Cell`, `Work Phone`, `Home Phone` columns are all empty in BoldTrail exports; check actual column names from a sample before writing extraction code
 - BoldTrail CSV `Agent Notes` can contain multiline quoted text (TCPA consent logs, timestamped entries) — `split('\n')` before parsing breaks column alignment for those rows; use a character-level parser that tracks quote state before treating `\n` as a row separator
 - When BoldTrail has no contact name on file, it writes the email username into `First Name` (e.g. `shellidwyer`, `ganschowlucas`) — ~15–20% of contacts in a typical CSV may have this; don't overwrite `lead_name` on re-import or manual corrections will be lost
+- BoldTrail CSV metadata is stored under `raw_`-prefixed keys (`raw_Avg Price`, `raw_Avg Beds`, `raw_Avg Baths`, `raw_Preferred City`, `raw_City`/`raw_State`/`raw_Zip`, `raw_Deal Type`) and `property_address` lands as an empty string — the nurture pipeline reads canonical names (`property_address`/`price_range`/`beds`/`baths`), so boldtrail leads get the generic "General buyer inquiry — no details on file" context and none of their intent/location/price data reaches Claude; map `raw_*` → canonical fields at import or in the scheduler's `Prep Fields` if personalization matters
 
 ## Zapier
 - Free tier pauses Zaps after 2 weeks of inactivity — always provision Starter ($20/mo) for live clients; silent lead drops are unacceptable
@@ -133,6 +134,7 @@
 - For clients on CRMs with restricted API access (e.g. Weichert/kvCORE), Zapier Starter is the right integration layer — don't try to reverse-engineer inbound-only API keys
 - Mission Control uses two tables (`stories` + `tasks`) not a self-referencing single table — stories and tasks have different schemas and different dispatch semantics; mixed parent/child rows in one table make queries and routing awkward
 - `seq` int on tasks enables ordered display within a story and future auto-advance logic; add it even before the automation is built
+- Nurture enrollment's durable gate is `leads.status` (excluded set: `converted`/`unenrolled`/`dead`), not the `created_at <= now() - 7 days` filter — the date window only *delays* enrollment, so backfilled leads left as `status = 'new'` will silently flood the auto-scheduler once they age past 7 days; to permanently exclude a backfilled lead, park it in an excluded status (`unenrolled`), never rely on age
 - Task `category` is the dispatch routing key: research/analysis → Claude API via n8n (fully autonomous); dev/testing → formatted prompt for Claude Code (human in loop); ops → neither
 - `agent_working` is a distinct task status from `in_progress` — signals an automated process is running, prevents concurrent edits, gives the board a clear in-flight indicator
 - Tasks are tracked in Neon (`stories` + `tasks` tables), not in CLAUDE.md — the Open Tasks section in CLAUDE.md is stale; always query Neon for current task state
