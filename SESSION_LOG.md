@@ -343,3 +343,12 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Analyzed Evan Knutson CSV: 372 leads, all with email → 372 expected in Neon, 95 with phone
 - Identified ~29 single-word/malformed names in Michelle's contacts; generated 27 Neon UPDATE statements (2 already fixed manually)
 - Identified ~27 single-word/malformed names in Evan's contacts; generated 27 Neon UPDATE statements (3 uncertain skipped for manual review)
+
+### 2026-06-15
+- Curated cold-nurture enrollment for Evan Knutson + Michelle Jasinski: enrolled exactly 9 named leads (Evan: Nic Rudolph, cjprohaski, Kassidee German, Grace Hoover — all `Organic Website` records; Michelle: Annie Draper, Jen Shaunce, Racheal Wagaman, Reagan Anderson, Tyson Taghon — `boldtrail`), excluded all other backfill
+- Set 370 unwanted `boldtrail` backfill leads (Evan 368 + Michelle's `johnson` + 1 opt-out) to `status = 'unenrolled'` — durable exclusion that survives the 7-day window
+- Identified the latent risk: Evan's 307 `new` boldtrail leads were held back only by the `created_at <= now() - 7 days` filter; would have flooded the auto-scheduler once aged
+- Cleaned up Grace Hoover duplicate: merged boldtrail dup's metadata into the `Organic Website` keeper (`metadata = dup || keeper`, keeper keys win), then deleted the dup (`d746bfad…`)
+- Verified the enrollment query returns exactly the intended 9 leads after changes
+- Traced nurture message path (Weichert Auto-Scheduler `Prep Fields` → `/webhook/cn-enroll` → Cold Nurture `Prep Fields` → `context_block`): confirmed BoldTrail metadata never reaches Claude — pipeline reads canonical keys (`property_address`/`price_range`/`beds`/`baths`), BoldTrail stores `raw_`-prefixed keys, so boldtrail leads get the generic "General buyer inquiry — no details on file" context
+- Logged two Neon backlog tasks: `8b805f84…` (high — BoldTrail CSV import dedupe + nurture-eligibility guard) and `dbc235a8…` (medium — map `raw_*` metadata into canonical nurture-context fields)
