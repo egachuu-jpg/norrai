@@ -352,3 +352,13 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Verified the enrollment query returns exactly the intended 9 leads after changes
 - Traced nurture message path (Weichert Auto-Scheduler `Prep Fields` → `/webhook/cn-enroll` → Cold Nurture `Prep Fields` → `context_block`): confirmed BoldTrail metadata never reaches Claude — pipeline reads canonical keys (`property_address`/`price_range`/`beds`/`baths`), BoldTrail stores `raw_`-prefixed keys, so boldtrail leads get the generic "General buyer inquiry — no details on file" context
 - Logged two Neon backlog tasks: `8b805f84…` (high — BoldTrail CSV import dedupe + nurture-eligibility guard) and `dbc235a8…` (medium — map `raw_*` metadata into canonical nurture-context fields)
+
+### 2026-06-22
+- Diagnosed nurture failure: `claude-sonnet-4-20250514` (Sonnet 4) retired 2026-06-15 → all Claude HTTP nodes 404 ("The resource you are requesting could not be found"); swapped to `claude-sonnet-4-6` across all 13 affected workflow JSONs (33 occurrences) via Python
+- Repaired `Real Estate Instant Lead Response.json`: removed a pre-existing trailing comma (line 103) that blocked n8n import ("file does not contain valid JSON data"); confirmed all 13 workflow JSONs now parse as strict JSON
+- Identified the 9 failed nurture leads (executions 1775–1783, 2026-06-17) by matching `leads.nurture_enrolled_at` = 2026-06-16 — the Error Logger payload carries execution metadata only, no lead identity
+- Found the 9 leads split across two agents (Michelle Jasinski / Evan Knutson, both Weichert Heartland Faribault); `agent_email` must equal each lead's `clients.primary_contact_email` or every touch's enrollment re-check silently skips
+- Verified live Cold Nurture graph (`LNVSsULAW1WrIHz1`, published on `claude-sonnet-4-6`) wires the token-validation branch into the main path — payloads require body `agent_token` = `clients.token` (Michelle `32663bc7…`, Evan `c1a35bff…`), not just the `x-norr-token` header; local export had those nodes orphaned
+- Re-fired all 9 cold-nurture enrollments via `/webhook/cn-enroll`; all returned 200, all 9 confirmed parked in `Wait Day 1` (T1 due ~2026-06-24 02:30 UTC)
+- User updated + published live: 7-Touch Cold Nurture, Lead Response Auto, Instant Lead Response
+- Logged Neon backlog task `d6b7ddf5…` (ops/high) to import the remaining 10 model-fixed workflows into n8n
