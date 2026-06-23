@@ -91,7 +91,7 @@
       "name": "Build Prompt T1"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [1240, 300],
@@ -160,7 +160,7 @@
       "name": "Build Prompt T2"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [2440, 300],
@@ -227,7 +227,7 @@
       "name": "Build Prompt T3"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [3640, 300],
@@ -294,7 +294,7 @@
       "name": "Build Prompt T4"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [4840, 300],
@@ -361,7 +361,7 @@
       "name": "Build Prompt T5"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 300,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [6040, 300],
@@ -428,7 +428,7 @@
       "name": "Build Prompt T6"
     },
     {
-      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
+      "parameters": { "method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi", "sendHeaders": true, "headerParameters": { "parameters": [ { "name": "anthropic-version", "value": "2023-06-01" }, { "name": "content-type", "value": "application/json" } ] }, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 150,\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}", "options": {} },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [7240, 300],
