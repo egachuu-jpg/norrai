@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-07T18:19:48.151Z",
+  "updatedAt": "2026-06-25T01:34:00.066Z",
   "createdAt": "2026-05-12T02:09:01.410Z",
   "id": "JPOPWcKVzheC9YXs",
   "name": "Real Estate Review Request",
@@ -7,10 +7,17 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {"httpMethod": "POST", "path": "review-request", "options": {}},
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "review-request",
+        "options": {}
+      },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "id": "c83d839b-776e-4bfa-8169-4ff909392f35",
       "name": "Receive Review Request",
       "webhookId": "review-request-webhook-001"
@@ -18,8 +25,23 @@
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [{"id": "token-check-review-001", "leftValue": "={{ $json.headers[\"x-norr-token\"] }}", "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "equals"}}],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "token-check-review-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
           "combinator": "and"
         },
         "looseTypeValidation": true,
@@ -27,7 +49,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [192, 80],
+      "position": [
+        192,
+        80
+      ],
       "id": "59cb378b-5a7d-4f2c-9332-af92ee8df9bf",
       "name": "Token Check"
     },
@@ -37,15 +62,24 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [400, 0],
+      "position": [
+        400,
+        0
+      ],
       "id": "95de6271-057a-43c6-8679-58e186af8d5b",
       "name": "Prep Fields"
     },
     {
-      "parameters": {"amount": "={{ $json.delay_days }}", "unit": "days"},
+      "parameters": {
+        "amount": "={{ $json.delay_days }}",
+        "unit": "days"
+      },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [608, 0],
+      "position": [
+        608,
+        0
+      ],
       "id": "673b7461-5b20-4b85-9c4e-a214fdb2bc9b",
       "name": "Wait",
       "webhookId": "7a75a42d-2dee-4b16-b276-fe8502b0afec"
@@ -53,13 +87,23 @@
     {
       "parameters": {
         "assignments": {
-          "assignments": [{"id": "set-prompt-review-001", "name": "prompt", "value": "=You are a real estate assistant helping agent {{ $('Prep Fields').first().json.agent_name }} request a review from a recently closed client.\n\nClient: {{ $('Prep Fields').first().json.client_name }}\nTransaction: {{ $('Prep Fields').first().json.transaction_type }} (buyer = they purchased a home; seller = they sold a home)\nProperty: {{ $('Prep Fields').first().json.property_address }}\nAgent: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite three things in exactly this format:\n\nSMS:\n<A warm, conversational message under 160 characters. For buyers, reference 'your new home at [property]'. For sellers, reference 'a successful sale at [property]'. Ask for an honest review and say it only takes a minute. Do NOT include any URLs — those will be added automatically.>\n\nEMAIL_SUBJECT:\n<Warm subject line under 60 characters>\n\nEMAIL_BODY:\n<2-3 short paragraphs. Warm congratulations on the transaction. Explain that a review helps other families find trusted help, and that it takes just a minute. Sign off from {{ $('Prep Fields').first().json.agent_name }}. Do NOT include any URLs — those will be added automatically.>\n\nReturn ONLY these three labeled sections. No extra commentary, no quotation marks.", "type": "string"}]
+          "assignments": [
+            {
+              "id": "set-prompt-review-001",
+              "name": "prompt",
+              "value": "=You are a real estate assistant helping agent {{ $('Prep Fields').first().json.agent_name }} request a review from a recently closed client.\n\nClient: {{ $('Prep Fields').first().json.client_name }}\nTransaction: {{ $('Prep Fields').first().json.transaction_type }} (buyer = they purchased a home; seller = they sold a home)\nProperty: {{ $('Prep Fields').first().json.property_address }}\nAgent: {{ $('Prep Fields').first().json.agent_name }}\n\nWrite three things in exactly this format:\n\nSMS:\n<A warm, conversational message under 160 characters. For buyers, reference 'your new home at [property]'. For sellers, reference 'a successful sale at [property]'. Ask for an honest review and say it only takes a minute. Do NOT include any URLs — those will be added automatically.>\n\nEMAIL_SUBJECT:\n<Warm subject line under 60 characters>\n\nEMAIL_BODY:\n<2-3 short paragraphs. Warm congratulations on the transaction. Explain that a review helps other families find trusted help, and that it takes just a minute. Sign off from {{ $('Prep Fields').first().json.agent_name }}. Do NOT include any URLs — those will be added automatically.>\n\nReturn ONLY these three labeled sections. No extra commentary, no quotation marks.",
+              "type": "string"
+            }
+          ]
         },
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [816, 0],
+      "position": [
+        816,
+        0
+      ],
       "id": "72d72868-128a-49d7-a826-f4f9a27b0d1d",
       "name": "Build Claude Prompt"
     },
@@ -70,7 +114,18 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 400,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
@@ -78,18 +133,29 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1024, 0],
+      "position": [
+        1024,
+        0
+      ],
       "id": "0f249640-1bfa-45bd-a5dc-0000ac46f977",
       "name": "Claude API",
-      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.content[0].text;\nconst prep = $('Prep Fields').first().json;\n\nfunction extract(label, str) {\n  const re = new RegExp(label + ':\\\\s*([\\\\s\\\\S]*?)(?=\\\\n[A-Z_]+:|$)');\n  const m = str.match(re);\n  return m ? m[1].trim() : '';\n}\n\nconst smsText      = extract('SMS', text);\nconst emailSubject = extract('EMAIL_SUBJECT', text);\nconst emailBodyRaw = extract('EMAIL_BODY', text);\n\nconst linkLines = ['', '⭐ Leave a review:'];\nif (prep.google_url) linkLines.push('Google: ' + prep.google_url);\nif (prep.zillow_url) linkLines.push('Zillow: ' + prep.zillow_url);\nconst smsMessage = smsText + linkLines.join('\\n');\n\nconst esc = s => (s || '').replace(/&/g, '&amp;');\nconst linkHtml = [\n  prep.google_url ? `<a href=\"${esc(prep.google_url)}\" style=\"color:#7FA9B8;\">Leave a Google review</a>` : '',\n  prep.zillow_url ? `<a href=\"${esc(prep.zillow_url)}\" style=\"color:#7FA9B8;\">Leave a Zillow review</a>` : '',\n].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');\n\nconst bodyHtml = emailBodyRaw\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\n\\n/g, '</p><p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">')\n  .replace(/\\n/g, '<br>');\n\nconst unsubUrl = 'https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent(prep.client_email);\nconst unsubFooter = `<p style=\"font-size:11px;color:#9EA3AA;margin:20px 0 0;\">To stop receiving these emails: <a href=\"${unsubUrl}\" style=\"color:#9EA3AA;\">${unsubUrl}</a></p>`;\n\nconst emailHtml = [\n  '<div style=\"font-family:\\'Inter\\',Arial,sans-serif;max-width:520px;margin:0 auto;color:#0A0F1A;\">',\n  '  <div style=\"background:#0A0F1A;padding:32px 32px 28px;border-radius:8px 8px 0 0;\">',\n  '    <p style=\"font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#7FA9B8;margin:0 0 10px;\">Review Request</p>',\n  `    <h1 style=\"font-size:22px;font-weight:700;color:#FAFAF7;margin:0;letter-spacing:-0.02em;\">${emailSubject.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h1>`,\n  '  </div>',\n  '  <div style=\"background:#FFFFFF;padding:32px;border:1px solid #E5E4DE;border-top:none;border-radius:0 0 8px 8px;\">',\n  `    <p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">${bodyHtml}</p>`,\n  `    <p style=\"font-size:14px;margin:0 0 28px;\">${linkHtml}</p>`,\n  '    <hr style=\"border:none;border-top:1px solid #E5E4DE;margin:0 0 20px;\">',\n  '    <p style=\"font-size:12px;color:#9EA3AA;margin:0;\">Norr AI &nbsp;&middot;&nbsp; <a href=\"https://norrai.co\" style=\"color:#9EA3AA;\">norrai.co</a></p>',\n  `    ${unsubFooter}`,\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    sms_message:   smsMessage,\n    email_subject: emailSubject,\n    email_html:    emailHtml,\n    client_phone:  prep.client_phone,\n    client_email:  prep.client_email,\n  }\n}];"
+        "jsCode": "const text = $input.first().json.content[0].text;\nconst prep = $('Prep Fields').first().json;\n\nfunction extract(label, str) {\n  const re = new RegExp(label + ':\\\\s*([\\\\s\\\\S]*?)(?=\\\\n[A-Z_]+:|$)');\n  const m = str.match(re);\n  return m ? m[1].trim() : '';\n}\n\nconst smsText      = extract('SMS', text);\nconst emailSubject = extract('EMAIL_SUBJECT', text);\nconst emailBodyRaw = extract('EMAIL_BODY', text);\n\n// Build SMS — append links\nconst linkLines = ['', '⭐ Leave a review:'];\nif (prep.google_url) linkLines.push('Google: ' + prep.google_url);\nif (prep.zillow_url) linkLines.push('Zillow: ' + prep.zillow_url);\nconst smsMessage = smsText + linkLines.join('\\n');\n\n// Build email HTML\nconst esc = s => (s || '').replace(/&/g, '&amp;');\nconst linkHtml = [\n  prep.google_url ? `<a href=\"${esc(prep.google_url)}\" style=\"color:#7FA9B8;\">Leave a Google review</a>` : '',\n  prep.zillow_url ? `<a href=\"${esc(prep.zillow_url)}\" style=\"color:#7FA9B8;\">Leave a Zillow review</a>` : '',\n].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');\n\nconst bodyHtml = emailBodyRaw\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\n\\n/g, '</p><p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">')\n  .replace(/\\n/g, '<br>');\n\nconst unsubUrl = 'https://tools.norrai.co/unsubscribe?email=' + encodeURIComponent(prep.client_email);\nconst unsubFooter = `<p style=\"font-size:11px;color:#9EA3AA;margin:20px 0 0;\">To stop receiving these emails: <a href=\"${unsubUrl}\" style=\"color:#9EA3AA;\">${unsubUrl}</a></p>`;\n\nconst emailHtml = [\n  '<div style=\"font-family:\\'Inter\\',Arial,sans-serif;max-width:520px;margin:0 auto;color:#0A0F1A;\">',\n  '  <div style=\"background:#0A0F1A;padding:32px 32px 28px;border-radius:8px 8px 0 0;\">',\n  '    <p style=\"font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#7FA9B8;margin:0 0 10px;\">Review Request</p>',\n  `    <h1 style=\"font-size:22px;font-weight:700;color:#FAFAF7;margin:0;letter-spacing:-0.02em;\">${emailSubject.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h1>`,\n  '  </div>',\n  '  <div style=\"background:#FFFFFF;padding:32px;border:1px solid #E5E4DE;border-top:none;border-radius:0 0 8px 8px;\">',\n  `    <p style=\"font-size:15px;color:#3A3F48;line-height:1.6;margin:0 0 16px;\">${bodyHtml}</p>`,\n  `    <p style=\"font-size:14px;margin:0 0 28px;\">${linkHtml}</p>`,\n  '    <hr style=\"border:none;border-top:1px solid #E5E4DE;margin:0 0 20px;\">',\n  '    <p style=\"font-size:12px;color:#9EA3AA;margin:0;\">Norr AI &nbsp;&middot;&nbsp; <a href=\"https://norrai.co\" style=\"color:#9EA3AA;\">norrai.co</a></p>',\n  `    ${unsubFooter}`,\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    sms_message:   smsMessage,\n    email_subject: emailSubject,\n    email_html:    emailHtml,\n    client_phone:  prep.client_phone,\n    client_email:  prep.client_email,\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1232, 0],
+      "position": [
+        1232,
+        0
+      ],
       "id": "2b332728-1944-4389-a2fb-adc6340a87e1",
       "name": "Parse + Build Email"
     },
@@ -102,17 +168,40 @@
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
-      "position": [1552, -112],
+      "position": [
+        1552,
+        -112
+      ],
       "id": "377348eb-d74e-45a1-84ef-8b73de66ea8c",
       "name": "Send SMS",
-      "credentials": {"twilioApi": {"id": "n9LXeaDPT2RcuOmv", "name": "Twilio account"}},
+      "credentials": {
+        "twilioApi": {
+          "id": "n9LXeaDPT2RcuOmv",
+          "name": "Twilio account"
+        }
+      },
       "disabled": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [{"id": "has-email-review-001", "leftValue": "={{ $('Parse + Build Email').first().json.client_email }}", "rightValue": "", "operator": {"type": "string", "operation": "notEquals"}}],
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "has-email-review-001",
+              "leftValue": "={{ $('Parse + Build Email').first().json.client_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
           "combinator": "and"
         },
         "looseTypeValidation": true,
@@ -120,7 +209,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1648, 80],
+      "position": [
+        1648,
+        80
+      ],
       "id": "7ebdb7ef-2ce5-4226-8428-7449d67ff7ed",
       "name": "Has Email?"
     },
@@ -131,7 +223,14 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $('Parse + Build Email').first().json.client_email }}\"}]}],\n  \"from\": {\"email\": \"hello@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": {{ JSON.stringify($('Parse + Build Email').first().json.email_subject) }},\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($('Parse + Build Email').first().json.email_html) }}}]\n}",
@@ -139,23 +238,39 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1856, 0],
+      "position": [
+        1856,
+        0
+      ],
       "id": "bd7521db-ea54-4d54-8684-8ad74245ce83",
       "name": "Send Email",
-      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}}
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
     },
     {
       "id": "01ec23bd-af26-4ee8-b1a7-92409f5217ab",
       "name": "Lookup Client",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [400, 200],
+      "position": [
+        400,
+        200
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}' LIMIT 1",
         "options": {}
       },
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     },
     {
@@ -163,13 +278,21 @@
       "name": "Log Triggered",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [608, 200],
+      "position": [
+        608,
+        200
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id || \"e2f9934c-4d28-4bb4-ac90-4284c1123517\" }}',\n  'review_request',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
         "options": {}
       },
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     },
     {
@@ -177,36 +300,244 @@
       "name": "Log Completed",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2048, 0],
+      "position": [
+        2048,
+        0
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(NULLIF(NULLIF('{{ $('Lookup Client').first().json.id }}', ''), 'null'), 'e2f9934c-4d28-4bb4-ac90-4284c1123517')::uuid,\n  'review_request',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
         "options": {}
       },
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     }
   ],
   "connections": {
-    "Receive Review Request": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
-    "Token Check": {"main": [[{"node": "Prep Fields", "type": "main", "index": 0}, {"node": "Lookup Client", "type": "main", "index": 0}]]},
-    "Prep Fields": {"main": [[{"node": "Wait", "type": "main", "index": 0}]]},
-    "Wait": {"main": [[{"node": "Build Claude Prompt", "type": "main", "index": 0}]]},
-    "Build Claude Prompt": {"main": [[{"node": "Claude API", "type": "main", "index": 0}]]},
-    "Claude API": {"main": [[{"node": "Parse + Build Email", "type": "main", "index": 0}]]},
-    "Parse + Build Email": {"main": [[{"node": "Has Email?", "type": "main", "index": 0}]]},
-    "Send SMS": {"main": [[]]},
-    "Has Email?": {"main": [[{"node": "Send Email", "type": "main", "index": 0}]]},
-    "Lookup Client": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]},
-    "Send Email": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
+    "Receive Review Request": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Fields": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse + Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse + Build Email": {
+      "main": [
+        [
+          {
+            "node": "Has Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS": {
+      "main": [
+        []
+      ]
+    },
+    "Has Email?": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": {"executionOrder": "v1", "binaryMode": "separate", "timeSavedMode": "fixed", "errorWorkflow": "Al6gagYmiq1feOWq", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": false},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
   "staticData": null,
-  "meta": {"templateCredsSetupCompleted": true},
-  "pinData": {},
-  "versionId": "e3e811a4-0221-4b71-a2ae-add8348fac3e",
-  "activeVersionId": "e3e811a4-0221-4b71-a2ae-add8348fac3e",
-  "versionCounter": 24,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Receive Review Request": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "content-length": "323",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "72.58.83.86",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9fa5f246fa94454f-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=1, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "72.58.83.86, 172.69.58.211",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-qcg5v",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "72.58.83.86"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": "Egan Bonde",
+            "google_url": "https://tools.norrai.co",
+            "zillow_url": "",
+            "client_name": "Evan",
+            "client_phone": "5072109774",
+            "client_email": "eganbonde@gmail.com",
+            "transaction_type": "buyer",
+            "property_address": "1106 Cuylle Ct",
+            "delay_days": 3,
+            "submitted_at": "2026-05-12T02:20:46.636Z",
+            "source_form": "review_request_web"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/review-request",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Wait": [
+      {
+        "json": {
+          "agent_name": "Egan Bonde",
+          "google_url": "https://tools.norrai.co",
+          "zillow_url": "",
+          "client_name": "Evan",
+          "client_phone": "+15072109774",
+          "client_email": "eganbonde@gmail.com",
+          "transaction_type": "buyer",
+          "property_address": "1106 Cuylle Ct",
+          "delay_days": 3
+        }
+      }
+    ]
+  },
+  "versionId": "bfed640b-3372-4bd4-9bef-efe514b1e0e4",
+  "activeVersionId": "bfed640b-3372-4bd4-9bef-efe514b1e0e4",
+  "versionCounter": 25,
   "triggerCount": 1,
-  "tags": [{"id": "hF4YeAdcnZuVMhqJ", "name": "real estate"}]
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }

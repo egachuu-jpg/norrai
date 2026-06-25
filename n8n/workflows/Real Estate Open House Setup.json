@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-06T03:09:37.533Z",
+  "updatedAt": "2026-06-25T01:33:58.572Z",
   "createdAt": "2026-04-30T02:05:16.905Z",
   "id": "7qRcLtblC23cygMD",
   "name": "Real Estate Open House Setup",
@@ -7,10 +7,17 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {"httpMethod": "POST", "path": "open-house-setup", "options": {}},
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "open-house-setup",
+        "options": {}
+      },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "id": "bda7a653-667e-48b4-8367-3dede1da2c03",
       "name": "Receive Setup",
       "webhookId": "open-house-setup-webhook-001"
@@ -18,8 +25,23 @@
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [{"id": "token-check-setup-001", "leftValue": "={{ $json.headers[\"x-norr-token\"] }}", "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "startsWith"}}],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "token-check-setup-001",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
           "combinator": "or"
         },
         "looseTypeValidation": true,
@@ -27,7 +49,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [192, 80],
+      "position": [
+        192,
+        80
+      ],
       "id": "4efc9494-857b-40c2-884c-8cc247cc2313",
       "name": "Token Check"
     },
@@ -37,7 +62,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [400, 0],
+      "position": [
+        400,
+        0
+      ],
       "id": "87e4db04-dd63-4921-82f2-9ab529d05e05",
       "name": "Prep Fields"
     },
@@ -47,7 +75,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [608, 0],
+      "position": [
+        608,
+        0
+      ],
       "id": "3045f7bf-1993-480f-9ad8-b10926ddd8df",
       "name": "Build Extraction Prompt"
     },
@@ -58,7 +89,18 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 150,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
@@ -66,21 +108,32 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [816, 0],
+      "position": [
+        816,
+        0
+      ],
       "id": "0b3cd4b3-bc87-4222-a63c-b722983cca07",
       "name": "Extract Highlights (Claude)",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst highlights = (response.content[0].text || '').trim();\n\nconst prev = $('Prep Fields').first().json;\nconst isWeichert = prev.source_form === 'weichert_open_house_setup';\nconst businessName = ($('Validate Client Token').first().json.business_name || '').trim();\n\nconst baseUrl = 'https://tools.norrai.co/open_house.html';\nconst qsParts = [\n  'address='     + encodeURIComponent(prev.property_address),\n  'agent='       + encodeURIComponent(prev.agent_name),\n  'agent_email=' + encodeURIComponent(prev.agent_email),\n  'agent_phone=' + encodeURIComponent(prev.agent_phone),\n  'notes='       + encodeURIComponent(highlights),\n];\nif (businessName) qsParts.push('agent_company=' + encodeURIComponent(businessName));\nif (isWeichert) {\n  qsParts.push('wf=weichert');\n  if (prev.listing_url) qsParts.push('listing_url=' + encodeURIComponent(prev.listing_url));\n}\nconst qs = qsParts.join('&');\nconst signinUrl = baseUrl + '?' + qs;\nconst qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(signinUrl);\n\nconst qrUrlSafe     = qrUrl.replace(/&/g, '&amp;');\nconst signinUrlSafe = signinUrl.replace(/&/g, '&amp;');\n\nconst emailHtml = [\n  '<div style=\"font-family: \\'Inter\\', Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #0A0F1A;\">',\n  '  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Open House Setup</p>',\n  '    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">Your QR code is ready.</h1>',\n  '  </div>',\n  '  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 6px;\">Property</p>',\n  '    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 24px;\">' + prev.property_address + '</p>',\n  '    <p style=\"font-size: 14px; color: #6A6F78; margin: 0 0 16px;\">Print this and tape it to the front door. Attendees scan it to sign in — you\\'ll get a personalized follow-up sent to each of them at 9am the next morning.</p>',\n  '    <div style=\"text-align: center; margin: 28px 0;\">',\n  '      <img src=\"' + qrUrlSafe + '\" width=\"300\" height=\"300\" alt=\"Open House Sign-In QR Code\" style=\"display: inline-block; border: 1px solid #E5E4DE; border-radius: 8px; padding: 12px; background: #fff;\">',\n  '    </div>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Property highlights Claude will reference in follow-ups:</p>',\n  '    <p style=\"font-size: 13px; color: #3A3F48; font-style: italic; margin: 0 0 24px; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE;\">' + highlights + '</p>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Direct link (if you need to share digitally):</p>',\n  '    <p style=\"font-size: 12px; margin: 0 0 28px; word-break: break-all;\"><a href=\"' + signinUrlSafe + '\" style=\"color: #7FA9B8;\">' + signinUrl + '</a></p>',\n  '    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;·&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    highlights,\n    signin_url:       signinUrl,\n    qr_url:           qrUrl,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    property_address: prev.property_address,\n    listing_url:      prev.listing_url,\n    email_html:       emailHtml,\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst highlights = (response.content[0].text || '').trim();\n\nconst prev = $('Prep Fields').first().json;\nconst isWeichert = prev.source_form === 'weichert_open_house_setup';\nconst businessName = ($('Validate Client Token').first().json.business_name || '').trim();\n\nconst baseUrl = 'https://tools.norrai.co/open_house.html';\nconst qsParts = [\n  'address='     + encodeURIComponent(prev.property_address),\n  'agent='       + encodeURIComponent(prev.agent_name),\n  'agent_email=' + encodeURIComponent(prev.agent_email),\n  'agent_phone=' + encodeURIComponent(prev.agent_phone),\n  'notes='       + encodeURIComponent(highlights),\n];\nif (businessName) qsParts.push('agent_company=' + encodeURIComponent(businessName));\nif (isWeichert) {\n  qsParts.push('wf=weichert');\n  if (prev.listing_url) qsParts.push('listing_url=' + encodeURIComponent(prev.listing_url));\n}\nconst qs = qsParts.join('&');\nconst signinUrl = baseUrl + '?' + qs;\nconst qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(signinUrl);\n\n// Escape & in URLs used inside HTML attributes\nconst qrUrlSafe     = qrUrl.replace(/&/g, '&amp;');\nconst signinUrlSafe = signinUrl.replace(/&/g, '&amp;');\n\nconst emailHtml = [\n  '<div style=\"font-family: \\'Inter\\', Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #0A0F1A;\">',\n  '  <div style=\"background: #0A0F1A; padding: 32px 32px 28px; border-radius: 8px 8px 0 0;\">',\n  '    <p style=\"font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7FA9B8; margin: 0 0 10px;\">Open House Setup</p>',\n  '    <h1 style=\"font-size: 22px; font-weight: 700; color: #FAFAF7; margin: 0; letter-spacing: -0.02em;\">Your QR code is ready.</h1>',\n  '  </div>',\n  '  <div style=\"background: #FFFFFF; padding: 32px; border: 1px solid #E5E4DE; border-top: none; border-radius: 0 0 8px 8px;\">',\n  '    <p style=\"font-size: 14px; color: #3A3F48; margin: 0 0 6px;\">Property</p>',\n  '    <p style=\"font-size: 16px; font-weight: 600; color: #0A0F1A; margin: 0 0 24px;\">' + prev.property_address + '</p>',\n  '    <p style=\"font-size: 14px; color: #6A6F78; margin: 0 0 16px;\">Print this and tape it to the front door. Attendees scan it to sign in — you\\'ll get a personalized follow-up sent to each of them at 9am the next morning.</p>',\n  '    <div style=\"text-align: center; margin: 28px 0;\">',\n  '      <img src=\"' + qrUrlSafe + '\" width=\"300\" height=\"300\" alt=\"Open House Sign-In QR Code\" style=\"display: inline-block; border: 1px solid #E5E4DE; border-radius: 8px; padding: 12px; background: #fff;\">',\n  '    </div>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Property highlights Claude will reference in follow-ups:</p>',\n  '    <p style=\"font-size: 13px; color: #3A3F48; font-style: italic; margin: 0 0 24px; padding: 12px 14px; background: #FAFAF7; border-radius: 6px; border: 1px solid #E5E4DE;\">' + highlights + '</p>',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0 0 6px;\">Direct link (if you need to share digitally):</p>',\n  '    <p style=\"font-size: 12px; margin: 0 0 28px; word-break: break-all;\"><a href=\"' + signinUrlSafe + '\" style=\"color: #7FA9B8;\">' + signinUrl + '</a></p>',\n  '    <hr style=\"border: none; border-top: 1px solid #E5E4DE; margin: 0 0 20px;\">',\n  '    <p style=\"font-size: 12px; color: #9EA3AA; margin: 0;\">Norr AI &nbsp;·&nbsp; <a href=\"https://norrai.co\" style=\"color: #9EA3AA;\">norrai.co</a></p>',\n  '  </div>',\n  '</div>',\n].join('\\n');\n\nreturn [{\n  json: {\n    highlights,\n    signin_url:       signinUrl,\n    qr_url:           qrUrl,\n    agent_name:       prev.agent_name,\n    agent_email:      prev.agent_email,\n    property_address: prev.property_address,\n    listing_url:      prev.listing_url,\n    email_html:       emailHtml,\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1024, 0],
+      "position": [
+        1024,
+        0
+      ],
       "id": "80e1efe5-5cbc-4973-808a-5ce241e67cb2",
       "name": "Build QR URL"
     },
@@ -91,7 +144,14 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"personalizations\": [{\"to\": [{\"email\": \"{{ $json.agent_email }}\"}]}],\n  \"from\": {\"email\": \"studio@norrai.co\", \"name\": \"Norr AI\"},\n  \"subject\": \"Your open house QR code — {{ $json.property_address }}\",\n  \"content\": [{\"type\": \"text/html\", \"value\": {{ JSON.stringify($json.email_html) }}}]\n}",
@@ -99,10 +159,18 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1232, 0],
+      "position": [
+        1232,
+        0
+      ],
       "id": "e9b9041f-ee7f-4d97-bfbc-9d68d74d46bb",
       "name": "Email QR to Agent",
-      "credentials": {"httpHeaderAuth": {"id": "d2B1Q0ceGNVDwjqs", "name": "Header Auth account"}}
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      }
     },
     {
       "parameters": {
@@ -110,26 +178,56 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [400, 352],
+      "position": [
+        400,
+        352
+      ],
       "id": "btq-d4d6d77966f54dcb",
       "name": "Build Token Query",
       "continueOnFail": true
     },
     {
-      "parameters": {"operation": "executeQuery", "query": "{{ $json.client_query }}", "options": {}},
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.client_query }}",
+        "options": {}
+      },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [624, 352],
+      "position": [
+        624,
+        352
+      ],
       "id": "vct-4944f0ce817346c4",
       "name": "Validate Client Token",
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [{"id": "8d25f37a-6180-4b65-971e-139acd8b774a", "leftValue": "={{ $json.id }}", "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}}],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8d25f37a-6180-4b65-971e-139acd8b774a",
+              "leftValue": "={{ $json.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
           "combinator": "or"
         },
         "looseTypeValidation": true,
@@ -137,21 +235,115 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [832, 352],
+      "position": [
+        832,
+        352
+      ],
       "id": "cv-250fbe0dcfaa49df",
       "name": "Client Valid?"
     }
   ],
   "connections": {
-    "Receive Setup": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
-    "Token Check": {"main": [[{"node": "Build Token Query", "type": "main", "index": 0}]]},
-    "Prep Fields": {"main": [[{"node": "Build Extraction Prompt", "type": "main", "index": 0}]]},
-    "Build Extraction Prompt": {"main": [[{"node": "Extract Highlights (Claude)", "type": "main", "index": 0}]]},
-    "Extract Highlights (Claude)": {"main": [[{"node": "Build QR URL", "type": "main", "index": 0}]]},
-    "Build QR URL": {"main": [[{"node": "Email QR to Agent", "type": "main", "index": 0}]]},
-    "Build Token Query": {"main": [[{"node": "Validate Client Token", "type": "main", "index": 0}]]},
-    "Validate Client Token": {"main": [[{"node": "Client Valid?", "type": "main", "index": 0}]]},
-    "Client Valid?": {"main": [[{"node": "Prep Fields", "type": "main", "index": 0}], []]}
+    "Receive Setup": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Build Token Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Fields": {
+      "main": [
+        [
+          {
+            "node": "Build Extraction Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Extraction Prompt": {
+      "main": [
+        [
+          {
+            "node": "Extract Highlights (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Highlights (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Build QR URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build QR URL": {
+      "main": [
+        [
+          {
+            "node": "Email QR to Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Token Query": {
+      "main": [
+        [
+          {
+            "node": "Validate Client Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Client Token": {
+      "main": [
+        [
+          {
+            "node": "Client Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
   },
   "settings": {
     "executionOrder": "v1",
@@ -163,10 +355,73 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": {},
-  "versionId": "d0e6ac3e-70d7-45b1-a356-68df6446d21e",
-  "activeVersionId": "d0e6ac3e-70d7-45b1-a356-68df6446d21e",
-  "versionCounter": 48,
+  "pinData": {
+    "Receive Setup1": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "content-length": "1385",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "152.117.90.20",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f42fd46df73e264-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=1, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "152.117.90.20, 108.162.216.227",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-sqd8x",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "152.117.90.20"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": "yessm",
+            "agent_email": "egachuu@gmail.com",
+            "agent_phone": "5072109774",
+            "street_address": "1231 Kane Ave",
+            "city": "Faribault",
+            "state": "MN",
+            "zip": "55021",
+            "property_address": "1231 Kane Ave, Faribault, MN, 55021",
+            "listing_description": "Step into this delightful home nestled in one of Faribault's most desirable neighborhoods, where thoughtful updates meet incredible value in a package that's perfect for first-time buyers. Built in 2013, this well-maintained gem offers 3 generous bedrooms and 2 full bathrooms, creating comfortable living spaces that feel both cozy and functional. The heart of the home showcases a beautifully remodeled kitchen with modern finishes and thoughtful design, perfect for daily living and casual entertaining. Every detail has been carefully considered to create a space that feels move-in ready from day one. Located in a wonderful neighborhood known for its friendly atmosphere and community spirit, you'll enjoy the perfect blend of small-town charm and convenience. Just minutes from downtown Faribault's growing dining and shopping scene, plus easy access to I-35 for commuting to the Twin Cities. This is more than just a starter home—it's your gateway to homeownership in a community that truly feels like home. An incredible opportunity to own in one of Southern Minnesota's most up-and-coming areas! ",
+            "source_form": "open_house_setup"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/open-house-setup",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "bf3f40bb-b680-4a4c-99f7-55f56ae766ae",
+  "activeVersionId": "bf3f40bb-b680-4a4c-99f7-55f56ae766ae",
+  "versionCounter": 49,
   "triggerCount": 1,
-  "tags": [{"id": "hF4YeAdcnZuVMhqJ", "name": "real estate"}]
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }

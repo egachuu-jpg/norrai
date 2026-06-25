@@ -1,9 +1,8 @@
 {
-  "updatedAt": "2026-06-06T04:16:22.196Z",
+  "updatedAt": "2026-06-25T01:33:56.812Z",
   "createdAt": "2026-05-11T22:59:35.233Z",
   "id": "VzNYr7R5DdiTvni9",
   "name": "Real Estate Open House Follow-Up Weichert",
-  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -15,8 +14,11 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [1440, 1072],
-      "id": "c1a40ace-3bbf-4a6b-ba39-b048fcecf841",
+      "position": [
+        2832,
+        1216
+      ],
+      "id": "1adbc894-be1f-468b-b872-d4e585dae2bf",
       "name": "Receive Sign-In",
       "webhookId": "weichert-open-house-signin-webhook-001"
     },
@@ -47,8 +49,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1664, 1072],
-      "id": "d08cbbf3-c44f-4b82-b202-13aa85f19634",
+      "position": [
+        3056,
+        1216
+      ],
+      "id": "03b4c385-cfc6-49c3-9efb-8a61929b3cda",
       "name": "Token Check"
     },
     {
@@ -59,8 +64,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1888, 1072],
-      "id": "39c1675c-ef3f-41ed-ac48-6a03fc84fd29",
+      "position": [
+        3280,
+        1216
+      ],
+      "id": "4705d13c-8e5a-4a94-8a08-bd5445fd5eaa",
       "name": "Lookup Client",
       "credentials": {
         "postgres": {
@@ -79,8 +87,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2112, 1072],
-      "id": "631c74ff-6633-4dc5-9a79-a3ad4e298aca",
+      "position": [
+        3504,
+        1216
+      ],
+      "id": "3a8aa321-f782-4aa9-8aa4-b6cf2f69b70d",
       "name": "Log Triggered",
       "credentials": {
         "postgres": {
@@ -97,18 +108,21 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2336, 1072],
-      "id": "ebdf8ccf-ede0-4e05-8715-f4723a8b9cf1",
+      "position": [
+        3728,
+        1216
+      ],
+      "id": "c71b4dae-1205-408c-8448-5f524f26d25e",
       "name": "Prep Wait Time"
     },
     {
       "parameters": {
         "conditions": {
           "options": {
-            "version": 3,
-            "leftValue": "",
             "caseSensitive": false,
-            "typeValidation": "loose"
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
           },
           "conditions": [
             {
@@ -128,8 +142,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [2560, 1072],
-      "id": "e14b0fe8-b987-4a6b-a232-e5e342651481",
+      "position": [
+        3952,
+        1216
+      ],
+      "id": "6e1cbf20-5454-4861-91c1-7b7a7eb0c05e",
       "name": "Has Agent?"
     },
     {
@@ -140,8 +157,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2784, 976],
-      "id": "feca7eb2-9882-4c3e-b63f-5e8eba47f84e",
+      "position": [
+        4176,
+        1120
+      ],
+      "id": "40f790ce-caae-439c-af0b-a81ce4af7232",
       "name": "Dedupe Check",
       "alwaysOutputData": true,
       "credentials": {
@@ -159,8 +179,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3008, 976],
-      "id": "a66a3c6c-6ba4-4253-bbd3-6f6e911825a3",
+      "position": [
+        4400,
+        1120
+      ],
+      "id": "47563d73-acc2-4ec0-b658-22dd0cf0adae",
       "name": "Build Upsert Query"
     },
     {
@@ -171,8 +194,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3232, 976],
-      "id": "08a617a7-1cf7-4ed6-b1f3-deff6c4abbe4",
+      "position": [
+        4624,
+        1120
+      ],
+      "id": "4118e6e0-0fc2-4dc5-aa7a-d70eef64749b",
       "name": "Upsert Lead",
       "credentials": {
         "postgres": {
@@ -190,8 +216,11 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [3456, 1072],
-      "id": "4f450878-0de7-467a-801b-fd5f34a1ef12",
+      "position": [
+        4848,
+        1216
+      ],
+      "id": "8f1dfd5c-a8f0-44a7-a261-dc6800bf34d7",
       "name": "Wait Until 9am CT",
       "webhookId": "weichert-open-house-wait-webhook-001"
     },
@@ -211,8 +240,11 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [3680, 1072],
-      "id": "ea1eff1b-8848-40d0-9d1b-d85f401f7c12",
+      "position": [
+        5072,
+        1216
+      ],
+      "id": "5edae162-0d92-46e8-8c94-8867c1a22672",
       "name": "Build Prompt"
     },
     {
@@ -224,8 +256,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "anthropic-version", "value": "2023-06-01" },
-            { "name": "content-type", "value": "application/json" }
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -235,8 +273,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [3904, 1072],
-      "id": "595631c9-5a62-4c25-9294-58a26caf1238",
+      "position": [
+        5296,
+        1216
+      ],
+      "id": "89994adc-33e9-4aef-a530-df21580cfe88",
       "name": "Draft Follow-Up (Claude)",
       "retryOnFail": true,
       "maxTries": 3,
@@ -254,8 +295,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4128, 1072],
-      "id": "ee743e1f-b20d-483a-a82a-2129f16b0fa9",
+      "position": [
+        5520,
+        1216
+      ],
+      "id": "021967cd-1a1c-4ad6-8296-4d8d2f4013dc",
       "name": "Extract Message"
     },
     {
@@ -267,8 +311,11 @@
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
-      "position": [4352, 976],
-      "id": "cef3843b-0d90-41b3-9d10-8adfdec8e9f8",
+      "position": [
+        5744,
+        1120
+      ],
+      "id": "d01df184-bd1d-43cb-8874-61ed6afa70d6",
       "name": "SMS to Attendee",
       "disabled": true
     },
@@ -280,8 +327,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [4352, 1168],
-      "id": "2642c28c-cab3-46f0-bdc6-9da4fc8dca66",
+      "position": [
+        5744,
+        1312
+      ],
+      "id": "ff094e26-ca23-4ce1-880d-93674a38c431",
       "name": "Check Email Opt-Out",
       "alwaysOutputData": true,
       "credentials": {
@@ -320,8 +370,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [4576, 1168],
-      "id": "84195662-8e9b-4191-84b3-0f6212fc742a",
+      "position": [
+        5968,
+        1312
+      ],
+      "id": "21843115-28e8-41d5-ae3c-edf0fb3c96b0",
       "name": "Email Opted Out?"
     },
     {
@@ -351,8 +404,11 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [4800, 1168],
-      "id": "a755c8a8-dda5-485f-a826-3122c401674b",
+      "position": [
+        6192,
+        1312
+      ],
+      "id": "d2edc2a2-4e0a-45f0-808f-fe0208fbaf05",
       "name": "Has Email?"
     },
     {
@@ -364,7 +420,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -374,8 +433,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [5024, 1168],
-      "id": "92f766e7-dd14-43a0-9b3a-eaa2fc5b6567",
+      "position": [
+        6416,
+        1312
+      ],
+      "id": "47c64106-7292-4501-ae82-7d1f13ad1ef3",
       "name": "Email to Attendee",
       "credentials": {
         "httpHeaderAuth": {
@@ -392,8 +454,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [5248, 1168],
-      "id": "299f8698-f6b4-4ec5-805c-4bf146de8b2b",
+      "position": [
+        6640,
+        1312
+      ],
+      "id": "662f0716-f9a0-4ef5-ac74-17dffbd8e2e6",
       "name": "Log Completed",
       "credentials": {
         "postgres": {
@@ -410,8 +475,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2784, 1296],
-      "id": "e76d9571-63f1-4093-b539-2a2016748c98",
+      "position": [
+        4176,
+        1440
+      ],
+      "id": "01702e77-6329-49ac-a8e3-9158bf4cff9d",
       "name": "Build Rep Buyer Alert"
     },
     {
@@ -423,7 +491,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -433,8 +504,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [3008, 1296],
-      "id": "b482f5d1-e01b-4d17-87ce-8e7c5ac8139c",
+      "position": [
+        4400,
+        1440
+      ],
+      "id": "4eaac4d4-8c75-48c0-bce8-d531b14a0c55",
       "name": "Email Hosting Agent",
       "credentials": {
         "httpHeaderAuth": {
@@ -451,8 +525,11 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3232, 1296],
-      "id": "fa38c604-c142-4508-8174-d8cf8292bfa6",
+      "position": [
+        4624,
+        1440
+      ],
+      "id": "0477ffec-24c0-4d38-9a55-83a9f2a26e2b",
       "name": "Log Completed (Represented)",
       "credentials": {
         "postgres": {
@@ -465,29 +542,313 @@
     }
   ],
   "connections": {
-    "Receive Sign-In": { "main": [[{ "node": "Token Check", "type": "main", "index": 0 }]] },
-    "Token Check": { "main": [[{ "node": "Lookup Client", "type": "main", "index": 0 }]] },
-    "Lookup Client": { "main": [[{ "node": "Log Triggered", "type": "main", "index": 0 }]] },
-    "Log Triggered": { "main": [[{ "node": "Prep Wait Time", "type": "main", "index": 0 }]] },
-    "Prep Wait Time": { "main": [[{ "node": "Has Agent?", "type": "main", "index": 0 }]] },
-    "Has Agent?": { "main": [[{ "node": "Dedupe Check", "type": "main", "index": 0 }], [{ "node": "Build Rep Buyer Alert", "type": "main", "index": 0 }]] },
-    "Dedupe Check": { "main": [[{ "node": "Build Upsert Query", "type": "main", "index": 0 }]] },
-    "Build Upsert Query": { "main": [[{ "node": "Upsert Lead", "type": "main", "index": 0 }]] },
-    "Upsert Lead": { "main": [[{ "node": "Wait Until 9am CT", "type": "main", "index": 0 }]] },
-    "Wait Until 9am CT": { "main": [[{ "node": "Build Prompt", "type": "main", "index": 0 }]] },
-    "Build Prompt": { "main": [[{ "node": "Draft Follow-Up (Claude)", "type": "main", "index": 0 }]] },
-    "Draft Follow-Up (Claude)": { "main": [[{ "node": "Extract Message", "type": "main", "index": 0 }]] },
-    "Extract Message": { "main": [[{ "node": "SMS to Attendee", "type": "main", "index": 0 }, { "node": "Check Email Opt-Out", "type": "main", "index": 0 }]] },
-    "Check Email Opt-Out": { "main": [[{ "node": "Email Opted Out?", "type": "main", "index": 0 }]] },
-    "Email Opted Out?": { "main": [[], [{ "node": "Has Email?", "type": "main", "index": 0 }]] },
-    "Has Email?": { "main": [[{ "node": "Email to Attendee", "type": "main", "index": 0 }]] },
-    "Email to Attendee": { "main": [[{ "node": "Log Completed", "type": "main", "index": 0 }]] },
-    "Build Rep Buyer Alert": { "main": [[{ "node": "Email Hosting Agent", "type": "main", "index": 0 }]] },
-    "Email Hosting Agent": { "main": [[{ "node": "Log Completed (Represented)", "type": "main", "index": 0 }]] }
+    "Receive Sign-In": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Prep Wait Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Wait Time": {
+      "main": [
+        [
+          {
+            "node": "Has Agent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Agent?": {
+      "main": [
+        [
+          {
+            "node": "Dedupe Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Rep Buyer Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe Check": {
+      "main": [
+        [
+          {
+            "node": "Build Upsert Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Upsert Query": {
+      "main": [
+        [
+          {
+            "node": "Upsert Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Lead": {
+      "main": [
+        [
+          {
+            "node": "Wait Until 9am CT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Until 9am CT": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Draft Follow-Up (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Follow-Up (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Extract Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message": {
+      "main": [
+        [
+          {
+            "node": "SMS to Attendee",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Email Opt-Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Email Opt-Out": {
+      "main": [
+        [
+          {
+            "node": "Email Opted Out?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Opted Out?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Has Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Email?": {
+      "main": [
+        [
+          {
+            "node": "Email to Attendee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email to Attendee": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Rep Buyer Alert": {
+      "main": [
+        [
+          {
+            "node": "Email Hosting Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Hosting Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Completed (Represented)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "Al6gagYmiq1feOWq"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "tags": [{ "id": "hF4YeAdcnZuVMhqJ", "name": "real estate" }]
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Receive Sign-In": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "curl/8.7.1",
+            "content-length": "593",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "72.58.83.86",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "a074c83c89124c9c-MSP",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "72.58.83.86, 162.158.137.30",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-qcg5v",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "72.58.83.86"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "attendee_name": "Edgar",
+            "phone": "5072109774",
+            "email": "egachuu@gmail.com",
+            "agent_name": "Egan Bonde",
+            "agent_email": "egan@norrai.co",
+            "agent_phone": "5072109774",
+            "agent_token": "ed26fb31-e64c-459d-be9b-d34a80651f4c",
+            "property_address": "123 Maple St, Faribault, MN, 55021",
+            "listing_url": "https://www.zillow.com/homedetails/123-maple-st-faribault-mn-55021/",
+            "brought_you_in": "Drove by the sign",
+            "property_notes": "Loved the updated kitchen",
+            "opt_in_sms": true,
+            "has_agent": false,
+            "representing_agent_name": "",
+            "representing_agent_brokerage": ""
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/weichert-open-house-signin",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Wait Until 9am CT": [
+      {
+        "json": {
+          "success": true
+        }
+      }
+    ]
+  },
+  "versionId": "592d19bc-dae4-4f7a-9383-2fcfaacf378e",
+  "activeVersionId": "592d19bc-dae4-4f7a-9383-2fcfaacf378e",
+  "versionCounter": 89,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }
