@@ -362,3 +362,14 @@ Historical record of work done per session. Not loaded into Claude's context by 
 - Re-fired all 9 cold-nurture enrollments via `/webhook/cn-enroll`; all returned 200, all 9 confirmed parked in `Wait Day 1` (T1 due ~2026-06-24 02:30 UTC)
 - User updated + published live: 7-Touch Cold Nurture, Lead Response Auto, Instant Lead Response
 - Logged Neon backlog task `d6b7ddf5…` (ops/high) to import the remaining 10 model-fixed workflows into n8n
+
+### 2026-06-24
+- Root-caused the silent nurture failure from the 2026-06-22 re-fire: live Cold Nurture (`LNVSsULAW1WrIHz1`) `Email T1–T6` had `continueOnFail: true`, so the SendGrid `401 "Maximum credits exceeded"` (free trial lapsed 2026-06-18) was swallowed — execution finished green, Error Logger never fired, no Slack alert, sequence marched forward sending nothing
+- Confirmed the Error Workflow was already wired (`errorWorkflow: Al6gagYmiq1feOWq`) and the Error Logger logs `failed` to `workflow_events` + posts `:fire:` Slack — the only gap was the swallow on the send nodes
+- Fix: changed `Email T1–T6` to `onError: "stopWorkflow"` (decision: stop-and-alert over log-and-continue) so a send failure throws → Error Logger fires with `last_node` naming the failed touch; user upgraded SendGrid to Essentials tier
+- Validated workflow post-change: my edit applied cleanly; remaining `valid:false` errors are all pre-existing (expression `=`-prefix false positives, `continueOnFail`+`onError` conflicts on Check Enrolled nodes) — not introduced by the change
+- Audited the 2026-06-22 sonnet-4-6 commit (`0c77d48`) against the live graph: 4 active workflows still on retired `claude-sonnet-4-20250514` (Listing Description Generator, Open House Follow-Up Weichert, Open House Setup, Review Request) + 3 inactive; Cold Nurture / Instant Lead Response / Lead Response Auto already on 4-6
+- Patched the model in place via `patchNodeField` (no re-import, no new IDs): 5 saved (4 active + Instant Lead Response with Research); 2 inactive failed to save on pre-existing structural defects (unary operator missing `singleValue`; disconnected placeholder node) → archived both (Listing Description Generator dup, Cold Nurture Slack SMS Preview) via `POST /api/v1/workflows/{id}/archive`
+- Ran workflow-sync scoped to the 6 changed workflows; filtered out the n8n API's new embedded `activeVersion`/`shared`/`description` fields to keep the curated repo format
+- Committed `2d21c10` (6 workflow JSONs + lessons-learned continueOnFail entry)
+- Neon: created task `834a1193` (high — sweep all live workflows for `continueOnFail` on send/action nodes); marked `d6b7ddf5` done (remaining model-fix imports complete)
