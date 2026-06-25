@@ -64,11 +64,16 @@
 - The live n8n graph can differ from the repo's `n8n/workflows/*.json` export — verify payload contracts with `n8n_get_workflow(mode='active')` before drafting webhook payloads; e.g. live Cold Nurture wires `Build Token Query → Validate Client Token → Client Valid?` into the main path (body `agent_token` = `clients.token` required), but the local export showed those nodes orphaned
 - n8n's import-from-file rejects JSON with trailing commas ("The file does not contain valid JSON data") even though many parsers tolerate them — validate exports with strict `json.loads` before importing; one trailing comma blocks the whole file
 - The n8n Cloud execution-list API can lag by hours — an empty or stale list (e.g. nothing newer than ~6.5h despite bihourly scheduled jobs) is NOT proof a run didn't happen; trust the webhook's `200 {"message":"Workflow was started"}` as the acceptance signal and `status='waiting'` executions to confirm a Wait-node enrollment
+- `n8n_update_partial_workflow` is atomic and validates the ENTIRE workflow before saving — a pre-existing structural defect anywhere (unary operator missing `singleValue: true`, a disconnected node) blocks an unrelated one-line patch: the ops apply in-memory but the workflow is NOT saved. Inactive/archived workflows with latent corruption can't be patched via the validated API without fixing the defect first (or just archive them)
+- The n8n REST API `GET /api/v1/workflows/{id}` now embeds a full `activeVersion` duplicate of the graph (plus `shared`, `description`, `nodeGroups`, `sourceWorkflowId`) — when syncing live workflows back to `n8n/workflows/*.json`, filter to the curated key set (`updatedAt,createdAt,id,name,active,isArchived,nodes,connections,settings,staticData,meta,pinData,versionId,activeVersionId,versionCounter,triggerCount,tags`) or files double in size and diffs explode with duplicated node payloads
+- Archive a workflow via REST: `POST /api/v1/workflows/{id}/archive` (mirror of `/unarchive`) — cleaner than the MCP tools for retiring inactive duplicates/experiments
+- The live n8n instance accumulates many archived duplicates sharing identical names (plus junk like "My workflow") — a blanket "export all 79 by name" sync collides same-named files and pollutes the curated repo; scope syncs to the specific workflows changed, written into their existing repo files
 
 ## SendGrid
 - HTML email arriving as a Gmail attachment = unescaped `&` in HTML attribute values inside the email body; fix with `&amp;`
 - Use HTTP Request node calling SendGrid v3 API directly for HTML emails — the native n8n SendGrid node doesn't set content-type correctly for HTML
 - SendGrid v3 HTTP Request requires a "Header Auth" credential: `Authorization: Bearer SG.xxx`; JSON.stringify the body value
+- SendGrid `401 "Maximum credits exceeded"` is plan/credit exhaustion, NOT an auth failure despite the 401 status — when a free trial lapses (or a monthly cap is hit) the daily send allowance collapses and every subsequent send 401s; with `continueOnFail` on the send node this fails silently. Watch trial-end dates as production hazards (trial ended 2026-06-18 → 9 nurture sequences silently no-op'd on 2026-06-23)
 - Disable click tracking on transactional emails — enabled by default, causes Gmail to route to Promotions tab
 
 ## Gemini
