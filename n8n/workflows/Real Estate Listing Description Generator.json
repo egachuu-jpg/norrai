@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T19:43:45.976Z",
+  "updatedAt": "2026-06-25T01:33:54.939Z",
   "createdAt": "2026-04-19T02:07:18.687Z",
   "id": "nkkl9KmX7zMGuhvE",
   "name": "Real Estate Listing Description Generator",
@@ -7,10 +7,17 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {"httpMethod": "POST", "path": "listing-description", "options": {}},
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "listing-description",
+        "options": {}
+      },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [608, -256],
+      "position": [
+        608,
+        -256
+      ],
       "id": "00f8975c-a35f-4eda-9791-004aad3e2e47",
       "name": "Get Listing Details",
       "webhookId": "51a77105-7762-4f29-8a87-cb981ea85e6e"
@@ -18,8 +25,23 @@
     {
       "parameters": {
         "conditions": {
-          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3},
-          "conditions": [{"id": "09c9c0dc-11bd-431f-93fe-eda5e92be7a6", "leftValue": "={{ $json.headers[\"x-norr-token\"] }}", "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "equals"}}],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09c9c0dc-11bd-431f-93fe-eda5e92be7a6",
+              "leftValue": "={{ $json.headers[\"x-norr-token\"] }}",
+              "rightValue": "=8F68D963-7060-4033-BD04-7593E4B203CB",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
           "combinator": "or"
         },
         "looseTypeValidation": true,
@@ -27,7 +49,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [832, -256],
+      "position": [
+        832,
+        -256
+      ],
       "id": "8a9d002d-ad0f-4b79-b9e2-2119a08d0d0b",
       "name": "Token Check"
     },
@@ -35,16 +60,34 @@
       "parameters": {
         "assignments": {
           "assignments": [
-            {"id": "7d612203-db2a-48cc-babc-17e177cf58ad", "name": "prompt", "value": "=You are a real estate copywriter who writes in the style of a specific agent. Study these example listings carefully and match their voice, tone, and style exactly.\n\nEXAMPLE LISTINGS FROM THIS AGENT:\n{{ $node[\"Get Listing Details\"].json.body.previous_listings }}\n\nNow generate a headline and two professional property descriptions in exactly the same style for this listing:\n\nAddress: {{ $node[\"Get Listing Details\"].json.body.property_address }}\nBedrooms: {{ $node[\"Get Listing Details\"].json.body.beds }}\nBathrooms: {{ $node[\"Get Listing Details\"].json.body.baths }}\nSquare Feet: {{ $node[\"Get Listing Details\"].json.body.sqft }}\nYear Built: {{ $node[\"Get Listing Details\"].json.body.year_built }}\nBasement: {{ $node[\"Get Listing Details\"].json.body.basement }}\nGarage: {{ $node[\"Get Listing Details\"].json.body.garage }}\nPrice: {{ $node[\"Get Listing Details\"].json.body.price }}\nKey Features: {{ $node[\"Get Listing Details\"].json.body.key_features }}\nNeighborhood Notes: {{ $node[\"Get Listing Details\"].json.body.neighborhood_notes }}\nTone: {{ $node[\"Get Listing Details\"].json.body.tone }}\nTarget Buyer: {{ $node[\"Get Listing Details\"].json.body.target_buyer }}\n\nPlease provide:\n1. HEADLINE: A punchy property headline under 10 words\n2. MLS_DESCRIPTION: A detailed professional MLS listing description (150-200 words)\n3. SOCIAL_MEDIA_POST: An engaging social media post (50-75 words) with emojis\n\nFormat your response exactly as:\nHEADLINE: [your headline here]\n\nMLS_DESCRIPTION: [your MLS description here]\n\nSOCIAL_MEDIA_POST: [your social media post here]", "type": "string"},
-            {"id": "73f13592-0617-498f-ac61-1fe319106875", "name": "agent_name", "value": "={{ $node[\"Get Listing Details\"].json.body.agent_name }}", "type": "string"},
-            {"id": "ece63fc6-53cc-4569-ae43-f4910dd0bd98", "name": "agent_email", "value": "={{ $node[\"Get Listing Details\"].json.body.agent_email }}", "type": "string"}
+            {
+              "id": "7d612203-db2a-48cc-babc-17e177cf58ad",
+              "name": "prompt",
+              "value": "=You are a real estate copywriter who writes in the style of a specific agent. Study these example listings carefully and match their voice, tone, and style exactly.\n\nEXAMPLE LISTINGS FROM THIS AGENT:\n{{ $node[\"Get Listing Details\"].json.body.previous_listings }}\n\nNow generate a headline and two professional property descriptions in exactly the same style for this listing:\n\nAddress: {{ $node[\"Get Listing Details\"].json.body.property_address }}\nBedrooms: {{ $node[\"Get Listing Details\"].json.body.beds }}\nBathrooms: {{ $node[\"Get Listing Details\"].json.body.baths }}\nSquare Feet: {{ $node[\"Get Listing Details\"].json.body.sqft }}\nYear Built: {{ $node[\"Get Listing Details\"].json.body.year_built }}\nBasement: {{ $node[\"Get Listing Details\"].json.body.basement }}\nGarage: {{ $node[\"Get Listing Details\"].json.body.garage }}\nPrice: {{ $node[\"Get Listing Details\"].json.body.price }}\nKey Features: {{ $node[\"Get Listing Details\"].json.body.key_features }}\nNeighborhood Notes: {{ $node[\"Get Listing Details\"].json.body.neighborhood_notes }}\nTone: {{ $node[\"Get Listing Details\"].json.body.tone }}\nTarget Buyer: {{ $node[\"Get Listing Details\"].json.body.target_buyer }}\n\nPlease provide:\n1. HEADLINE: A punchy property headline under 10 words\n2. MLS_DESCRIPTION: A detailed professional MLS listing description (150-200 words)\n3. SOCIAL_MEDIA_POST: An engaging social media post (50-75 words) with emojis\n\nFormat your response exactly as:\nHEADLINE: [your headline here]\n\nMLS_DESCRIPTION: [your MLS description here]\n\nSOCIAL_MEDIA_POST: [your social media post here]",
+              "type": "string"
+            },
+            {
+              "id": "73f13592-0617-498f-ac61-1fe319106875",
+              "name": "agent_name",
+              "value": "={{ $node[\"Get Listing Details\"].json.body.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ece63fc6-53cc-4569-ae43-f4910dd0bd98",
+              "name": "agent_email",
+              "value": "={{ $node[\"Get Listing Details\"].json.body.agent_email }}",
+              "type": "string"
+            }
           ]
         },
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1280, -256],
+      "position": [
+        1280,
+        -256
+      ],
       "id": "50d02867-2b97-4e59-aeb8-90e1fd81df54",
       "name": "Parse HTML"
     },
@@ -55,7 +98,18 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "anthropicApi",
         "sendHeaders": true,
-        "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}, {"name": "content-type", "value": "application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
@@ -63,18 +117,29 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1504, -256],
+      "position": [
+        1504,
+        -256
+      ],
       "id": "c605c7d6-b401-47aa-8309-4d74d43cae0c",
       "name": "Generate Listing (Claude)",
-      "credentials": {"anthropicApi": {"id": "gXqu8TiqvDY4mUPZ", "name": "Anthropic account 2"}}
+      "credentials": {
+        "anthropicApi": {
+          "id": "gXqu8TiqvDY4mUPZ",
+          "name": "Anthropic account 2"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text;\n\nconst headlineMatch = text.split('HEADLINE:')[1];\nconst mlsMatch = text.split('MLS_DESCRIPTION:')[1];\nconst socialMatch = text.split('SOCIAL_MEDIA_POST:')[1];\n\nconst headline = headlineMatch ? headlineMatch.split('MLS_DESCRIPTION:')[0].trim() : '';\nconst mls_description = mlsMatch ? mlsMatch.split('SOCIAL_MEDIA_POST:')[0].trim() : '';\nconst social_caption = socialMatch ? socialMatch.trim() : '';\n\nreturn [{ json: { headline, mls_description, social_caption } }];"
+        "jsCode": "const response = $input.first().json;\nconst text = response.content[0].text;\n\nconst headlineMatch = text.split('HEADLINE:')[1];\nconst mlsMatch = text.split('MLS_DESCRIPTION:')[1];\nconst socialMatch = text.split('SOCIAL_MEDIA_POST:')[1];\n\nconst headline = headlineMatch\n  ? headlineMatch.split('MLS_DESCRIPTION:')[0].trim()\n  : '';\n\nconst mls_description = mlsMatch\n  ? mlsMatch.split('SOCIAL_MEDIA_POST:')[0].trim()\n  : '';\n\nconst social_caption = socialMatch\n  ? socialMatch.trim()\n  : '';\n\nreturn [{\n  json: {\n    headline,\n    mls_description,\n    social_caption\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1728, -256],
+      "position": [
+        1728,
+        -256
+      ],
       "id": "55550dfb-eb20-4764-9bb4-7b3c52416a64",
       "name": "Parse Desc"
     },
@@ -90,23 +155,39 @@
       },
       "type": "n8n-nodes-base.sendGrid",
       "typeVersion": 1,
-      "position": [1952, -256],
+      "position": [
+        1952,
+        -256
+      ],
       "id": "80040969-0d0b-4b1a-9f6a-48dcb4a86f49",
       "name": "Send email",
-      "credentials": {"sendGridApi": {"id": "A5ypmjiRLAUMUm9O", "name": "SendGrid account"}}
+      "credentials": {
+        "sendGridApi": {
+          "id": "A5ypmjiRLAUMUm9O",
+          "name": "SendGrid account"
+        }
+      }
     },
     {
       "id": "b3ceaaf3-3f88-4c14-bb82-162efd4d121f",
       "name": "Lookup Client",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1056, -80],
+      "position": [
+        1056,
+        -80
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}' LIMIT 1",
         "options": {}
       },
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     },
     {
@@ -114,13 +195,21 @@
       "name": "Log Triggered",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1280, -80],
+      "position": [
+        1280,
+        -80
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id || \"e2f9934c-4d28-4bb4-ac90-4284c1123517\" }}',\n  'listing_description',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
         "options": {}
       },
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     },
     {
@@ -128,32 +217,199 @@
       "name": "Log Completed",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2144, -256],
+      "position": [
+        2144,
+        -256
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(NULLIF(NULLIF('{{ $('Lookup Client').first().json.id }}', ''), 'null'), 'e2f9934c-4d28-4bb4-ac90-4284c1123517')::uuid,\n  'listing_description',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}')::jsonb\n)",
         "options": {}
       },
-      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}},
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
       "continueOnFail": true
     }
   ],
   "connections": {
-    "Get Listing Details": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
-    "Token Check": {"main": [[{"node": "Parse HTML", "type": "main", "index": 0}, {"node": "Lookup Client", "type": "main", "index": 0}], []]},
-    "Parse HTML": {"main": [[{"node": "Generate Listing (Claude)", "type": "main", "index": 0}]]},
-    "Generate Listing (Claude)": {"main": [[{"node": "Parse Desc", "type": "main", "index": 0}]]},
-    "Parse Desc": {"main": [[{"node": "Send email", "type": "main", "index": 0}]]},
-    "Lookup Client": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}]]},
-    "Send email": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
+    "Get Listing Details": {
+      "main": [
+        [
+          {
+            "node": "Token Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Check": {
+      "main": [
+        [
+          {
+            "node": "Parse HTML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Parse HTML": {
+      "main": [
+        [
+          {
+            "node": "Generate Listing (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Listing (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Parse Desc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Desc": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": {"executionOrder": "v1", "binaryMode": "separate", "timeSavedMode": "fixed", "errorWorkflow": "Al6gagYmiq1feOWq", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": false},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
   "staticData": null,
-  "meta": {"templateCredsSetupCompleted": true},
-  "pinData": {},
-  "versionId": "fd7b0e96-4085-4461-a61a-38097d2fadca",
-  "activeVersionId": "fd7b0e96-4085-4461-a61a-38097d2fadca",
-  "versionCounter": 412,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Get Listing Details": [
+      {
+        "json": {
+          "headers": {
+            "host": "norrai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.3 Safari/605.1.15",
+            "content-length": "2548",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "97.234.142.232",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9f8b5e344cf32318-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://tools.norrai.co",
+            "priority": "u=3, i",
+            "referer": "https://tools.norrai.co/",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "97.234.142.232, 172.71.255.114",
+            "x-forwarded-host": "norrai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-28-854bc9cc5d-jcvxr",
+            "x-is-trusted": "yes",
+            "x-norr-token": "8F68D963-7060-4033-BD04-7593E4B203CB",
+            "x-real-ip": "97.234.142.232"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": "Matthew Lien",
+            "agent_email": "matt@mattlienhomes.com",
+            "price": "$530,000",
+            "street_address": "2018 Douglas Trail Dr",
+            "city": "Pine Island",
+            "state": "MN",
+            "zip": "55963",
+            "county": "Olmsted",
+            "property_type": "Single-family",
+            "garage": "3-car attached",
+            "key_features": "Open layout, huge primary bedroom, primary en-suite with dual vanity, large tiled shower, walk in closet. Stainless steel appliances, laundry on main floor, 3 bedrooms on main floor, fireplace, maintenance free deck with stairs, fenced in back yard, sprinkler system, huge basement family room that spans whole width of home, office/den in basement, unfinished bathroom in basement with finished bedroom and walk in closet. Large utility room for storage, zero entry home meaning no stairs to enter, corner pantry in kitchen, lots of cupboard space and large center kitchen island",
+            "neighborhood_notes": "Walking distance to the Douglas state trail, pine island elementary school, short drive to highway 52",
+            "tone": "family_friendly",
+            "target_buyer": "Move-up buyer",
+            "previous_listings": "Ideally situated on a spacious corner lot, this beautifully refreshed home has a lot to offer! Main floor living at its finest, with 3 bedrooms, full bath, and laundry all on one level. The interior has been thoughtfully revitalized, featuring new kitchen and bathroom flooring, new kitchen appliances, finished basement, new doors, and outdoor fence perfect for your pets. The finished basement adds a large family room, office/workout room, and walkout to your backyard space great for entertaining. Located just 15 minutes from Rochester, within walking distance of Pine Island Middle/High School and the Douglas State Trail, this home is a must see!\n\n—-\n\nBeautiful 2-story side-by-side townhome offering comfort, convenience, and low-maintenance living! This well-maintained townhome offers functional layout with 3 bedrooms on the upper level with full bath. Relax in your open living room that flows into the dining/kitchen area featuring stainless steel appliances, ample cabinets space, and great countertop space. Escape to the lower level and enjoy the family room, play room and office space. End unit home, offers extra yard space, with convenient patio space out back. Located in a quiet neighborhood, easy access to Highway 14, this one is move-in ready!\n\n",
+            "property_address": "2018 Douglas Trail Dr, Pine Island, MN 55963",
+            "beds": 4,
+            "baths": 2,
+            "sqft": 2780,
+            "year_built": 2022,
+            "lot_size": 0.17,
+            "basement": "",
+            "submitted_at": "2026-05-08T20:55:48.312Z",
+            "source": "listing_form_web"
+          },
+          "webhookUrl": "https://norrai.app.n8n.cloud/webhook/listing-description",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "0d7a516e-a841-4a18-b8f4-78350ff5d573",
+  "activeVersionId": "0d7a516e-a841-4a18-b8f4-78350ff5d573",
+  "versionCounter": 413,
   "triggerCount": 1,
-  "tags": [{"id": "hF4YeAdcnZuVMhqJ", "name": "real estate"}]
+  "tags": [
+    {
+      "updatedAt": "2026-05-01T01:39:33.838Z",
+      "createdAt": "2026-05-01T01:39:33.838Z",
+      "id": "hF4YeAdcnZuVMhqJ",
+      "name": "real estate"
+    }
+  ]
 }
