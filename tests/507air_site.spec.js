@@ -84,8 +84,8 @@ test('home: service area lists both regions with named towns for local SEO', asy
   const groups = page.locator('.area-group');
   expect(await groups.count()).toBe(2);
   await expect(groups.nth(0).locator('h3')).toContainText('Southern Minnesota');
-  await expect(groups.nth(1).locator('h3')).toContainText('South Metro');
-  for (const town of ['Faribault', 'Owatonna', 'Northfield', 'Lakeville', 'Farmington', 'New Prague']) {
+  await expect(groups.nth(1).locator('h3')).toContainText('Mankato Area');
+  for (const town of ['Faribault', 'Owatonna', 'Cannon Falls', 'Mankato', 'St. Peter', 'Le Sueur']) {
     const count = await page.locator('.area-list li', { hasText: town }).count();
     expect(count, `area list should name ${town}`).toBeGreaterThan(0);
   }
