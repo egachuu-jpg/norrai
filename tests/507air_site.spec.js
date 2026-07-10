@@ -51,7 +51,9 @@ test('nav links from home resolve to real pages', async ({ page, request }) => {
 
 test('home: hero headline, trust chips, and brands are present', async ({ page }) => {
   await page.goto(`${BASE}/index.html`);
-  await expect(page.locator('.hero h1')).toContainText(/cooling & heating needs/i);
+  // business name is the standout H1; tagline is the subheading
+  await expect(page.locator('.hero h1.hero-name')).toContainText('507 Air Heating & Cooling');
+  await expect(page.locator('.hero-tagline')).toContainText(/cooling & heating needs/i);
   await expect(page.locator('.trust-chips')).toContainText('Family-owned');
   await expect(page.locator('.trust-chips')).toContainText('Se habla español');
   for (const brand of ['GE', 'Goodman', 'Cooper & Hunter', 'Durastar']) {
