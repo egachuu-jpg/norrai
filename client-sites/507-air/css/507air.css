@@ -59,26 +59,15 @@ a { color: var(--blue-deep); }
   padding: 0 22px;
 }
 
-/* ---------- dual-arrow rule (logo motif) ---------- */
+/* ---------- dual-arrow motif (from the logo) ---------- */
 
-.dual-rule {
-  position: relative;
-  height: 13px;
-  width: min(300px, 70%);
-  margin: 18px 0;
+.hero-arrows {
+  display: block;
+  width: min(330px, 80%);
+  height: auto;
+  margin: 22px 0;
 }
-.dual-rule::before,
-.dual-rule::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 5px;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
-}
-.dual-rule::before { top: 0; background: var(--blue); }
-.dual-rule::after  { bottom: 0; background: var(--red); right: 14px; }
-.dual-rule.center { margin-left: auto; margin-right: auto; }
+.hero-arrows.center { margin-left: auto; margin-right: auto; }
 
 /* ---------- header ---------- */
 
@@ -226,6 +215,30 @@ a { color: var(--blue-deep); }
 }
 .hero h1 .cool { color: #4E8EE8; }
 .hero h1 .heat { color: #E8474E; }
+
+/* homepage: business name is the standout, tagline is the subheading */
+.hero .hero-name {
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 9vw, 4.4rem);
+  line-height: 1.0;
+  letter-spacing: 0.01em;
+  margin: 0;
+  color: var(--on-dark);
+  text-wrap: balance;
+  max-width: 15ch;
+}
+.hero .hero-tagline {
+  font-family: var(--display);
+  font-size: clamp(1.05rem, 2.8vw, 1.5rem);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--on-dark-soft);
+  margin: 16px 0 0;
+  max-width: 28ch;
+}
+.hero .hero-tagline .cool { color: #4E8EE8; }
+.hero .hero-tagline .heat { color: #E8474E; }
+
 .hero .sub {
   font-size: 1.12rem;
   color: var(--on-dark-soft);
