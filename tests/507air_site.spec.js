@@ -51,8 +51,9 @@ test('nav links from home resolve to real pages', async ({ page, request }) => {
 
 test('home: hero headline, trust chips, and brands are present', async ({ page }) => {
   await page.goto(`${BASE}/index.html`);
-  // business name is the standout H1; tagline is the subheading
-  await expect(page.locator('.hero h1.hero-name')).toContainText('507 Air Heating & Cooling');
+  // the logo is the hero; a hidden H1 keeps the name for SEO/screen readers
+  await expect(page.locator('.hero-logo')).toHaveAttribute('alt', /507 Air Heating & Cooling/);
+  await expect(page.locator('.hero h1')).toContainText('507 Air Heating & Cooling');
   await expect(page.locator('.hero-tagline')).toContainText(/cooling & heating needs/i);
   await expect(page.locator('.trust-chips')).toContainText('Family-owned');
   await expect(page.locator('.trust-chips')).toContainText('Se habla español');
@@ -143,7 +144,7 @@ test('mobile nav toggle opens and closes the menu', async ({ page }) => {
 });
 
 test('images referenced on pages exist', async ({ request }) => {
-  for (const img of ['logo.jpg', 'logo-wide.jpg', 'billboard.png', 'ge-install.jpg']) {
+  for (const img of ['logo.jpg', 'logo-wide.jpg', 'logo-hero.jpg', 'billboard.png', 'ge-install.jpg']) {
     const res = await request.get(`${BASE}/images/${img}`);
     expect(res.status(), `images/${img} should exist`).toBe(200);
   }
