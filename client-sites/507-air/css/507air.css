@@ -239,6 +239,30 @@ a { color: var(--blue-deep); }
 .hero .hero-tagline .cool { color: #4E8EE8; }
 .hero .hero-tagline .heat { color: #E8474E; }
 
+/* homepage: the logo itself is the hero. Pure-black ground so the logo's
+   black background blends seamlessly with no visible box. */
+.hero--logo { background: #000; }
+.hero .hero-logo {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  margin: 4px 0 2px;
+}
+
+/* visually hidden, still read by search engines and screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .hero .sub {
   font-size: 1.12rem;
   color: var(--on-dark-soft);
