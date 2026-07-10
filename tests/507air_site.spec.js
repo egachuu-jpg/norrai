@@ -79,6 +79,24 @@ test('services: full service list from owner email is covered', async ({ page })
   }
 });
 
+test('home: service area lists both regions with named towns for local SEO', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  const groups = page.locator('.area-group');
+  expect(await groups.count()).toBe(2);
+  await expect(groups.nth(0).locator('h3')).toContainText('Southern Minnesota');
+  await expect(groups.nth(1).locator('h3')).toContainText('South Metro');
+  for (const town of ['Faribault', 'Owatonna', 'Northfield', 'Lakeville', 'Farmington', 'New Prague']) {
+    const count = await page.locator('.area-list li', { hasText: town }).count();
+    expect(count, `area list should name ${town}`).toBeGreaterThan(0);
+  }
+});
+
+test('contact: service area groups present with catchall call link', async ({ page }) => {
+  await page.goto(`${BASE}/contact.html`);
+  expect(await page.locator('.area-group').count()).toBe(2);
+  await expect(page.locator('.brand-note a[href="' + PHONE_HREF + '"]')).toBeVisible();
+});
+
 test('deals: at least one offer card with a phone CTA', async ({ page }) => {
   await page.goto(`${BASE}/deals.html`);
   const cards = page.locator('.deal-card');

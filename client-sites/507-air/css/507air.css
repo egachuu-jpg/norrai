@@ -470,6 +470,19 @@ table.hours td:last-child {
 
 /* ---------- area list ---------- */
 
+.area-group { margin-bottom: 24px; }
+.area-group:last-of-type { margin-bottom: 0; }
+.area-group h3 {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--steel);
+  margin: 0 0 12px;
+}
+.block.dark .area-group h3 { color: var(--on-dark-soft); }
+
 .area-list {
   display: flex;
   flex-wrap: wrap;
