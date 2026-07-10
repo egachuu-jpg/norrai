@@ -120,6 +120,8 @@ test('contact: booking info, hours, emergency weekends, Spanish', async ({ page 
   await expect(page.locator('table.hours')).toContainText('8am–4pm');
   await expect(page.locator('table.hours .emergency-flag')).toContainText('Emergency calls');
   await expect(page.locator('main')).toContainText('Se habla español');
+  // PO Box mailing address (not the owner's home) per client request
+  await expect(page.locator('.info-card', { hasText: 'By Mail' })).toContainText('PO Box 355');
   // no booking form — booking is call/email only per scope
   expect(await page.locator('form').count()).toBe(0);
 });
