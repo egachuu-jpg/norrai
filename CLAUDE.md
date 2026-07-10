@@ -243,6 +243,8 @@ norrai/
 │   ├── norr_ai_emblem.svg
 │   └── css/
 │       └── norrai.css        # Shared Polar Modern styles for main site pages
+├── client-sites/             # Client website builds — each deploys as its OWN Cloudflare Pages project
+│   └── 507-air/              # 507 Air Heating & Cooling (Oscar Salazar, Faribault) — see its README.md
 ├── db/
 │   ├── schema.sql            # Canonical schema — apply with: psql <connection-string> -f db/schema.sql
 │   └── README.md             # Table overview, n8n connection instructions, smoke test queries
@@ -285,7 +287,7 @@ font-mono:    'JetBrains Mono'
 ## Testing
 
 **Test stack:** Playwright (`npm test`)
-**276 tests across 11 spec files — all must pass before pushing.**
+**294 tests across 12 spec files — all must pass before pushing.**
 
 | Spec file | Page covered |
 |---|---|
@@ -300,6 +302,7 @@ font-mono:    'JetBrains Mono'
 | `tests/event_ops_discovery.spec.js` | `event_ops_discovery.html` |
 | `tests/onboarding_form.spec.js` | `onboarding_form.html` |
 | `tests/dashboard.spec.js` | `internal/dashboard.html` |
+| `tests/507air_site.spec.js` | `client-sites/507-air/` — all pages (served on port 3001) |
 
 ### Rules
 - **Run `npm test` before pushing any code changes.** All tests must pass.
