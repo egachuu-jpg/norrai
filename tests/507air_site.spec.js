@@ -82,10 +82,11 @@ test('services: full service list from owner email is covered', async ({ page })
 test('home: service area lists both regions with named towns for local SEO', async ({ page }) => {
   await page.goto(`${BASE}/index.html`);
   const groups = page.locator('.area-group');
-  expect(await groups.count()).toBe(2);
+  expect(await groups.count()).toBe(3);
   await expect(groups.nth(0).locator('h3')).toContainText('Southern Minnesota');
   await expect(groups.nth(1).locator('h3')).toContainText('Mankato Area');
-  for (const town of ['Faribault', 'Owatonna', 'Cannon Falls', 'Mankato', 'St. Peter', 'Le Sueur']) {
+  await expect(groups.nth(2).locator('h3')).toContainText('South Metro');
+  for (const town of ['Faribault', 'Cannon Falls', 'Mankato', 'Le Sueur', 'Lakeville', 'Apple Valley']) {
     const count = await page.locator('.area-list li', { hasText: town }).count();
     expect(count, `area list should name ${town}`).toBeGreaterThan(0);
   }
@@ -93,7 +94,7 @@ test('home: service area lists both regions with named towns for local SEO', asy
 
 test('contact: service area groups present with catchall call link', async ({ page }) => {
   await page.goto(`${BASE}/contact.html`);
-  expect(await page.locator('.area-group').count()).toBe(2);
+  expect(await page.locator('.area-group').count()).toBe(3);
   await expect(page.locator('.brand-note a[href="' + PHONE_HREF + '"]')).toBeVisible();
 });
 
