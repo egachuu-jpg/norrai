@@ -5,11 +5,15 @@ One-time build. Booking info only — no forms, no webhooks.
 
 ## Deploy
 
-Deploy as its **own Cloudflare Pages project** (do NOT merge into the `website/` norrai.co project):
+Its **own** Cloudflare Workers project (separate from the `website/` norrai.co project),
+using the same static-assets pattern as `website/wrangler.jsonc`:
 
-- Build command: none (static)
-- Build output directory: `client-sites/507-air`
-- Custom domain: TBD — pending GoDaddy account recovery (Oscar may already own a domain there)
+- **Root directory** (Cloudflare project setting): `client-sites/507-air` — the build
+  must run inside this folder so wrangler finds `wrangler.jsonc` here. If it runs from the
+  repo root, the deploy fails with "Missing entry-point to Worker script or to assets directory".
+- `wrangler.jsonc` serves this folder (`assets.directory: "."`); no build command needed.
+- The `name` in `wrangler.jsonc` (`507air`) must match the Cloudflare Worker/project name.
+- Custom domain: `507air.com` (registered; pending ICANN email verification by Oscar).
 
 ## Contact facts (source: Oscar's email 2026-07-09 + billboard art)
 
