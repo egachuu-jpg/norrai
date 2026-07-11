@@ -30,7 +30,8 @@ Norr AI is an AI automation agency targeting local businesses in Faribault and s
 | SendGrid | Email delivery via hello@norrai.co |
 | Neon (Postgres) | Connective tissue between Tier 1 and Tier 2 — project `norrai` (ID `gentle-hill-54285247`), Postgres 17, `us-east-1`, db `neondb`, branch `main`; pooled `DATABASE_URL` in `.env` |
 | Claude Code | Custom Tier 3 builds |
-| Cloudflare Pages | Website hosting (build output dir: `website`) |
+| Cloudflare Pages | Main site hosting for `tools.norrai.co` (build output dir: `website`) |
+| Cloudflare Workers | Per-client static sites — one Worker per client under `client-sites/<slug>/`, deployed with `npx wrangler deploy` (config in that dir's `wrangler.jsonc`) |
 | Cloudflare Access | Auth for agent-facing forms (`clients` group 7-day session, `internal` group 1-day) |
 
 ---
@@ -120,13 +121,15 @@ All logging nodes use `continueOnFail: true` — logging failures never break th
 ## Project Structure
 
 ```
-website/    # All HTML → Cloudflare Pages. Public pages at root; clients/ and
-            # internal/ gated by Cloudflare Access. Shared styles in css/norrai.css.
-db/         # schema.sql (canonical — apply with psql -f) + README.md
-n8n/        # workflow JSON exports + README (workflow_name registry) + testing docs
-tests/      # Playwright specs (one per tested HTML page)
-PRD/        # product specs (e.g. research-agent.md)
-docs/       # lessons-learned, workflows-built, ideas, roadmap, client notes
+website/       # Main tools.norrai.co site → Cloudflare Pages. Public pages at root;
+               # clients/ and internal/ gated by Cloudflare Access. Styles in css/norrai.css.
+client-sites/  # Per-client static sites, one dir per client (e.g. 507-air/), each
+               # deployed as its own Cloudflare Worker via `npx wrangler deploy`.
+db/            # schema.sql (canonical — apply with psql -f) + README.md
+n8n/           # workflow JSON exports + README (workflow_name registry) + testing docs
+tests/         # Playwright specs (one per tested HTML page)
+PRD/           # product specs (e.g. research-agent.md)
+docs/          # lessons-learned, workflows-built, ideas, roadmap, client notes
 ```
 
 Full page inventory and Cloudflare Access grouping: see the `website/` directory and `docs/lessons-learned.md § Cloudflare Access`.
