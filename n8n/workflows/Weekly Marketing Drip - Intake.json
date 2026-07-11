@@ -1,0 +1,106 @@
+{
+  "name": "Weekly Marketing Drip - Intake",
+  "id": "KDWC5WwRJuNldOCY",
+  "active": false,
+  "nodes": [
+    {
+      "id": "wmi-001-receive",
+      "name": "Receive Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 300],
+      "onError": "continueRegularOutput",
+      "parameters": {"httpMethod": "POST", "path": "weekly-marketing-drip-intake", "responseMode": "responseNode", "options": {}},
+      "webhookId": "weekly-marketing-drip-intake-webhook-001"
+    },
+    {
+      "id": "wmi-002-token",
+      "name": "Token Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [200, 300],
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3}, "conditions": [{"id": "wmi-token-001", "leftValue": "={{ $json.headers[\"x-norr-token\"] }}", "rightValue": "8F68D963-7060-4033-BD04-7593E4B203CB", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "looseTypeValidation": true, "options": {}}
+    },
+    {
+      "id": "wmi-003-forbidden",
+      "name": "Respond: Forbidden",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [400, 480],
+      "parameters": {"respondWith": "json", "responseBody": "={ \"status\": \"error\", \"message\": \"forbidden\" }", "options": {"responseCode": 403}}
+    },
+    {
+      "id": "wmi-004-log-trig",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [400, 200],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip_intake', 'triggered', json_build_object('execution_id', '{{ $execution.id }}')::jsonb)", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    },
+    {
+      "id": "wmi-005-validate",
+      "name": "Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 200],
+      "parameters": {"jsCode": "const root = $('Receive Intake').first().json;\nconst body = root.body || root;\nlet listings = Array.isArray(body.listings) ? body.listings : [];\nlistings = listings\n  .filter(l => l && typeof l.url === 'string' && l.url.trim() !== '')\n  .slice(0, 10)\n  .map(l => ({ url: String(l.url).trim(), address: (l.address != null && String(l.address).trim() !== '') ? String(l.address).trim() : null }));\nconst valid = listings.length > 0;\nconst listings_json = JSON.stringify(listings).replace(/'/g, \"''\");\nreturn [{ json: { valid, count: listings.length, listings, listings_json } }];"}
+    },
+    {
+      "id": "wmi-006-valid",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [800, 200],
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3}, "conditions": [{"id": "wmi-valid-001", "leftValue": "={{ $json.valid }}", "rightValue": true, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}], "combinator": "and"}, "looseTypeValidation": true, "options": {}}
+    },
+    {
+      "id": "wmi-007-badreq",
+      "name": "Respond: Bad Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1000, 380],
+      "parameters": {"respondWith": "json", "responseBody": "={ \"status\": \"error\", \"message\": \"at least one listing url is required\" }", "options": {"responseCode": 400}}
+    },
+    {
+      "id": "wmi-008-insert",
+      "name": "Insert Queue",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1000, 200],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=INSERT INTO listing_queue (listings, status) VALUES ('{{ $('Validate').first().json.listings_json }}'::jsonb, 'pending') RETURNING id", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    },
+    {
+      "id": "wmi-009-ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 200],
+      "parameters": {"respondWith": "json", "responseBody": "={{ JSON.stringify({ status: 'queued', queue_id: $json.id, count: $('Validate').first().json.count }) }}", "options": {"responseCode": 200}}
+    },
+    {
+      "id": "wmi-010-log-comp",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1400, 200],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip_intake', 'completed', json_build_object('execution_id', '{{ $execution.id }}', 'queue_id', '{{ $('Insert Queue').first().json.id }}', 'count', {{ $('Validate').first().json.count }})::jsonb)", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    }
+  ],
+  "connections": {
+    "Receive Intake": {"main": [[{"node": "Token Check", "type": "main", "index": 0}]]},
+    "Token Check": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}], [{"node": "Respond: Forbidden", "type": "main", "index": 0}]]},
+    "Log Triggered": {"main": [[{"node": "Validate", "type": "main", "index": 0}]]},
+    "Validate": {"main": [[{"node": "Valid?", "type": "main", "index": 0}]]},
+    "Valid?": {"main": [[{"node": "Insert Queue", "type": "main", "index": 0}], [{"node": "Respond: Bad Request", "type": "main", "index": 0}]]},
+    "Insert Queue": {"main": [[{"node": "Respond OK", "type": "main", "index": 0}]]},
+    "Respond OK": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1", "errorWorkflow": "Norr AI Workflow Error Logger"},
+  "tags": [{"name": "real estate"}]
+}

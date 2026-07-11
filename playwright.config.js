@@ -7,9 +7,16 @@ module.exports = defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
   },
-  webServer: {
-    command: 'npx serve website -p 3000 --no-clipboard',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: 'npx serve website -p 3000 --no-clipboard',
+      port: 3000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npx serve client-sites/507-air -p 3001 --no-clipboard',
+      port: 3001,
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });

@@ -1,0 +1,154 @@
+{
+  "name": "Marketing Opt-Out",
+  "id": "oiefZVdPfLPRsTZM",
+  "active": true,
+  "nodes": [
+    {
+      "id": "moo-001-receive",
+      "name": "Receive Click",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 300],
+      "onError": "continueRegularOutput",
+      "parameters": {"httpMethod": "GET", "path": "marketing-opt-out", "responseMode": "responseNode", "options": {}},
+      "webhookId": "marketing-opt-out-webhook-001"
+    },
+    {
+      "id": "moo-002-prep",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "parameters": {"jsCode": "const q = $input.first().json.query || {};\nconst lead_id = String(q.lead_id || '').trim();\nconst token = String(q.token || '').trim();\nconst uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nreturn [{ json: { lead_id, query_token: token, valid: uuidRe.test(lead_id) } }];"}
+    },
+    {
+      "id": "moo-003-verify",
+      "name": "Verify Token",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [400, 300],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=SELECT encode(hmac('{{ $('Prep').first().json.lead_id }}', '8F68D963-7060-4033-BD04-7593E4B203CB', 'sha256'), 'hex') AS expected_token", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    },
+    {
+      "id": "moo-004-token-valid",
+      "name": "Token Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [600, 300],
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3}, "conditions": [{"id": "moo-valid-001", "leftValue": "={{ $('Prep').first().json.valid }}", "rightValue": true, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}, {"id": "moo-valid-002", "leftValue": "={{ $('Prep').first().json.query_token }}", "rightValue": "={{ $json.expected_token }}", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "looseTypeValidation": true, "options": {}}
+    },
+    {
+      "id": "moo-005-bad",
+      "name": "Respond: Invalid Link",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [800, 480],
+      "parameters": {"respondWith": "text", "responseBody": "<!DOCTYPE html><html><head><title>Invalid Link</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>Invalid link.</h2><p>This unsubscribe link isn't valid. To stop receiving weekly listing emails, reply to the email or contact hello@norrai.co.</p></body></html>", "options": {"responseCode": 403, "responseHeaders": {"entries": [{"name": "Content-Type", "value": "text/html"}]}}}
+    },
+    {
+      "id": "moo-006-log-trig",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [800, 200],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'marketing_opt_out', 'triggered', json_build_object('execution_id', '{{ $execution.id }}', 'lead_id', '{{ $('Prep').first().json.lead_id }}')::jsonb)", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    },
+    {
+      "id": "moo-007-lookup",
+      "name": "Lookup Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1000, 200],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=SELECT l.id, l.lead_name, l.communication_opted_out FROM (SELECT '{{ $('Prep').first().json.lead_id }}'::uuid AS qid) q LEFT JOIN leads l ON l.id = q.qid", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    },
+    {
+      "id": "moo-008-found",
+      "name": "Lead Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1200, 200],
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3}, "conditions": [{"id": "moo-found-001", "leftValue": "={{ $json.id }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}}], "combinator": "and"}, "looseTypeValidation": true, "options": {}}
+    },
+    {
+      "id": "moo-009-notfound",
+      "name": "Respond: Not Found",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1400, 380],
+      "parameters": {"respondWith": "text", "responseBody": "<!DOCTYPE html><html><head><title>Not Found</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>We couldn't find your subscription.</h2><p>This link may have expired. Contact hello@norrai.co and we'll make sure you're unsubscribed.</p></body></html>", "options": {"responseCode": 404, "responseHeaders": {"entries": [{"name": "Content-Type", "value": "text/html"}]}}}
+    },
+    {
+      "id": "moo-010-already",
+      "name": "Already Opted Out?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1400, 200],
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 3}, "conditions": [{"id": "moo-already-001", "leftValue": "={{ $json.communication_opted_out }}", "rightValue": true, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}], "combinator": "and"}, "looseTypeValidation": true, "options": {}}
+    },
+    {
+      "id": "moo-011-respond-already",
+      "name": "Respond: Already",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1600, 80],
+      "parameters": {"respondWith": "text", "responseBody": "<!DOCTYPE html><html><head><title>Already Unsubscribed</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>You're already unsubscribed.</h2><p>You won't receive any more weekly listing emails. Nothing more to do.</p></body></html>", "options": {"responseCode": 200, "responseHeaders": {"entries": [{"name": "Content-Type", "value": "text/html"}]}}}
+    },
+    {
+      "id": "moo-012-set",
+      "name": "Set Opted Out",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1600, 280],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=UPDATE leads SET communication_opted_out = true, opted_out_at = now() WHERE id = '{{ $('Lookup Lead').first().json.id }}'", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    },
+    {
+      "id": "moo-013-prep-success",
+      "name": "Prep Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1800, 280],
+      "parameters": {"jsCode": "return [{ json: {\n  lead_id: $('Lookup Lead').first().json.id,\n  lead_name: $('Lookup Lead').first().json.lead_name || 'You'\n} }];"}
+    },
+    {
+      "id": "moo-014-respond-success",
+      "name": "Respond: Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2000, 280],
+      "parameters": {"respondWith": "text", "responseBody": "<!DOCTYPE html><html><head><title>Unsubscribed</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{font-family:sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#0A0F1A}h2{margin-bottom:12px}p{color:#3A3F48;line-height:1.6}</style></head><body><h2>You've been unsubscribed.</h2><p>You will no longer receive weekly listing emails. Changed your mind? Contact your agent or hello@norrai.co.</p></body></html>", "options": {"responseCode": 200, "responseHeaders": {"entries": [{"name": "Content-Type", "value": "text/html"}]}}}
+    },
+    {
+      "id": "moo-015-log-comp",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2200, 280],
+      "onError": "continueRegularOutput",
+      "parameters": {"operation": "executeQuery", "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'marketing_opt_out', 'completed', json_build_object('lead_id', '{{ $('Prep Success').first().json.lead_id }}')::jsonb)", "options": {}},
+      "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
+    }
+  ],
+  "connections": {
+    "Receive Click": {"main": [[{"node": "Prep", "type": "main", "index": 0}]]},
+    "Prep": {"main": [[{"node": "Verify Token", "type": "main", "index": 0}]]},
+    "Verify Token": {"main": [[{"node": "Token Valid?", "type": "main", "index": 0}]]},
+    "Token Valid?": {"main": [[{"node": "Log Triggered", "type": "main", "index": 0}], [{"node": "Respond: Invalid Link", "type": "main", "index": 0}]]},
+    "Log Triggered": {"main": [[{"node": "Lookup Lead", "type": "main", "index": 0}]]},
+    "Lookup Lead": {"main": [[{"node": "Lead Found?", "type": "main", "index": 0}]]},
+    "Lead Found?": {"main": [[{"node": "Already Opted Out?", "type": "main", "index": 0}], [{"node": "Respond: Not Found", "type": "main", "index": 0}]]},
+    "Already Opted Out?": {"main": [[{"node": "Respond: Already", "type": "main", "index": 0}], [{"node": "Set Opted Out", "type": "main", "index": 0}]]},
+    "Set Opted Out": {"main": [[{"node": "Prep Success", "type": "main", "index": 0}]]},
+    "Prep Success": {"main": [[{"node": "Respond: Success", "type": "main", "index": 0}]]},
+    "Respond: Success": {"main": [[{"node": "Log Completed", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1", "errorWorkflow": "Norr AI Workflow Error Logger"},
+  "tags": [{"name": "real estate"}]
+}

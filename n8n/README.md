@@ -61,3 +61,6 @@ SELECT DISTINCT workflow_name FROM workflow_events ORDER BY workflow_name;
 | Norr AI Contract Signed | `contract_signed` |
 | Email Triage Sweep | `email_triage_sweep` |
 | Email Triage Reply Handler | `email_triage_reply` |
+| Weekly Marketing Drip — Intake | `weekly_marketing_drip_intake` |
+| Weekly Marketing Drip — Send | `weekly_marketing_drip` |
+| Marketing Opt-Out | `marketing_opt_out` |
