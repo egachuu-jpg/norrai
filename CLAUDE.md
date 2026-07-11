@@ -4,13 +4,9 @@
 
 Norr AI is an AI automation agency targeting local businesses in Faribault and southern Minnesota. Built and operated by Egan. The name has quiet Scandinavian/regional roots — credible locally, scalable nationally.
 
-- **Domain:** norrai.co
-- **Primary email:** hello@norrai.co
-- **Automation email:** hello@norrai.co (SendGrid verified sender)
-- **LLC:** Filed with Minnesota SOS — pending approval
-- **EIN:** Obtained
-- **Banking:** Relay — pending approval
-- **Google Workspace:** Active
+- **Domain:** norrai.co · **Site is live at `tools.norrai.co`** (Cloudflare Pages custom domain), not the apex — all external links in workflows/emails must use `tools.norrai.co`
+- **Primary + automation email:** hello@norrai.co (SendGrid verified sender)
+- **Business setup (as of 2026-07):** LLC filed with MN SOS (pending), EIN obtained, Relay banking (pending), Google Workspace active
 
 ---
 
@@ -32,19 +28,18 @@ Norr AI is an AI automation agency targeting local businesses in Faribault and s
 | Claude API | Intelligence layer across all tiers |
 | Twilio | SMS delivery — one subaccount per client |
 | SendGrid | Email delivery via hello@norrai.co |
-| Neon (Postgres) | Connective tissue between Tier 1 and Tier 2 — project: `norrai`, hosted on Neon (`gentle-hill-54285247`) |
+| Neon (Postgres) | Connective tissue between Tier 1 and Tier 2 — project `norrai` (ID `gentle-hill-54285247`), Postgres 17, `us-east-1`, db `neondb`, branch `main`; pooled `DATABASE_URL` in `.env` |
 | Claude Code | Custom Tier 3 builds |
-| Hoppscotch | Webhook testing (dev only) |
+| Cloudflare Pages | Website hosting (build output dir: `website`) |
+| Cloudflare Access | Auth for agent-facing forms (`clients` group 7-day session, `internal` group 1-day) |
 
 ---
 
 ## Target Verticals
 
-Norr AI serves any local or regional business with repetitive client communications, scheduling, or data workflows. The full target market includes:
+Norr AI serves any local or regional business with repetitive client communications, scheduling, or data workflows: 🏡 Real estate · 🦷 Dental · 👁️ Eye clinics · ✂️ Salons/barbershops · ⛳ Golf courses · 🌿 Greenhouses/nurseries · 🔧 Plumbers/electricians · 🏗️ Construction · 🛡️ Insurance · 💆 Spas/wellness · 🐾 Veterinary · 🚗 Auto repair · 🏋️ Gyms · 🌄 Landscaping.
 
-🏡 Real estate agents · 🦷 Dental offices · 👁️ Eye clinics · ✂️ Hair salons & barbershops · ⛳ Golf courses · 🌿 Greenhouses & nurseries · 🔧 Plumbers & electricians · 🏗️ Construction companies · 🛡️ Insurance brokers · 💆 Spas & wellness studios · 🐾 Veterinary clinics · 🚗 Auto repair shops · 🏋️ Gyms & fitness studios · 🌄 Landscaping companies
-
-### Verticals with Detailed Playbooks Built Out
+### Verticals with detailed playbooks
 
 **Dental** — Starter pitch: no-show math. Workflows: appointment reminders, missed appointment follow-up, review requests, missed call → SMS, new patient intake. Growth anchor: dormant patient reactivation. Pro: Dentrix/Eaglesoft pipeline → production dashboard.
 
@@ -58,12 +53,11 @@ Norr AI serves any local or regional business with repetitive client communicati
 
 - Own the infrastructure from day one: Twilio numbers, Postgres, n8n instance. Client pays for the service — Norr AI owns the stack.
 - All Tier 1 n8n workflows write events to Postgres so Tier 2 inherits clean history.
-- Transition framing when upgrading a client: "we expanded the system" not "we rebuilt everything."
-- Run Tier 1 and Tier 2 in parallel for 2–4 weeks during upgrade — zero downtime.
+- Transition framing when upgrading a client: "we expanded the system" not "we rebuilt everything." Run Tier 1 and Tier 2 in parallel for 2–4 weeks during upgrade — zero downtime.
+- Cloudflare Access is the real auth layer for agent-facing forms; the workflow Token Check is a secondary CSRF guard, **not** real security.
 
-**Lead Cleansing Architecture:** A staging layer sits between all intake sources and downstream nurture workflows. Every intake source normalizes to a single payload shape before hitting the cleansing workflow.
+**Lead Cleansing Architecture:** A staging layer sits between all intake sources and downstream nurture workflows. Every intake source normalizes to a single payload shape before hitting the cleansing workflow:
 
-Normalized payload shape:
 ```json
 {
   "lead_name": "Sarah Johnson",
@@ -83,30 +77,25 @@ Dedupe check: CRM lookup by email + phone before firing any sequence. Existing l
 
 ## n8n Operational Notes
 
+Hard-won gotchas (expression quirks, node behavior, deploy pitfalls) live in `docs/lessons-learned.md`. The durable operating rules:
+
 - Always use `/webhook/` production path, NOT `/webhook-test/`, for live clients.
 - Timezone: n8n Cloud runs UTC. Use `America/Chicago` with `hour12: false` for Central time.
-- Business hours IF node: use two separate conditions (`>= 8` AND `< 17`), not a single JS expression.
-- SendGrid click tracking: disable for transactional emails to avoid Promotions tab.
-- Twilio subaccounts: one master account, one subaccount per client.
-- Expression path: raw JSON from webhooks comes through as `$json.fieldname` (no `.body.` wrapper).
-- Multiline Claude prompts: build in Set node first, pass as single `$json.prompt` variable to HTTP Request.
-
-Timezone expression used in Missed Call workflow:
-```js
-parseInt(new Date().toLocaleString('en-US', {timeZone: 'America/Chicago', hour12: false}).split(', ')[1].split(':')[0])
-```
+- Business hours IF node: two separate conditions (`>= 8` AND `< 17`), not a single JS expression.
+- Twilio: one master account, one subaccount per client.
+- Multiline Claude prompts: build in a Set node first, pass as a single `$json.prompt` variable to the HTTP Request.
+- `continueOnFail` / `onError: continueRegularOutput` belongs on **logging/lookup nodes only** — never on a send/action node (SendGrid, Twilio), where it turns a hard failure into a silent no-op.
 
 ### Workflow Logging Standard
 
-Every n8n workflow must log `triggered`, `completed`, and `failed` events to `workflow_events` in Neon. This powers the monitoring dashboard health logic (red/yellow/green per client).
+Every workflow logs `triggered`, `completed`, and `failed` to `workflow_events` in Neon (powers the dashboard red/yellow/green health logic per client). The `workflow_name` registry lives in **`n8n/README.md`**.
 
 **Node pattern (add to every workflow):**
 
-1. **Lookup Client** (Postgres, `continueOnFail: true`) — resolves `client_id` based on workflow group:
+1. **Lookup Client** (Postgres, `continueOnFail: true`) — resolves `client_id` by workflow group:
    - Real estate webhooks: `SELECT id FROM clients WHERE primary_contact_email = '{{ $json.body.agent_email }}'`
    - B&B workflows: hardcode `86a01b94-ddab-4594-8afc-8212fb18fdd0`
-   - Internal/system workflows: hardcode `e2f9934c-4d28-4bb4-ac90-4284c1123517` (norrai_internal)
-   - Lead Cleanser pipeline + misc: use norrai_internal until per-client routing is built
+   - Internal/system + Lead Cleanser + misc: hardcode `e2f9934c-4d28-4bb4-ac90-4284c1123517` (norrai_internal) until per-client routing exists
 
 2. **Log Triggered** (Postgres, `continueOnFail: true`) — fires right after Token Check:
    ```sql
@@ -115,154 +104,38 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
      '{"execution_id": "{{ $execution.id }}", "agent_email": "{{ $json.body.agent_email }}"}'::jsonb)
    ```
 
-3. **Log Completed** (Postgres, `continueOnFail: true`) — fires at the successful end of the workflow:
+3. **Log Completed** (Postgres, `continueOnFail: true`) — fires at the successful end:
    ```sql
    INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)
    VALUES ($client_id, '$workflow_name', 'completed',
      '{"execution_id": "{{ $execution.id }}"}'::jsonb)
    ```
 
-4. **Error Workflow setting** — every workflow's Settings → Error Workflow must point to `Norr AI Workflow Error Logger`. This handles `failed` event logging automatically.
+4. **Error Workflow setting** — every workflow's Settings → Error Workflow must point to `Norr AI Workflow Error Logger`, which logs the `failed` event automatically.
 
-**`workflow_name` registry (snake_case values stored in Neon):**
-
-| Workflow | `workflow_name` |
-|---|---|
-| Real Estate Instant Lead Response | `instant_lead_response` |
-| Real Estate Open House Follow-Up | `open_house_follow_up` |
-| Real Estate Open House Setup | `open_house_setup` |
-| Real Estate Listing Description Generator | `listing_description` |
-| Real Estate Review Request | `review_request` |
-| Real Estate 7-Touch Cold Nurture | `cold_nurture` |
-| B&B Lead Generator | `bnb_lead_generator` |
-| B&B Manufacturing Estimate | `bnb_estimate` |
-| Norr AI Chief of Staff | `norrai_chief_of_staff` |
-| Norr AI Client Health Query | `client_health_query` |
-| Norr AI Red Alert Scheduler | `red_alert_scheduler` |
-| Real Estate Lead Cleanser | `lead_cleanser` |
-| Real Estate Zillow Intake | `zillow_intake` |
-| Real Estate Realtor Intake | `realtor_intake` |
-| Real Estate Facebook Intake | `facebook_intake` |
-| Real Estate Custom Form Intake | `custom_form_intake` |
-| Real Estate Lead Response Auto | `lead_response_auto` |
-| Real Estate Lead Action Handler | `lead_action_handler` |
-| Client Discovery → Claude Analysis | `client_discovery` |
-| Client Onboarding → Claude Analysis | `client_onboarding` |
-| Event Ops Discovery | `event_ops_discovery` |
-| Real Estate Research Agent | `research_agent` |
-| Buyer Briefing Generator | `buyer_briefing` |
-| Price Sanity Checker | `price_sanity_checker` |
-| Lead Scoring at Intake | `lead_scoring` |
-| Nurture Prompt Scheduler | `nurture_prompt_scheduler` |
-| Nurture Prompt Confirm | `nurture_prompt_confirm` |
-| Nurture De-Enroll Prompt | `nurture_deenroll_prompt` |
-| Nurture De-Enroll Confirm | `nurture_deenroll_confirm` |
-| Weichert Nurture Auto-Scheduler | `weichert_nurture_auto_scheduler` |
-| Birthday & Anniversary Outreach | `bday_anniversary_outreach` |
-| PropertyBoost Intake | `property_boost_intake` |
-| PropertyBoost Parser | `property_boost_parser` |
-| BoldTrail CSV Import | `boldtrail_csv_import` |
-| Manual Opt-Out Handler | `manual_optout_handler` |
-| Real Estate BoldTrail Intake | `boldtrail_intake` |
-| Norr AI Contract Signed | `contract_signed` |
-| Email Triage Sweep | `email_triage_sweep` |
-| Email Triage Reply Handler | `email_triage_reply` |
-
-**All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.**
-
----
-
-## Workflows Built
-
-### Missed Call → Auto SMS
-- **Status:** Working end to end
-- **Stack:** Twilio webhook → n8n IF node (business hours check) → Twilio SMS (two branches: in-hours / after-hours message)
-- **Pending:** Upgrade Twilio account from trial, buy local 507 area code number to replace toll-free 855 number
-
-### Listing Description Generator
-- **Status:** Working end to end
-- **Stack:** Webhook → Set node (build prompt) → HTTP Request (Claude API) → Code node (parse response) → SendGrid
-- Claude returns plain text with `HEADLINE:` / `MLS_DESCRIPTION:` / `SOCIAL_MEDIA_POST:` labels — Code node splits on these
-- Email sends from hello@norrai.co via SendGrid native n8n node
-- Agent voice personalization: few-shot prompting with 3–5 of agent's previous listings pasted into prompt
-- **Webhook URL:** `https://norrai.app.n8n.cloud/webhook/listing-description`
-
-### Research Agent (Subworkflow)
-- **Status:** Live in production — smoke tested 2026-05-10
-- **Stack:** Webhook → Token Check → Prep Input (Code) → Log Triggered (Neon) → Cache Lookup (Neon, 7-day TTL) → Evaluate Cache (Code) → [cache hit] Respond Cached / [cache miss] Census Geocoder → Build Gemini Prompt (Code) → Gemini 2.0 Flash + Google Search Grounding (HTTP) → Parse + Compliance Filter (Code) → Claude Haiku Formatter (HTTP) → Build Final Output (Code) → Save to Cache (Neon) → Log Completed (Neon) → Respond to Webhook
-- **Webhook URL:** `https://norrai.app.n8n.cloud/webhook/research-agent`
-- **Input:** `address`, `city`, `state`, `zip`, `price_range`, `beds`, `baths` (+ optional `sqft`, `year_built`, `caller`, `client_id`)
-- **Output:** `status`, `address_verified`, `walkability`, `schools`, `market`, `recent_comps`, `data_confidence`, `insight_block`, `comps_disclaimer`
-- **Credentials needed in n8n:** "Gemini API Key" (Query Auth credential — name: `key`, value: your Gemini API key) — created and wired
-- **Prerequisites:** `research_cache` table in Neon (added to `db/schema.sql` — apply to production)
-- See `PRD/research-agent.md` for full spec
-
-### Event Ops Discovery Form
-- **Status:** Working end to end
-- **Stack:** `event_ops_discovery.html` → n8n webhook → (review + routing)
-- 6-section discovery questionnaire: About You, Event Volume & Types, Where Your Time Goes (1–5 rating scales), Current Tools & Stack, Repetitive Work, Priorities & Goals
-- Collects: team size, capacity gap, events/year, attendee volume, event types, time-sink ratings across 7 categories, current registration/comms/data tools, manual step walkthrough, recurring email and report types, biggest pain, success criteria, openness to new tools
-- Payload fields include multi-select pill groups serialized as comma-separated strings, rating scale values as integers, and free-text fields
-- **Webhook URL placeholder:** `https://YOUR-N8N-INSTANCE.app.n8n.cloud/webhook/event-ops-discovery`
-- **Origin:** Built for a warm lead — senior event ops manager at Prep Network who lost two employees; her director is also running an internal AI automation analysis this quarter
+All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.
 
 ---
 
 ## Project Structure
 
 ```
-norrai/
-├── website/                  # All HTML — deployed to Cloudflare Pages (build output dir: website)
-│   ├── index.html
-│   ├── services.html
-│   ├── how-it-works.html
-│   ├── pricing.html
-│   ├── contact.html
-│   ├── dental.html
-│   ├── real-estate.html
-│   ├── insurance.html
-│   ├── privacy.html            # Public legal page
-│   ├── terms.html              # Public legal page
-│   ├── open_house.html         # Open house sign-in — public, QR code, reads URL params (address, agent, notes)
-│   ├── discovery_form.html     # General prospect discovery form — public
-│   ├── event_ops_discovery.html
-│   ├── onboarding_form.html
-│   ├── clients/                # Cloudflare Access: clients group (7-day session)
-│   │   ├── listing_form.html       # Listing description generator
-│   │   ├── lead_response.html      # Instant lead response
-│   │   ├── open_house_setup.html   # Open house QR code generator
-│   │   ├── nurture_enroll.html     # Cold nurture enrollment
-│   │   ├── review_request.html     # Review request
-│   │   ├── lead_action_edit.html   # Edit SMS/email drafts before sending to leads
-│   │   └── bnb_estimate_form.html  # B&B Manufacturing estimate form (B&B employees)
-│   ├── internal/               # Cloudflare Access: internal group (1-day session)
-│   │   ├── brand_concepts.html
-│   │   ├── norrai_style_guide.html
-│   │   └── dashboard.html
-│   ├── norr_ai_favicon.svg
-│   ├── norr_ai_emblem.svg
-│   └── css/
-│       └── norrai.css        # Shared Polar Modern styles for main site pages
-├── db/
-│   ├── schema.sql            # Canonical schema — apply with: psql <connection-string> -f db/schema.sql
-│   └── README.md             # Table overview, n8n connection instructions, smoke test queries
-├── n8n/
-│   ├── TESTING_NOTES.md      # Gotchas, known gaps, production promotion checklist
-│   ├── TESTING_GUIDE.md      # Step-by-step testing instructions per workflow
-│   └── workflows/            # n8n workflow JSON exports — import directly into n8n
-├── tests/
-│   └── listing_form.spec.js  # Playwright tests for listing_form.html
-├── norrai_master_context.docx
-├── playwright.config.js
-├── package.json
-└── CLAUDE.md
+website/    # All HTML → Cloudflare Pages. Public pages at root; clients/ and
+            # internal/ gated by Cloudflare Access. Shared styles in css/norrai.css.
+db/         # schema.sql (canonical — apply with psql -f) + README.md
+n8n/        # workflow JSON exports + README (workflow_name registry) + testing docs
+tests/      # Playwright specs (one per tested HTML page)
+PRD/        # product specs (e.g. research-agent.md)
+docs/       # lessons-learned, workflows-built, ideas, roadmap, client notes
 ```
+
+Full page inventory and Cloudflare Access grouping: see the `website/` directory and `docs/lessons-learned.md § Cloudflare Access`.
 
 ---
 
 ## Brand — Polar Modern
 
-All HTML files should use this design system:
+All HTML uses this design system:
 
 ```css
 --bone:      #FAFAF7;   /* background */
@@ -280,59 +153,29 @@ font-body:    'Inter'
 font-mono:    'JetBrains Mono'
 ```
 
+When creating a new Polar Modern page, copy the full `:root` block from an existing page in the same directory — partial copies silently omit canonical tokens.
+
 ---
 
 ## Testing
 
-**Test stack:** Playwright (`npm test`)
-**276 tests across 11 spec files — all must pass before pushing.**
-
-| Spec file | Page covered |
-|---|---|
-| `tests/listing_form.spec.js` | `clients/listing_form.html` |
-| `tests/lead_response.spec.js` | `clients/lead_response.html` |
-| `tests/open_house_setup.spec.js` | `clients/open_house_setup.html` |
-| `tests/nurture_enroll.spec.js` | `clients/nurture_enroll.html` |
-| `tests/review_request.spec.js` | `clients/review_request.html` |
-| `tests/bnb_estimate_form.spec.js` | `clients/bnb_estimate_form.html` |
-| `tests/open_house.spec.js` | `open_house.html` |
-| `tests/discovery_form.spec.js` | `discovery_form.html` |
-| `tests/event_ops_discovery.spec.js` | `event_ops_discovery.html` |
-| `tests/onboarding_form.spec.js` | `onboarding_form.html` |
-| `tests/dashboard.spec.js` | `internal/dashboard.html` |
+**Stack:** Playwright (`npm test`). One spec file per tested HTML page in `tests/`. **All tests must pass before pushing.**
 
 ### Rules
-- **Run `npm test` before pushing any code changes.** All tests must pass.
-- **When adding new functionality to a tested file, add tests for it first (or alongside).** Do not ship new form fields, JS behavior, or payload changes without corresponding test coverage.
-- **When editing a file that has no test file, create one.** Scope the tests to the risk level of the file (see below).
-- New test coverage should follow the existing patterns in `tests/listing_form.spec.js`: use `fillRequired()` + `mockWebhook()` helpers, `Promise.all` for request interception, and wait for UI state (success banner, etc.) before asserting async side effects like localStorage.
+- Run `npm test` before pushing any code change.
+- When adding functionality to a tested file, add tests for it first (or alongside). Don't ship new form fields, JS behavior, or payload changes without coverage.
+- When editing a file with no test file, create one, scoped to its risk level (below).
+- Follow the patterns in `tests/listing_form.spec.js`: `fillRequired()` + `mockWebhook()` helpers, `Promise.all` for request interception, wait for UI state before asserting async side effects like localStorage.
 
-### Risk-based test coverage
+### Risk-based coverage
 
 | Risk | File type | Minimum coverage |
 |------|-----------|-----------------|
 | **High** | Forms that submit to a webhook (listing_form, event_ops_discovery) | Full: required fields, type enforcement, payload shape, localStorage, UI states, security header |
-| **Medium** | Marketing/vertical pages with interactive elements or JS | Key interactions, navigation links resolve, no JS errors on load |
-| **Low** | Static display pages with no JS (brand_concepts, style_guide) | Smoke test only: page loads, title correct, no console errors |
+| **Medium** | Marketing/vertical pages with interactive JS | Key interactions, nav links resolve, no JS errors on load |
+| **Low** | Static display pages, no JS (brand_concepts, style_guide) | Smoke test: loads, title correct, no console errors |
 
 Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — bad data produces silent failures with real cost (API calls, emails sent). Test them thoroughly.
-
----
-
-## Ideas / Parking Lot
-
-### Real Estate — Slack-mediated SMS send (agent-in-the-loop)
-Instead of the workflow sending the automated text directly to the lead, route it through Slack first. The agent receives the pre-drafted SMS in Slack, formatted exactly as it would be sent. Tapping the message opens it in iMessage (or the native Android Messages app) with the lead's number and message body pre-filled — agent just hits send. Technical mechanism: generate an `sms:` deep link (`sms:+15075551234?body=Hey%20Sarah...`) and post it to Slack as a button or linked message. This works on mobile — iOS and Android both honor the `sms:` URI scheme natively with no app install required; tapping the link opens the default messaging app with the number and body pre-filled. The main implementation detail in n8n is URL-encoding the message body correctly before constructing the link — use a Code node to run `encodeURIComponent(message)` on the Claude-generated SMS draft before building the `sms:` URL. Benefit: agent stays in the loop for the actual send (trust, compliance, personal touch) without having to draft anything. Tradeoff: adds one manual step vs. full automation. Could be an opt-in mode per agent — "auto-send" vs. "review in Slack first." Applies to: instant lead response, open house follow-up, any outbound SMS in the nurture sequence.
-
----
-
-## Open Tasks
-
-> **Tasks are tracked in Neon (`stories` + `tasks` tables), not here.** Query Neon for current state:
->
-> ```sql
-> SELECT t.title, t.status, t.priority, s.title as story FROM tasks t LEFT JOIN stories s ON t.story_id = s.id ORDER BY t.priority, t.seq;
-> ```
 
 ---
 
@@ -347,9 +190,7 @@ Instead of the workflow sending the automated text directly to the lead, route i
 
 ## Database
 
-**Platform:** Neon — project `norrai` (ID: `gentle-hill-54285247`), Postgres 17, `us-east-1`
-**Database:** `neondb` | **Branch:** `main`
-**Connection string:** stored in `.env` as `DATABASE_URL` (pooled)
+**Neon** — project `norrai` (`gentle-hill-54285247`), Postgres 17. Canonical schema in `db/schema.sql` (apply with `psql <conn> -f db/schema.sql`); table overview + smoke queries in `db/README.md`.
 
 | Table | Purpose |
 |-------|---------|
@@ -358,24 +199,28 @@ Instead of the workflow sending the automated text directly to the lead, route i
 | `twilio_subaccounts` | One Twilio subaccount + phone number per client |
 | `norrai_meetings` | NorrAI's own discovery/onboarding/check-in calls |
 | `leads` | End-customer leads across all verticals; vertical-specific fields in `metadata` jsonb |
-| `appointments` | End-customer appointments; tracks reminder/follow-up/review-request timestamps |
+| `appointments` | End-customer appointments; reminder/follow-up/review-request timestamps |
 | `workflow_events` | Audit log of every n8n workflow trigger/completion/failure |
+| `stories` / `tasks` | Mission Control — project tasks (status CHECK on stories: `active｜paused｜done｜cancelled`) |
+| `research_cache` | Research Agent cache, 7-day TTL by address |
 
-**Vertical-specific lead fields** go in `leads.metadata` jsonb:
-```json
-// Real estate
-{ "property_address": "123 Maple St", "price_range": "$250k-$320k", "beds": 3 }
-// Insurance
-{ "policy_type": "auto", "renewal_date": "2026-09-01", "current_carrier": "State Farm" }
-// Dental
-{ "procedure_type": "cleaning", "insurance": "Delta Dental", "last_visit": "2024-11-01" }
-```
+**Vertical-specific lead fields** go in `leads.metadata` jsonb — e.g. real estate `{property_address, price_range, beds}`, insurance `{policy_type, renewal_date, current_carrier}`, dental `{procedure_type, insurance, last_visit}`.
+
+Notes: `run_sql` (Neon MCP) is one statement per call. `leads` has no UNIQUE on `(client_id, email)` — dedupe with SELECT-then-conditional-INSERT/UPDATE, not `ON CONFLICT`.
 
 ---
 
-## Lessons Learned
+## Pointers
 
-See `docs/lessons-learned.md` for the full reference — n8n expressions, workflow management, SendGrid, Gemini, prompt engineering, Cloudflare Access, HTML/JS, Playwright, BoldTrail, Zapier, and architecture decisions.
+- **Tasks / status:** tracked in Neon (`stories` + `tasks`), not here — `SELECT t.title, t.status, t.priority, s.title AS story FROM tasks t LEFT JOIN stories s ON t.story_id = s.id ORDER BY t.priority, t.seq;`
+- **Lessons learned:** `docs/lessons-learned.md` (n8n, SendGrid, Gemini, prompt engineering, Cloudflare Access, HTML/JS, Playwright, BoldTrail, Zapier, architecture)
+- **Workflows built + status:** `docs/workflows-built.md`
+- **Workflow name registry:** `n8n/README.md`
+- **Ideas / parking lot:** `docs/ideas.md`
+- **Roadmap:** `docs/Norr AI — 6 Month Roadmap.md`
+- **Session history:** `SESSION_LOG.md`
+
+---
 
 ## About the Owner
 
@@ -385,12 +230,10 @@ Egan is a data engineer working primarily with dbt and SQL Server. Comfortable w
 
 ## Session Wrap-Up
 
-When the user says **"donezo"** or **"wrap up"**, run the `/session-end` skill and also do the following **before committing**:
+When the user says **"donezo"** or **"wrap up"**, run the `/session-end` skill. It appends a dated entry to `SESSION_LOG.md`, extracts new lessons to `docs/lessons-learned.md`, and commits both.
 
-**Additional step — update Neon tasks:**
-- Review what was completed this session
-- Run `UPDATE tasks SET status = 'completed', updated_at = NOW() WHERE title = '...'` for each task finished
-- If a story's tasks are all done, update the story status too: `UPDATE stories SET status = 'completed' WHERE id = '...'`
-- Use the Neon MCP tool to execute these directly
-
-Then commit `SESSION_LOG.md` and `docs/lessons-learned.md` as usual.
+**Additional step — update Neon tasks (before committing):**
+- Review what was completed this session.
+- `UPDATE tasks SET status = 'completed', updated_at = NOW() WHERE title = '...'` for each finished task.
+- If a story's tasks are all done: `UPDATE stories SET status = 'done' WHERE id = '...'` — the `stories` CHECK constraint is `active｜paused｜done｜cancelled`; it rejects `completed`.
+- Use the Neon MCP tool to execute these directly.
