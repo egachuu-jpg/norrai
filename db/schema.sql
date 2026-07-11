@@ -95,6 +95,7 @@ CREATE TABLE leads (
   nurture_enrolled_at timestamptz,              -- set when lead enters cold nurture sequence
   sms_opt_out         boolean NOT NULL DEFAULT FALSE,
   email_opt_out       boolean NOT NULL DEFAULT FALSE,
+  communication_opted_out boolean NOT NULL DEFAULT FALSE, -- excludes lead from marketing broadcast emails (weekly drip); does NOT affect transactional msgs
   opted_out_at        timestamptz,
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now()
@@ -190,6 +191,24 @@ CREATE TABLE research_cache (
 );
 
 CREATE INDEX idx_research_cache_address_expires ON research_cache(address, expires_at);
+
+-- ============================================================
+-- WEEKLY MARKETING DRIP (Weichert weekly listing email)
+-- ============================================================
+
+-- Queue of agent-submitted listing batches awaiting the Monday 9am CT send.
+-- One row per intake-form submission. The Monday workflow reads the latest
+-- pending row, scrapes each listing, sends, then marks it sent.
+CREATE TABLE IF NOT EXISTS listing_queue (
+  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  submitted_at timestamptz NOT NULL DEFAULT now(),
+  listings     jsonb NOT NULL,            -- [{url: string, address: string|null}] — max 10
+  status       text NOT NULL DEFAULT 'pending', -- pending | sent | failed
+  sent_at      timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS idx_listing_queue_status_submitted
+  ON listing_queue(status, submitted_at DESC);
 
 -- ============================================================
 -- EMAIL TRIAGE ASSISTANT
