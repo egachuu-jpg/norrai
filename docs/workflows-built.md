@@ -4,12 +4,6 @@ Reference for workflows that are wired and their current state. Status lines
 here go stale — treat this as a snapshot, not a live dashboard. For live health
 per client, query `workflow_events` in Neon.
 
-> **Note (flagged in 2026-07 audit):** the Research Agent stack below and
-> `PRD/research-agent.md` both say "Gemini 2.0 Flash", but
-> `docs/lessons-learned.md` records that `gemini-2.0-flash` is unavailable to
-> new API users (use `gemini-2.5-flash`). Confirm which model the live workflow
-> actually calls and reconcile all three docs.
-
 ## Missed Call → Auto SMS
 - **Status:** Working end to end
 - **Stack:** Twilio webhook → n8n IF node (business hours check) → Twilio SMS (two branches: in-hours / after-hours message)
@@ -25,7 +19,7 @@ per client, query `workflow_events` in Neon.
 
 ## Research Agent (Subworkflow)
 - **Status:** Live in production — smoke tested 2026-05-10
-- **Stack:** Webhook → Token Check → Prep Input (Code) → Log Triggered (Neon) → Cache Lookup (Neon, 7-day TTL) → Evaluate Cache (Code) → [cache hit] Respond Cached / [cache miss] Census Geocoder → Build Gemini Prompt (Code) → Gemini 2.0 Flash + Google Search Grounding (HTTP) → Parse + Compliance Filter (Code) → Claude Haiku Formatter (HTTP) → Build Final Output (Code) → Save to Cache (Neon) → Log Completed (Neon) → Respond to Webhook
+- **Stack:** Webhook → Token Check → Prep Input (Code) → Log Triggered (Neon) → Cache Lookup (Neon, 7-day TTL) → Evaluate Cache (Code) → [cache hit] Respond Cached / [cache miss] Census Geocoder → Build Gemini Prompt (Code) → Gemini 2.5 Flash + Google Search grounding (HTTP) → Parse + Compliance Filter (Code) → Claude Haiku Formatter (HTTP) → Build Final Output (Code) → Save to Cache (Neon) → Log Completed (Neon) → Respond to Webhook
 - **Webhook URL:** `https://norrai.app.n8n.cloud/webhook/research-agent`
 - **Input:** `address`, `city`, `state`, `zip`, `price_range`, `beds`, `baths` (+ optional `sqft`, `year_built`, `caller`, `client_id`)
 - **Output:** `status`, `address_verified`, `walkability`, `schools`, `market`, `recent_comps`, `data_confidence`, `insight_block`, `comps_disclaimer`
