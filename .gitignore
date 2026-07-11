@@ -20,3 +20,7 @@ playwright-report/
 # Claude Code worktrees
 .claude/worktrees/
 .worktrees/
+
+# Python bytecode
+__pycache__/
+*.pyc
