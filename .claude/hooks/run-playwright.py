@@ -15,7 +15,7 @@ if not fp or "website/" not in fp or not fp.endswith(".html"):
     sys.exit(0)
 
 spec_name = os.path.basename(fp).replace(".html", ".spec.js")
-project_root = "/Users/Egan/Documents/Claude/Projects/NorrAI"
+project_root = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
 spec_path = os.path.join(project_root, "tests", spec_name)
 
 if not os.path.exists(spec_path):
