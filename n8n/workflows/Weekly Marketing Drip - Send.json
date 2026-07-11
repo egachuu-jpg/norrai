@@ -185,7 +185,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, lead_name, email, client_id, encode(hmac(id::text, '8F68D963-7060-4033-BD04-7593E4B203CB', 'sha256'), 'hex') AS opt_out_token FROM leads WHERE client_id IN ('ded234e3-1c78-45c3-8924-6036e1fcaf60','451306d1-6437-42b8-8ffe-c16f28803490') AND email IS NOT NULL AND communication_opted_out != true",
+        "query": "SELECT id, lead_name, email, client_id, encode(hmac(id::text, '8F68D963-7060-4033-BD04-7593E4B203CB', 'sha256'), 'hex') AS opt_out_token FROM leads WHERE client_id IN ('ded234e3-1c78-45c3-8924-6036e1fcaf60','451306d1-6437-42b8-8ffe-c16f28803490') AND email IS NOT NULL AND communication_opted_out != true AND email_opt_out != true",
         "options": {}
       },
       "id": "wms-009-getleads",
@@ -323,6 +323,120 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: 'hello@norrai.co' }] }], from: { email: 'hello@norrai.co', name: 'Norr AI' }, subject: 'Weekly Drip preflight — SendGrid OK', content: [{ type: 'text/plain', value: 'SendGrid preflight passed for the weekly marketing drip. Queue ' + $('Build Cards').first().json.queue_id + ', ' + $('Build Cards').first().json.listing_count + ' listing(s). The blast to the CRM list follows.' }] } }}",
+        "options": {}
+      },
+      "id": "wms-017-canary",
+      "name": "Canary Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1456,
+        700
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Pre-flight: one canary email to hello@norrai.co. If SendGrid is unhealthy this errors (onError:continue) and the workflow aborts the blast instead of silently no-opping 899 sends."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wms-preflight-001",
+              "leftValue": "={{ !!$json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "wms-018-preflight",
+      "name": "Preflight Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ text: ':rotating_light: Weekly Marketing Drip ABORTED — SendGrid preflight failed, so the weekly blast did NOT send (0 leads emailed). Error: ' + (($json.error && $json.error.message) ? $json.error.message : 'unknown') + '. Queue row ' + $('Build Cards').first().json.queue_id + ' left pending for retry once SendGrid is healthy.' }) }}",
+        "options": {}
+      },
+      "id": "wms-019-slack",
+      "name": "Slack: Abort Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1776,
+        780
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip', 'failed', json_build_object('execution_id', '{{ $execution.id }}', 'reason', 'sendgrid_preflight_failed', 'queue_id', '{{ $('Build Cards').first().json.queue_id }}')::jsonb)",
+        "options": {}
+      },
+      "id": "wms-020-logfail",
+      "name": "Log Preflight Failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1936,
+        780
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -381,7 +495,7 @@
       "main": [
         [
           {
-            "node": "Get Leads",
+            "node": "Canary Send",
             "type": "main",
             "index": 0
           }
@@ -477,6 +591,46 @@
         [
           {
             "node": "Build Cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canary Send": {
+      "main": [
+        [
+          {
+            "node": "Preflight Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preflight Failed?": {
+      "main": [
+        [
+          {
+            "node": "Slack: Abort Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: Abort Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Preflight Failed",
             "type": "main",
             "index": 0
           }
