@@ -89,8 +89,6 @@
 - `response_mime_type: application/json` is incompatible with tool use — remove it from `generation_config` when using `google_search`
 - n8n credential for Gemini: Query Auth type, field name `key`, display name "Gemini API Key"
 - Gemini (and Claude) may return markdown-fenced JSON (triple-backtick json blocks) even when instructed not to — always strip fences before JSON.parse()
-- Never commit `.env` — `DATABASE_URL` (pooled connection string) lives there only
-- `appointments` table: schema is correct, but don't build calendar scraping/normalization until a real client requires it
 
 ## Prompt Engineering
 - Wrap all user-supplied fields in Claude prompts with `[DATA][/DATA]` delimiters to prevent prompt injection (lead_name, lead_message, agent_notes, etc.)
@@ -112,6 +110,7 @@
 - `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
 - `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
 - `btn.disabled = true` after a successful webhook response prevents double-submit — apply this to every form submit handler
+- Single HTML file can serve multiple workflow variants via a `wf` URL param — QR code generator injects the param at setup time (`wf=weichert`) so no separate HTML file is needed per client; downstream webhook routing is a one-liner: `const WEBHOOK_URL = wf === 'weichert' ? '.../weichert-open-house-signin' : '.../open-house-signin'`
 
 ## Playwright / Testing
 - `npx serve` strips `.html` extension AND drops query params in clean-URL redirects — always navigate to the clean path (no `.html`) in Playwright tests when query params are needed
@@ -139,10 +138,9 @@
 - Fetching a view URL directly (`view://...`) is not supported by the fetch tool — results in a validation error
 - Notion workspace search returns the database itself as a result, not the individual rows inside it — workspace search is not a substitute for a database query
 
-## HTML / JavaScript
-- Single HTML file can serve multiple workflow variants via a `wf` URL param — QR code generator injects the param at setup time (`wf=weichert`) so no separate HTML file is needed per client; downstream webhook routing is a one-liner: `const WEBHOOK_URL = wf === 'weichert' ? '.../weichert-open-house-signin' : '.../open-house-signin'`
-
 ## Architecture Decisions
+- Never commit `.env` — `DATABASE_URL` (pooled connection string) lives there only
+- `appointments` table: schema is correct, but don't build calendar scraping/normalization until a real client requires it
 - Own the infrastructure stack (Twilio numbers, Neon, n8n) — client pays for service, Norr AI owns the stack
 - Cloudflare Access is the real auth layer for agent-facing forms; Token Check is a secondary CSRF guard, not real security
 - Research Agent caches by address with 7-day TTL — call once per workflow run, not per touch; the cache covers the full cold nurture run

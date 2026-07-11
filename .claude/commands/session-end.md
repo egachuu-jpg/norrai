@@ -6,16 +6,16 @@ Review this conversation from the beginning and perform a session wrap-up. Do th
    - Keep it factual and scannable — not a narrative, not a list of every tool call
    - If nothing substantive was built or changed (brainstorm-only session), write a short entry noting what was discussed and decided
 
-2. **Extract new lessons to `CLAUDE.md ## Lessons Learned`**
+2. **Extract new lessons to `docs/lessons-learned.md`**
    - Review everything that went wrong, required a fix, or revealed a non-obvious constraint this session
    - Also capture any architectural decisions that shouldn't be re-litigated (with a one-line rationale)
-   - Add each item as a single line under the correct domain section (n8n, SendGrid, Gemini, Neon, Prompt Engineering, Cloudflare Access, Architecture Decisions)
+   - Add each item as a single line under the correct domain heading (n8n, SendGrid, Gemini, Prompt Engineering, Cloudflare Access, HTML/JavaScript, Playwright, BoldTrail, Zapier, Architecture Decisions)
    - If a new domain is needed, add it
    - Do not add lessons that are already there — check for duplicates first
    - Do not add obvious things ("always test before pushing") — only non-obvious gotchas and real decisions
 
 3. **Commit both files**
-   - Stage only `SESSION_LOG.md` and `CLAUDE.md`
+   - Stage only `SESSION_LOG.md` and `docs/lessons-learned.md`
    - Commit message: `docs: session wrap-up YYYY-MM-DD`
    - Push to the current branch
 
