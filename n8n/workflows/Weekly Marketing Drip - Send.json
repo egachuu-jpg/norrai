@@ -1,0 +1,646 @@
+{
+  "name": "Weekly Marketing Drip - Send",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "wms-001-cron",
+      "name": "Schedule Monday 9am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip', 'triggered', json_build_object('execution_id', '{{ $execution.id }}')::jsonb)",
+        "options": {}
+      },
+      "id": "wms-002-log-trig",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        592
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT lq.id, lq.listings FROM (SELECT 1) x LEFT JOIN LATERAL (SELECT id, listings FROM listing_queue WHERE status = 'pending' ORDER BY submitted_at DESC LIMIT 1) lq ON true",
+        "options": {}
+      },
+      "id": "wms-003-getpending",
+      "name": "Get Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        448,
+        592
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wms-has-001",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "wms-004-haspending",
+      "name": "Has Pending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip', 'completed', json_build_object('execution_id', '{{ $execution.id }}', 'note', 'no_pending')::jsonb)",
+        "options": {}
+      },
+      "id": "wms-005-nopending",
+      "name": "Log No Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        896,
+        672
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Get Pending').first().json;\nlet listings = row.listings;\nif (typeof listings === 'string') { try { listings = JSON.parse(listings); } catch (e) { listings = []; } }\nif (!Array.isArray(listings)) listings = [];\n// Emit one item per listing so the next HTTP node fetches each listing-detail page.\n// northstar.weichert.com/{id}/ is server-rendered and returns og:image + <title> in static HTML.\nreturn listings.map((l, i) => ({ json: { idx: i, url: l.url, address: l.address || null } }));"
+      },
+      "id": "wms-006-apifyinput",
+      "name": "Build Fetch Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        480
+      ],
+      "notes": "Fans out one item per submitted listing URL for the Fetch Listing Pages node."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; NorrAI-listing-fetch/1.0)"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "wms-007-apify",
+      "name": "Fetch Listing Pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        480
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Best-effort GET of the listing-detail page (runs once per listing). Response text lands in $json.data. On any error (e.g. transient 500), onError:continue passes the source item through so Build Cards degrades that card to address-only."
+    },
+    {
+      "parameters": {
+        "jsCode": "const pending = $('Get Pending').first().json;\nconst queue_id = pending.id;\nconst sources = $('Build Fetch Items').all().map(i => i.json);   // [{idx,url,address}] in order\nconst fetched = $input.all().map(i => i.json);                    // aligned 1:1 by index\nconst esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst ogImage = (html) => { if (!html) return null; const m = String(html).match(/<meta[^>]+og:image[^>]+content=[\"']?([^\"'>\\s]+)/i); return m ? m[1] : null; };\nconst pageTitle = (html) => { if (!html) return null; const m = String(html).match(/<title[^>]*>([^<]+)<\\/title>/i); return m ? m[1].trim() : null; };\nconst addrFromTitle = (t) => { if (!t) return null; const a = t.split(/\\s+for sale/i)[0].split(' | ')[0].trim(); return a || null; };\nconst cards = sources.map((s, i) => {\n  const f = fetched[i] || {};\n  const html = (f && (f.data || f.body)) || (typeof f === 'string' ? f : '') || '';\n  const photo = ogImage(html);\n  const address = s.address || addrFromTitle(pageTitle(html)) || null;\n  const url = s.url;\n  const photoBlock = photo ? `<tr><td style='padding:0;'><img src='${esc(photo)}' alt='${esc(address || 'Listing')}' width='600' style='display:block;width:100%;max-width:600px;height:auto;'></td></tr>` : '';\n  return `<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='margin:0 0 18px;border:1px solid #e5e4de;border-radius:8px;overflow:hidden;'>${photoBlock}<tr><td style='padding:14px 16px;'><div style='font-size:16px;font-weight:bold;color:#0A0F1A;'>${esc(address || 'New Listing')}</div><div style='margin-top:12px;'><a href='${esc(url)}' style='display:inline-block;background:#0A0F1A;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;padding:10px 18px;border-radius:6px;'>View Listing &rarr;</a></div></td></tr></table>`;\n}).join('');\nreturn [{ json: { queue_id, cards_html: cards, listing_count: sources.length } }];"
+      },
+      "id": "wms-008-cards",
+      "name": "Build Cards",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, lead_name, email, client_id, encode(hmac(id::text, '8F68D963-7060-4033-BD04-7593E4B203CB', 'sha256'), 'hex') AS opt_out_token FROM leads WHERE client_id IN ('ded234e3-1c78-45c3-8924-6036e1fcaf60','451306d1-6437-42b8-8ffe-c16f28803490') AND email IS NOT NULL AND communication_opted_out != true AND email_opt_out != true",
+        "options": {}
+      },
+      "id": "wms-009-getleads",
+      "name": "Get Leads",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1568,
+        480
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cardsHtml = $('Build Cards').first().json.cards_html || '';\nconst EVAN = 'ded234e3-1c78-45c3-8924-6036e1fcaf60';\nconst MICH = '451306d1-6437-42b8-8ffe-c16f28803490';\nconst agents = {};\nagents[EVAN] = { name: 'Evan Knutson', phone: '507-210-9140', email: 'eknutson@teamyellownow.com' };\nagents[MICH] = { name: 'Michelle Jasinski', phone: '507-210-7967', email: 'mjasinski@teamyellownow.com' };\nconst BASE = 'https://norrai.app.n8n.cloud/webhook/marketing-opt-out';\nconst out = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  if (!j.email) continue;\n  const a = agents[j.client_id] || agents[EVAN];\n  const firstName = String(j.lead_name || '').trim().split(/\\s+/)[0] || 'there';\n  const optOut = BASE + '?lead_id=' + encodeURIComponent(j.id) + '&token=' + encodeURIComponent(j.opt_out_token || '');\n  const html = `<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head><body style='margin:0;padding:0;background:#f4f4f2;font-family:Arial,Helvetica,sans-serif;color:#0A0F1A;'><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f2;padding:24px 0;'><tr><td align='center'><table role='presentation' width='600' cellpadding='0' cellspacing='0' style='max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;'><tr><td style='background:#ffce00;padding:22px 28px;'><div style='font-size:18px;font-weight:bold;color:#0A0F1A;'>Weichert, Realtors&reg; &mdash; Heartland</div><div style='font-size:12px;color:#3A3F48;letter-spacing:.04em;'>FARIBAULT, MINNESOTA</div></td></tr><tr><td style='padding:24px 28px 8px;'><p style='margin:0 0 8px;font-size:16px;'>Hi ${firstName},</p><p style='margin:0;font-size:15px;line-height:1.6;color:#3A3F48;'>Here are this week&rsquo;s featured listings in Faribault.</p></td></tr><tr><td style='padding:8px 28px 0;'>${cardsHtml}</td></tr><tr><td style='padding:0 28px;'><p style='margin:8px 0 0;font-size:15px;line-height:1.6;'>Interested in a showing? Call or text <strong>${a.name}</strong> at <a href='tel:${a.phone}' style='color:#1a73a7;'>${a.phone}</a>.</p></td></tr><tr><td style='padding:18px 28px 20px;'><div style='font-size:14px;font-weight:bold;'>${a.name}</div><div style='font-size:13px;color:#3A3F48;'>Weichert, Realtors&reg; &mdash; Heartland</div><div style='font-size:13px;'><a href='tel:${a.phone}' style='color:#1a73a7;'>${a.phone}</a> &middot; <a href='mailto:${a.email}' style='color:#1a73a7;'>${a.email}</a></div></td></tr><tr><td style='padding:16px 28px 24px;background:#fafaf7;border-top:1px solid #eee;'><p style='margin:0;font-size:11px;color:#9EA3AA;line-height:1.6;'>You are receiving this because you are a contact of ${a.name} at Weichert, Realtors&reg; &mdash; Heartland in Faribault, MN.<br><a href='${optOut}' style='color:#9EA3AA;text-decoration:underline;'>Opt out of future listing emails</a></p></td></tr></table></td></tr></table></body></html>`;\n  out.push({ json: { email: j.email, lead_name: j.lead_name || '', subject: 'Featured listings this week — ' + a.name, html, agent_name: a.name, agent_email: a.email, client_id: j.client_id } });\n}\nreturn out;"
+      },
+      "id": "wms-011-buildemail",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "wms-012-loop",
+      "name": "Loop Over Leads",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2016,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email, name: $json.lead_name }] }], from: { email: 'hello@norrai.co', name: $json.agent_name }, reply_to: { email: $json.agent_email, name: $json.agent_name }, subject: $json.subject, content: [{ type: 'text/html', value: $json.html }], tracking_settings: { click_tracking: { enable: false }, open_tracking: { enable: false } } } }}",
+        "options": {}
+      },
+      "id": "wms-013-send",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 0.1
+      },
+      "id": "wms-014-wait",
+      "name": "Wait 100ms",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2464,
+        400
+      ],
+      "webhookId": "wms-wait-100ms-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE listing_queue SET status = 'sent', sent_at = now() WHERE id = '{{ $('Build Cards').first().json.queue_id }}'",
+        "options": {}
+      },
+      "id": "wms-015-marksent",
+      "name": "Mark Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2240,
+        496
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip', 'completed', json_build_object('execution_id', '{{ $execution.id }}', 'queue_id', '{{ $('Build Cards').first().json.queue_id }}', 'listings', {{ $('Build Cards').first().json.listing_count }})::jsonb)",
+        "options": {}
+      },
+      "id": "wms-016-log-comp",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2464,
+        592
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: 'hello@norrai.co' }] }], from: { email: 'hello@norrai.co', name: 'Norr AI' }, subject: 'Weekly Drip preflight — SendGrid OK', content: [{ type: 'text/plain', value: 'SendGrid preflight passed for the weekly marketing drip. Queue ' + $('Build Cards').first().json.queue_id + ', ' + $('Build Cards').first().json.listing_count + ' listing(s). The blast to the CRM list follows.' }] } }}",
+        "options": {}
+      },
+      "id": "wms-017-canary",
+      "name": "Canary Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1456,
+        700
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "d2B1Q0ceGNVDwjqs",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Pre-flight: one canary email to hello@norrai.co. If SendGrid is unhealthy this errors (onError:continue) and the workflow aborts the blast instead of silently no-opping 899 sends."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wms-preflight-001",
+              "leftValue": "={{ !!$json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "wms-018-preflight",
+      "name": "Preflight Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ text: ':rotating_light: Weekly Marketing Drip ABORTED — SendGrid preflight failed, so the weekly blast did NOT send (0 leads emailed). Error: ' + (($json.error && $json.error.message) ? $json.error.message : 'unknown') + '. Queue row ' + $('Build Cards').first().json.queue_id + ' left pending for retry once SendGrid is healthy.' }) }}",
+        "options": {}
+      },
+      "id": "wms-019-slack",
+      "name": "Slack: Abort Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1776,
+        780
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'weekly_marketing_drip', 'failed', json_build_object('execution_id', '{{ $execution.id }}', 'reason', 'sendgrid_preflight_failed', 'queue_id', '{{ $('Build Cards').first().json.queue_id }}')::jsonb)",
+        "options": {}
+      },
+      "id": "wms-020-logfail",
+      "name": "Log Preflight Failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1936,
+        780
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Schedule Monday 9am CT": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Get Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending": {
+      "main": [
+        [
+          {
+            "node": "Has Pending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pending?": {
+      "main": [
+        [
+          {
+            "node": "Build Fetch Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log No Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cards": {
+      "main": [
+        [
+          {
+            "node": "Canary Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Wait 100ms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 100ms": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Sent": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Leads": {
+      "main": [
+        [
+          {
+            "node": "Mark Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Leads": {
+      "main": [
+        [
+          {
+            "node": "Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Fetch Items": {
+      "main": [
+        [
+          {
+            "node": "Fetch Listing Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Listing Pages": {
+      "main": [
+        [
+          {
+            "node": "Build Cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canary Send": {
+      "main": [
+        [
+          {
+            "node": "Preflight Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preflight Failed?": {
+      "main": [
+        [
+          {
+            "node": "Slack: Abort Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: Abort Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Preflight Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  }
+}
