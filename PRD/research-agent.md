@@ -44,7 +44,7 @@ Agents need Claude to write messages grounded in verified, publicly available da
 
 ### Why Gemini
 
-Gemini 2.0 Flash with Google Search grounding can query live web data (Zillow, Redfin, Realtor.com, GreatSchools, school district sites) and synthesize structured output in one API call. This eliminates the need for separate Walk Score, NCES, and RentCast API integrations — reducing cost, complexity, and API key management to a single endpoint.
+Gemini 2.5 Flash with Google Search grounding can query live web data (Zillow, Redfin, Realtor.com, GreatSchools, school district sites) and synthesize structured output in one API call. This eliminates the need for separate Walk Score, NCES, and RentCast API integrations — reducing cost, complexity, and API key management to a single endpoint.
 
 ### Pattern
 
@@ -55,7 +55,7 @@ Parent Workflow
                     Census Geocoder
                     (address → lat/lng, verify address is real)
                           │
-                    Gemini 2.0 Flash
+                    Gemini 2.5 Flash
                     + Google Search Grounding
                     (one call covering all data categories)
                           │
@@ -83,14 +83,14 @@ Parent Workflow
 
 ```json
 {
-  "model": "gemini-2.0-flash",
+  "model": "gemini-2.5-flash",
   "contents": [{
     "parts": [{
       "text": "Research the following property and local market. Return ONLY information you find from search results — do not estimate or invent any numbers.\n\nPROPERTY: [address], [city], [state] [zip]\nPRICE RANGE: [price_range]\nBEDS: [beds] | BATHS: [baths]\n\nReturn a JSON object with these fields:\n- walkability: { description: string } (from Walk Score or similar sources)\n- schools: [ { name, grades, rating, source, distance_miles } ] (nearest 2-3 public schools)\n- market: { median_sale_price, median_days_on_market, inventory_level (low/balanced/high), yoy_price_trend, data_source, data_date }\n- recent_comps: [ { address, sold_price, sold_date, beds, baths, sqft_if_available } ] (up to 4 comparable recently sold homes from public listings)\n- data_confidence: { market: high/medium/low, comps: high/medium/low, schools: high/medium/low }\n\nDo not include demographic data, crime statistics, or any information about the racial or ethnic composition of the area."
     }]
   }],
-  "tools": [{ "google_search_retrieval": {} }],
-  "generationConfig": { "response_mime_type": "application/json" }
+  "tools": [{ "google_search": {} }],
+  "generation_config": {}
 }
 ```
 
@@ -217,7 +217,7 @@ TTL: 7 days. The research agent checks cache before calling Gemini. Market data 
 
 | Component | Cost |
 |-----------|------|
-| Gemini 2.0 Flash | ~$0.075 / 1M input tokens. One research call ≈ 500-800 tokens. Effectively $0 at current volume. |
+| Gemini 2.5 Flash | Low per-1M-token input pricing; one research call ≈ 500-800 tokens. Effectively $0 at current volume. (Confirm the current Flash rate before scaling.) |
 | Census Geocoder | Free |
 | Neon cache reads | Free (existing connection) |
 
