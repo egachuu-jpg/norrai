@@ -19,7 +19,7 @@ Audit n8n workflow JSON files against the NorrAI logging standard defined in CLA
 - [ ] It fires immediately after the Token Check node
 - [ ] Uses `continueOnFail: true`
 - [ ] SQL inserts `event_type = 'triggered'`
-- [ ] `workflow_name` value matches the registry in CLAUDE.md
+- [ ] `workflow_name` value matches the registry in `n8n/README.md`
 
 ### 2. Log Completed node
 - [ ] Node named "Log Completed" exists at every successful terminal branch
