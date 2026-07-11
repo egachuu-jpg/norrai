@@ -167,6 +167,9 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 | Norr AI Contract Signed | `contract_signed` |
 | Email Triage Sweep | `email_triage_sweep` |
 | Email Triage Reply Handler | `email_triage_reply` |
+| Weekly Marketing Drip — Intake | `weekly_marketing_drip_intake` |
+| Weekly Marketing Drip — Send | `weekly_marketing_drip` |
+| Marketing Opt-Out | `marketing_opt_out` |
 
 **All logging nodes use `continueOnFail: true` — logging failures never break the main workflow.**
 
@@ -205,6 +208,17 @@ Every n8n workflow must log `triggered`, `completed`, and `failed` events to `wo
 - Payload fields include multi-select pill groups serialized as comma-separated strings, rating scale values as integers, and free-text fields
 - **Webhook URL placeholder:** `https://YOUR-N8N-INSTANCE.app.n8n.cloud/webhook/event-ops-discovery`
 - **Origin:** Built for a warm lead — senior event ops manager at Prep Network who lost two employees; her director is also running an internal AI automation analysis this quarter
+
+### Weekly Marketing Drip (Weichert weekly listing email)
+- **Status:** Built, validated, pushed to n8n Cloud. Intake + Opt-Out are **active and smoke-tested**; Send is **inactive pending go-live** (see PRD `obsidian/PRDs/2026-05-22-weekly-marketing-drip.md`)
+- **Three workflows (n8n IDs):**
+  - Weekly Marketing Drip - Intake (`KDWC5WwRJuNldOCY`) — webhook `/webhook/weekly-marketing-drip-intake`, writes form submission to `listing_queue` (status `pending`)
+  - Weekly Marketing Drip - Send (`wSXuvtUorzoLmktv`) — Monday 9am CT cron (workflow timezone `America/Chicago`); reads latest pending queue row, best-effort Apify scrape, per-lead SendGrid send (100ms Wait between sends), marks queue `sent`
+  - Marketing Opt-Out (`oiefZVdPfLPRsTZM`) — webhook `/webhook/marketing-opt-out?lead_id=&token=`, idempotent, flips `leads.communication_opted_out`
+- **Form:** `website/clients/weichert_weekly_listings_form.html` (Cloudflare Access — clients)
+- **Opt-out token:** HMAC-SHA256(lead_id) hex computed in **Postgres via pgcrypto** (`encode(hmac(id::text, secret, 'sha256'),'hex')`), shared secret = the standard `X-Norr-Token`. Send generates the token in the Get Leads query; Opt-Out re-derives + compares it in a Verify Token query. (n8n Cloud's task runner exposes no `crypto` global and no `require`, and the Crypto node needs a credential — pgcrypto avoids both and guarantees both sides match.)
+- **Schema:** `leads.communication_opted_out` column + `listing_queue` table (applied to Neon prod)
+- **Go-live gates:** (1) SendGrid volume — **CLEARED** (Essentials 50K Email API, ~3,900/mo needed; the "End of Access" banner is the unused Marketing Campaigns product); (2) listing photos — Weichert pages are a client-side SPA with no og:image in static HTML, so cheerio/native scraping can't get photos; **decision pending** between address-only (ship now) / JS-render scraper / reverse-engineer `weichertapi.azurewebsites.net`; (3) activate the Send workflow (Monday 9am CT cron)
 
 ---
 

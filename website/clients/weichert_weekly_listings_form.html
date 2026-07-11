@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Listing Email — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone:      #FAFAF7;
+    --ink:       #0A0F1A;
+    --glacial:   #7FA9B8;
+    --graphite:  #3A3F48;
+    --blush:     #E8D4C4;
+    --surface:   #FFFFFF;
+    --border:    #E5E4DE;
+    --muted:     #9EA3AA;
+    --secondary: #6A6F78;
+    --success-bg: #F0FAF4;
+    --success:   #2D7A4F;
+    --error-bg:  #FEF2F2;
+    --error:     #B91C1C;
+
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body:    'Inter', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--ink);
+    padding: 48px 24px 44px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .site-header-inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--glacial);
+    margin-bottom: 14px;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--bone);
+    margin-bottom: 12px;
+  }
+  .site-header h1 .accent { color: var(--glacial); }
+  .site-header p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  form { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Section cards ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bone);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--glacial);
+    background: rgba(127,169,184,0.12);
+    border: 1px solid rgba(127,169,184,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-body { padding: 24px; }
+  .section-intro {
+    font-size: 13px;
+    color: var(--secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  /* ── Listing rows ── */
+  .listing-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+  }
+  .listing-row:last-child { margin-bottom: 0; }
+  .row-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding-top: 11px;
+    text-align: right;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary);
+    letter-spacing: 0.01em;
+  }
+  label .req { color: var(--glacial); margin-left: 2px; }
+  label .opt { color: var(--muted); margin-left: 2px; font-weight: 400; }
+
+  input {
+    width: 100%;
+    background: var(--bone);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+  input::placeholder { color: var(--muted); }
+  input:focus {
+    outline: none;
+    border-color: var(--glacial);
+    box-shadow: 0 0 0 3px rgba(127,169,184,0.15);
+    background: var(--surface);
+  }
+  .col-labels {
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .col-labels span:first-child { visibility: hidden; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+
+  /* ── Submit area ── */
+  .submit-area { display: flex; flex-direction: column; gap: 12px; }
+
+  button[type="submit"] {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    border: none;
+    padding: 15px 24px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button[type="submit"]:hover:not(:disabled) { background: var(--graphite); }
+  button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status ── */
+  .status {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .status.show { display: block; }
+  .status.success { background: var(--success-bg); border: 1px solid #A7F3C4; color: var(--success); }
+  .status.error   { background: var(--error-bg);   border: 1px solid #FECACA; color: var(--error); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--secondary); }
+
+  /* ── Responsive ── */
+  @media (max-width: 580px) {
+    .listing-row, .col-labels { grid-template-columns: 20px 1fr; }
+    .listing-row .field:last-child { grid-column: 2; }
+    .col-labels span:nth-child(3) { display: none; }
+    .site-header { padding: 36px 18px 32px; }
+    .wrap { padding: 32px 18px 64px; }
+    .section-body { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="eyebrow">Norr AI · tools.norrai.co</div>
+    <h1>Weekly Listing<br><span class="accent">Email</span></h1>
+    <p>Drop in this week's listing links below. Every Monday at 9am we'll email them to your full contact list — branded, with your contact info and a one-tap "View Listing" button.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="listings-form" novalidate>
+
+    <!-- 01 This Week's Listings -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">This Week's Listings</span>
+      </div>
+      <div class="section-body">
+        <p class="section-intro">
+          Paste the full listing URL from northstar.weichert.com. Add up to 10. The address is optional — we pull it automatically, but adding it here is a safe fallback if a photo can't be fetched. At least one URL is required.
+        </p>
+
+        <div class="col-labels">
+          <span></span>
+          <span><label>Listing URL <span class="req">*</span></label></span>
+          <span><label>Address <span class="opt">(optional)</span></label></span>
+        </div>
+
+        <div id="rows"></div>
+
+        <div class="hint" style="margin-top:16px;">
+          Tip: open the listing on northstar.weichert.com and copy the address bar URL. Leave rows blank if you have fewer than 10 this week.
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <div id="status" class="status" role="alert"></div>
+      <button type="submit" id="submit-btn">Queue This Week's Email →</button>
+    </div>
+
+  </form>
+
+  <footer>
+    <p>Norr AI &nbsp;·&nbsp; <a href="mailto:hello@norrai.co">hello@norrai.co</a> &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
+  </footer>
+</div>
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/weekly-marketing-drip-intake';
+  const NORR_TOKEN  = '8F68D963-7060-4033-BD04-7593E4B203CB';
+  const MAX_ROWS    = 10;
+
+  // ─── Build listing rows ─────────────────────────────────────────────────────
+  const rowsEl = document.getElementById('rows');
+  for (let i = 0; i < MAX_ROWS; i++) {
+    const row = document.createElement('div');
+    row.className = 'listing-row';
+    row.innerHTML = `
+      <div class="row-num">${i + 1}</div>
+      <div class="field">
+        <input type="url" class="listing-url" name="url_${i}" inputmode="url"
+               placeholder="https://northstar.weichert.com/listing/...">
+      </div>
+      <div class="field">
+        <input type="text" class="listing-address" name="address_${i}"
+               placeholder="123 Maple St, Faribault">
+      </div>`;
+    rowsEl.appendChild(row);
+  }
+
+  // ─── Form submission ──────────────────────────────────────────────────────
+  const form   = document.getElementById('listings-form');
+  const btn     = document.getElementById('submit-btn');
+  const status  = document.getElementById('status');
+
+  function collectListings() {
+    const listings = [];
+    document.querySelectorAll('.listing-row').forEach(row => {
+      const url     = row.querySelector('.listing-url').value.trim();
+      const address = row.querySelector('.listing-address').value.trim();
+      if (url) listings.push({ url, address: address || null });
+    });
+    return listings;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Browser validation first — catches malformed URLs in filled rows
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const listings = collectListings();
+
+    // At least one URL required
+    if (listings.length === 0) {
+      status.textContent = 'Add at least one listing URL before queuing the email.';
+      status.className = 'status error show';
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    const payload = {
+      listings,
+      submitted_at: new Date().toISOString(),
+      source: 'weichert_weekly_listings_form',
+    };
+
+    // UI state
+    status.className = 'status';
+    btn.disabled = true;
+    btn.textContent = 'Queuing…';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Norr-Token': NORR_TOKEN,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      status.textContent = 'Listings queued — the email will send this Monday at 9am CT.';
+      status.className = 'status success show';
+      form.reset();
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+      status.textContent = `Something went wrong: ${err.message}. Try again or email hello@norrai.co.`;
+      status.className = 'status error show';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Queue This Week\'s Email →';
+    }
+  });
+</script>
+</body>
+</html>
