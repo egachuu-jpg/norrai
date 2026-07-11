@@ -236,9 +236,18 @@
         "url": "https://api.sendgrid.com/v3/mail/send",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
-        "contentType": "raw",
-        "body": "={{ JSON.stringify({ personalizations: [{ to: [{ email: $json.email, name: $json.lead_name }] }], from: { email: 'hello@norrai.co', name: $json.agent_name }, reply_to: { email: $json.agent_email, name: $json.agent_name }, subject: $json.subject, content: [{ type: 'text/html', value: $json.html }], tracking_settings: { click_tracking: { enable: false }, open_tracking: { enable: false } } }) }}",
+        "specifyBody": "json",
+        "jsonBody": "={{ { personalizations: [{ to: [{ email: $json.email, name: $json.lead_name }] }], from: { email: 'hello@norrai.co', name: $json.agent_name }, reply_to: { email: $json.agent_email, name: $json.agent_name }, subject: $json.subject, content: [{ type: 'text/html', value: $json.html }], tracking_settings: { click_tracking: { enable: false }, open_tracking: { enable: false } } } }}",
         "options": {}
       },
       "id": "wms-013-send",
