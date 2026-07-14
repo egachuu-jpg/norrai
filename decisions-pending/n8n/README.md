@@ -1,0 +1,98 @@
+# Decisions Pending — n8n Collectors
+
+Workflow JSON exports for the data-plane collectors described in the
+decisions-pending dev spec (Phase B). Import directly into the Norr AI n8n
+instance. These run alongside — and follow the same conventions as — the
+main `n8n/` workflow set at the repo root (see that directory's `README.md`
+for the `workflow_name` registry of client-facing workflows).
+
+## Logging Standard
+
+Same standard as the root `CLAUDE.md` § Workflow Logging Standard: every
+workflow logs `triggered` / `completed` / `failed` to `workflow_events`,
+gated by a `Lookup Client` node. Because these are internal/system workflows
+with no per-client routing yet, `client_id` is hardcoded to
+`e2f9934c-4d28-4bb4-ac90-4284c1123517` (`norrai_internal`) in all four —
+matching the "Internal/system + Lead Cleanser + misc" rule.
+
+All logging/lookup nodes use `continueOnFail: true` (`onError:
+continueRegularOutput`) so a logging failure never breaks the main workflow.
+`errorWorkflow` is set to `Norr AI Workflow Error Logger` and `timezone` to
+`America/Chicago` on all four.
+
+## `workflow_name` Registry
+
+| Workflow | File | `workflow_name` | Schedule (America/Chicago) | Purpose |
+|---|---|---|---|---|
+| Decisions Pending — Digest | `wf-digest.json` | `cos_digest` (v0.1) | Daily 05:30 | Runs the escalation/expiry SQL, pulls weather + `cos.v_surfaced` + nagged items, has Claude Fable 5 synthesize the 7am Telegram digest text, logs it to `cos.digest_log`. |
+| Decisions Pending — Gmail Collector | `wf-gmail-collector.json` | `cos_gmail_collector` (v1.0) | Every 30 min, 06:00–21:30 (`*/30 6-21 * * *`) | Scans inbox threads older than 48h, classifies actionability with Claude Opus 4.8 (Claude Fable 5 as a low-confidence second opinion), and upserts/resolves rows in `cos.pending_decisions`. Ships with a `dry_run` kill switch (see below). |
+| Decisions Pending — Calendar Collector | `wf-calendar-collector.json` | `cos_calendar_collector` (v1.0) | Daily 05:00 | Pulls the next 14 days of calendar events, has Claude Opus 4.8 flag ones needing prep, upserts flagged events into `cos.pending_decisions`. |
+| Decisions Pending — Rules Expander | `wf-rules.json` | `cos_rules` (v1.1) | Nightly 05:15 | Expands `cos.decision_rules` RRULEs (Python `dateutil.rrule`) and idempotently inserts due occurrences into `cos.pending_decisions`. |
+
+`workflow_name` is the snake_case value stored in Neon — same registry
+convention as the root `n8n/README.md`. Neon is the source of truth; when
+this table disagrees with the DB, trust the DB.
+
+## Gmail Collector — dry-run procedure
+
+`wf-gmail-collector.json` has a `Config` Set node at the top with
+`dry_run: true`. While `true`, both write paths (marking a thread resolved
+when Egan replied, and upserting a classified decision) log the would-be
+action to `cos.command_log` (`source_agent = 'collector-dryrun'`,
+`applied = false`) instead of writing to `cos.pending_decisions`. **Run it
+dry for 2 days, review the logged actions in `cos.command_log`, then flip
+`Config.dry_run` to `false`** to enable real writes.
+
+## Escalation/expiry sync
+
+`wf-digest.json`'s "Escalation + Expiry (sync sql/003)" Postgres node embeds
+the full contents of `sql/003_escalation_expiry.sql` as of when this workflow
+was generated. **If that SQL file changes, re-paste its contents into the
+node before the next import** — don't hand-edit the query in the n8n UI, or
+the two copies will drift.
+
+## Structural assumptions made during the Phase B build
+
+- **Anthropic calls use the HTTP Request node** (`POST
+  https://api.anthropic.com/v1/messages`, `anthropicApi` predefined
+  credential type, `anthropic-version: 2023-06-01` header), matching every
+  existing Claude-calling export in the root `n8n/` directory — no dedicated
+  n8n Anthropic node is used anywhere in this repo.
+- **`claude-fable-5` calls opt into the server-side refusal fallback**
+  (`anthropic-beta: server-side-fallback-2026-06-01` header +
+  `fallbacks: [{"model": "claude-opus-4-8"}]` body field) per current
+  Anthropic API guidance for Fable 5 — a policy decline retries on Opus 4.8
+  automatically instead of silently producing nothing. This applies to the
+  digest-synthesis call and the Gmail collector's low-confidence second
+  opinion. Remove if not desired.
+- **Multiline prompts** (both system prompts and per-item user payloads) are
+  built in a Set node first and referenced from the HTTP Request node's JSON
+  body via `{{ JSON.stringify(...) }}`, per the house rule — this avoids
+  hand-escaping newlines/quotes in the raw JSON body string.
+- **Gmail inbox scope**: the Gmail collector is wired to a single Gmail
+  credential/inbox. The dev spec doesn't pin which of Egan's inboxes feeds
+  Decisions Pending — set the credential to the intended inbox before import
+  (see the sticky note in the workflow).
+- **Gmail "older than 48h"** is implemented as Gmail search `older_than:2d`
+  (Gmail's search grammar has no hour-granularity `older_than` unit).
+- **Calendar id**: the Calendar Collector points at `egachuu@gmail.com`'s
+  primary calendar by default (sticky note in the workflow flags this as
+  configurable).
+- **Rules expander Python runtime**: `wf-rules.json`'s "Expand Occurrences"
+  Code node is set to `language: python` and imports `dateutil.rrule` per the
+  dev spec. n8n's Python Code node runs on Pyodide, which does not ship
+  `python-dateutil` by default — confirm availability (or swap to a
+  JS-based RRULE library in a JavaScript Code node) before relying on this
+  in production; flagged with a sticky note in the workflow.
+- **Zero-item fan-out**: the Calendar Collector and Rules Expander both
+  parse/expand into a single item first, then fan out with a Split Out node
+  for the per-occurrence upsert — `Log Completed` connects from the
+  pre-split single item so it always fires exactly once per execution, even
+  when zero events/occurrences are flagged (a bare 0-item array reaching
+  `Log Completed` directly would prevent it from firing at all, per the
+  n8n zero-items-halts-the-branch gotcha).
+- **Credential placeholders** (all replace before import): Postgres —
+  `NEON_CREDENTIAL_ID` / "Neon norrai"; Anthropic — `ANTHROPIC_CREDENTIAL_ID`
+  / "Anthropic account"; Gmail — `GMAIL_CREDENTIAL_ID` / "Gmail — Decisions
+  Pending"; Google Calendar — `GCAL_CREDENTIAL_ID` / "Google Calendar —
+  Decisions Pending".

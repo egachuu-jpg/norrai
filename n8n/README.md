@@ -64,3 +64,12 @@ SELECT DISTINCT workflow_name FROM workflow_events ORDER BY workflow_name;
 | Weekly Marketing Drip — Intake | `weekly_marketing_drip_intake` |
 | Weekly Marketing Drip — Send | `weekly_marketing_drip` |
 | Marketing Opt-Out | `marketing_opt_out` |
+| Decisions Pending — Digest | `cos_digest` |
+| Decisions Pending — Gmail Collector | `cos_gmail_collector` |
+| Decisions Pending — Calendar Collector | `cos_calendar_collector` |
+| Decisions Pending — Rules Expander | `cos_rules` |
+
+Decisions Pending exports live in `decisions-pending/n8n/` (see that
+directory's README for schedules, the gmail dry-run procedure, and import
+notes) — registered here because they log to the same `workflow_events`
+table.

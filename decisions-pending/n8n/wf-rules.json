@@ -1,0 +1,282 @@
+{
+  "name": "cos_rules",
+  "nodes": [
+    {
+      "id": "58b17a1c-bb8e-45c6-98f6-1dbc4f261ab6",
+      "name": "Schedule 05:15 CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1000,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 5 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "80a5d935-d5ce-47cb-852a-42ab68dba11c",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -800,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM clients WHERE id = 'e2f9934c-4d28-4bb4-ac90-4284c1123517'",
+        "options": {}
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "66373072-cec7-42d2-9b26-69df1bc77928",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -600,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517', 'cos_rules', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "options": {}
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "06dfc28a-4e3c-41a3-9f2b-51fb85ce8650",
+      "name": "Fetch Active Rules",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -400,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, title, rrule, lead_days, urgency, consequence, detail, owner\nFROM cos.decision_rules\nWHERE active = true",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "f1b7eb50-5120-44d8-ae14-4c4831f98432",
+      "name": "Expand Occurrences",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        0
+      ],
+      "parameters": {
+        "language": "python",
+        "pythonCode": "from dateutil.rrule import rrulestr\nfrom datetime import date, datetime, timedelta\n\nitems = _input.all()\noccurrences = []\ntoday = date.today()\n\nfor item in items:\n    rule = item['json']\n    try:\n        rr = rrulestr(rule['rrule'], dtstart=datetime.combine(today - timedelta(days=400), datetime.min.time()))\n        next_occ = rr.after(datetime.combine(today - timedelta(days=1), datetime.min.time()), inc=True)\n    except Exception:\n        continue\n    if next_occ is None:\n        continue\n    occ_date = next_occ.date()\n    lead_days = rule.get('lead_days') or 0\n    if (occ_date - timedelta(days=lead_days)) <= today:\n        occurrences.append({\n            'rule_id': rule['id'],\n            'title': rule['title'],\n            'occurrence_date': occ_date.isoformat(),\n            'lead_days': lead_days,\n            'urgency': rule.get('urgency') or 'normal',\n            'consequence': rule.get('consequence'),\n            'detail': rule.get('detail'),\n            'owner': rule.get('owner') or 'egan',\n        })\n\nreturn [{'json': {'occurrences': occurrences}}]"
+      }
+    },
+    {
+      "id": "35727433-1d5c-49e9-b974-5ddbf19754c7",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        -160
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517', 'cos_rules', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "options": {}
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "a1a3d535-3aec-42d7-a215-ceafed6ca53b",
+      "name": "Split Occurrences",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        0,
+        160
+      ],
+      "parameters": {
+        "fieldToSplitOut": "occurrences",
+        "options": {}
+      }
+    },
+    {
+      "id": "d5574fad-d561-499b-9a08-2e477506c041",
+      "name": "Prepare Rule Upsert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const d = $json;\nconst esc = (s) => (s ?? '').replace(/'/g, \"''\");\nconst source_ref = `${d.rule_id}:${d.occurrence_date}`;\nreturn [{ json: {\n  source_ref,\n  title_sql: `'${esc(d.title)}'`,\n  consequence_sql: d.consequence ? `'${esc(d.consequence)}'` : 'NULL',\n  detail_sql: d.detail ? `'${esc(d.detail)}'` : 'NULL',\n  deadline_sql: `'${d.occurrence_date}'`,\n  lead_days: d.lead_days,\n  urgency_sql: `'${esc(d.urgency)}'`,\n  owner_sql: `'${esc(d.owner)}'`,\n} }];"
+      }
+    },
+    {
+      "id": "85bf60f4-bf10-4ec2-9498-02cf3b16fbd7",
+      "name": "Rule Upsert (idempotent)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        400,
+        160
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO cos.pending_decisions\n  (title, ask, detail, consequence, deadline, lead_days, urgency, owner, source, source_ref)\nVALUES\n  ({{ $json.title_sql }}, {{ $json.title_sql }}, {{ $json.detail_sql }}, {{ $json.consequence_sql }}, {{ $json.deadline_sql }}, {{ $json.lead_days }}, {{ $json.urgency_sql }}, {{ $json.owner_sql }}, 'recurring', '{{ $json.source_ref }}')\nON CONFLICT (source, source_ref) DO NOTHING",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "26d93167-6dab-4200-bcd0-3114de81261f",
+      "name": "Python Runtime Assumption",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -260
+      ],
+      "parameters": {
+        "content": "## Assumption — Python sandbox packages\n\n\"Expand Occurrences\" uses `dateutil.rrule` per the dev spec. n8n's Code node Python runtime (Pyodide) does not ship `python-dateutil` by default — confirm it's available (or vendor a pure-JS RRULE parser, e.g. `rrule.js`, into a JavaScript Code node instead) before relying on this in production.",
+        "height": 220,
+        "width": 380
+      }
+    }
+  ],
+  "connections": {
+    "Schedule 05:15 CT": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Fetch Active Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Active Rules": {
+      "main": [
+        [
+          {
+            "node": "Expand Occurrences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Occurrences": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Occurrences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Occurrences": {
+      "main": [
+        [
+          {
+            "node": "Prepare Rule Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Rule Upsert": {
+      "main": [
+        [
+          {
+            "node": "Rule Upsert (idempotent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "staticData": null
+}
