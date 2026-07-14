@@ -376,6 +376,39 @@ h2 {
 }
 .svc-card ul li { margin: 4px 0; }
 
+/* ---------- reviews ---------- */
+
+.review-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--red);
+  border-radius: var(--radius);
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.review-card.cool { border-top-color: var(--blue); }
+.review-card .stars {
+  margin: 0;
+  color: var(--red);
+  letter-spacing: 0.15em;
+  font-size: 1rem;
+}
+.review-card .quote {
+  margin: 0;
+  color: var(--steel);
+  font-size: 0.95rem;
+  flex-grow: 1;
+}
+.review-card .attrib {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.review-card .btn { align-self: flex-start; margin-top: 4px; }
+
 /* ---------- brand badges ---------- */
 
 .brand-row {
