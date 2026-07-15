@@ -1,1 +1,10 @@
-UNPINNED — record exact Hermes version here at install time (upgrades manual, after changelog review)
+NousResearch/hermes-agent
+repo:    https://github.com/NousResearch/hermes-agent.git
+commit:  43e566f77eaf01293086eb7cb99a21e240d60634 (2026-05-17)
+tag:     v2026.5.16-212-g43e566f77
+version: 0.14.0 (pyproject.toml)
+
+Pinned from the working install on Egan's MacBook Air (~/.hermes/hermes-agent),
+2026-07-15. Upgrades are manual only, after changelog review (RELEASE_v*.md
+in the repo) — update this file with the new commit/tag/version on every
+upgrade, and re-run scripts/audit_vps.sh immediately after.
