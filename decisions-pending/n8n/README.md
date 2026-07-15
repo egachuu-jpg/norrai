@@ -25,7 +25,7 @@ continueRegularOutput`) so a logging failure never breaks the main workflow.
 | Workflow | File | `workflow_name` | Schedule (America/Chicago) | Purpose |
 |---|---|---|---|---|
 | Decisions Pending — Digest | `wf-digest.json` | `cos_digest` (v0.1) | Daily 05:30 | Runs the escalation/expiry SQL, pulls weather + `cos.v_surfaced` + nagged items, has Claude Fable 5 synthesize the 7am Telegram digest text, logs it to `cos.digest_log`. |
-| Decisions Pending — Gmail Collector | `wf-gmail-collector.json` | `cos_gmail_collector` (v1.0) | Every 30 min, 06:00–21:30 (`*/30 6-21 * * *`) | Scans inbox threads older than 48h, classifies actionability with Claude Opus 4.8 (Claude Fable 5 as a low-confidence second opinion), and upserts/resolves rows in `cos.pending_decisions`. Ships with a `dry_run` kill switch (see below). |
+| Decisions Pending — Gmail Collector | `wf-gmail-collector.json` | `cos_gmail_collector` (v1.1) | Every 30 min, 06:00–21:30 (`*/30 6-21 * * *`) | Polls 4 inboxes independently (eganbonde@gmail.com, egachuu@gmail.com, egan@norrai.co, hello@norrai.co), classifies actionability with Claude Opus 4.8 (Claude Fable 5 as a low-confidence second opinion), and upserts/resolves rows in `cos.pending_decisions`. Ships with a `dry_run` kill switch (see below). |
 | Decisions Pending — Calendar Collector | `wf-calendar-collector.json` | `cos_calendar_collector` (v1.0) | Daily 05:00 | Pulls the next 14 days of calendar events, has Claude Opus 4.8 flag ones needing prep, upserts flagged events into `cos.pending_decisions`. |
 | Decisions Pending — Rules Expander | `wf-rules.json` | `cos_rules` (v1.1) | Nightly 05:15 | Expands `cos.decision_rules` RRULEs (Python `dateutil.rrule`) and idempotently inserts due occurrences into `cos.pending_decisions`. |
 
@@ -36,12 +36,50 @@ this table disagrees with the DB, trust the DB.
 ## Gmail Collector — dry-run procedure
 
 `wf-gmail-collector.json` has a `Config` Set node at the top with
-`dry_run: true`. While `true`, both write paths (marking a thread resolved
-when Egan replied, and upserting a classified decision) log the would-be
-action to `cos.command_log` (`source_agent = 'collector-dryrun'`,
-`applied = false`) instead of writing to `cos.pending_decisions`. **Run it
-dry for 2 days, review the logged actions in `cos.command_log`, then flip
-`Config.dry_run` to `false`** to enable real writes.
+`dry_run: true`, shared by all 4 inbox branches. While `true`, both write
+paths (marking a thread resolved when Egan replied, and upserting a
+classified decision) in every branch log the would-be action to
+`cos.command_log` (`source_agent = 'collector-dryrun'`, `applied = false`)
+instead of writing to `cos.pending_decisions`. **Run it dry for 2 days,
+review the logged actions across all 4 inboxes in `cos.command_log`, then
+flip `Config.dry_run` to `false`** to enable real writes everywhere at once.
+
+## Gmail Collector — v1.1 multi-inbox rebuild
+
+v1.0 polled a single Gmail credential (placeholder). v1.1 (current) polls
+**4 independent inboxes** — eganbonde@gmail.com (Personal), egachuu@gmail.com
+(Tech), egan@norrai.co (Norr AI), hello@norrai.co (Norr AI) — because n8n
+Gmail-node credentials are static per node with no runtime switching, so
+each inbox needs its own full Get-Threads → loop → classify → upsert
+pipeline with its own SplitInBatches loop (a loopback can't cross
+branches). The 4 branches share only the header (trigger through prompt
+load) and fan back into one `Merge Branch Completion` node before
+`Log Completed`, so "completed" logs exactly once per execution regardless
+of how many threads were found across all 4 accounts. Full rationale and
+the assumptions that still need verifying (aliased-mailbox collapse,
+cross-inbox reply detection) are documented in the "Multi-Inbox Setup"
+sticky note inside the workflow itself.
+
+Two other things changed with the rebuild:
+- **`source_ref` is now `{inbox}:{gmail_thread_id}`**, not the bare thread
+  ID — `UNIQUE(source, source_ref)` is shared across all 4 inboxes under
+  `source='email'`, and Gmail thread IDs are per-account, so namespacing
+  guards against a theoretical cross-account collision.
+- **Bug fix carried over from v1.0:** `Classification Upsert`'s
+  `ON CONFLICT DO UPDATE` referenced `EXCLUDED.detail`, but `detail` was
+  never in the INSERT column list — every re-classification silently
+  nulled it out. Fixed by inserting `detail = 'Received in <inbox
+  address>'`, which also surfaces which inbox a decision came from.
+
+New credential placeholders (replace all 4 before import — see "Credential
+placeholders" below): `GMAIL_CREDENTIAL_EGANBONDE`, `GMAIL_CREDENTIAL_EGACHUU`,
+`GMAIL_CREDENTIAL_EGAN_NORRAI`, `GMAIL_CREDENTIAL_HELLO_NORRAI`.
+
+The classifier prompt was bumped to `prompts/email_classifier_v2.md` — v1's
+identity line only listed 2 of the 4 addresses (`egachuu@gmail.com` and
+`hello@norrai.co`); v2 updates it to name all 4. This is a version bump,
+not a silent edit — v1 is untouched and still on disk for history, per the
+dev spec's "prompt changes are a version-bumped task" rule.
 
 ## Escalation/expiry sync
 
@@ -69,10 +107,8 @@ the two copies will drift.
   built in a Set node first and referenced from the HTTP Request node's JSON
   body via `{{ JSON.stringify(...) }}`, per the house rule — this avoids
   hand-escaping newlines/quotes in the raw JSON body string.
-- **Gmail inbox scope**: the Gmail collector is wired to a single Gmail
-  credential/inbox. The dev spec doesn't pin which of Egan's inboxes feeds
-  Decisions Pending — set the credential to the intended inbox before import
-  (see the sticky note in the workflow).
+- **Gmail inbox scope (v1.1)**: 4 independent branches, one per inbox — see
+  "Gmail Collector — v1.1 multi-inbox rebuild" above.
 - **Gmail "older than 48h"** is implemented as Gmail search `older_than:2d`
   (Gmail's search grammar has no hour-granularity `older_than` unit).
 - **Calendar id**: the Calendar Collector points at `egachuu@gmail.com`'s
@@ -93,6 +129,9 @@ the two copies will drift.
   n8n zero-items-halts-the-branch gotcha).
 - **Credential placeholders** (all replace before import): Postgres —
   `NEON_CREDENTIAL_ID` / "Neon norrai"; Anthropic — `ANTHROPIC_CREDENTIAL_ID`
-  / "Anthropic account"; Gmail — `GMAIL_CREDENTIAL_ID` / "Gmail — Decisions
-  Pending"; Google Calendar — `GCAL_CREDENTIAL_ID` / "Google Calendar —
-  Decisions Pending".
+  / "Anthropic account"; Google Calendar — `GCAL_CREDENTIAL_ID` / "Google
+  Calendar — Decisions Pending"; Gmail (one OAuth connection per inbox) —
+  `GMAIL_CREDENTIAL_EGANBONDE` / "Gmail — eganbonde@gmail.com (Personal)",
+  `GMAIL_CREDENTIAL_EGACHUU` / "Gmail — egachuu@gmail.com (Tech)",
+  `GMAIL_CREDENTIAL_EGAN_NORRAI` / "Gmail — egan@norrai.co (Norr AI)",
+  `GMAIL_CREDENTIAL_HELLO_NORRAI` / "Gmail — hello@norrai.co (Norr AI)".
