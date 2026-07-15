@@ -32,7 +32,8 @@ The processes, in OS terms:
 The loop that makes it an OS:
 
 ```
-sense (workflows + health checks write events, file tasks)
+sense (workflows + health checks write events, file tasks; ideas
+       captured from anywhere land in the inbox)
   → decide (Egan or COS triages the queue from a phone)
   → act (workers claim tasks; daemons run sequences)
   → gate (all outbound waits for keyword approval)
@@ -286,7 +287,98 @@ days.
 
 ---
 
-## 6. Widening the gate
+## 6. Idea capture — Telegram inbox
+
+The OS needs a zero-friction way to get a thought out of Egan's head and
+into the substrate from anywhere. Today that path is "remember it until the
+next Claude Code session edits `docs/ideas.md`" — which is where ideas die.
+
+**Design: capture-only Telegram bot, built entirely in n8n.** No change to
+the COS FastAPI service. Telegram over SMS-to-COS because it's free, has no
+1600-char limit, handles multi-message brain dumps naturally, and n8n Cloud
+has a native Telegram Trigger node — this is one workflow, not a new
+service.
+
+### 6.1 Storage — `ideas` inbox table
+
+`docs/ideas.md` stays the **curated** parking lot (per CLAUDE.md). The
+table is the **raw inbox** that feeds it — a capture buffer, not a parallel
+data model; rows exit by promotion or discard.
+
+`db/migrations/008_ideas.sql` (append to `db/schema.sql`):
+
+```sql
+-- Raw idea inbox — captured from anywhere, triaged into docs/ideas.md
+-- or promoted to a task. Not a knowledge base; rows are transient.
+
+CREATE TABLE ideas (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source           text NOT NULL DEFAULT 'telegram'
+    CHECK (source IN ('telegram', 'slack', 'sms', 'session')),
+  raw_text         text NOT NULL,           -- verbatim, never rewritten
+  title            text,                    -- Claude-generated one-liner
+  suggested_tags   text[] NOT NULL DEFAULT '{}',
+  status           text NOT NULL DEFAULT 'new'
+    CHECK (status IN ('new', 'triaged', 'promoted', 'discarded')),
+  promoted_task_id uuid REFERENCES tasks(id),
+  created_at       timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_ideas_new ON ideas(created_at) WHERE status = 'new';
+```
+
+### 6.2 Workflow — **Norr AI Idea Capture** (`idea_capture` in the registry)
+
+```
+Telegram Trigger (BotFather bot, token as n8n credential)
+  → Allowlist IF: message.from.id equals Egan's numeric Telegram user ID
+      (no match → stop; no reply — don't advertise the bot)
+  → Log Triggered (norrai_internal client_id, standard pattern)
+  → Claude Haiku (HTTP): from raw_text produce {"title": ..., "tags": [...]}
+      — title/tag ONLY; raw_text is stored verbatim, never rewritten
+  → Insert into ideas (Postgres)
+  → Log Completed
+  → Telegram reply: "Logged ✓ — {title}"
+```
+
+Rules, per the operational standards:
+
+- Claude node prompt built in a Set node first (CLAUDE.md multiline rule).
+- The Claude enrichment node gets `onError: continueRegularOutput` — a
+  failed title generation must NOT lose the idea; insert with `title NULL`.
+  The **Insert** node does not get it (a lost insert is the one real
+  failure), and the Telegram reply only fires after a successful insert.
+- Error Workflow → `Norr AI Workflow Error Logger`; export JSON to
+  `n8n/workflows/`; registry row in `n8n/README.md`.
+- Every plain text message = one idea. No commands, no parsing, no menus —
+  friction kills capture.
+
+### 6.3 Triage loop
+
+- **Digest:** the Monday digest's queue section (§5) adds one line — count
+  of `new` ideas + the three newest titles.
+- **Promotion is human, execution is agent:** in any Claude Code session
+  (or via a COS `list_ideas` tool later), Egan reviews the inbox; each idea
+  becomes `promoted` (a real task is filed, `promoted_task_id` set),
+  `triaged` (written into `docs/ideas.md` by the session, kept as
+  reference), or `discarded`.
+- **The session-end skill picks up the sweep:** add "check `ideas` for
+  `new` rows and triage them with Egan" to the wrap-up checklist, so the
+  inbox drains at least once per working session.
+
+### 6.4 Deferred for this channel
+
+- Voice-note capture (Telegram voice → transcription → same insert)
+- Two-way Telegram (querying COS, approvals) — that makes Telegram a third
+  COS channel: `main.py` webhook + allowlist + widening the
+  `cos_pending_actions` channel CHECK. Do it only if Telegram displaces
+  SMS as the on-the-go channel in practice.
+- Auto-promotion by the worker (an agent deciding what's worth doing is
+  exactly the judgment call that stays human)
+
+---
+
+## 7. Widening the gate
 
 `cos_pending_actions` becomes the OS-wide outbound gate. Two changes, both
 anticipated by COS v2:
@@ -307,7 +399,7 @@ Financial/contractual actions remain outside the tool surface entirely
 
 ---
 
-## 7. Build order & acceptance
+## 8. Build order & acceptance
 
 Prerequisite: **COS v2 steps 1–3 shipped** (allowlist, read tools, gate).
 The digest (v2 step 4) can land in parallel with Phase 1.
@@ -319,9 +411,12 @@ The digest (v2 step 4) can land in parallel with Phase 1.
 | 3 | `dev` category + PR flow; COS tools `file_task` and `kick_worker` | A workflow-JSON task produces a green-tested, audit-clean PR; Egan files a task and kicks the worker from SMS |
 | 4 | Daily Sensor workflow + janitor + digest queue section | A synthetic `failed` event produces exactly one deduped task by 5:30 AM and a diagnosis in `review` by 7:00 AM |
 | 5 | Gate widening + worker staging + Slack nudge | Worker-staged email approved with "send it" end-to-end; `send_sms` constraint in place (executor deferred to re-concierge) |
+| T | **Parallel track, no dependencies:** migration 008 + Idea Capture workflow (§6) | Telegram message from Egan's account lands as an `ideas` row with a Claude title and gets a "Logged ✓" reply; non-allowlisted sender gets silence; killed-Claude-node path still inserts |
 
 Each phase is independently shippable and useful on its own. Rough effort:
-Phases 1–2 ≈ two evenings; 3–5 ≈ an evening each once COS v2 exists.
+Phases 1–2 ≈ two evenings; 3–5 ≈ an evening each once COS v2 exists;
+track T is one evening and can ship first — it needs nothing but n8n and
+migration 008.
 
 ### Kill criteria (evaluate after 4 weeks of Phase 3)
 
@@ -332,7 +427,7 @@ Phases 1–2 ≈ two evenings; 3–5 ≈ an evening each once COS v2 exists.
   negative leverage — narrow the category allowlist rather than push
   through.
 
-## 8. Explicitly deferred
+## 9. Explicitly deferred
 
 - Multiple concurrent workers (claim SQL already safe via `SKIP LOCKED`;
   turn on by adding Routine firings when queue depth justifies it)
