@@ -43,10 +43,11 @@ export ANTHROPIC_API_KEY="sk-ant-..."   # set before the next command, or via `h
 hermes model
 ```
 
-- [ ] Select provider `anthropic`, model `claude-opus-4-8` (per the dev spec;
-  `claude-sonnet-4-6` if you want the cheaper tier — either is acceptable).
-  Anthropic is a first-class provider here (confirmed in `providers/README.md`
-  of the repo) — no OpenRouter proxy needed.
+- [ ] Select provider `anthropic`, model `claude-sonnet-5` — chosen over
+  `claude-opus-4-8` for cost, since Hermes's actual usage volume here is a
+  handful of Telegram messages a day plus one digest fetch. Anthropic is a
+  first-class provider here (confirmed in `providers/README.md` of the
+  repo) — no OpenRouter proxy needed.
 
 ### 4. Telegram Gateway
 
