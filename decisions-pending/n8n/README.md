@@ -26,7 +26,7 @@ continueRegularOutput`) so a logging failure never breaks the main workflow.
 |---|---|---|---|---|
 | Decisions Pending — Digest | `wf-digest.json` | `cos_digest` (v0.1) | Daily 05:30 | Runs the escalation/expiry SQL, pulls weather + `cos.v_surfaced` + nagged items, has Claude Fable 5 synthesize the 7am Telegram digest text, logs it to `cos.digest_log`. |
 | Decisions Pending — Gmail Collector | `wf-gmail-collector.json` | `cos_gmail_collector` (v1.1) | Every 30 min, 06:00–21:30 (`*/30 6-21 * * *`) | Polls 4 inboxes independently (eganbonde@gmail.com, egachuu@gmail.com, egan@norrai.co, hello@norrai.co), classifies actionability with Claude Opus 4.8 (Claude Fable 5 as a low-confidence second opinion), and upserts/resolves rows in `cos.pending_decisions`. Ships with a `dry_run` kill switch (see below). |
-| Decisions Pending — Calendar Collector | `wf-calendar-collector.json` | `cos_calendar_collector` (v1.0) | Daily 05:00 | Pulls the next 14 days of calendar events, has Claude Opus 4.8 flag ones needing prep, upserts flagged events into `cos.pending_decisions`. |
+| Decisions Pending — Calendar Collector | `wf-calendar-collector.json` | `cos_calendar_collector` (v1.1) | Daily 05:00 | Pulls the next 14 days of events from all 4 accounts' calendars (eganbonde@gmail.com, egachuu@gmail.com, egan@norrai.co, hello@norrai.co), has Claude Opus 4.8 flag ones needing prep, upserts flagged events into `cos.pending_decisions`. |
 | Decisions Pending — Rules Expander | `wf-rules.json` | `cos_rules` (v1.1) | Nightly 05:15 | Expands `cos.decision_rules` RRULEs (Python `dateutil.rrule`) and idempotently inserts due occurrences into `cos.pending_decisions`. |
 
 `workflow_name` is the snake_case value stored in Neon — same registry
@@ -111,9 +111,14 @@ the two copies will drift.
   "Gmail Collector — v1.1 multi-inbox rebuild" above.
 - **Gmail "older than 48h"** is implemented as Gmail search `older_than:2d`
   (Gmail's search grammar has no hour-granularity `older_than` unit).
-- **Calendar id**: the Calendar Collector points at `egachuu@gmail.com`'s
-  primary calendar by default (sticky note in the workflow flags this as
-  configurable).
+- **Calendar id (v1.1)**: 4 independent fetch branches, one per account's
+  primary calendar — see "Calendar Collector — v1.1 multi-calendar rebuild"
+  below. Unlike the Gmail collector, there's no per-item loop here (one
+  `getAll` batch fetch per calendar), so only the fetch step is duplicated
+  per account; classify/parse/split/upsert stay a single shared execution
+  per run, fed by a `Merge Calendar Batches` node that flattens the 4
+  fetches into one combined event list before the (unmodified, LOCKED)
+  `calendar_prep_v1.md` prompt runs once over everything.
 - **Rules expander Python runtime**: `wf-rules.json`'s "Expand Occurrences"
   Code node is set to `language: python` and imports `dateutil.rrule` per the
   dev spec. n8n's Python Code node runs on Pyodide, which does not ship
@@ -129,9 +134,39 @@ the two copies will drift.
   n8n zero-items-halts-the-branch gotcha).
 - **Credential placeholders** (all replace before import): Postgres —
   `NEON_CREDENTIAL_ID` / "Neon norrai"; Anthropic — `ANTHROPIC_CREDENTIAL_ID`
-  / "Anthropic account"; Google Calendar — `GCAL_CREDENTIAL_ID` / "Google
-  Calendar — Decisions Pending"; Gmail (one OAuth connection per inbox) —
+  / "Anthropic account"; Gmail (one OAuth connection per inbox) —
   `GMAIL_CREDENTIAL_EGANBONDE` / "Gmail — eganbonde@gmail.com (Personal)",
   `GMAIL_CREDENTIAL_EGACHUU` / "Gmail — egachuu@gmail.com (Tech)",
   `GMAIL_CREDENTIAL_EGAN_NORRAI` / "Gmail — egan@norrai.co (Norr AI)",
-  `GMAIL_CREDENTIAL_HELLO_NORRAI` / "Gmail — hello@norrai.co (Norr AI)".
+  `GMAIL_CREDENTIAL_HELLO_NORRAI` / "Gmail — hello@norrai.co (Norr AI)";
+  Google Calendar (one OAuth connection per account) —
+  `GCAL_CREDENTIAL_EGANBONDE` / "Google Calendar — eganbonde@gmail.com
+  (Personal)", `GCAL_CREDENTIAL_EGACHUU` / "Google Calendar —
+  egachuu@gmail.com (Tech)", `GCAL_CREDENTIAL_EGAN_NORRAI` / "Google
+  Calendar — egan@norrai.co (Norr AI)", `GCAL_CREDENTIAL_HELLO_NORRAI` /
+  "Google Calendar — hello@norrai.co (Norr AI)".
+
+## Calendar Collector — v1.1 multi-calendar rebuild
+
+v1.0 polled a single calendar (egachuu@gmail.com, hardcoded). v1.1
+(current) polls the primary calendar of all 4 accounts — same account list
+as the Gmail collector, for the same reason (Egan reads/schedules across
+all 4). Structurally lighter than the Gmail rebuild: there's no per-item
+loop in this workflow, just one `getAll` batch fetch per calendar, so only
+`Get Events` and `Build Event Batch` are duplicated per account (4 pairs,
+8 nodes); everything from `Merge Calendar Batches` onward — flatten,
+build prompt, the single shared Claude call, parse, split, upsert — runs
+exactly once per execution regardless of how many calendars had events.
+
+`event_id` is qualified as `{calendar_email}:{google_event_id}` before it's
+sent to Claude (in `Build Event Batch`), not the bare Google event ID —
+same `UNIQUE(source, source_ref)` collision-safety reasoning as the Gmail
+collector's `source_ref` change, since the constraint is shared across all
+4 calendars under `source='calendar'`. The LOCKED `calendar_prep_v1.md`
+prompt is untouched — it just echoes back whatever `event_id` string it's
+given, so no version bump was needed here (unlike the email classifier,
+this prompt carries no per-address identity text).
+
+Same open item as the Gmail collector: verify `egan@norrai.co` and
+`hello@norrai.co` aren't the same Workspace mailbox/calendar via a send-as
+alias before enabling — if they are, this polls one calendar twice.
