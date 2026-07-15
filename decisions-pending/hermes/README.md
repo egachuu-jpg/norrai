@@ -1,6 +1,13 @@
 # Hermes VPS Provisioning Guide
 
-Chief of Staff personal agent, separate minimal VPS connected to Telegram and Norr AI's cos API.
+Chief of Staff personal agent, on a minimal droplet separate from the Norr AI
+box, connected to Telegram and the cos API. Software is
+[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) —
+see `hermes/VERSION` for the exact pin. This replaces the earlier
+generic-installer draft of this doc with the actual CLI surface, confirmed
+against a working install (`hermes --help`, `hermes gateway --help`,
+`hermes skills --help`, `hermes pairing --help`, `hermes cron --help`) rather
+than assumed.
 
 ---
 
@@ -8,113 +15,185 @@ Chief of Staff personal agent, separate minimal VPS connected to Telegram and No
 
 ### 1. Infrastructure Setup
 
-- [ ] Provision minimal VPS (separate from Norr AI box)
+- [ ] Provision minimal droplet (separate from the Norr AI box)
   - 1–2 vCPU, 2GB RAM, 20GB disk minimum
-  - Network: outbound HTTPS to cos API (Norr AI box) and Telegram API only
-  - Firewall: NO inbound ports except SSH (restrict to your IP)
+  - Firewall: no inbound ports except SSH (restrict to your IP)
+- [ ] Install Docker (`apt install docker.io` or the official Docker repo) —
+  required for the terminal/tool-execution sandbox in step 6, not present by
+  default on a fresh droplet.
 
-### 2. Hermes Installation
+### 2. Clone + Install
 
-- [ ] Install Hermes via official installer ([link to latest installer](https://github.com/talkdai/hermes/releases))
-  - Follow official setup wizard
-  - Record the exact version number in `hermes/VERSION` after successful install
+```bash
+git clone https://github.com/NousResearch/hermes-agent.git
+cd hermes-agent
+git checkout 43e566f77eaf01293086eb7cb99a21e240d60634   # matches hermes/VERSION pin
+./setup-hermes.sh   # installs uv, creates venv, installs .[all], symlinks ~/.local/bin/hermes
+```
 
-### 3. Version Pinning
+- [ ] Confirm `hermes version` runs and matches the pin in `hermes/VERSION`.
+  If you deliberately install a newer commit instead, update `hermes/VERSION`
+  with the new commit/tag/version — see PRD §6.3, upgrades are manual only,
+  after reviewing `RELEASE_v*.md` in the repo.
 
-- [ ] Open `hermes/VERSION` and replace `UNPINNED` with the exact version installed
-  - Example: `v1.2.3 — installed 2026-07-14, upgraded manual changelog review`
-  - Keep this updated on every upgrade; upgrades are manual (review changelog before upgrading)
+### 3. Model / Provider
 
-### 4. LLM Backend Configuration
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."   # set before the next command, or via `hermes login`
+hermes model
+```
 
-- [ ] Configure Anthropic backend in Hermes settings
-  - Model: `claude-opus-4-8` or `claude-sonnet-4-6`
-  - Set `ANTHROPIC_API_KEY` env var (see Step 7)
+- [ ] Select provider `anthropic`, model `claude-opus-4-8` (per the dev spec;
+  `claude-sonnet-4-6` if you want the cheaper tier — either is acceptable).
+  Anthropic is a first-class provider here (confirmed in `providers/README.md`
+  of the repo) — no OpenRouter proxy needed.
 
-### 5. Telegram Integration
+### 4. Telegram Gateway
 
-- [ ] Create Telegram bot with BotFather
-  - Record bot token (will set in Step 7)
-  - **Allowlist Egan's chat ID ONLY** — no other users can access this agent
-  - Test that bot receives messages from Egan's chat
+```bash
+hermes gateway setup      # interactive: choose Telegram, paste BotFather token
+hermes gateway install    # generates the systemd service (Linux equivalent
+                          # of the launchd plist a Mac/macOS install gets)
+hermes gateway start
+hermes gateway status
+```
 
-### 6. Tool Configuration
+- [ ] Create the bot via BotFather first if you're using a fresh bot (decided:
+  yes — see chat) and paste its token during `gateway setup`.
 
-- [ ] Confirm **NO browsing tool** is enabled (Hermes should have zero web access)
-  - Tools allowed: cos-assistant skill only
-- [ ] Set terminal backend to Docker sandbox (never host shell)
+### 5. Access Control (pairing, not a static allowlist)
 
-### 7. Install cos-assistant Skill
+This project's access control is DM-pairing, not a config-file chat-ID list:
 
-- [ ] Skill path: `hermes/skills/cos-assistant/`
-  - Hermes loads skills from its config directory
-  - Restart Hermes after adding the skill
-  - Test: say "what's pending" in Telegram → should return cos API response
+- [ ] From your phone, DM the bot once — it will issue a pairing code.
+- [ ] On the droplet: `hermes pairing list` (see the pending code) →
+  `hermes pairing approve <code>`.
+- [ ] Confirm no one else is approved: `hermes pairing list` should show
+  exactly one approved user (you). `hermes pairing revoke <user>` removes
+  anyone else; `hermes pairing clear-pending` clears any other pending codes
+  before you approve yours, if you want to be extra sure nothing else got
+  submitted first.
 
-### 8. Environment Secrets
+### 6. Tool Restriction
 
-- [ ] Set three environment variables on the Hermes VPS (in systemd service or shell profile)
-  ```bash
-  export ANTHROPIC_API_KEY="sk-ant-..."
-  export TELEGRAM_BOT_TOKEN="7890123456:ABCdef..."
-  export COS_API_TOKEN="cos_secret_token_..."
-  export COS_API_BASE="http://NORRAI_BOX:8100"  # internal IP or hostname
-  ```
-  - Store securely (e.g., systemd EnvironmentFile, `.env` in service wrapper, or AWS Secrets Manager)
-  - **Never commit to git or hardcode in Hermes config**
+```bash
+hermes tools
+```
 
-### 9. Security Audit
+- [ ] Disable the browser/web tool and anything not needed for calling the
+  cos API (bash/http execution is what actually runs the `curl` calls
+  described in the skill — keep that; disable browsing, computer-use, and
+  anything platform-specific you don't need).
+- [ ] Set the terminal/tool-execution sandbox backend to **Docker** (one of
+  seven backends this project supports — Local/Docker/SSH/Singularity/
+  Modal/Daytona/Vercel Sandbox) via `hermes config` (interactive) — confirms
+  the spec's "terminal backend = Docker sandbox" requirement. Requires
+  Docker installed (step 1).
 
-- [ ] Run secrets audit from Norr AI box (requires SSH access to Hermes VPS)
-  ```bash
-  bash scripts/audit_vps.sh
-  ```
-  - Must output: `AUDIT CLEAN — only permitted secrets found`
-  - If violations: remove unwanted secrets and re-run until clean
-  - Run after every Hermes upgrade as well
+### 7. Environment Secrets
 
-### 10. Backup & Recovery
+Three permitted secrets, same as the spec (PRD §6.1) — `ANTHROPIC_API_KEY`
+goes in via step 3 / `hermes login`; the Telegram bot token goes in via
+`hermes gateway setup` (step 4), not a raw env var. Add the two cos-specific
+ones to the same env file the setup wizard created (check `hermes config` /
+`hermes doctor` to find its exact path if unsure — the Mac install used
+`~/.hermes/.env`):
 
-- [ ] Set up nightly snapshots of Hermes home directory
-  - Example crontab (on Hermes VPS):
-    ```bash
-    # Daily 22:00 UTC backup to Norr AI box
-    0 22 * * * tar -czf /tmp/hermes-backup-$(date +\%Y\%m\%d).tar.gz ~/.hermes && \
-      scp /tmp/hermes-backup-$(date +\%Y\%m\%d).tar.gz backups@NORRAI_BOX:/backups/hermes/ && \
-      rm /tmp/hermes-backup-*.tar.gz
-    ```
-  - Or use rclone to ship to object storage (S3, R2, etc.)
+```bash
+COS_API_TOKEN=...                       # generated per decisions-pending/README.md runbook
+COS_API_BASE=http://NORRAI_BOX:8100     # internal IP or hostname
+```
+
+- [ ] **Never commit to git or hardcode in Hermes config.**
+
+### 8. Install the cos-assistant Skill
+
+Skills are plain directories under `~/.hermes/skills/` (confirmed structure:
+each skill = one directory containing a `SKILL.md` with YAML frontmatter —
+`name`/`description`/`version`/`platforms`/`metadata.hermes.tags`; ours now
+has this, see `hermes/skills/cos-assistant/SKILL.md`).
+
+```bash
+cp -r hermes/skills/cos-assistant ~/.hermes/skills/cos-assistant
+hermes skills list      # confirm it's recognized
+hermes skills config    # enable it; disable/leave-off anything unneeded
+```
+
+- [ ] Restart the gateway after adding the skill: `hermes gateway restart`.
+- [ ] Test: DM "what's pending" → should return a cos API response.
+
+### 9. Digest Delivery (built-in cron, not system crontab)
+
+This project has its own scheduler (`hermes cron`) — use it instead of a
+system crontab entry:
+
+```bash
+hermes cron create
+```
+
+- [ ] Configure (interactively, in natural language per this project's own
+  convention): schedule `0 7 * * *`, timezone `America/Chicago`, action
+  "`GET {COS_API_BASE}/digest/latest` with `Authorization: Bearer
+  $COS_API_TOKEN`, send the response text to Telegram **verbatim** — do not
+  rewrite, summarize, or decorate it. If 404 (no digest yet), skip silently
+  and don't retry until the next scheduled run."
+- [ ] Verify: `hermes cron list` shows the job; `hermes cron status` shows
+  the scheduler is running.
+
+### 10. Security Audit
+
+```bash
+bash scripts/audit_vps.sh
+```
+
+- [ ] Must output `AUDIT CLEAN — only permitted secrets found`. If not,
+  remove the offending secret and re-run until clean.
+- [ ] Run after every Hermes upgrade too (`hermes update` bumps the pinned
+  commit — update `hermes/VERSION` immediately after and re-audit).
+
+### 11. Backup
+
+Native backup command, not a hand-rolled tar job:
+
+```bash
+hermes backup   # produces a zip of the Hermes home directory
+```
+
+- [ ] Check `hermes backup --help` for a built-in schedule flag; if there
+  isn't one, wrap this in a thin system cron entry (not `hermes cron`, which
+  is for agent-delivered tasks) that runs it nightly and ships the zip to
+  the Norr AI box or object storage via `scp`/`rclone`.
+- [ ] Restore path: `hermes import <backup.zip>`.
 
 ---
 
 ## Acceptance Checklist
 
-Verify the system end-to-end before declaring done:
-
 - [ ] Send to Telegram: `"track: test item by next Friday"`
-  - Expected: Database row created in cos API; position assigned for tomorrow's digest
-  
+  → row created in cos API; position assigned for tomorrow's digest
 - [ ] Send to Telegram: `"list"`
-  - Expected: All pending items rendered with positions (1, 2, 3, ...)
-  - Includes the "test item" just created
-
-- [ ] Send to Telegram: `"done 1"` (or the position of the test item)
-  - Expected: Item marked complete; no longer appears in `"list"` output
-
-- [ ] Wait or manually trigger digest generation (~07:00 America/Chicago)
-  - Expected: Digest text arrives in Telegram verbatim from `GET /digest/latest`
-
+  → all pending items rendered with positions, including the test item
+- [ ] Send to Telegram: `"done 1"` (or the test item's position)
+  → item marked complete; no longer appears in `"list"`
+- [ ] Trigger the digest (`hermes cron run <job>` or wait for 07:00 CT)
+  → digest text arrives verbatim from `GET /digest/latest`
 - [ ] Send to Telegram: `"snooze 2 to Thursday"`
-  - Expected: Item deferred to Thursday; confirm in `"list"` output
+  → item deferred, confirmed in `"list"`
+- [ ] `hermes pairing list` shows exactly one approved user
 
 ---
 
 ## After Provisioning
 
-- Keep `hermes/VERSION` updated on every upgrade
+- Keep `hermes/VERSION` updated on every upgrade (`hermes update` then
+  re-pin commit/tag/version here)
 - Run `scripts/audit_vps.sh` monthly and after every upgrade
-- Monitor Hermes logs for API errors (include COS_API_BASE connection issues)
-- Test the full pipeline monthly: track → list → digest delivery → done/snooze/dismiss
+- `hermes status` / `hermes doctor` for a quick health check
+- `hermes cron status`, `hermes gateway status` to confirm both the digest
+  scheduler and the Telegram gateway are actually running — not just
+  installed
+- Test the full pipeline monthly: track → list → digest delivery →
+  done/snooze/dismiss
 
 ---
 
@@ -122,8 +201,10 @@ Verify the system end-to-end before declaring done:
 
 | Issue | Check |
 |-------|-------|
-| Telegram: "connection refused" | Confirm `TELEGRAM_BOT_TOKEN` is correct; check Telegram API status |
-| Telegram: no response to commands | Confirm bot is in Egan's chat; verify Hermes service is running |
-| cos API 401 | Check `COS_API_TOKEN`; confirm it's set in Hermes environment |
-| cos API 404 on `/pending` | Confirm `COS_API_BASE` URL is reachable; check Norr AI box is online |
-| Audit script fails | Remove offending secrets; retry; if persist, check `HERMES_HOME` path |
+| Telegram: no response to commands | `hermes gateway status`; `hermes pairing list` (are you actually approved?) |
+| cos API 401 | `COS_API_TOKEN` mismatch — check wherever step 7's env file lives |
+| cos API 404 on `/pending` | `COS_API_BASE` unreachable — confirm the Norr AI box is online |
+| Digest never arrives | `hermes cron list` / `hermes cron status` — job created and scheduler running? |
+| Skill not responding | `hermes skills list` (installed?); `hermes skills config` (enabled?); `hermes gateway restart` after any skill change |
+| Audit script fails | Remove the offending secret; retry; check `HERMES_HOME` if paths look wrong |
+| Terminal sandbox not using Docker | Docker installed? (`which docker`); recheck `hermes config`'s terminal-backend setting |

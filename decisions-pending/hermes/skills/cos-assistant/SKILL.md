@@ -1,3 +1,14 @@
+---
+name: cos-assistant
+description: "Track, list, and act on Egan's pending decisions via the Norr AI cos API (done/snooze/dismiss/draft/track) and deliver the 7am digest verbatim over Telegram."
+version: 1.0.0
+platforms: [linux, macos]
+metadata:
+  hermes:
+    tags: [productivity, personal-assistant, norrai, decisions-pending]
+    related_skills: []
+---
+
 # Chief of Staff Assistant
 
 A personal decision-tracking skill that interfaces with the Norr AI "Decisions Pending" API. Manages daily priorities, decision tracking, and pending items with natural conversation.
