@@ -52,6 +52,29 @@ cp .env.example .env          # fill in COS_DB_URL + COS_API_TOKEN
 uvicorn api.main:app --host 127.0.0.1 --port 8100
 ```
 
+## Deploying the API (Railway)
+
+The spec's "Norr AI box" is, in this stack, Railway — the same platform
+already hosting the `cos/` business bot. Deploy this API as a **second
+Railway service** in that project (never merged into the existing one —
+different credentials, different blast radius):
+
+1. New service from this repo, **Root Directory = `decisions-pending`**
+   (the `Procfile` here runs `uvicorn api.main:app`).
+2. Variables: `COS_DB_URL` (the Neon DSN **as the `cos_api` role**, not the
+   owner role — `postgresql://cos_api:<password>@<neon-host>/neondb?sslmode=require`)
+   and `COS_API_TOKEN` (`openssl rand -hex 32`; same value goes to the
+   Hermes VPS later).
+3. Apply the schema first (below) or the pool will connect and every query
+   will 42P01.
+4. Verify: `curl https://<service>.up.railway.app/health` → `{"status":"ok"}`,
+   then one authed call:
+   `curl -H "Authorization: Bearer $COS_API_TOKEN" https://<service>.up.railway.app/pending` → `[]`.
+
+Hermes then gets `COS_API_BASE=https://<service>.up.railway.app` — HTTPS over
+the public internet with the bearer token is the intended posture (the
+droplet's only outbound dependencies stay "cos API + Telegram + Anthropic").
+
 ## Applying the schema (production)
 
 ```bash

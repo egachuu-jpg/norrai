@@ -11,16 +11,50 @@ than assumed.
 
 ---
 
+## Prerequisite — the cos API must be deployed and reachable FIRST
+
+Every acceptance test below round-trips through the cos API, so it has to
+exist before the droplet work can finish. Deployment steps live in
+`decisions-pending/README.md § Deploying the API (Railway)`: apply
+`sql/001_schema.sql` to the real Neon DB, set the `cos_api` role password,
+deploy the API as a second Railway service (Root Directory =
+`decisions-pending`), generate `COS_API_TOKEN`, and verify `/health` +
+one authed `/pending` call. Bring two values from that step to step 7
+below: the Railway URL (`COS_API_BASE`) and the token.
+
+---
+
 ## Provisioning Checklist
+
+### 0. Clear the stale `~/.hermes` copy (existing droplet only)
+
+The DigitalOcean droplet (`ubuntu-s-1vcpu-1gb-nyc1`) already has a
+`~/.hermes` directory — an orphaned copy of the Mac install's runtime state
+(scp'd over at some point; the `._*` AppleDouble files are the tell), with
+**no Hermes software behind it**. It contains a 25-category marketplace
+skill tree (`red-teaming`, `mcp`, `github`, `social-media`, …) plus curator
+state. A fresh install would adopt all of it, silently violating the
+"cos-assistant only, no browsing, minimal capability" posture — so it goes
+first:
+
+```bash
+mv ~/.hermes ~/hermes-stale-backup-$(date +%Y%m%d)   # keep a copy until the new install is confirmed
+rm -f ~/._.hermes ~/._skills                          # Mac transfer artifacts
+```
+
+Delete the backup once the acceptance checklist at the bottom passes.
 
 ### 1. Infrastructure Setup
 
-- [ ] Provision minimal droplet (separate from the Norr AI box)
-  - 1–2 vCPU, 2GB RAM, 20GB disk minimum
+- [ ] Droplet already exists (`ubuntu-s-1vcpu-1gb-nyc1`, 1 vCPU/1GB) — at the
+  spec's stated 2GB minimum it's undersized on RAM; try it first (the
+  gateway is mostly idle), and resize in place via the DigitalOcean panel if
+  the install or gateway OOMs. Note the "System restart required" banner —
+  reboot before installing, not after.
   - Firewall: no inbound ports except SSH (restrict to your IP)
 - [ ] Install Docker (`apt install docker.io` or the official Docker repo) —
-  required for the terminal/tool-execution sandbox in step 6, not present by
-  default on a fresh droplet.
+  required for the terminal/tool-execution sandbox in step 6; confirmed NOT
+  present on this droplet (`which docker` came back empty).
 
 ### 2. Clone + Install
 
@@ -102,7 +136,7 @@ ones to the same env file the setup wizard created (check `hermes config` /
 
 ```bash
 COS_API_TOKEN=...                       # generated per decisions-pending/README.md runbook
-COS_API_BASE=http://NORRAI_BOX:8100     # internal IP or hostname
+COS_API_BASE=https://<service>.up.railway.app   # from the Railway deploy (see Prerequisite)
 ```
 
 - [ ] **Never commit to git or hardcode in Hermes config.**

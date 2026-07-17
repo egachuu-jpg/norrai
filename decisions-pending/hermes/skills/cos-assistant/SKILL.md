@@ -15,7 +15,7 @@ A personal decision-tracking skill that interfaces with the Norr AI "Decisions P
 
 ## API Connection
 
-**Base URL:** Environment variable `COS_API_BASE` (default: `http://NORRAI_BOX:8100`)  
+**Base URL:** Environment variable `COS_API_BASE` (the Railway service URL, e.g. `https://<service>.up.railway.app`)  
 **Authentication:** Bearer token in `Authorization` header using env `COS_API_TOKEN`
 
 Example curl (all requests use this pattern):
