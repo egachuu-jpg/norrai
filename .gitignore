@@ -24,3 +24,12 @@ playwright-report/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Business documents — contracts, exports, and client data live in Google Drive/Neon, not git
+/*.pdf
+/*.docx
+docs/clients/*.csv
+docs/**/*.eml
+
+# Obsidian per-machine UI state
+obsidian/.obsidian/workspace.json
