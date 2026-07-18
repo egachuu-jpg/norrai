@@ -68,6 +68,11 @@ and drafting, Neon for history, and the `workflow_events` reporting spine.
 │  GBP posts (seasonal calendar) · monthly answer page ·     │
 │  monthly audit re-run + scorecard delivery                 │
 └────────────────────────────────────────────────────────────┘
+┌─ 4. OPTIMIZER (continual, results-driven) ────────────────┐
+│  monthly diff + query-loss attribution → typed action list │
+│  → auto-apply site changes · Norr-applies GBP edits ·      │
+│  client nudges — every action tracked against next battery │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ### Layer 1: Audit Engine
@@ -155,6 +160,75 @@ All n8n, all logging to `workflow_events` per the standard:
 - **Construction/remodel:** Jan–Mar planning/permits/financing · Apr–Sept project galleries (photos are the ranking currency) · Oct–Dec winter-prep + next-year booking
 - **Plumbing/electrical:** emergency-intent queries dominate — 24/7 attributes, "emergency ___ near me" answer pages, frozen-pipe/generator seasonal spikes
 
+### Layer 4: The Optimizer — closing the loop
+
+Without this layer the service measures continuously but optimizes on a fixed
+calendar. The Optimizer makes the monthly cycle results-driven:
+
+```
+audit + query battery results (this month)
+        │
+  Diff vs. last month + competitor state
+        │
+  Query-loss attribution ── for each query the client ISN'T the answer:
+        │                   Claude reads the winning answer's cited URLs +
+        │                   winner's GBP data and names the reason —
+        │                   "they have a page answering exactly this,"
+        │                   "3× your reviews," "better category match"
+        │
+  Claude: prioritized action list, each action typed by who applies it
+        │
+  ┌─────┴──────────────┬───────────────────────┐
+  auto-apply           Norr-applies            recommend-only
+  (Norr-built sites)   (GBP, as Manager)       (needs the client)
+  schema fixes, FAQ    description/services/   job photos, review asks
+  blocks, new answer   Q&A edits, posts,       for specific job types,
+  page, meta edits →   review responses →      license info, changes to
+  commit + PR + tests  applied directly        a site we don't control
+  + wrangler deploy    (API later; ~min/ea     → one SMS/email with the
+                       manual now)             ask, tracked to done
+        │
+  Log every applied action to aeo_actions with its target query/pillar
+        │
+  Next month's battery shows whether the action moved its target
+  → "what we changed → what it did" section in the scorecard
+```
+
+Key points:
+
+- **Attribution, not checklists.** Actions are generated from *why a specific
+  query was lost to a specific competitor*, not from a generic best-practices
+  list. That's what makes month 6 different from month 1.
+- **GBP needs no client friction.** Norr AI is a Manager on every profile
+  (fixed policy from the 507 Air model), so description tweaks, service-list
+  additions, Q&A seeding, and posts are Norr-applied — the owner only ever
+  approves tone-sensitive items (review responses) if they want to.
+- **Norr-built sites make website changes near-free.** A new FAQ block or
+  answer page on a Cloudflare Worker site is a Claude-drafted commit → tests →
+  deploy. External sites downgrade those actions to recommend-only — which is
+  the site-rebuild upsell pressure, made visible in the scorecard.
+- **Actions are accountable.** `aeo_actions` links each change to the query or
+  pillar it targets; the next battery run scores it. Some won't move — that's
+  fine and honest, and the trend is what's sold.
+
+### How much is manual? (steady-state, per client per month)
+
+| Work | Who | Automated? |
+|---|---|---|
+| Data pulls, scoring, query battery, scorecard build + delivery | System | Fully, from Phase 3 |
+| Review request sends | System | Fully |
+| Optimizer analysis + action drafting | System (Claude) | Fully |
+| Review responses | Claude drafts → approval | Approval tap only |
+| GBP edits/posts | Claude drafts → Egan applies as Manager | ~10 min/mo (API later: near-zero) |
+| Website changes (Norr-built sites) | Claude commits → Egan reviews PR + deploys | ~10–15 min/mo |
+| Citations | Egan, checklist | One-time + rare re-check |
+| Reviewing the Optimizer's action list | Egan | ~10 min/mo — the real operator job |
+| Photos, review asks, external-site changes | Client | Recommend-only, nudged + tracked |
+
+Target: **≤30–45 min of operator time per client per month** at steady state.
+Foundation builds and the citations first pass are project work by design;
+owner approvals are a feature (their voice, their profile), not overhead.
+
 ---
 
 ## Packaging & Pricing
@@ -191,7 +265,7 @@ The audit is the wedge; the retainer is the business.
 |---|---|---|
 | **1. Manual-assisted audit** | Claude Code script (`scripts/aeo-audit/`?) that takes name/URL/place-id + competitor list, runs Places API + site parse + Gemini query battery, emits scores JSON + Polar Modern report HTML. Operator fills citations checklist by hand. **Sellable immediately** | Days |
 | **2. Pilot** | Run on 507 Air (free) — real scorecard, before/after once the GBP verifies. Becomes the case-study artifact for every pitch | Hours + elapsed time |
-| **3. n8n automation** | `aeo_query_battery` (monthly cron per client) + `aeo_monthly_report` (assemble scorecard, SendGrid delivery) + `aeo_review_response` (Places poll → Claude draft → owner approval). Register all in `n8n/README.md`; standard logging on all | 1–2 weeks part-time |
+| **3. n8n automation** | `aeo_query_battery` (monthly cron per client) + `aeo_monthly_report` (assemble scorecard, SendGrid delivery) + `aeo_review_response` (Places poll → Claude draft → owner approval) + `aeo_optimizer` (monthly diff → attribution → action list into `aeo_actions`). Register all in `n8n/README.md`; standard logging on all | 1–2 weeks part-time |
 | **4. GBP API access** | Apply for Google Business Profile API under the Norr AI agency account once ≥2–3 managed profiles exist. Unlocks auto-posting and review auto-response | Elapsed/approval-gated |
 
 ### Neon schema additions (`db/schema.sql`)
@@ -217,6 +291,20 @@ CREATE TABLE aeo_queries (
   mentioned_names  jsonb,                -- competitors named in the answer
   cited_urls       jsonb
 );
+
+CREATE TABLE aeo_actions (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id     uuid REFERENCES clients(id),
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  action_type   text NOT NULL,   -- 'auto_apply' | 'norr_applies' | 'recommend_only'
+  surface       text NOT NULL,   -- 'website' | 'gbp' | 'citations' | 'client'
+  description   text NOT NULL,
+  target_query  text,            -- query battery question this targets, if any
+  target_pillar text,            -- pillar this targets, if any
+  status        text NOT NULL DEFAULT 'proposed',  -- proposed|applied|declined|done
+  applied_at    timestamptz,
+  outcome_note  text             -- filled after next battery run
+);
 ```
 
 Prospect audits need a `clients` row before signing — use a prospect-status row
@@ -229,6 +317,7 @@ Prospect audits need a `clients` row before signing — use a prospect-status ro
 | AEO Query Battery | `aeo_query_battery` |
 | AEO Monthly Report | `aeo_monthly_report` |
 | AEO Review Response Drafter | `aeo_review_response` |
+| AEO Optimizer | `aeo_optimizer` |
 | AEO Review Request | reuse/adapt `review_request` |
 
 ---
