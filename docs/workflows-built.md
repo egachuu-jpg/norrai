@@ -25,7 +25,7 @@ per client, query `workflow_events` in Neon.
 - **Output:** `status`, `address_verified`, `walkability`, `schools`, `market`, `recent_comps`, `data_confidence`, `insight_block`, `comps_disclaimer`
 - **Credentials needed in n8n:** "Gemini API Key" (Query Auth credential — name: `key`, value: your Gemini API key) — created and wired
 - **Prerequisites:** `research_cache` table in Neon (added to `db/schema.sql` — apply to production)
-- See `PRD/research-agent.md` for full spec
+- See `obsidian/PRDs/research-agent.md` for full spec
 
 ## Event Ops Discovery Form
 - **Status:** Working end to end
