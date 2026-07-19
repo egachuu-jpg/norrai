@@ -1,0 +1,14 @@
+{
+  "business_name": "507 Air Heating & Cooling",
+  "name_variants": ["507 Air"],
+  "website": "https://507air.com",
+  "place_id": null,
+  "vertical": "hvac",
+  "services": ["furnace repair", "AC installation", "ductless mini-split", "water heater repair"],
+  "cities": ["Faribault", "Northfield", "Owatonna", "Lakeville"],
+  "competitor_search": "HVAC contractor Faribault MN",
+  "citations": [
+    { "directory": "Yelp", "listed": true, "nap_match": false, "url": "https://yelp.com/biz/507-air-heating-cooling" },
+    { "directory": "Facebook", "listed": true, "nap_match": true, "url": "https://facebook.com/507air" }
+  ]
+}

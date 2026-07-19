@@ -39,6 +39,12 @@ For each directory below: search for the business, record whether it exists and 
 
 For each directory you check, add an entry to the `citations` array in the client config file. Each entry is a JSON object with four fields:
 
+> **Scoring note:** the citations pillar scores the 7 non-Google directories
+> (Bing Places, Apple Maps, Yelp, Facebook, BBB, Angi, Nextdoor). The Google
+> Business Profile row is checked here for completeness but scored under the
+> GBP pillar — including it in the array is fine; the engine ignores it for
+> this pillar's points.
+
 ```json
 {
   "directory": "Yelp",
