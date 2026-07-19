@@ -128,7 +128,7 @@ client-sites/  # Per-client static sites, one dir per client (e.g. 507-air/), ea
 db/            # schema.sql (canonical — apply with psql -f) + README.md
 n8n/           # workflow JSON exports + README (workflow_name registry) + testing docs
 tests/         # Playwright specs (one per tested HTML page)
-PRD/           # product specs (e.g. research-agent.md)
+obsidian/      # Obsidian vault — PRDs (obsidian/PRDs/), client notes, sales pipeline, vertical playbooks
 docs/          # lessons-learned, workflows-built, ideas, roadmap, client notes
 ```
 

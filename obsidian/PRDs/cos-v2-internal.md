@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12
 **Status:** Approved design, ready to implement
-**Supersedes:** `PRD/norr ai chief of staff prd.docx` (v0.1 draft, May 2026)
+**Supersedes:** `obsidian/PRDs/norr ai chief of staff prd.docx` (v0.1 draft, May 2026)
 **Builds on:** the deployed `cos/` FastAPI service (Railway) — this is an extension, not a rewrite
 
 ---
@@ -47,7 +47,7 @@ with monitoring, pipeline answers, quick approvals, and a weekly digest.
 3. Draft-and-approve outbound email from chat — a follow-up drafted in Slack/SMS, approved with one reply, sent via SendGrid from hello@norrai.co.
 4. Monday weekly digest pushed to Slack without being asked.
 5. Lock the service down to Egan only (currently it answers any Slack DM user and any SMS sender).
-6. Stay demo-ready: every feature here is shown live in sales calls as proof of the concierge pattern (see `PRD/re-concierge-pro.md`).
+6. Stay demo-ready: every feature here is shown live in sales calls as proof of the concierge pattern (see `obsidian/PRDs/re-concierge-pro.md`).
 
 ### Non-Goals
 - No specialist sub-agents, no intent router. One agent, more tools.
@@ -526,4 +526,4 @@ week of side-project time — versus the 4-week plan in the superseded PRD.
 - Block Kit approval buttons (conversational approval is channel-uniform; add buttons only if misfires actually happen)
 - Invoice tracking (revisit at ~5 active contracts)
 - Proposal generation (Claude Code does this better today)
-- Second user access — solved properly by the multi-tenant identity layer in `PRD/re-concierge-pro.md`, not by widening the allowlist
+- Second user access — solved properly by the multi-tenant identity layer in `obsidian/PRDs/re-concierge-pro.md`, not by widening the allowlist

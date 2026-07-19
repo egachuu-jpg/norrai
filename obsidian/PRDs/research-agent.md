@@ -25,7 +25,7 @@ Agents need Claude to write messages grounded in verified, publicly available da
 
 ## Non-Goals
 
-- Formal CMA with complete MLS comp coverage — see `PRD/cma-tool.md`
+- Formal CMA with complete MLS comp coverage — see `obsidian/PRDs/cma-tool.md`
 - Access MLS-gated data without a proper integration agreement
 - Provide demographic, crime, or protected-class-adjacent data — ever
 - Replace the agent's local market expertise
@@ -240,7 +240,7 @@ Total per research call: **< $0.001** at current Norr AI volume.
 
 The research agent's `recent_comps` are sourced from publicly indexed sales on Zillow and Redfin — **not** the full MLS. Coverage is partial. This is sufficient for message drafting and informal market context. It is **not** sufficient for a formal CMA an agent presents to a seller or buyer.
 
-For full CMA functionality, see `PRD/cma-tool.md`.
+For full CMA functionality, see `obsidian/PRDs/cma-tool.md`.
 
 ---
 

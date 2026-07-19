@@ -2,8 +2,8 @@
 
 **Date:** 2026-07-12
 **Status:** Approved design — **build starts only when a real estate client signs a Pro contract** (reaffirms the 2026-05-07 decision: no speculative build)
-**Supersedes:** `PRD/real estate chief of staff prd.docx` (v0.1 draft, May 2026)
-**Depends on:** `PRD/cos-v2-internal.md` shipped through step 3 (the pending-action layer and identity threading are prerequisites)
+**Supersedes:** `obsidian/PRDs/real estate chief of staff prd.docx` (v0.1 draft, May 2026)
+**Depends on:** `obsidian/PRDs/cos-v2-internal.md` shipped through step 3 (the pending-action layer and identity threading are prerequisites)
 
 ---
 
