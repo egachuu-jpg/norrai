@@ -152,7 +152,7 @@ All n8n, all logging to `workflow_events` per the standard:
 | Review responses | Within 48h | Poll new reviews (Places API) → Claude drafts response in owner's voice → owner approves via SMS/email (Growth: pre-approved templates auto-post once GBP API access lands) |
 | GBP posts | 2–4/mo | Seasonal calendar per vertical (below) → Claude drafts → owner approves → manual post (API post later) |
 | New answer page | 1/mo (Growth+) | Pick the lowest-performing query battery question → publish a page that answers it |
-| Audit re-run + scorecard | Monthly | Automated re-run → Polar Modern report page → email via SendGrid |
+| Audit re-run + scorecard | Monthly | Automated re-run → scorecard published to `tools.norrai.co/clients/aeo/<slug>/<YYYY-MM-DD>.html` (Cloudflare Access `clients` group) → SendGrid email from hello@norrai.co with the link |
 
 **Seasonal content calendars** (drives GBP posts + monthly pages):
 
