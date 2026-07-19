@@ -3,7 +3,7 @@
 **Date:** 2026-07-15
 **Status:** Draft for review
 **Builds on:** `PRD/cos-v2-internal.md` (approved 2026-07-12 — ship COS v2 first; this doc extends it, changes nothing in it)
-**Related:** `PRD/re-concierge-pro.md` (client-facing concierge pattern), `docs/Norr AI — 6 Month Roadmap.md` (Month 4–6: "delivery doesn't require Egan for every build")
+**Related:** `PRD/re-concierge-pro.md` (client-facing concierge pattern), `docs/Norr AI — 6 Month Roadmap.md` (Month 4–6: "delivery doesn't require Egan for every build"), `decisions-pending/README.md` on branch `claude/chief-of-staff-prd-ocmrz1` (personal chief of staff — Hermes/Telegram conversational plane, scoped cos API data plane)
 
 ---
 
@@ -22,6 +22,7 @@ The processes, in OS terms:
 | Shared state | Neon (`clients`, `leads`, `workflow_events`, `stories`/`tasks`) + repo | Exists |
 | Daemons | n8n workflows (reminders, drips, intake, cleansing) | Exists |
 | Interactive shell | COS bot (Slack/SMS → FastAPI → Claude tool loop) | Deployed; v2 spec approved |
+| Front door (mobile) | Hermes on Telegram → scoped APIs: decisions-pending cos API (personal) + norrai API (business, §6) | Personal side near go-live (branch `claude/chief-of-staff-prd-ocmrz1`); norrai API is **new — this doc** |
 | Scheduler | n8n crons + Claude Code Routines | Exists |
 | Work queue | `tasks` table (Mission Control) | Exists — this doc defines the agent contract |
 | Workers | Headless Claude Code sessions | **New — this doc** |
@@ -287,19 +288,97 @@ days.
 
 ---
 
-## 6. Idea capture — Telegram inbox
+## 6. Capture & the front door — Hermes + the norrai API
+
+> **Revision note (2026-07-19):** this section originally specified a
+> capture-only n8n Telegram bot. That design is superseded by the
+> **Decisions Pending / Hermes** build (branch
+> `claude/chief-of-staff-prd-ocmrz1`, `decisions-pending/README.md`) —
+> a personal chief of staff whose conversational plane is already a
+> Telegram agent (Hermes on a minimal VPS, DM-pairing access control,
+> scoped bearer-token APIs only). Standing up a second capture bot next
+> to it would mean three Telegram bots (email-triage, Hermes, capture)
+> and two capture UXes. Instead, Hermes becomes the **single Telegram
+> front door for both domains**, and the business side grows a scoped
+> API for it to call.
 
 The OS needs a zero-friction way to get a thought out of Egan's head and
 into the substrate from anywhere. Today that path is "remember it until the
 next Claude Code session edits `docs/ideas.md`" — which is where ideas die.
 
-**Design: capture-only Telegram bot, built entirely in n8n.** No change to
-the COS FastAPI service. Telegram over SMS-to-COS because it's free, has no
-1600-char limit, handles multi-message brain dumps naturally, and n8n Cloud
-has a native Telegram Trigger node — this is one workflow, not a new
-service.
+**Design: one agent, two isolated backends.** Hermes routes each Telegram
+message by domain: personal → the decisions-pending cos API (exists);
+business → the **norrai API** (new, below). The business/personal
+separation lives at the API-and-DB-role layer — the same blast-radius
+pattern the personal side already locked — not at the chat layer, so one
+conversation can span both domains.
 
-### 6.1 Storage — `ideas` inbox table
+### 6.1 The norrai API — a surface, not a service
+
+A token-authed REST router added to the **existing** `cos/` FastAPI
+service on Railway (COS v2). Not a third deployment — the endpoints wrap
+functions that already live in `cos/tools.py`. Mirrors the
+decisions-pending posture:
+
+- **Auth:** `Authorization: Bearer $NORRAI_API_TOKEN` — a new env var,
+  distinct from the personal side's `COS_API_TOKEN` and from all Slack/
+  Twilio secrets. 401 on mismatch; no unauthenticated route except
+  `/health`. This token is the one new secret the Hermes VPS gains.
+- **DB role (defense in depth):** endpoints connect as a new Neon role
+  `norrai_api` — SELECT on `tasks`, `stories`, `clients`, `leads`,
+  `service_contracts`, `workflow_events`; INSERT on `ideas` and `tasks`;
+  UPDATE on `tasks` (status/context only); **no DELETE anywhere, no
+  access to `cos_pending_actions`**. The Slack/SMS agent path keeps its
+  existing connection; only the API router uses this role.
+- **Endpoints (Phase 1 — reads + capture only):**
+
+| Route | Method | Does |
+|---|---|---|
+| `/api/ideas` | POST | `{raw_text, title?, tags?}` → `ideas` row (source stays `telegram`); returns id + stored title |
+| `/api/tasks` | POST | File a Mission Control task — requires `title`, `description`, `category`; `assigned_to: 'agent'` allowed (it just enqueues; the worker contract in §3 governs execution) |
+| `/api/tasks` | GET | `query_tasks` filters (status/priority/search) |
+| `/api/pipeline` | GET | `pipeline_summary` |
+| `/api/health` | GET | `check_client_health` + `get_workflow_errors` rollup |
+
+Deliberately absent: any route that sends, approves, or executes.
+See §6.3.
+
+### 6.2 Hermes routing — skill instructions, not infrastructure
+
+Routing is prompt-level, in the Hermes skill (extend
+`cos-assistant/SKILL.md` or add a sibling `norrai-assistant` skill —
+follow whichever pattern the decisions-pending repo settles on):
+
+- Personal decisions/commitments ("track: renew passport", "pick up
+  child Friday") → cos API verbs (`track` with a due date covers the
+  timed cases — no calendar tooling needed).
+- Business thoughts ("idea: white-label for agencies") → `POST /api/ideas`.
+- Business work ("file a task to rebuild the open-house prompt, agent
+  can do it") → `POST /api/tasks`.
+- Business questions ("what's red today?", "how's MRR?") → GET routes.
+- **Ambiguity is resolved by asking** — the front door is conversational
+  now, an upgrade over the one-shot n8n design, which had to guess.
+- **Capture never fails:** if routing is unclear and Egan doesn't
+  clarify, default to `POST /api/ideas` — worst case is "misfiled,"
+  never "lost."
+- **The reply states what was done and where** ("Logged as business
+  idea ✓" / "Tracking, due Friday ✓" / "Task filed for the agent
+  worker ✓") so a misroute is visible the second it happens.
+
+### 6.3 The approval-path constraint (do not relax)
+
+The norrai API **must not** expose approve/execute for
+`cos_pending_actions`, and the `norrai_api` DB role has no grant on that
+table. COS v2 §3.2's invariant is that approval is deterministic keyword
+interception in `main.py` — code, not model. Hermes relaying "send it"
+through an API call would put an LLM in the firing path of outbound
+email. Outbound staging + approval therefore stays on the Slack/SMS
+deterministic gate for now; if Telegram approval is ever wanted, it needs
+its own deterministic intercept (gateway-level, before the model), not an
+endpoint. Staging-via-API (`POST /api/stage-email` — safe, nothing sends)
+may come later; approval never does.
+
+### 6.4 Storage — `ideas` inbox table
 
 `docs/ideas.md` stays the **curated** parking lot (per CLAUDE.md). The
 table is the **raw inbox** that feeds it — a capture buffer, not a parallel
@@ -327,33 +406,13 @@ CREATE TABLE ideas (
 CREATE INDEX idx_ideas_new ON ideas(created_at) WHERE status = 'new';
 ```
 
-### 6.2 Workflow — **Norr AI Idea Capture** (`idea_capture` in the registry)
+Title/tag enrichment happens in the API handler (one Claude Haiku call,
+same title-only rule: `raw_text` is stored verbatim, never rewritten). A
+failed enrichment must NOT lose the idea — insert with `title NULL`; a
+failed **insert** returns an error so Hermes reports the failure instead
+of a false "Logged ✓". The confirmation must never lie.
 
-```
-Telegram Trigger (BotFather bot, token as n8n credential)
-  → Allowlist IF: message.from.id equals Egan's numeric Telegram user ID
-      (no match → stop; no reply — don't advertise the bot)
-  → Log Triggered (norrai_internal client_id, standard pattern)
-  → Claude Haiku (HTTP): from raw_text produce {"title": ..., "tags": [...]}
-      — title/tag ONLY; raw_text is stored verbatim, never rewritten
-  → Insert into ideas (Postgres)
-  → Log Completed
-  → Telegram reply: "Logged ✓ — {title}"
-```
-
-Rules, per the operational standards:
-
-- Claude node prompt built in a Set node first (CLAUDE.md multiline rule).
-- The Claude enrichment node gets `onError: continueRegularOutput` — a
-  failed title generation must NOT lose the idea; insert with `title NULL`.
-  The **Insert** node does not get it (a lost insert is the one real
-  failure), and the Telegram reply only fires after a successful insert.
-- Error Workflow → `Norr AI Workflow Error Logger`; export JSON to
-  `n8n/workflows/`; registry row in `n8n/README.md`.
-- Every plain text message = one idea. No commands, no parsing, no menus —
-  friction kills capture.
-
-### 6.3 Triage loop
+### 6.5 Triage loop
 
 - **Digest:** the Monday digest's queue section (§5) adds one line — count
   of `new` ideas + the three newest titles.
@@ -366,13 +425,17 @@ Rules, per the operational standards:
   `new` rows and triage them with Egan" to the wrap-up checklist, so the
   inbox drains at least once per working session.
 
-### 6.4 Deferred for this channel
+### 6.6 Deferred for this channel
 
-- Voice-note capture (Telegram voice → transcription → same insert)
-- Two-way Telegram (querying COS, approvals) — that makes Telegram a third
-  COS channel: `main.py` webhook + allowlist + widening the
-  `cos_pending_actions` channel CHECK. Do it only if Telegram displaces
-  SMS as the on-the-go channel in practice.
+- Voice-note capture (Telegram voice → Hermes-side transcription → same
+  `POST /api/ideas`)
+- `POST /api/stage-email` (staging is safe — the Slack keyword gate still
+  guards the send — but ship reads + capture first)
+- Telegram approval of staged actions — only ever via a deterministic
+  gateway-level intercept, never an API endpoint (§6.3)
+- Consolidating the May email-triage Telegram bot: its numbered-reply
+  approvals could eventually route through Hermes as one more intent,
+  retiring a bot. Not before the front door has months of trust.
 - Auto-promotion by the worker (an agent deciding what's worth doing is
   exactly the judgment call that stays human)
 
@@ -411,12 +474,12 @@ The digest (v2 step 4) can land in parallel with Phase 1.
 | 3 | `dev` category + PR flow; COS tools `file_task` and `kick_worker` | A workflow-JSON task produces a green-tested, audit-clean PR; Egan files a task and kicks the worker from SMS |
 | 4 | Daily Sensor workflow + janitor + digest queue section | A synthetic `failed` event produces exactly one deduped task by 5:30 AM and a diagnosis in `review` by 7:00 AM |
 | 5 | Gate widening + worker staging + Slack nudge | Worker-staged email approved with "send it" end-to-end; `send_sms` constraint in place (executor deferred to re-concierge) |
-| T | **Parallel track, no dependencies:** migration 008 + Idea Capture workflow (§6) | Telegram message from Egan's account lands as an `ideas` row with a Claude title and gets a "Logged ✓" reply; non-allowlisted sender gets silence; killed-Claude-node path still inserts |
+| T | **Parallel track:** migration 008 + norrai API router on `cos/` + `norrai_api` Neon role + Hermes skill routing (§6) | From Telegram: "idea: X" lands as an `ideas` row and Hermes confirms with the stored title; "what's red today" answers from `/api/health`; a wrong bearer token gets 401; the `norrai_api` role cannot touch `cos_pending_actions` (verified by test) |
 
 Each phase is independently shippable and useful on its own. Rough effort:
-Phases 1–2 ≈ two evenings; 3–5 ≈ an evening each once COS v2 exists;
-track T is one evening and can ship first — it needs nothing but n8n and
-migration 008.
+Phases 1–2 ≈ two evenings; 3–5 ≈ an evening each once COS v2 exists.
+Track T needs the deployed `cos/` service and the Hermes VPS from the
+decisions-pending branch, but none of Phases 1–5; it can ship first.
 
 ### Kill criteria (evaluate after 4 weeks of Phase 3)
 
