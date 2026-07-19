@@ -24,3 +24,4 @@ playwright-report/
 # Python bytecode
 __pycache__/
 *.pyc
+scripts/aeo-audit/out/
