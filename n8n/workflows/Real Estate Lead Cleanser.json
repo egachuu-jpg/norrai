@@ -53,7 +53,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').replace(/'/g, \"''\");\nconst phone = (prev.phone || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${row.id}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    agent_phone: row.primary_contact_phone || '',\n    brokerage: row.business_name || '',\n    payload: prev\n  }\n}];"
+        "jsCode": "const row = $input.first().json;\nconst prev = $('Build Token Query').first().json.payload;\nconst email = (prev.email || '').trim().replace(/'/g, \"''\");\nconst phone = (prev.phone || '').trim().replace(/'/g, \"''\");\n// Only match on non-empty identity keys — a blank email/phone must never be a dedupe key,\n// or it matches every existing lead with a blank value (false duplicate). Both blank => match nothing.\nconst orClauses = [];\nif (email) orClauses.push(`email = '${email}'`);\nif (phone) orClauses.push(`phone = '${phone}'`);\nconst matchClause = orClauses.length ? `(${orClauses.join(' OR ')})` : 'false';\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${row.id}' AND ${matchClause} LIMIT 1`,\n    client_id: row.id,\n    agent_email: row.primary_contact_email,\n    agent_name: row.primary_contact_name,\n    agent_phone: row.primary_contact_phone || '',\n    brokerage: row.business_name || '',\n    payload: prev\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

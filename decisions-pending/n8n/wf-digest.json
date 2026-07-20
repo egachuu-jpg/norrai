@@ -1,0 +1,525 @@
+{
+  "name": "cos_digest",
+  "nodes": [
+    {
+      "id": "e84a0510-283d-44fc-8972-b1ed5eade171",
+      "name": "Schedule 05:30 CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 5 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "59e4cea2-6666-4e0b-93c8-546168e8bc7a",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1400,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM clients WHERE id = 'e2f9934c-4d28-4bb4-ac90-4284c1123517'",
+        "options": {}
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "c0551a21-614d-4bfb-af21-f67012badf28",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1200,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517', 'cos_digest', 'triggered', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "options": {}
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "b3719bc8-e75d-4891-97d1-63a10437994f",
+      "name": "Load Digest System Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1000,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aa91ea93-227e-4a40-9225-aaa6efd884f7",
+              "name": "system",
+              "value": "You write Egan Bonde's 7am \"Decisions Pending\" digest for Telegram.\n\nInput JSON: {date, weather, items[], nags[]}. Each item: {digest_position, title, ask, deadline, urgency, consequence, source, detail}.\n\nRules:\n- Open with one weather line: emoji, weekday + date, high temp, one clause of conditions.\n- Sections in order, omitting empty ones: 🔴 CRITICAL, 🟠 NEEDS REPLY (email items), 🟡 COMING UP. Number items using digest_position exactly as given — never renumber.\n- One line per item: what to do + when + (only for critical) the consequence. Max ~12 words after the number.\n- Items in nags[] get appended: \"— still relevant? done / snooze / dismiss\"\n- If items is empty: exactly \"Nothing pending today — clear runway.\" after the weather line.\n- Close with: \"Reply: done N · snooze N [when] · draft N · track: <item>\"\n- No preamble, no sign-off, no motivational language. Terse and scannable on a phone.\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b0b353c4-4a31-49f4-b85c-a45816561fc4",
+      "name": "Escalation + Expiry (sync sql/003)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -800,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Decisions Pending — nightly escalation and expiry job (Task A4)\n-- Idempotent: safe to run multiple times in one day.\n-- Three stages: ESCALATION, EXPIRY, ANTI-STALENESS.\n\nDO $$\nDECLARE\n  v_today date;\nBEGIN\n  v_today := cos.today_chicago();\n\n  -- =========================================================================\n  -- 3a. ESCALATION\n  -- =========================================================================\n\n  -- Absolute urgency assignment: today >= deadline - 3 days\n  -- Set all rows at or past 3-day mark to 'critical' (idempotent: same value each run)\n  UPDATE cos.pending_decisions\n  SET urgency = 'critical', updated_at = now()\n  WHERE status = 'open'\n    AND deadline IS NOT NULL\n    AND v_today >= (deadline - 3)\n    AND urgency != 'critical';\n\n  -- One-tier promotion on deadline - 7 days, guarded by escalated_at\n  -- Only runs if NOT already promoted (escalated_at IS NULL)\n  -- low → normal, normal → high, high → critical (one tier only)\n  UPDATE cos.pending_decisions\n  SET\n    urgency = CASE\n      WHEN urgency = 'low' THEN 'normal'\n      WHEN urgency = 'normal' THEN 'high'\n      WHEN urgency = 'high' THEN 'critical'\n      ELSE urgency  -- safety: keep as-is if somehow in unexpected state\n    END,\n    escalated_at = now(),\n    updated_at = now()\n  WHERE status = 'open'\n    AND deadline IS NOT NULL\n    AND v_today >= (deadline - 7)\n    AND v_today < (deadline - 3)\n    AND escalated_at IS NULL;\n\n  -- =========================================================================\n  -- 3b. EXPIRY\n  -- =========================================================================\n\n  -- Mark as expired and capture the IDs for synthetic notice creation\n  WITH expired_rows AS (\n    UPDATE cos.pending_decisions\n    SET status = 'expired', resolved_at = now(), updated_at = now()\n    WHERE status = 'open'\n      AND deadline IS NOT NULL\n      AND deadline < v_today\n    RETURNING id, title\n  )\n  INSERT INTO cos.pending_decisions\n    (title, ask, detail, consequence, deadline, urgency, status, source, source_ref, lead_days)\n  SELECT\n    left('Expired unactioned: ' || e.title, 200),\n    NULL,\n    NULL,\n    NULL,\n    NULL,\n    'high',\n    'open',\n    'system',\n    'expired:' || e.id::text,\n    7  -- default lead_days\n  FROM expired_rows e\n  ON CONFLICT (source, source_ref) DO NOTHING;\n\n  -- =========================================================================\n  -- 3c. ANTI-STALENESS\n  -- =========================================================================\n\n  -- Set nag_pending=true on open decisions that appear in ALL 5 most recent\n  -- digest_log rows AND have zero command_log rows.\n  -- Also set nag_pending=false for all others (where condition no longer holds).\n  WITH recent_digests AS (\n    -- Get the 5 most recent digests (ordered by sent_at DESC)\n    SELECT sent_at, item_ids\n    FROM cos.digest_log\n    ORDER BY sent_at DESC LIMIT 5\n  ),\n  digest_count AS (\n    -- Count of recent digests (must be exactly 5)\n    SELECT COUNT(*) as cnt FROM recent_digests\n  ),\n  should_be_flagged AS (\n    -- Open decisions that appear in ALL 5 most recent digests and have no command_log\n    -- Only flag if there are exactly 5 digests\n    SELECT DISTINCT p.id\n    FROM cos.pending_decisions p\n    CROSS JOIN digest_count\n    WHERE p.status = 'open'\n      AND digest_count.cnt = 5\n      AND NOT EXISTS (\n        SELECT 1 FROM cos.command_log\n        WHERE decision_id = p.id\n      )\n      AND (\n        SELECT COUNT(DISTINCT rd.sent_at)\n        FROM recent_digests rd\n        WHERE p.id = ANY(rd.item_ids)\n      ) = 5\n  )\n  UPDATE cos.pending_decisions p\n  SET nag_pending = (p.id IN (SELECT id FROM should_be_flagged)),\n      updated_at = now()\n  WHERE (p.status = 'open' OR (p.status != 'open' AND p.nag_pending = true))\n    -- only touch rows whose flag actually changes (keeps updated_at honest\n    -- and the nightly run idempotent in the strict sense)\n    AND p.nag_pending IS DISTINCT FROM (p.id IN (SELECT id FROM should_be_flagged));\n\nEND $$;\n",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "d4ba75de-e002-4b76-8922-4a21cfa35953",
+      "name": "Fetch Weather",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -600,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "44.295"
+            },
+            {
+              "name": "longitude",
+              "value": "-93.269"
+            },
+            {
+              "name": "daily",
+              "value": "temperature_2m_max,temperature_2m_min,precipitation_sum"
+            },
+            {
+              "name": "hourly",
+              "value": "temperature_2m,precipitation_probability,weathercode"
+            },
+            {
+              "name": "temperature_unit",
+              "value": "fahrenheit"
+            },
+            {
+              "name": "timezone",
+              "value": "America/Chicago"
+            },
+            {
+              "name": "forecast_days",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c1da4a7b-78fc-4e4b-a453-fd56b4d2f0b1",
+      "name": "Fetch Surfaced Items",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -400,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM cos.v_surfaced\nORDER BY\n  CASE urgency WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 WHEN 'low' THEN 3 ELSE 4 END,\n  deadline ASC NULLS LAST",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "2c38d9d7-caec-4b07-9370-c121c4c8d244",
+      "name": "Fetch Nag Items",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -200,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, title, ask, deadline, urgency, consequence, source, detail\nFROM cos.pending_decisions\nWHERE status = 'open' AND nag_pending = true",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "82c7c39c-ecac-45df-8a4e-f4c4d9a6de5a",
+      "name": "Build Digest Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const weather = $('Fetch Weather').first().json;\nconst items = $('Fetch Surfaced Items').all().map((item, i) => ({\n  digest_position: i + 1,\n  title: item.json.title,\n  ask: item.json.ask,\n  detail: item.json.detail,\n  consequence: item.json.consequence,\n  deadline: item.json.deadline,\n  urgency: item.json.urgency,\n  source: item.json.source,\n  id: item.json.id,\n}));\nconst nags = $('Fetch Nag Items').all().map((item) => ({\n  id: item.json.id,\n  title: item.json.title,\n}));\nconst date = new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago' });\n\nreturn [{ json: { date, weather, items, nags } }];"
+      }
+    },
+    {
+      "id": "a36294a6-5684-487a-abea-5c59306cec97",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bfa937c5-75be-413f-9259-380267b0b8da",
+              "name": "prompt",
+              "value": "={{ JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6e494c89-593d-4027-a281-9ed283016586",
+      "name": "Digest Synthesis (Claude Fable 5)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "anthropic-beta",
+              "value": "server-side-fallback-2026-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-fable-5\",\n  \"max_tokens\": 1500,\n  \"system\": {{ JSON.stringify($('Load Digest System Prompt').first().json.system) }},\n  \"fallbacks\": [{ \"model\": \"claude-opus-4-8\" }],\n  \"messages\": [{ \"role\": \"user\", \"content\": {{ JSON.stringify($('Build Prompt').first().json.prompt) }} }]\n}",
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "id": "5fff42ca-2650-4f2e-a7c2-0743d5e188c5",
+      "name": "Prepare Digest Log Insert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const resp = $('Digest Synthesis (Claude Fable 5)').first().json;\nconst rendered_text = (resp.content && resp.content[0] && resp.content[0].text) || '';\nconst escape = (s) => (s ?? '').replace(/'/g, \"''\");\nconst items = $('Build Digest Payload').first().json.items || [];\nconst ids = items.map((it) => it.id);\nconst item_ids_sql = ids.length\n  ? `ARRAY[${ids.map((id) => `'${id}'`).join(',')}]::uuid[]`\n  : 'ARRAY[]::uuid[]';\n\nreturn [{ json: {\n  rendered_text_escaped: escape(rendered_text),\n  item_ids_sql,\n} }];"
+      }
+    },
+    {
+      "id": "5b5e5d5a-91fc-4135-a486-f746ad97d52c",
+      "name": "Insert Digest Log",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO cos.digest_log (rendered_text, item_ids, model)\nVALUES ('{{ $json.rendered_text_escaped }}', {{ $json.item_ids_sql }}, 'claude-fable-5')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "e84297b0-a240-4ea0-aad8-ae72b1636bb6",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517', 'cos_digest', 'completed', '{\"execution_id\": \"{{ $execution.id }}\"}'::jsonb)",
+        "options": {}
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "NEON_CREDENTIAL_ID",
+          "name": "Neon norrai"
+        }
+      }
+    },
+    {
+      "id": "fbbb1835-4634-4915-bebf-13b0f55910d8",
+      "name": "Sync Note — Escalation Script",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -820,
+        -260
+      ],
+      "parameters": {
+        "content": "## Keep in sync\n\nThe \"Escalation + Expiry (sync sql/003)\" node's query is a byte-for-byte copy of `sql/003_escalation_expiry.sql` as of the time this workflow was generated. If that file changes, re-paste its full contents into this node before the next import — do not hand-edit the query in the n8n UI.",
+        "height": 220,
+        "width": 360
+      }
+    },
+    {
+      "id": "9e9e6867-a046-4f9e-a9e6-5ce0ef4a8054",
+      "name": "Fable 5 Fallback Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -260
+      ],
+      "parameters": {
+        "content": "## claude-fable-5 refusal fallback\n\nThis call opts into the server-side refusal fallback (`anthropic-beta: server-side-fallback-2026-06-01` + `fallbacks: [{model: claude-opus-4-8}]`) so a policy decline on the digest synthesis call is retried on Opus 4.8 automatically instead of silently producing no digest. Remove if not desired.",
+        "height": 220,
+        "width": 340
+      }
+    }
+  ],
+  "connections": {
+    "Schedule 05:30 CT": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Load Digest System Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Digest System Prompt": {
+      "main": [
+        [
+          {
+            "node": "Escalation + Expiry (sync sql/003)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation + Expiry (sync sql/003)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Weather": {
+      "main": [
+        [
+          {
+            "node": "Fetch Surfaced Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Surfaced Items": {
+      "main": [
+        [
+          {
+            "node": "Fetch Nag Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Nag Items": {
+      "main": [
+        [
+          {
+            "node": "Build Digest Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Digest Payload": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Digest Synthesis (Claude Fable 5)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digest Synthesis (Claude Fable 5)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Digest Log Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Digest Log Insert": {
+      "main": [
+        [
+          {
+            "node": "Insert Digest Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Digest Log": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "errorWorkflow": "Norr AI Workflow Error Logger"
+  },
+  "staticData": null
+}

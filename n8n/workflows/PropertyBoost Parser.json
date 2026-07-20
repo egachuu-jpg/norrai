@@ -140,7 +140,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\nconst email = (d.email || '').replace(/'/g, \"''\");\nconst phone = (d.phone || '').replace(/'/g, \"''\");\nconst clientId = (d.db_client_id || '').replace(/'/g, \"''\");\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${clientId}' AND (email = '${email}' OR phone = '${phone}') LIMIT 1`,\n    ...d\n  }\n}];"
+        "jsCode": "const d = $input.first().json;\nconst email = (d.email || '').trim().replace(/'/g, \"''\");\nconst phone = (d.phone || '').trim().replace(/'/g, \"''\");\nconst clientId = (d.db_client_id || '').replace(/'/g, \"''\");\n// Only match on non-empty identity keys — a blank email/phone must never be a dedupe key,\n// or it matches every existing lead with a blank value (false duplicate). Both blank => match nothing.\nconst orClauses = [];\nif (email) orClauses.push(`email = '${email}'`);\nif (phone) orClauses.push(`phone = '${phone}'`);\nconst matchClause = orClauses.length ? `(${orClauses.join(' OR ')})` : 'false';\nreturn [{\n  json: {\n    query: `SELECT id FROM leads WHERE client_id = '${clientId}' AND ${matchClause} LIMIT 1`,\n    ...d\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

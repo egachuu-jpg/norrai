@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-25T01:10:47.058Z",
+  "updatedAt": "2026-07-20T01:45:37.482Z",
   "createdAt": "2026-06-04T02:05:48.275Z",
   "id": "LNVSsULAW1WrIHz1",
   "name": "Real Estate 7-Touch Cold Nurture",
@@ -72,7 +72,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE leads SET nurture_enrolled_at = now(), updated_at = now() WHERE email = '{{ $json.email }}' AND nurture_enrolled_at IS NULL",
+        "query": "UPDATE leads SET nurture_enrolled_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $json.email }}'), '') AND nurture_enrolled_at IS NULL",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -95,7 +95,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER('{{ $('Prep Fields').item.json.email }}') LIMIT 1",
+        "query": "SELECT email_opt_out FROM leads WHERE LOWER(email) = LOWER(NULLIF(trim('{{ $('Prep Fields').item.json.email }}'), '')) LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -167,7 +167,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -353,7 +353,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -539,7 +539,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -725,7 +725,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -911,7 +911,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -1097,7 +1097,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = '{{ $('Prep Fields').first().json.email }}' AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
+        "query": "SELECT l.status, l.id AS lead_id FROM leads l JOIN clients c ON l.client_id = c.id WHERE l.email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND c.primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}' LIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -1333,6 +1333,190 @@
       ],
       "id": "d33a9134-6f91-4319-8d0b-819e954373d5",
       "name": "Client Valid?"
+    },
+    {
+      "id": "d6c09917-425c-43a3-956b-6943bd49e972",
+      "name": "Update Contacted T1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3500,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE leads SET last_contacted_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "e9dea68f-fbc1-4e67-b551-32e4ca95cfbc",
+      "name": "Update Contacted T2",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        5088,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE leads SET last_contacted_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "65ae8368-35f3-4f4f-a00a-11b00c2b0839",
+      "name": "Update Contacted T3",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        6656,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE leads SET last_contacted_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "0087d1f2-cbfa-4792-a1ea-870cf046a919",
+      "name": "Update Contacted T4",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        8224,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE leads SET last_contacted_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "4c836530-632b-498a-9d64-76e10929aad9",
+      "name": "Update Contacted T5",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        9792,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE leads SET last_contacted_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "57c245b0-3eb5-4172-81ff-43b7b222a548",
+      "name": "Update Contacted T6",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        11360,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE leads SET last_contacted_at = now(), updated_at = now() WHERE email = NULLIF(trim('{{ $('Prep Fields').first().json.email }}'), '') AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $('Prep Fields').first().json.agent_email }}')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "2b60385d-a602-430e-94f8-3d219c33e9d6",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1056,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id }}',\n  'cold_nurture',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'agent_email', '{{ $('Manual Enrollment').first().json.body.agent_email }}')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "4080a3b9-01f0-4752-99fa-493f6825335b",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        11584,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Validate Client Token').first().json.id }}',\n  'cold_nurture',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}', 'touches_sent', 6)::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     }
   ],
   "connections": {
@@ -1374,17 +1558,6 @@
         [
           {
             "node": "Client Valid?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Client Valid?": {
-      "main": [
-        [
-          {
-            "node": "Prep Fields",
             "type": "main",
             "index": 0
           }
@@ -1502,17 +1675,6 @@
         ]
       ]
     },
-    "Email T1": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Wait Day 3": {
       "main": [
         [
@@ -1573,17 +1735,6 @@
         [
           {
             "node": "Email T2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T2": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 7",
             "type": "main",
             "index": 0
           }
@@ -1656,17 +1807,6 @@
         ]
       ]
     },
-    "Email T3": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 10",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Wait Day 10": {
       "main": [
         [
@@ -1727,17 +1867,6 @@
         [
           {
             "node": "Email T4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email T4": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 14",
             "type": "main",
             "index": 0
           }
@@ -1810,17 +1939,6 @@
         ]
       ]
     },
-    "Email T5": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 21",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Wait Day 21": {
       "main": [
         [
@@ -1886,6 +2004,160 @@
           }
         ]
       ]
+    },
+    "Email T1": {
+      "main": [
+        [
+          {
+            "node": "Update Contacted T1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T1": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T2": {
+      "main": [
+        [
+          {
+            "node": "Update Contacted T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T2": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T3": {
+      "main": [
+        [
+          {
+            "node": "Update Contacted T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T3": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T4": {
+      "main": [
+        [
+          {
+            "node": "Update Contacted T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T4": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T5": {
+      "main": [
+        [
+          {
+            "node": "Update Contacted T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T5": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email T6": {
+      "main": [
+        [
+          {
+            "node": "Update Contacted T6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T6": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1901,9 +2173,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "0f05972d-a248-435c-815d-188a15ccd473",
-  "activeVersionId": "0f05972d-a248-435c-815d-188a15ccd473",
-  "versionCounter": 144,
+  "versionId": "853cf110-13e1-4fe8-9e86-1d78da12eeff",
+  "activeVersionId": "853cf110-13e1-4fe8-9e86-1d78da12eeff",
+  "versionCounter": 148,
   "triggerCount": 1,
   "tags": [
     {
