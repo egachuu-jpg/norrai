@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-20T01:30:52.700Z",
+  "updatedAt": "2026-07-20T01:45:37.482Z",
   "createdAt": "2026-06-04T02:05:48.275Z",
   "id": "LNVSsULAW1WrIHz1",
   "name": "Real Estate 7-Touch Cold Nurture",
@@ -1471,6 +1471,52 @@
       },
       "onError": "continueRegularOutput",
       "alwaysOutputData": true
+    },
+    {
+      "id": "2b60385d-a602-430e-94f8-3d219c33e9d6",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1056,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $json.id }}',\n  'cold_nurture',\n  'triggered',\n  json_build_object('execution_id', '{{ $execution.id }}', 'agent_email', '{{ $('Manual Enrollment').first().json.body.agent_email }}')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "4080a3b9-01f0-4752-99fa-493f6825335b",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        11584,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Validate Client Token').first().json.id }}',\n  'cold_nurture',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}', 'touches_sent', 6)::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     }
   ],
   "connections": {
@@ -1512,17 +1558,6 @@
         [
           {
             "node": "Client Valid?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Client Valid?": {
-      "main": [
-        [
-          {
-            "node": "Prep Fields",
             "type": "main",
             "index": 0
           }
@@ -2090,6 +2125,39 @@
           }
         ]
       ]
+    },
+    "Client Valid?": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Prep Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contacted T6": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2105,9 +2173,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "150fb067-9a5e-417c-9d05-b43f510ddbea",
-  "activeVersionId": "150fb067-9a5e-417c-9d05-b43f510ddbea",
-  "versionCounter": 147,
+  "versionId": "853cf110-13e1-4fe8-9e86-1d78da12eeff",
+  "activeVersionId": "853cf110-13e1-4fe8-9e86-1d78da12eeff",
+  "versionCounter": 148,
   "triggerCount": 1,
   "tags": [
     {
