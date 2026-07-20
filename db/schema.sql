@@ -249,3 +249,67 @@ CREATE INDEX IF NOT EXISTS idx_triage_queue_pending
   ON email_triage_queue(status) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS idx_triage_queue_dedup
   ON email_triage_queue(message_id, inbox);
+
+-- ============================================================
+-- AEO SERVICE TABLES
+-- ============================================================
+
+-- Monthly (or on-demand) audit score run for a client. Append-only —
+-- one row per run, so month-over-month deltas are just a self-join on
+-- client_id ordered by run_at. Prospects get a 'prospect'-status clients
+-- row before the audit runs, so client_id is NOT NULL here too.
+CREATE TABLE aeo_audits (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id     uuid NOT NULL REFERENCES clients(id),
+  run_at        timestamptz NOT NULL DEFAULT now(),
+  total_score   int,
+  pillar_scores jsonb,                    -- {gbp, reputation, website, citations, ai_presence}
+  raw           jsonb,                    -- full check results for the report
+  report_url    text
+);
+
+CREATE INDEX idx_aeo_audits_client_run ON aeo_audits(client_id, run_at);
+
+
+-- One row per query battery question per run. Append-only. engine is left
+-- unconstrained (new engines get added without a migration).
+CREATE TABLE aeo_queries (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id        uuid NOT NULL REFERENCES clients(id),
+  run_at           timestamptz NOT NULL DEFAULT now(),
+  engine           text NOT NULL,         -- 'gemini_grounded' | 'perplexity' | ...
+  query            text NOT NULL,
+  client_mentioned boolean NOT NULL,
+  mentioned_names  jsonb,                 -- competitors named in the answer
+  cited_urls       jsonb
+);
+
+CREATE INDEX idx_aeo_queries_client_run ON aeo_queries(client_id, run_at);
+
+
+-- Optimizer output: one row per proposed/applied action, linked to the
+-- query or pillar it targets so the next battery run can score it.
+-- Not append-only — status moves proposed -> applied/declined -> done.
+CREATE TABLE aeo_actions (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id     uuid NOT NULL REFERENCES clients(id),
+  action_type   text NOT NULL             -- who applies it
+    CHECK (action_type IN ('auto_apply', 'norr_applies', 'recommend_only')),
+  surface       text NOT NULL             -- what it changes
+    CHECK (surface IN ('website', 'gbp', 'citations', 'client')),
+  description   text NOT NULL,
+  target_query  text,                     -- query battery question this targets, if any
+  target_pillar text,                     -- pillar this targets, if any
+  status        text NOT NULL DEFAULT 'proposed'
+    CHECK (status IN ('proposed', 'applied', 'declined', 'done')),
+  applied_at    timestamptz,
+  outcome_note  text,                     -- filled after next battery run
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TRIGGER aeo_actions_updated_at
+  BEFORE UPDATE ON aeo_actions
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE INDEX idx_aeo_actions_client_created ON aeo_actions(client_id, created_at);
