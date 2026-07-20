@@ -37,6 +37,9 @@ Find your connection string in the Neon dashboard under **Connection Details**. 
 | `leads` | End-customer leads across all verticals; vertical-specific fields go in `metadata` jsonb. Status values: `new`, `contacted`, `qualified`, `nurturing`, `converted`, `unenrolled`, `dead` |
 | `appointments` | End-customer appointments; tracks reminder/follow-up/review-request timestamps |
 | `workflow_events` | Raw audit log of every n8n workflow trigger/completion/failure |
+| `aeo_audits` | AEO audit engine score runs (append-only) — total + pillar scores, raw check results, report URL |
+| `aeo_queries` | AEO query battery results (append-only) — one row per question per run, whether the client was mentioned, competitors named, cited URLs |
+| `aeo_actions` | AEO Optimizer action list — typed by who applies it (`auto_apply`, `norr_applies`, `recommend_only`), tracked from `proposed` through `done` against the query/pillar it targets |
 
 ## Vertical-specific lead fields
 
@@ -73,4 +76,27 @@ RETURNING id;
 INSERT INTO appointments (client_id, customer_name, appointment_type, scheduled_at)
 VALUES ('<client_id>', 'Jane Smith', 'cleaning', '2026-05-01 10:00:00-05')
 RETURNING id;
+```
+
+## AEO smoke queries
+
+Latest audit score per client:
+
+```sql
+SELECT DISTINCT ON (client_id)
+  client_id, run_at, total_score, pillar_scores
+FROM aeo_audits
+ORDER BY client_id, run_at DESC;
+```
+
+Query-battery mention rate trend (per client, per monthly run):
+
+```sql
+SELECT
+  client_id,
+  date_trunc('month', run_at) AS run_month,
+  round(100.0 * count(*) FILTER (WHERE client_mentioned) / count(*), 1) AS mention_rate_pct
+FROM aeo_queries
+GROUP BY client_id, run_month
+ORDER BY client_id, run_month;
 ```

@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "business_name": "507 Air Heating & Cooling",
+    "client_id": null,
+    "website": "https://507air.com",
+    "place_id": "ChIJFIXTURE_PLACEID_000",
+    "vertical": "hvac",
+    "generated_at": "2026-07-18T15:00:00.000Z",
+    "engine_version": "1.0.0",
+    "partial": false,
+    "skipped_collectors": []
+  },
+  "scores": {
+    "total": 31,
+    "pillars": {
+      "gbp": {
+        "score": 9,
+        "max": 25,
+        "assessed": true,
+        "checks": [
+          { "id": "gbp_verified", "label": "Profile verified", "points": 3, "max_points": 3, "assessed": true, "value": "verified" },
+          { "id": "gbp_primary_category", "label": "Correct primary category", "points": 4, "max_points": 4, "assessed": true, "value": "HVAC contractor" },
+          { "id": "gbp_services_listed", "label": "≥8 services listed", "points": 0, "max_points": 3, "assessed": true, "value": "3 services", "note": "Add furnace repair, AC install, water heater, mini-split, boiler, tune-ups" },
+          { "id": "gbp_hours", "label": "Hours set", "points": 2, "max_points": 2, "assessed": true, "value": "Mon–Fri 8–4" },
+          { "id": "gbp_attributes", "label": "Attributes set (emergency, language, estimates)", "points": 0, "max_points": 2, "assessed": true, "value": "none set" },
+          { "id": "gbp_photos", "label": "≥10 photos, one in last 60 days", "points": 0, "max_points": 3, "assessed": true, "value": "4 photos, newest 210d old" },
+          { "id": "gbp_recent_post", "label": "Post in last 30 days", "points": 0, "max_points": 4, "assessed": true, "value": "no posts ever" },
+          { "id": "gbp_qna_seeded", "label": "Q&A section seeded", "points": 0, "max_points": 4, "assessed": true, "value": "0 questions" }
+        ]
+      },
+      "reputation": {
+        "score": 8,
+        "max": 25,
+        "assessed": true,
+        "checks": [
+          { "id": "rep_review_count", "label": "Review count vs top-3 competitors", "points": 2, "max_points": 8, "assessed": true, "value": "12 vs competitor median 180" },
+          { "id": "rep_rating", "label": "Average rating ≥4.6", "points": 5, "max_points": 5, "assessed": true, "value": "4.9" },
+          { "id": "rep_velocity", "label": "Review velocity ≥4/mo", "points": 0, "max_points": 6, "assessed": true, "value": "0.5/mo (trailing 90d)" },
+          { "id": "rep_response_rate", "label": "Owner responds to reviews within 48h", "points": 1, "max_points": 6, "assessed": true, "value": "2 of 12 responded, slow" }
+        ]
+      },
+      "website": {
+        "score": 12,
+        "max": 25,
+        "assessed": true,
+        "checks": [
+          { "id": "web_schema_localbusiness", "label": "Valid LocalBusiness/HVACBusiness JSON-LD", "points": 0, "max_points": 5, "assessed": true, "value": "no JSON-LD found" },
+          { "id": "web_schema_faq", "label": "FAQPage JSON-LD present", "points": 0, "max_points": 3, "assessed": true, "value": "none" },
+          { "id": "web_faq_content", "label": "FAQ content per core service", "points": 3, "max_points": 4, "assessed": true, "value": "general FAQ exists, not per-service" },
+          { "id": "web_city_pages", "label": "Service+city pages for top towns", "points": 0, "max_points": 4, "assessed": true, "value": "0 of 4 target towns" },
+          { "id": "web_nap_match", "label": "NAP exact-match with GBP", "points": 3, "max_points": 3, "assessed": true, "value": "match" },
+          { "id": "web_entity_signals", "label": "Entity signals (license, years, brands)", "points": 3, "max_points": 3, "assessed": true, "value": "license + brands on About page" },
+          { "id": "web_mobile_cwv", "label": "Mobile-friendly + Core Web Vitals", "points": 3, "max_points": 3, "assessed": true, "value": "LCP 1.9s mobile" }
+        ]
+      },
+      "citations": {
+        "score": 0,
+        "max": 15,
+        "assessed": false,
+        "checks": []
+      },
+      "ai_presence": {
+        "score": 2,
+        "max": 10,
+        "assessed": true,
+        "checks": [
+          { "id": "ai_mention_rate", "label": "Mentioned in AI answers (query battery)", "points": 2, "max_points": 10, "assessed": true, "value": "1 of 6 queries (17%)" }
+        ]
+      }
+    }
+  },
+  "competitors": [
+    { "name": "Cannon Valley Heating & Air", "place_id": "ChIJFIXTURE_COMP_001", "rating": 4.8, "review_count": 212 },
+    { "name": "Straight River Mechanical", "place_id": "ChIJFIXTURE_COMP_002", "rating": 4.7, "review_count": 180 },
+    { "name": "South Metro Comfort Co", "place_id": "ChIJFIXTURE_COMP_003", "rating": 4.9, "review_count": 96 }
+  ],
+  "battery": {
+    "run_at": "2026-07-18T15:05:00.000Z",
+    "engine": "gemini_grounded",
+    "mention_rate": 0.17,
+    "queries": [
+      {
+        "query": "best furnace repair near Faribault MN",
+        "service": "furnace repair",
+        "city": "Faribault",
+        "intent": "best_near_me",
+        "client_mentioned": false,
+        "mentioned_names": ["Cannon Valley Heating & Air", "Straight River Mechanical"],
+        "cited_urls": ["https://example-competitor-1.com/furnace-repair"],
+        "answer_summary": "Recommends two established local contractors, citing review counts and dedicated furnace-repair pages."
+      },
+      {
+        "query": "who should I call for AC installation in Northfield MN",
+        "service": "AC installation",
+        "city": "Northfield",
+        "intent": "who_to_call",
+        "client_mentioned": false,
+        "mentioned_names": ["Cannon Valley Heating & Air"],
+        "cited_urls": ["https://example-competitor-1.com/ac-installation-northfield"],
+        "answer_summary": "Single strong recommendation backed by a Northfield-specific service page."
+      },
+      {
+        "query": "how much does furnace replacement cost in southern Minnesota",
+        "service": "furnace replacement",
+        "city": "Faribault",
+        "intent": "cost",
+        "client_mentioned": false,
+        "mentioned_names": ["Straight River Mechanical"],
+        "cited_urls": ["https://example-competitor-2.com/furnace-cost-guide"],
+        "answer_summary": "Quotes a competitor's cost-guide page for the price range; no local installer named besides them."
+      },
+      {
+        "query": "emergency furnace repair Faribault",
+        "service": "furnace repair",
+        "city": "Faribault",
+        "intent": "emergency",
+        "client_mentioned": true,
+        "mentioned_names": ["507 Air Heating & Cooling", "Cannon Valley Heating & Air"],
+        "cited_urls": ["https://507air.com", "https://example-competitor-1.com"],
+        "answer_summary": "Client is named alongside one competitor; weekend emergency availability on the site is cited."
+      },
+      {
+        "query": "best HVAC contractor Owatonna MN",
+        "service": "HVAC",
+        "city": "Owatonna",
+        "intent": "best_near_me",
+        "client_mentioned": false,
+        "mentioned_names": ["South Metro Comfort Co", "Straight River Mechanical"],
+        "cited_urls": ["https://example-competitor-3.com"],
+        "answer_summary": "Answer built from GBP review data; client's profile has too few reviews to surface."
+      },
+      {
+        "query": "water heater installation cost Lakeville MN",
+        "service": "water heater installation",
+        "city": "Lakeville",
+        "intent": "cost",
+        "client_mentioned": false,
+        "mentioned_names": [],
+        "cited_urls": ["https://example-national-brand.com/water-heater-cost"],
+        "answer_summary": "Only national cost aggregators cited; no local installer named at all — winnable query."
+      }
+    ]
+  },
+  "raw": {
+    "places": {
+      "client": {
+        "name": "507 Air Heating & Cooling",
+        "rating": 4.9,
+        "user_ratings_total": 12,
+        "business_status": "OPERATIONAL",
+        "photos_count": 4,
+        "opening_hours_set": true
+      },
+      "competitor_search": "HVAC contractor Faribault MN"
+    },
+    "site": {
+      "fetched_pages": ["/", "/services.html", "/about.html", "/contact.html"],
+      "jsonld_blocks": 0,
+      "nap": { "phone": "(507) 491-3063", "matches_gbp": true },
+      "sitemap": false,
+      "robots": true
+    },
+    "pagespeed": {
+      "mobile": { "lcp_ms": 1900, "cls": 0.02, "performance_score": 0.94 }
+    },
+    "citations": []
+  }
+}
