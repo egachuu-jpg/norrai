@@ -29,7 +29,11 @@ PATTERNS=(
 
 is_whitelisted_path() {
   case "$1" in
-    "$HERMES_HOME"*) return 0 ;;
+    "$HERMES_HOME"*)           return 0 ;;  # Hermes runtime state (permitted secrets live here)
+    /root/hermes-agent/*)      return 0 ;;  # Hermes codebase (test fixtures, docs, venv)
+    /root/.cache/uv/*)         return 0 ;;  # uv package cache (library source contains example creds)
+    /root/.local/share/uv/*)   return 0 ;;  # uv Python distribution (TCL encoding false positives)
+    /etc/ssh/ssh_host_*)       return 0 ;;  # Server SSH host keys (legitimate system files)
     *) return 1 ;;
   esac
 }

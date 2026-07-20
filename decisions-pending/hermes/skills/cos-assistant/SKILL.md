@@ -18,11 +18,22 @@ A personal decision-tracking skill that interfaces with the Norr AI "Decisions P
 **Base URL:** Environment variable `COS_API_BASE` (the Railway service URL, e.g. `https://<service>.up.railway.app`)  
 **Authentication:** Bearer token in `Authorization` header using env `COS_API_TOKEN`
 
-Example curl (all requests use this pattern):
+**IMPORTANT — always source the env file before every curl call** (the terminal subprocess does not inherit the shell environment automatically):
+
 ```bash
-curl -H "Authorization: Bearer $COS_API_TOKEN" \
+source /root/.hermes/.env && curl -H "Authorization: Bearer $COS_API_TOKEN" \
   "$COS_API_BASE/pending"
 ```
+
+Every API call below follows this pattern: `source /root/.hermes/.env &&` prepended to the curl.
+
+---
+
+## Critical Rules
+
+- **The cos API is the ONLY source of truth.** Never invent, recall, or cache a "local task list" from conversation context. Every list or status display MUST come from a fresh API call.
+- **Deadline format is always `YYYY-MM-DD`.** Parse natural language ("next Friday", "July 31") to an ISO date string before putting it in the curl command. Never pass a phrase like "next Friday" in the JSON body — it will fail.
+- **NEVER use Hermes built-in tools for these commands.** Do NOT create cron jobs, reminders, or internal task entries to handle user requests. Do NOT list Hermes cron jobs in response to "list". ALL of the following are cos API operations — nothing else: list, track, add, done, complete, dismiss, ignore, snooze, defer, draft.
 
 ---
 
@@ -36,7 +47,7 @@ Mark an item complete by its number in today's digest.
 - "done 2"
 - "complete item 5"
 
-**API call:** `POST /decisions/by-position/{n}/done`
+**API call:** `source /root/.hermes/.env && curl -s -X POST -H "Authorization: Bearer $COS_API_TOKEN" "$COS_API_BASE/decisions/by-position/{n}/done"`
 
 **Response:** Confirms completion. If already done/dismissed (409): tell Egan "that's already done" with current status.
 
@@ -50,7 +61,7 @@ Defer an item to a specific date (parses natural language like "Friday", "next M
 - "snooze 3 til Friday"
 - "defer 1 to next Tuesday"
 
-**API call:** Parse date to `YYYY-MM-DD` → `POST /decisions/by-position/{n}/snooze` with body `{"until":"YYYY-MM-DD"}`
+**API call:** Parse date to `YYYY-MM-DD` → `source /root/.hermes/.env && curl -s -X POST -H "Authorization: Bearer $COS_API_TOKEN" -H "Content-Type: application/json" -d '{"until":"YYYY-MM-DD"}' "$COS_API_BASE/decisions/by-position/{n}/snooze"`
 
 **Response:** Confirms snooze date. If already done/dismissed (409): tell Egan its current status.
 
@@ -64,7 +75,7 @@ Remove an item from the active list.
 - "dismiss 4"
 - "ignore item 2"
 
-**API call:** `POST /decisions/by-position/{n}/dismiss`
+**API call:** `source /root/.hermes/.env && curl -s -X POST -H "Authorization: Bearer $COS_API_TOKEN" "$COS_API_BASE/decisions/by-position/{n}/dismiss"`
 
 **Response:** Confirms dismissal. If already done/dismissed (409): tell Egan "that's already dismissed" with current status.
 
@@ -79,8 +90,8 @@ Retrieve a suggested reply for an item (for review before Egan sends manually).
 - "show me the draft for item 3"
 
 **Workflow:**
-1. `GET /pending` → find item where `digest_position == {n}`, extract `id`
-2. `GET /decisions/{id}/draft` → retrieve `{"draft_reply": "..."}`
+1. `source /root/.hermes/.env && curl -s -H "Authorization: Bearer $COS_API_TOKEN" "$COS_API_BASE/pending"` → find item where `digest_position == {n}`, extract `id`
+2. `source /root/.hermes/.env && curl -s -H "Authorization: Bearer $COS_API_TOKEN" "$COS_API_BASE/decisions/{id}/draft"` → retrieve `{"draft_reply": "..."}`
 
 **Response:** Display the draft text for Egan to copy and paste. **Never send or execute the email yourself.** If no draft (404): "no draft available for that item yet."
 
@@ -94,7 +105,7 @@ Create a new pending item, optionally with a deadline.
 - "track: call the accountant by Friday"
 - "add: review Q3 budget by July 31"
 
-**API call:** Parse title and optional deadline → `POST /decisions` with body `{"title": "...", "deadline": "YYYY-MM-DD"}` (omit deadline if not given)
+**API call:** Parse title and optional deadline → `source /root/.hermes/.env && curl -s -X POST -H "Authorization: Bearer $COS_API_TOKEN" -H "Content-Type: application/json" -d '{"title": "...", "deadline": "YYYY-MM-DD"}' "$COS_API_BASE/decisions"` (omit deadline if not given)
 
 **Response:** Confirms the item is tracked and assigned a position in tomorrow's digest.
 
@@ -109,7 +120,7 @@ Show all currently open items, numbered by digest position.
 - "list"
 - "show my decisions"
 
-**API call:** `GET /pending`
+**API call:** `source /root/.hermes/.env && curl -s -H "Authorization: Bearer $COS_API_TOKEN" "$COS_API_BASE/pending"`
 
 **Response:** Render all items numbered by `digest_position`, e.g.:
 ```
@@ -125,7 +136,7 @@ Show all currently open items, numbered by digest position.
 **When:** 07:00 America/Chicago (every day)
 
 **Action:**
-1. `GET /digest/latest`
+1. `source /root/.hermes/.env && curl -s -H "Authorization: Bearer $COS_API_TOKEN" "$COS_API_BASE/digest/latest"`
 2. Send the returned text to Telegram **verbatim** (no rewriting, summarizing, or decorating)
 
 If digest not yet generated (404), skip and try again next hour.
