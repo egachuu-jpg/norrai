@@ -152,7 +152,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM leads\nWHERE email = '{{ $json.email }}'\n  AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $json.agent_email }}' LIMIT 1)\nLIMIT 1",
+        "query": "SELECT id FROM leads\nWHERE email = NULLIF(trim('{{ $json.email }}'), '')\n  AND client_id = (SELECT id FROM clients WHERE primary_contact_email = '{{ $json.agent_email }}' LIMIT 1)\nLIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
