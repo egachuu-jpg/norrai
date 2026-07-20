@@ -74,14 +74,18 @@ git checkout 43e566f77eaf01293086eb7cb99a21e240d60634   # matches hermes/VERSION
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."   # set before the next command, or via `hermes login`
-hermes model
+hermes config set model.default claude-sonnet-4-6
+hermes config set model.provider anthropic
 ```
 
-- [ ] Select provider `anthropic`, model `claude-sonnet-5` — chosen over
+- [ ] Provider `anthropic`, model **`claude-sonnet-4-6`** — chosen over
   `claude-opus-4-8` for cost, since Hermes's actual usage volume here is a
   handful of Telegram messages a day plus one digest fetch. Anthropic is a
-  first-class provider here (confirmed in `providers/README.md` of the
-  repo) — no OpenRouter proxy needed.
+  first-class provider here — no OpenRouter proxy needed.
+  - ⚠️ **`claude-sonnet-5` does not exist** in the model registry (an earlier
+    draft of this doc named it — that was wrong). Setting a bogus model id
+    silently falls back / errors at first message. Confirm with
+    `hermes config show` → Model line reads `claude-sonnet-4-6`.
 
 ### 4. Telegram Gateway
 
@@ -96,34 +100,83 @@ hermes gateway status
 - [ ] Create the bot via BotFather first if you're using a fresh bot (decided:
   yes — see chat) and paste its token during `gateway setup`.
 
-### 5. Access Control (pairing, not a static allowlist)
+### 5. Access Control (`TELEGRAM_ALLOWED_USERS`, NOT pairing)
 
-This project's access control is DM-pairing, not a config-file chat-ID list:
+⚠️ **`hermes pairing` is NOT the DM access control in this build.** An earlier
+draft of this doc claimed pairing gates who can DM the bot — it does not. With
+pairing "approved" the bot still replied to anyone. The real gate is the
+`TELEGRAM_ALLOWED_USERS` env var (comma-separated numeric Telegram user IDs)
+in `~/.hermes/.env`:
 
-- [ ] From your phone, DM the bot once — it will issue a pairing code.
-- [ ] On the droplet: `hermes pairing list` (see the pending code) →
-  `hermes pairing approve <code>`.
-- [ ] Confirm no one else is approved: `hermes pairing list` should show
-  exactly one approved user (you). `hermes pairing revoke <user>` removes
-  anyone else; `hermes pairing clear-pending` clears any other pending codes
-  before you approve yours, if you want to be extra sure nothing else got
-  submitted first.
+- [ ] Find your numeric Telegram user ID (DM `@userinfobot`, or check the
+  gateway log after you first message the bot).
+- [ ] Add it to `~/.hermes/.env`:
+  ```bash
+  echo 'TELEGRAM_ALLOWED_USERS=<your_numeric_id>' >> ~/.hermes/.env
+  hermes gateway restart
+  ```
+- [ ] **Verify with a negative test:** the bot must go silent for any ID not
+  in the list. Confirmed working: bogus ID → silence; real ID → reply. For a
+  single-user box this is the whole access model.
+- [ ] For a Telegram DM, chat_id == user_id — this same numeric ID is reused
+  in step 6b (the persona prompt is keyed on it).
 
-### 6. Tool Restriction
+### 6a. Terminal Backend — **local**, NOT Docker
+
+⚠️ **Do NOT use the Docker sandbox backend.** An earlier draft required it.
+In practice the Docker sandbox **isolates environment variables**, so
+`$COS_API_TOKEN` / `$COS_API_BASE` from `~/.hermes/.env` are empty inside the
+container and every cos API `curl` fails (the agent then hallucinates success).
+Use the **local** backend:
 
 ```bash
-hermes tools
+hermes config set terminal.backend local
 ```
 
-- [ ] Disable the browser/web tool and anything not needed for calling the
-  cos API (bash/http execution is what actually runs the `curl` calls
-  described in the skill — keep that; disable browsing, computer-use, and
-  anything platform-specific you don't need).
-- [ ] Set the terminal/tool-execution sandbox backend to **Docker** (one of
-  seven backends this project supports — Local/Docker/SSH/Singularity/
-  Modal/Daytona/Vercel Sandbox) via `hermes config` (interactive) — confirms
-  the spec's "terminal backend = Docker sandbox" requirement. Requires
-  Docker installed (step 1).
+- [ ] Note: even with the local backend, the terminal subprocess does **not**
+  auto-inherit `~/.hermes/.env`. The skill compensates by prefixing every
+  command with `source /root/.hermes/.env &&` — see
+  `hermes/skills/cos-assistant/SKILL.md`. Keep that pattern.
+
+### 6b. Disable shadowing toolsets (critical for skill routing)
+
+The agent has built-in toolsets whose verbs collide with the skill's — a bare
+`list` / `track` gets grabbed by `cronjob`, `todo`, or `kanban`, and `memory`
+lets the agent fabricate a task list from conversation history instead of
+calling the API. Disable them on **both** platforms (`hermes tools disable`
+defaults to `--platform cli`, so run each twice):
+
+```bash
+for t in cronjob todo memory; do
+  hermes tools disable "$t" --platform telegram
+  hermes tools disable "$t"
+done
+```
+
+- [ ] Leave `terminal` and `skills` enabled (the skill needs both). `web`,
+  `browser`, `image_gen`, `computer_use`, etc. should already be off.
+- [ ] `kanban` is config-listed but not a toggleable toolset (`tools disable
+  kanban` → "Unknown toolset"); disabling `memory`/`todo`/`cronjob` is what
+  matters.
+
+### 6c. Persona prompt — pin the agent to the cos-assistant skill
+
+⚠️ **Without this, skill routing fails even with the shadow tools gone.** On a
+bare `list` the agent defaults to *listing skills* rather than loading
+cos-assistant. The fix is a per-chat system prompt (`telegram.channel_prompts`
+keyed on your numeric Telegram ID from step 5) that hard-wires the verbs to the
+skill:
+
+```bash
+CHAT=$(grep TELEGRAM_ALLOWED_USERS ~/.hermes/.env | cut -d= -f2 | tr -d ' "' | cut -d, -f1)
+hermes config set telegram.channel_prompts.$CHAT "You are Egan's Chief of Staff running on a single-purpose appliance. Your ONLY job is managing pending decisions through the cos-assistant skill. For ANY of these requests — list, what is pending, show decisions, track, add, done, complete, snooze, defer, dismiss, ignore, draft — you MUST load the cos-assistant skill and call the cos API with a terminal curl. The word 'list' ALWAYS means GET /pending on the cos API. It NEVER means listing skills, and NEVER means hermes cron. Do not use cron, kanban, or memory tools. Never answer about tasks or decisions from conversation history — always call the cos API fresh."
+```
+
+- [ ] Verify it landed: `grep -A2 channel_prompts ~/.hermes/config.yaml` shows
+  your ID mapped to the prompt. Restart the gateway after.
+- [ ] After any change here, start a **fresh Telegram thread** (`/new`) before
+  testing — a poisoned session anchors the old (wrong) interpretation of
+  `list` and resumes it across gateway restarts.
 
 ### 7. Environment Secrets
 
@@ -214,7 +267,17 @@ hermes backup   # produces a zip of the Hermes home directory
   → digest text arrives verbatim from `GET /digest/latest`
 - [ ] Send to Telegram: `"snooze 2 to Thursday"`
   → item deferred, confirmed in `"list"`
-- [ ] `hermes pairing list` shows exactly one approved user
+- [ ] Access control: from a **different** Telegram account (ID not in
+  `TELEGRAM_ALLOWED_USERS`), DM the bot → it stays silent. (There is no
+  `hermes pairing` gate — see step 5.)
+
+> **Note on by-position tests:** `done N` / `snooze N` / `dismiss N` resolve
+> against *today's* `digest_log.item_ids` snapshot. Until the digest-generation
+> workflow (n8n) exists, no digest row is written automatically, so these
+> return "no digest yet today." To validate the path before then, seed one row:
+> `INSERT INTO cos.digest_log (rendered_text, item_ids, model) VALUES ('...',
+> ARRAY['<id1>','<id2>']::uuid[], 'manual-test-seed');` — positions map 1:1 to
+> `item_ids` order.
 
 ---
 
@@ -236,10 +299,11 @@ hermes backup   # produces a zip of the Hermes home directory
 
 | Issue | Check |
 |-------|-------|
-| Telegram: no response to commands | `hermes gateway status`; `hermes pairing list` (are you actually approved?) |
-| cos API 401 | `COS_API_TOKEN` mismatch — check wherever step 7's env file lives |
-| cos API 404 on `/pending` | `COS_API_BASE` unreachable — confirm the Norr AI box is online |
-| Digest never arrives | `hermes cron list` / `hermes cron status` — job created and scheduler running? |
-| Skill not responding | `hermes skills list` (installed?); `hermes skills config` (enabled?); `hermes gateway restart` after any skill change |
+| Telegram: no response to commands | `hermes gateway status`; is your numeric ID in `TELEGRAM_ALLOWED_USERS` (step 5)? |
+| Bot replies but ignores the skill (lists skills / cron jobs, or invents a task list) | Shadow toolsets or missing persona — verify step 6b (`memory`/`todo`/`cronjob` disabled) and step 6c (`channel_prompts` set); then `/new` for a fresh thread |
+| cos API 401 | `COS_API_TOKEN` mismatch — check `~/.hermes/.env` |
+| cos API 500 on first call after idle | Railway cold-start on the DB pool — retry once; it warms up (not a code bug) |
+| Bot claims curl worked but DB is empty | Terminal subprocess env not sourced — every curl must be prefixed `source /root/.hermes/.env &&` (step 6a) |
+| `done N`/`snooze N`/`dismiss N` → "no digest yet today" | No `digest_log` row for today — expected until the n8n digest workflow exists; seed one to test (see Acceptance note) |
+| Skill not responding | `hermes skills list` (enabled?); `hermes gateway restart` after any skill change |
 | Audit script fails | Remove the offending secret; retry; check `HERMES_HOME` if paths look wrong |
-| Terminal sandbox not using Docker | Docker installed? (`which docker`); recheck `hermes config`'s terminal-backend setting |
