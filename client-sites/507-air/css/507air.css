@@ -46,6 +46,10 @@ body {
 
 img { max-width: 100%; display: block; }
 
+/* keep [hidden] authoritative — layout rules below (flex/grid/block) would
+   otherwise out-specify the user-agent [hidden] rule and reveal the element */
+[hidden] { display: none !important; }
+
 a { color: var(--blue-deep); }
 
 :focus-visible {

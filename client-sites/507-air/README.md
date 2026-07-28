@@ -31,8 +31,10 @@ using the same static-assets pattern as `website/wrangler.jsonc`:
    first pass (Faribault + surrounding). **Confirm the exact list with Oscar.**
 3. **Photos** — more job photos from Oscar's email (Goodman, Cooper & Hunter, Durastar,
    GE furnace) can be added to `images/` and worked into services/about pages.
-4. **Google reviews** — once the Google Business Profile has reviews, add a testimonials
-   section to `index.html`.
+4. **Google reviews** — the review CTAs (index.html §Reviews + the footer link on every
+   page) are hidden until `js/review-link.js` has a real `PLACE_ID`; set it there once
+   the Google Business Profile is verified. See `GBP_SETUP.md` §10. Once real reviews
+   come in, add `.review-card` blocks to the Reviews section on `index.html`.
 
 ## Tests
 

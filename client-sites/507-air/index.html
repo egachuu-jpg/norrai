@@ -192,7 +192,12 @@
   </div>
 </section>
 
-<section class="block" id="reviews">
+<!--
+  This whole section is hidden until js/review-link.js has a real Place ID —
+  there is nothing to link to before the Google Business Profile is verified.
+  See js/review-link.js to turn it on.
+-->
+<section class="block" id="reviews" data-review-cta hidden>
   <div class="wrap">
     <p class="eyebrow cool">Reviews</p>
     <h2>What customers are saying</h2>
@@ -212,7 +217,7 @@
       <div class="review-card">
         <p class="stars" aria-label="5 out of 5 stars">★★★★★</p>
         <p class="quote">Just finished a job for you? A quick Google review goes a long way for a family-owned business — thank you.</p>
-        <a class="btn blue" href="https://search.google.com/local/writereview?placeid=REPLACE_WITH_GBP_PLACE_ID" target="_blank" rel="noopener">Leave us a review</a>
+        <a class="btn blue" href="#" data-review-url target="_blank" rel="noopener">Leave us a review</a>
       </div>
     </div>
   </div>
@@ -261,7 +266,7 @@
           <li><a href="tel:+15074913063">(507) 491-3063</a></li>
           <li><a href="mailto:airheatingandcooling507@outlook.com">Email us</a></li>
           <li>PO Box 355, Faribault, MN 55021</li>
-          <li><a href="https://search.google.com/local/writereview?placeid=REPLACE_WITH_GBP_PLACE_ID" target="_blank" rel="noopener">Leave a Google review</a></li>
+          <li data-review-cta hidden><a href="#" data-review-url target="_blank" rel="noopener">Leave a Google review</a></li>
         </ul>
       </div>
     </div>
@@ -272,6 +277,7 @@
   </div>
 </footer>
 
+<script src="js/review-link.js" defer></script>
 <script>
   const toggle = document.querySelector('.nav-toggle');
   const nav = document.querySelector('.site-nav');
