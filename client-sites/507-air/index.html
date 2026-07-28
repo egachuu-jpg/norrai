@@ -193,15 +193,18 @@
 </section>
 
 <!--
-  This whole section is hidden until js/review-link.js has a real Place ID —
-  there is nothing to link to before the Google Business Profile is verified.
+  This whole section is hidden until js/review-link.js has a real REVIEW_URL —
+  there is nothing to link to before the Google Business Profile is live.
   See js/review-link.js to turn it on.
 -->
 <section class="block" id="reviews" data-review-cta hidden>
   <div class="wrap">
     <p class="eyebrow cool">Reviews</p>
-    <h2>What customers are saying</h2>
     <!--
+      HEADING: this says "Been a customer?" because the only card below is the
+      ask — there are no real reviews yet. Switch it back to "What customers
+      are saying" at the same time you add the first real .review-card.
+
       ADDING REVIEWS: once the Google Business Profile has reviews, copy a
       .review-card block below for each one (alternate class "review-card" /
       "review-card cool" for the heat/cool accent stripe). Structure:
@@ -210,12 +213,14 @@
           <p class="quote">"Short 1–3 sentence quote from the review."</p>
           <p class="attrib">— First name, City</p>
         </div>
+      Note the stars belong to a real review only — the ask card below must not
+      carry them, or it reads as a 5-star review 507 Air wrote about itself.
       Keep the "Leave us a review" card either removed or moved to the end
       once there are 3+ real reviews to show.
     -->
+    <h2>Been a customer?</h2>
     <div class="card-grid">
       <div class="review-card">
-        <p class="stars" aria-label="5 out of 5 stars">★★★★★</p>
         <p class="quote">Just finished a job for you? A quick Google review goes a long way for a family-owned business — thank you.</p>
         <a class="btn blue" href="#" data-review-url target="_blank" rel="noopener">Leave us a review</a>
       </div>
