@@ -162,19 +162,24 @@ Minimum for a credible profile: logo + cover + 3 job photos.
 
 ## 10. After it's live — loop back to the website
 
-The site is already wired for this — a "Leave us a review" card on `index.html`
-(§Reviews section) and a "Leave a Google review" link in the footer of all 5 pages.
-**Both are hidden until a real Place ID exists**, because a review URL without one
-returns a Google 404 (Oscar hit exactly that on 2026-07-28).
-
-Once the profile is created, set the review URL in **one** place —
-`client-sites/507-air/js/review-link.js`:
+**Status (2026-07-28): done.** The profile exists and `REVIEW_URL` is set to the
+dashboard's "Ask for reviews" short link:
 
 ```js
-var REVIEW_URL = '…';   // ← the only edit; all 5 pages read this file
+var REVIEW_URL = 'https://g.page/r/CS6mxtsUw3ujEBM/review';
 ```
 
-Either form works:
+That same link is the one to hand Oscar for texting customers (item 3 below).
+
+The mechanism, for when it needs changing: a "Leave us a review" card on
+`index.html` (§Reviews section) and a "Leave a Google review" link in the footer
+of all 5 pages both take their href from **one** place —
+`client-sites/507-air/js/review-link.js`. Blank it and every CTA hides itself
+again. That default is deliberate: the pages previously hardcoded
+`?placeid=REPLACE_WITH_GBP_PLACE_ID`, and Oscar reported the resulting Google
+404 on 2026-07-28.
+
+Either URL form works:
 
 | Source | URL shape |
 |---|---|

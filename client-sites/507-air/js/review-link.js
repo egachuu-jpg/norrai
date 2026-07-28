@@ -22,7 +22,7 @@
   Whatever you paste, click it once yourself before deploying.
 */
 (function () {
-  var REVIEW_URL = '';
+  var REVIEW_URL = 'https://g.page/r/CS6mxtsUw3ujEBM/review';
 
   if (!REVIEW_URL) return;
 
