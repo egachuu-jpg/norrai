@@ -162,18 +162,22 @@ Minimum for a credible profile: logo + cover + 3 job photos.
 
 ## 10. After it's live — loop back to the website
 
-The site is already wired for this — a "Leave us a review" card is live on `index.html`
-(§Reviews section) and a "Leave a Google review" link is in the footer of all 5 pages.
-Both currently point to:
-
-```
-https://search.google.com/local/writereview?placeid=REPLACE_WITH_GBP_PLACE_ID
-```
+The site is already wired for this — a "Leave us a review" card on `index.html`
+(§Reviews section) and a "Leave a Google review" link in the footer of all 5 pages.
+**Both are hidden until a real Place ID exists**, because a review URL without one
+returns a Google 404 (Oscar hit exactly that on 2026-07-28).
 
 Once the profile is created, find its **Place ID** (Google Business Profile Manager →
 Info, or via the [Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id))
-and find/replace `REPLACE_WITH_GBP_PLACE_ID` across `index.html`, `about.html`,
-`contact.html`, `deals.html`, `services.html` with the real ID.
+and set it in **one** place — `client-sites/507-air/js/review-link.js`:
+
+```js
+var PLACE_ID = 'ChIJ…';   // ← the only edit; all 5 pages read this file
+```
+
+That reveals the Reviews section and the footer links and points them at
+`https://search.google.com/local/writereview?placeid=<PLACE_ID>`. Then redeploy
+(`npx wrangler deploy` from `client-sites/507-air`) and run `npm test`.
 
 Once real reviews start coming in:
 1. Copy a `.review-card` block in `index.html`'s Reviews section for each one (see the

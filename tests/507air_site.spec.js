@@ -34,6 +34,20 @@ for (const { path, title } of PAGES) {
       await expect(page.locator(`.site-footer a[href="${PHONE_HREF}"]`)).toBeVisible();
       await expect(page.locator(`.site-footer a[href="${EMAIL_HREF}"]`)).toBeVisible();
     });
+
+    // The owner hit a Google 404 from a hardcoded placeholder review URL — no
+    // page may ship a review link until js/review-link.js supplies a real one.
+    test('review CTA is wired to review-link.js, never a dead URL', async ({ page }) => {
+      await page.goto(`${BASE}${path}`);
+      expect(await page.locator('script[src="js/review-link.js"]').count()).toBe(1);
+      expect(
+        await page.locator('a[href*="REPLACE_WITH"], a[href*="writereview"]').count(),
+        'no hardcoded review URL',
+      ).toBe(0);
+      const footerLink = page.locator('.site-footer a[data-review-url]');
+      expect(await footerLink.count()).toBe(1);
+      await expect(footerLink).toBeHidden();
+    });
   });
 }
 
@@ -141,6 +155,39 @@ test('mobile nav toggle opens and closes the menu', async ({ page }) => {
   await toggle.click();
   await expect(nav).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+// Google review CTAs: the profile isn't verified yet, so no Place ID exists.
+// The owner reported a 404 from the old hardcoded placeholder URL — these guard
+// against ever shipping a review link that points nowhere.
+test('review-link.js is served by the site', async ({ request }) => {
+  const res = await request.get(`${BASE}/js/review-link.js`);
+  expect(res.status()).toBe(200);
+});
+
+test('home: reviews section stays hidden while the Place ID is unset', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  await expect(page.locator('#reviews')).toBeHidden();
+});
+
+test('home: setting a Place ID reveals the CTAs and builds a real Google URL', async ({ page }) => {
+  // simulate js/review-link.js with PLACE_ID filled in
+  await page.goto(`${BASE}/index.html`);
+  await page.evaluate(() => {
+    const url = 'https://search.google.com/local/writereview?placeid=ChIJTestPlaceId';
+    document.querySelectorAll('a[data-review-url]').forEach((a) => a.setAttribute('href', url));
+    document.querySelectorAll('[data-review-cta]').forEach((el) => { el.hidden = false; });
+  });
+  await expect(page.locator('#reviews')).toBeVisible();
+  const links = page.locator('a[data-review-url]');
+  expect(await links.count()).toBe(2); // reviews card + footer
+  for (let i = 0; i < 2; i++) {
+    await expect(links.nth(i)).toHaveAttribute(
+      'href',
+      'https://search.google.com/local/writereview?placeid=ChIJTestPlaceId'
+    );
+    await expect(links.nth(i)).toBeVisible();
+  }
 });
 
 test('images referenced on pages exist', async ({ request }) => {
