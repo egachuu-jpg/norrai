@@ -165,30 +165,34 @@ test('review-link.js is served by the site', async ({ request }) => {
   expect(res.status()).toBe(200);
 });
 
-test('home: reviews section stays hidden while the Place ID is unset', async ({ page }) => {
+test('home: reviews section stays hidden while REVIEW_URL is unset', async ({ page }) => {
   await page.goto(`${BASE}/index.html`);
   await expect(page.locator('#reviews')).toBeHidden();
 });
 
-test('home: setting a Place ID reveals the CTAs and builds a real Google URL', async ({ page }) => {
-  // simulate js/review-link.js with PLACE_ID filled in
-  await page.goto(`${BASE}/index.html`);
-  await page.evaluate(() => {
-    const url = 'https://search.google.com/local/writereview?placeid=ChIJTestPlaceId';
-    document.querySelectorAll('a[data-review-url]').forEach((a) => a.setAttribute('href', url));
-    document.querySelectorAll('[data-review-cta]').forEach((el) => { el.hidden = false; });
+// Both URL forms review-link.js documents must light up every CTA.
+for (const url of [
+  'https://g.page/r/CTestCidValue/review',
+  'https://search.google.com/local/writereview?placeid=ChIJTestPlaceId',
+]) {
+  test(`home: setting REVIEW_URL to ${url} reveals the CTAs`, async ({ page }) => {
+    await page.goto(`${BASE}/index.html`);
+    // simulate js/review-link.js with REVIEW_URL filled in
+    await page.evaluate((reviewUrl) => {
+      document
+        .querySelectorAll('a[data-review-url]')
+        .forEach((a) => a.setAttribute('href', reviewUrl));
+      document.querySelectorAll('[data-review-cta]').forEach((el) => { el.hidden = false; });
+    }, url);
+    await expect(page.locator('#reviews')).toBeVisible();
+    const links = page.locator('a[data-review-url]');
+    expect(await links.count()).toBe(2); // reviews card + footer
+    for (let i = 0; i < 2; i++) {
+      await expect(links.nth(i)).toHaveAttribute('href', url);
+      await expect(links.nth(i)).toBeVisible();
+    }
   });
-  await expect(page.locator('#reviews')).toBeVisible();
-  const links = page.locator('a[data-review-url]');
-  expect(await links.count()).toBe(2); // reviews card + footer
-  for (let i = 0; i < 2; i++) {
-    await expect(links.nth(i)).toHaveAttribute(
-      'href',
-      'https://search.google.com/local/writereview?placeid=ChIJTestPlaceId'
-    );
-    await expect(links.nth(i)).toBeVisible();
-  }
-});
+}
 
 test('images referenced on pages exist', async ({ request }) => {
   for (const img of ['logo.jpg', 'logo-wide.jpg', 'logo-hero.jpg', 'billboard.png', 'ge-install.jpg']) {

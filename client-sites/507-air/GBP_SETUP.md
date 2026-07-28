@@ -167,17 +167,24 @@ The site is already wired for this — a "Leave us a review" card on `index.html
 **Both are hidden until a real Place ID exists**, because a review URL without one
 returns a Google 404 (Oscar hit exactly that on 2026-07-28).
 
-Once the profile is created, find its **Place ID** (Google Business Profile Manager →
-Info, or via the [Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id))
-and set it in **one** place — `client-sites/507-air/js/review-link.js`:
+Once the profile is created, set the review URL in **one** place —
+`client-sites/507-air/js/review-link.js`:
 
 ```js
-var PLACE_ID = 'ChIJ…';   // ← the only edit; all 5 pages read this file
+var REVIEW_URL = '…';   // ← the only edit; all 5 pages read this file
 ```
 
-That reveals the Reviews section and the footer links and points them at
-`https://search.google.com/local/writereview?placeid=<PLACE_ID>`. Then redeploy
-(`npx wrangler deploy` from `client-sites/507-air`) and run `npm test`.
+Either form works:
+
+| Source | URL shape |
+|---|---|
+| **"Get more reviews" short link** (Business Profile dashboard) — preferred, short enough to text | `https://g.page/r/<CID>/review` |
+| Built from the profile's **Place ID** ([Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id)) | `https://search.google.com/local/writereview?placeid=<PLACE_ID>` |
+
+Setting it reveals the Reviews section and the footer links on all 5 pages.
+**Click the URL once yourself before deploying** — a wrong ID renders a live
+404, which is the exact bug this file was added to prevent. Then run `npm test`
+and redeploy (`npx wrangler deploy` from `client-sites/507-air`).
 
 Once real reviews start coming in:
 1. Copy a `.review-card` block in `index.html`'s Reviews section for each one (see the
