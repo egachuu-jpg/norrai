@@ -112,6 +112,8 @@
 - `new Date('YYYY-MM-DD')` parses as UTC midnight and displays as the prior day in US timezones — use `new Date('YYYY-MM-DDT12:00:00')` when displaying dates locally
 - `escapeHtml()` is required when rendering user-supplied strings into `innerHTML` template literals — use `textContent` for plain text nodes, `escapeHtml()` when the value is embedded in HTML markup
 - `btn.disabled = true` after a successful webhook response prevents double-submit — apply this to every form submit handler
+- Never ship a placeholder inside a live `href` — `?placeid=REPLACE_WITH_GBP_PLACE_ID` went live on 507air.com and the owner reported the 404. The fix pattern: put the unknown value in one small JS config file, mark every CTA `hidden` in the markup, and let the script unhide only when the value is real. Absent config renders nothing instead of a broken link, and no-JS users never see a dead CTA either
+- `[hidden]` from the user-agent stylesheet loses to any author rule that sets `display` (`.block`, `.card-grid`, flex/grid containers) — add `[hidden] { display: none !important; }` to the site stylesheet or "hidden" elements render anyway
 - Single HTML file can serve multiple workflow variants via a `wf` URL param — QR code generator injects the param at setup time (`wf=weichert`) so no separate HTML file is needed per client; downstream webhook routing is a one-liner: `const WEBHOOK_URL = wf === 'weichert' ? '.../weichert-open-house-signin' : '.../open-house-signin'`
 
 ## Playwright / Testing
@@ -119,6 +121,7 @@
 - `"0".trim()` is truthy — `setup_fee=0` passes a non-empty string check; add an explicit test for zero-value numeric fields to prevent silent regression if validation logic changes
 - CSS-hidden radio buttons (`opacity:0; width:0; height:0`) cannot be interacted with via `page.check()` even with `force:true` — must click the visible `<span>` label using a `:has(input[value="..."])` locator
 - `type="number" step="1000"` silently prevents form submission when the value is not a valid step multiple — use `step="any"` to accept any numeric value and validate range server-side
+- One test that loops `page.goto()` over every page blows the 30s per-test timeout on a slow `npx serve` — put per-page assertions inside the existing `for (const page of PAGES)` describe block so each page gets its own timeout budget
 
 ## BoldTrail / kvCORE
 - Lead Dropbox API key is inbound-only — `GET /contacts` returns 401; it pushes leads into BoldTrail, not out; Zapier uses OAuth separately

@@ -8,6 +8,9 @@ const { test, expect } = require('@playwright/test');
 const BASE = 'http://localhost:3001';
 const PHONE_HREF = 'tel:+15074913063';
 const EMAIL_HREF = 'mailto:airheatingandcooling507@outlook.com';
+// the "Ask for reviews" short link from the Google Business Profile dashboard,
+// set as REVIEW_URL in client-sites/507-air/js/review-link.js
+const REVIEW_URL = 'https://g.page/r/CS6mxtsUw3ujEBM/review';
 
 const PAGES = [
   { path: '/index.html', title: /507 Air Heating & Cooling.*Faribault/ },
@@ -33,6 +36,21 @@ for (const { path, title } of PAGES) {
       await expect(page.locator('.site-nav .call-btn')).toHaveAttribute('href', PHONE_HREF);
       await expect(page.locator(`.site-footer a[href="${PHONE_HREF}"]`)).toBeVisible();
       await expect(page.locator(`.site-footer a[href="${EMAIL_HREF}"]`)).toBeVisible();
+    });
+
+    // The owner hit a Google 404 from a hardcoded placeholder review URL. Every
+    // review CTA must get its href from review-link.js and nowhere else.
+    test('footer review CTA is wired to review-link.js', async ({ page, request }) => {
+      await page.goto(`${BASE}${path}`);
+      expect(await page.locator('script[src="js/review-link.js"]').count()).toBe(1);
+
+      // the served markup must carry no review URL of its own — inert until JS runs
+      const html = await (await request.get(`${BASE}${path}`)).text();
+      expect(html, 'no review URL hardcoded in markup').not.toMatch(/g\.page|writereview|REPLACE_WITH/);
+
+      const footerLink = page.locator('.site-footer a[data-review-url]');
+      await expect(footerLink).toBeVisible();
+      await expect(footerLink).toHaveAttribute('href', REVIEW_URL);
     });
   });
 }
@@ -141,6 +159,52 @@ test('mobile nav toggle opens and closes the menu', async ({ page }) => {
   await toggle.click();
   await expect(nav).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+// Google review CTAs. The owner reported a 404 from a hardcoded placeholder
+// URL; these guard against ever shipping a review link that points nowhere.
+test('review-link.js is served and holds a real review URL', async ({ request }) => {
+  const res = await request.get(`${BASE}/js/review-link.js`);
+  expect(res.status()).toBe(200);
+  const src = await res.text();
+  // read the assigned value only — the file's header documents a `<PLACE_ID>`
+  // example URL, so scanning the whole source for placeholders false-positives
+  const assigned = src.match(/var REVIEW_URL = '([^']*)';/);
+  expect(assigned, 'review-link.js must assign REVIEW_URL').not.toBeNull();
+  expect(assigned[1]).toBe(REVIEW_URL);
+});
+
+test('review URL is one of the two forms Google actually issues', async () => {
+  expect(REVIEW_URL).toMatch(
+    /^https:\/\/(g\.page\/r\/[\w-]+\/review|search\.google\.com\/local\/writereview\?placeid=[\w-]+)$/,
+  );
+});
+
+test('home: reviews section is visible and both CTAs point at the review URL', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  await expect(page.locator('#reviews')).toBeVisible();
+  const links = page.locator('a[data-review-url]');
+  expect(await links.count()).toBe(2); // reviews card + footer
+  for (let i = 0; i < 2; i++) {
+    await expect(links.nth(i)).toBeVisible();
+    await expect(links.nth(i)).toHaveAttribute('href', REVIEW_URL);
+  }
+});
+
+// The ask card is a solicitation, not a review — stars on it would read as a
+// 5-star rating 507 Air wrote about itself.
+test('home: the "leave us a review" card shows no star rating', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  const askCard = page.locator('.review-card', { has: page.locator('a[data-review-url]') });
+  expect(await askCard.locator('.stars').count(), 'ask card must not carry stars').toBe(0);
+});
+
+test('home: CTAs stay inert if review-link.js never runs', async ({ page }) => {
+  // no-JS / script-blocked visitors must not see a dead link
+  await page.route('**/js/review-link.js', (route) => route.abort());
+  await page.goto(`${BASE}/index.html`);
+  await expect(page.locator('#reviews')).toBeHidden();
+  await expect(page.locator('.site-footer a[data-review-url]')).toBeHidden();
 });
 
 test('images referenced on pages exist', async ({ request }) => {
