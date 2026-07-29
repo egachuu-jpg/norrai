@@ -162,18 +162,34 @@ Minimum for a credible profile: logo + cover + 3 job photos.
 
 ## 10. After it's live — loop back to the website
 
-The site is already wired for this — a "Leave us a review" card is live on `index.html`
-(§Reviews section) and a "Leave a Google review" link is in the footer of all 5 pages.
-Both currently point to:
+**Status (2026-07-28): done.** The profile exists and `REVIEW_URL` is set to the
+dashboard's "Ask for reviews" short link:
 
-```
-https://search.google.com/local/writereview?placeid=REPLACE_WITH_GBP_PLACE_ID
+```js
+var REVIEW_URL = 'https://g.page/r/CS6mxtsUw3ujEBM/review';
 ```
 
-Once the profile is created, find its **Place ID** (Google Business Profile Manager →
-Info, or via the [Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id))
-and find/replace `REPLACE_WITH_GBP_PLACE_ID` across `index.html`, `about.html`,
-`contact.html`, `deals.html`, `services.html` with the real ID.
+That same link is the one to hand Oscar for texting customers (item 3 below).
+
+The mechanism, for when it needs changing: a "Leave us a review" card on
+`index.html` (§Reviews section) and a "Leave a Google review" link in the footer
+of all 5 pages both take their href from **one** place —
+`client-sites/507-air/js/review-link.js`. Blank it and every CTA hides itself
+again. That default is deliberate: the pages previously hardcoded
+`?placeid=REPLACE_WITH_GBP_PLACE_ID`, and Oscar reported the resulting Google
+404 on 2026-07-28.
+
+Either URL form works:
+
+| Source | URL shape |
+|---|---|
+| **"Get more reviews" short link** (Business Profile dashboard) — preferred, short enough to text | `https://g.page/r/<CID>/review` |
+| Built from the profile's **Place ID** ([Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id)) | `https://search.google.com/local/writereview?placeid=<PLACE_ID>` |
+
+Setting it reveals the Reviews section and the footer links on all 5 pages.
+**Click the URL once yourself before deploying** — a wrong ID renders a live
+404, which is the exact bug this file was added to prevent. Then run `npm test`
+and redeploy (`npx wrangler deploy` from `client-sites/507-air`).
 
 Once real reviews start coming in:
 1. Copy a `.review-card` block in `index.html`'s Reviews section for each one (see the
