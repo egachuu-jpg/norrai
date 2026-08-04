@@ -19,7 +19,11 @@ using the same static-assets pattern as `website/wrangler.jsonc`:
 
 - Phone: (507) 491-3063
 - Email: airheatingandcooling507@outlook.com
-- Hours: Mon–Fri 8am–4pm; Sat–Sun emergency calls
+- Hours: **Open 24/7** (changed 2026-08-04 at Oscar's request; was Mon–Fri 8am–4pm with
+  weekend emergency calls). Hours appear in six places — the `openingHours` schema on
+  `index.html`, the `contact.html` meta description, the `contact.html` hours table, a
+  hero trust chip on `index.html`, and the footer block on all 5 pages. `tests/507air_site.spec.js`
+  guards all of them. Google Business Profile must match — see `GBP_SETUP.md` §4.
 - Spanish spoken — featured on every page
 - Street address intentionally NOT published (service-area business)
 
