@@ -83,18 +83,37 @@ Primary category drives most of the ranking — keep it **HVAC contractor**.
 
 ---
 
-## 4. Hours
+## 4. Hours — **Open 24 hours, 7 days** (Oscar's call, 2026-08-04)
 
 | Day | Hours |
 |---|---|
-| Mon–Fri | 8:00 AM – 4:00 PM |
-| Sat | Closed (set special note: emergency calls) |
-| Sun | Closed (set special note: emergency calls) |
+| Mon–Sun | **Open 24 hours** |
 
-Google has no "emergency only" weekend toggle. Best practice: mark Sat/Sun **Closed**,
-then add to the description + a Google Post that weekend **emergency service** is available
-by phone. Optionally turn on the "Open 24 hours" attribute only if Oscar wants after-hours
-calls flowing 7 days.
+Set the "Open 24 hours" toggle for every day. Do not enter 8:00 AM – 4:00 PM anywhere
+on the profile.
+
+**Why, for the record.** Oscar asked whether Google could show regular hours 8am–4pm
+with everything after that flagged as after-hours. It can't. The only feature close to
+that is **"More hours"**, whose types are delivery / pickup / drive-through / kitchen /
+senior hours — nothing for contractors or emergency service — and Google requires those
+to be a *subset* of regular hours, so they can't cover 4pm–8am anyway. A profile is
+simply open or closed at any given moment.
+
+That single flag is load-bearing: Google favors profiles that are open at the time of
+the search, and "furnace repair near me" at 11pm is exactly when it matters. Listed
+8–4, 507 Air is filtered out of its highest-urgency searches.
+
+**The obligation that comes with it.** Google's guidance is explicit that hours must
+reflect reality — profiles marked open when nobody answers draw complaints and lost
+trust. Open 24 hours means after-hours calls need to be answered or captured fast.
+Norr AI pitched a missed-call → instant SMS text-back to back this up; if that isn't
+in place, watch for reviews complaining about unanswered nights.
+
+**No after-hours pricing anywhere public (Oscar's call, 2026-08-06).** The site presents
+one message — open 24/7, call any time — with no office-hours vs. after-hours split and
+no premium-rate explanation. If Oscar does charge more for a 2am call, that conversation
+happens on the phone, not on the website or the profile. Do not reintroduce rate language
+to `contact.html` or the GBP description without asking him first.
 
 ---
 
@@ -118,7 +137,8 @@ Farmington, Apple Valley, Burnsville, Mankato, St. Peter
 > maintain furnaces, air conditioners, ductless mini-splits, water heaters, boilers,
 > garage heaters, and whole-home humidifiers — for houses, businesses, and mobile/
 > manufactured homes. Repairs on all makes and models, plus tune-ups and inspections.
-> Se habla español. Weekend emergency calls available. Call (507) 491-3063.
+> Se habla español. Emergency service available 24/7 — nights, weekends, and holidays.
+> Call (507) 491-3063.
 
 ---
 
@@ -136,6 +156,7 @@ Farmington, Apple Valley, Burnsville, Mankato, St. Peter
 - Whole-home humidifier installation & service
 - Heating & cooling for mobile / manufactured homes
 - Tune-ups & inspections (all makes & models)
+- 24/7 emergency HVAC service
 
 ---
 

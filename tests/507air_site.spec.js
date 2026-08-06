@@ -38,6 +38,15 @@ for (const { path, title } of PAGES) {
       await expect(page.locator(`.site-footer a[href="${EMAIL_HREF}"]`)).toBeVisible();
     });
 
+    // the footer hours block is duplicated on all 5 pages and must match the
+    // Google Business Profile (Open 24 hours) — stale copies are the drift risk
+    test('footer hours read 24/7, not the old 8am–4pm', async ({ page }) => {
+      await page.goto(`${BASE}${path}`);
+      const footer = page.locator('.site-footer');
+      await expect(footer).toContainText('Open 24/7');
+      await expect(footer).not.toContainText('8am–4pm');
+    });
+
     // The owner hit a Google 404 from a hardcoded placeholder review URL. Every
     // review CTA must get its href from review-link.js and nowhere else.
     test('footer review CTA is wired to review-link.js', async ({ page, request }) => {
@@ -75,9 +84,19 @@ test('home: hero headline, trust chips, and brands are present', async ({ page }
   await expect(page.locator('.hero-tagline')).toContainText(/cooling & heating needs/i);
   await expect(page.locator('.trust-chips')).toContainText('Family-owned');
   await expect(page.locator('.trust-chips')).toContainText('Se habla español');
+  await expect(page.locator('.trust-chips')).toContainText('24/7');
   for (const brand of ['GE', 'Goodman', 'Cooper & Hunter', 'Durastar']) {
     await expect(page.locator('.brand-row')).toContainText(brand);
   }
+});
+
+// structured data is what Google reads for hours — it has to say 24/7 too, or
+// the profile and the site disagree on the one signal that drives "open now"
+test('home: LocalBusiness schema declares 24/7 opening hours', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  const raw = await page.locator('script[type="application/ld+json"]').textContent();
+  const schema = JSON.parse(raw);
+  expect(schema.openingHours).toBe('Mo-Su 00:00-23:59');
 });
 
 test('services: full service list from owner email is covered', async ({ page }) => {
@@ -133,13 +152,14 @@ test('about: family story and Ruger the mascot', async ({ page }) => {
   await expect(page.locator('img[src="images/billboard.png"]')).toBeVisible();
 });
 
-test('contact: booking info, hours, emergency weekends, Spanish', async ({ page }) => {
+test('contact: booking info, 24/7 hours, Spanish', async ({ page }) => {
   await page.goto(`${BASE}/contact.html`);
   await expect(page.locator(`.info-card a[href="${PHONE_HREF}"]`)).toBeVisible();
   await expect(page.locator(`.info-card a[href="${EMAIL_HREF}"]`)).toBeVisible();
-  await expect(page.locator('table.hours')).toContainText('Monday–Friday');
-  await expect(page.locator('table.hours')).toContainText('8am–4pm');
-  await expect(page.locator('table.hours .emergency-flag')).toContainText('Emergency calls');
+  await expect(page.locator('table.hours')).toContainText('Monday–Sunday');
+  await expect(page.locator('table.hours .emergency-flag')).toContainText('Open 24 hours');
+  // hours must read 24/7 everywhere — they mirror the Google Business Profile
+  await expect(page.locator('table.hours')).not.toContainText('8am–4pm');
   await expect(page.locator('main')).toContainText('Se habla español');
   // PO Box mailing address (not the owner's home) per client request
   await expect(page.locator('.info-card', { hasText: 'By Mail' })).toContainText('PO Box 355');
