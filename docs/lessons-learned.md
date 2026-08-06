@@ -106,6 +106,11 @@
 - `open_house.html` stays at root (public, QR code on door) — Cloudflare Access only covers `/clients/*` and `/internal/*`
 - Session durations: clients group = 7 days, internal group = 1 day
 
+## Google Business Profile / Local SEO
+- A profile has exactly one set of hours — there is no "regular hours + after-hours" split. The **"More hours"** feature looks like the answer but isn't: its types are delivery / pickup / drive-through / kitchen / senior hours (nothing for contractors or emergency service), and Google requires them to be a *subset* of regular hours, so they can't describe 4pm–8am at all. For any service business asking this, the real choice is binary: list normal hours, or list Open 24 hours
+- Google favors profiles that are open **at the moment of the search** — a 24/7 listing wins the 11pm "furnace repair near me" searches that a 9–5 listing is filtered out of. That's the whole argument for going 24/7, and it's also why Google penalizes hours that don't reflect reality: mark it open, and the calls have to be answered or captured (missed-call → SMS text-back). Sell the capture layer alongside the hours change, not after
+- Hours live in more places than expected — for 507 Air: the `openingHours` schema, one meta description, a visible hours table, a hero trust chip, and a footer block duplicated across 5 pages. Site and profile disagreeing on hours is a NAP-consistency hit, so pin all of them with tests when the value changes
+
 ## HTML / JavaScript
 - For dollar amount inputs, use `type="text"` + `inputmode="numeric"` + live JS formatting (strip non-numeric, reformat with `'$' + Number(raw).toLocaleString('en-US')`); submit raw integer to webhook — avoids `type="number"` step/validation quirks while showing a formatted `$275,000` display
 - When creating a new Polar Modern HTML page, start by copying the full `:root` CSS block from an existing page in the same directory — partial copies silently omit canonical tokens (e.g. `--blush`) that may be needed for components added later
