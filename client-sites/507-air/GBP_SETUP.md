@@ -109,9 +109,11 @@ trust. Open 24 hours means after-hours calls need to be answered or captured fas
 Norr AI pitched a missed-call → instant SMS text-back to back this up; if that isn't
 in place, watch for reviews complaining about unanswered nights.
 
-The 8am–4pm office-hours vs. after-hours distinction (including any premium rate) lives
-in the **description and on the website**, where it can be explained — not in the hours
-field.
+**No after-hours pricing anywhere public (Oscar's call, 2026-08-06).** The site presents
+one message — open 24/7, call any time — with no office-hours vs. after-hours split and
+no premium-rate explanation. If Oscar does charge more for a 2am call, that conversation
+happens on the phone, not on the website or the profile. Do not reintroduce rate language
+to `contact.html` or the GBP description without asking him first.
 
 ---
 
