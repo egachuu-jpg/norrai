@@ -85,12 +85,25 @@ Primary category drives most of the ranking — keep it **HVAC contractor**.
 
 ## 4. Hours — **Open 24 hours, 7 days** (Oscar's call, 2026-08-04)
 
+**Status (2026-08-06): applied to the live profile.**
+
 | Day | Hours |
 |---|---|
 | Mon–Sun | **Open 24 hours** |
 
-Set the "Open 24 hours" toggle for every day. Do not enter 8:00 AM – 4:00 PM anywhere
-on the profile.
+Do not enter 8:00 AM – 4:00 PM anywhere on the profile.
+
+**Where the setting actually lives**, since it isn't where you'd expect: on the Hours
+tab, keep the **"Open with main hours"** radio selected — none of the four radios is the
+24-hour setting, and "Open with no main hours" hides hours entirely, which forfeits the
+open-now signal this change exists for. Instead, per day, leave the **"Closed"** checkbox
+*unchecked* (checking it closes the day) and pick **"24 hours"** from inside the
+**"Opens at"** time list. The mobile web editor sometimes omits that entry — the Google
+Maps app or a desktop browser surface it reliably.
+
+Note: the days did not all match this file before the change (Sunday was live as
+9:00 AM–5:00 PM, not the documented 8–4). Verify every day against the profile rather
+than trusting this packet when auditing.
 
 **Why, for the record.** Oscar asked whether Google could show regular hours 8am–4pm
 with everything after that flagged as after-hours. It can't. The only feature close to
