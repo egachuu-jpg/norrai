@@ -210,6 +210,18 @@ CREATE TABLE IF NOT EXISTS listing_queue (
 CREATE INDEX IF NOT EXISTS idx_listing_queue_status_submitted
   ON listing_queue(status, submitted_at DESC);
 
+-- Dedupe log for the automated Weekly Marketing Drip scrape: tracks which
+-- Weichert Heartland MLS listings have already been featured, so the same
+-- property isn't re-blasted week over week. PRIMARY KEY on mls_id enables a
+-- clean ON CONFLICT upsert (this table has no shared-identity ambiguity like
+-- `leads` does, so no SELECT-then-conditional dance is needed here).
+CREATE TABLE IF NOT EXISTS weichert_sent_listings (
+  mls_id        text PRIMARY KEY,
+  address       text,
+  first_sent_at timestamptz NOT NULL DEFAULT now(),
+  last_sent_at  timestamptz NOT NULL DEFAULT now()
+);
+
 -- ============================================================
 -- EMAIL TRIAGE ASSISTANT
 -- ============================================================

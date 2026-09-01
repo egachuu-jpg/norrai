@@ -40,6 +40,7 @@ Find your connection string in the Neon dashboard under **Connection Details**. 
 | `aeo_audits` | AEO audit engine score runs (append-only) — total + pillar scores, raw check results, report URL |
 | `aeo_queries` | AEO query battery results (append-only) — one row per question per run, whether the client was mentioned, competitors named, cited URLs |
 | `aeo_actions` | AEO Optimizer action list — typed by who applies it (`auto_apply`, `norr_applies`, `recommend_only`), tracked from `proposed` through `done` against the query/pillar it targets |
+| `weichert_sent_listings` | Dedupe log for the Weichert Weekly Drip auto-scrape; one row per MLS ID ever featured |
 
 ## Vertical-specific lead fields
 
