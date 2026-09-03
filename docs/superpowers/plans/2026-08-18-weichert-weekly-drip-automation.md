@@ -47,12 +47,13 @@ This is the one genuinely unverified piece of the design: whether an Apify actor
 
 **Files:** none (Apify console + a scratch HTTP call)
 
-- [ ] **Step 1: Get an Apify API token**
+- [x] **Step 1: Get an Apify API token** — DONE 2026-08-18. Token created and approved for full-account-access (the `apify/puppeteer-scraper` actor requires this — Apify returns `full-permission-actor-not-approved` with an approval URL on first use if it's not granted yet). Stored as an n8n Query Auth credential named `Apify API Token` (field name `token`), created directly by Egan in n8n.
 
-Log into the Apify account (created for the original PRD's research task). Go to Settings → Integrations → copy the Personal API token.
+- [x] **Step 2: Run the actor via a direct API call — DONE 2026-08-18, CONFIRMED WORKING**
 
-- [ ] **Step 2: Run the actor via a direct API call**
+The plain `apifyProxyGroups: ["RESIDENTIAL"]` config (no country pin) got blocked by Cloudflare after 3 retries (`403`, `429`, then a proxy tunnel failure — the `#error` wrapper item). Adding `apifyProxyCountry: "US"` fixed it on the very next call: `HTTP 201`, 25 items, 0 errors, 0 missing `mls_id`, 0 missing `photo_thumb_url`, every item's debug block shows `statusCode: 200, retryCount: 0`. **This confirms the design's central risk is resolved** — Apify + a US-pinned residential proxy reliably passes this site's Cloudflare challenge.
 
+**Confirmed-working call:**
 ```bash
 curl -s -X POST \
   "https://api.apify.com/v2/acts/apify~puppeteer-scraper/run-sync-get-dataset-items?token=YOUR_APIFY_TOKEN" \
@@ -60,23 +61,16 @@ curl -s -X POST \
   -d '{
     "startUrls": [{ "url": "https://www.teamyellownow.com/index.php?showagency=1" }],
     "pageFunction": "async function pageFunction(context) { const { page } = context; await page.waitForSelector(\".vertical-listing-card\", { timeout: 30000 }); return await page.$$eval(\".vertical-listing-card\", (nodes) => nodes.map((card) => { const saveEl = card.querySelector(\".saveListing\"); const priceEl = card.querySelector(\".card-title\"); const addressEl = card.querySelector(\"p b.text-mute\"); const imgEl = card.querySelector(\"img.card-img-top\"); const nums = Array.from(card.querySelectorAll(\".card-text b\")).map((b) => b.textContent.trim()); return { mls_id: saveEl ? saveEl.getAttribute(\"data-mlsid\") : null, price: priceEl ? priceEl.textContent.trim() : null, beds: nums[0] || null, baths: nums[1] || null, sqft: nums[2] || null, address: addressEl ? addressEl.textContent.trim() : null, url: card.getAttribute(\"data-link\"), photo_thumb_url: imgEl ? imgEl.getAttribute(\"src\") : null }; })); }",
-    "proxyConfiguration": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] },
+    "proxyConfiguration": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"], "apifyProxyCountry": "US" },
     "maxPagesPerCrawl": 1,
     "maxResultRecords": 30,
-    "pageLoadTimeoutSecs": 60
+    "pageLoadTimeoutSecs": 90
   }' | head -c 2000
 ```
 
-Expected: a JSON array of ~20-25 objects shaped like
-`{"mls_id":"7126006","price":"$ 384,900","beds":"4","baths":"3","sqft":"2,552","address":"17 9th Avenue Se","url":"https://www.teamyellownow.com/property/133-7126006-...","photo_thumb_url":"https://d36xftgacqn2p.cloudfront.net/listingphotos133/thumbnails/7126006-1.jpg"}`.
+Real sample item returned: `{"mls_id":"7127292","price":"$ 225,000","beds":"2","baths":"1.5","sqft":"927","address":"15549 Flyboat Lane # 63","url":"https://www.teamyellownow.com/property/133-7127292-15549-flyboat-lane-63-apple-valley-MN-55124","photo_thumb_url":"https://d36xftgacqn2p.cloudfront.net/listingphotos133/thumbnails/7127292-1.jpg"}` — exactly the shape `Parse Listings` (Task 4) expects.
 
-**If the actor rejects the input** (unknown field error): open `https://console.apify.com/actors/apify~puppeteer-scraper/input` and check the current input schema field names against what's used above — field names for this actor have been stable for years but confirm before assuming the call above is wrong.
-
-**If the result comes back empty or the actor times out waiting for `.vertical-listing-card`**: Cloudflare blocked the RESIDENTIAL proxy pool too. Retry once with `"apifyProxyGroups": ["RESIDENTIAL"], "apifyProxyCountry": "US"` added. If it still fails, this is the point to come back and reconsider the design (e.g. a dedicated Cloudflare-bypass scraping API instead of Apify) — do not proceed to Task 3 with a scraper that can't reliably get past the challenge.
-
-- [ ] **Step 3: Record the confirmed-working actor input**
-
-Once Step 2 returns real listing data, save the exact JSON body that worked into a scratch note — Task 4 wires this same payload into the n8n HTTP Request node verbatim.
+- [x] **Step 3: Record the confirmed-working actor input — DONE.** Task 4 Step 2's node JSON below has been updated to use `apifyProxyCountry: "US"` and `pageLoadTimeoutSecs: 90` to match what was actually verified working.
 
 ---
 
@@ -153,7 +147,7 @@ Call `mcp__n8n-mcp__n8n_validate_workflow` on `wSXuvtUorzoLmktv`. Expected: erro
 
 - [ ] **Step 1: Create the Apify credential in n8n**
 
-In the n8n UI: Credentials → New → "Query Auth". Name it `Apify API Token`. Field name: `token`. Value: the Apify token from Task 1 Step 1.
+DONE — Egan created this directly in n8n. Confirmed via `n8n_manage_credentials` (action: list): name `Apify API Token`, id `IEJGBQErsNtkxrYM`, type `httpQueryAuth`. Note: the n8n credential type is `httpQueryAuth`, not `queryAuth` — confirmed via `n8n_manage_credentials` (action: getSchema, type: httpQueryAuth), which returns `{name, value, allowedHttpRequestDomains, allowedDomains}`. This matches the existing pattern in this workflow where `httpHeaderAuth` (not a shortened form) is used as both the `genericAuthType` value and the `credentials` object key (see `Canary Send`/`Send Email` nodes). Step 2 below has been corrected to use `httpQueryAuth` throughout, and the real credential id `IEJGBQErsNtkxrYM`.
 
 - [ ] **Step 2: Add "Scrape Office Listings" (HTTP Request)**
 
@@ -168,13 +162,13 @@ Add a node with these parameters (position it where `Build Fetch Items` used to 
     "method": "POST",
     "url": "https://api.apify.com/v2/acts/apify~puppeteer-scraper/run-sync-get-dataset-items",
     "authentication": "genericCredentialType",
-    "genericAuthType": "queryAuth",
+    "genericAuthType": "httpQueryAuth",
     "sendBody": true,
     "specifyBody": "json",
-    "jsonBody": "={{ { startUrls: [{ url: 'https://www.teamyellownow.com/index.php?showagency=1' }], pageFunction: \"async function pageFunction(context) { const { page } = context; await page.waitForSelector('.vertical-listing-card', { timeout: 30000 }); return await page.$$eval('.vertical-listing-card', (nodes) => nodes.map((card) => { const saveEl = card.querySelector('.saveListing'); const priceEl = card.querySelector('.card-title'); const addressEl = card.querySelector('p b.text-mute'); const imgEl = card.querySelector('img.card-img-top'); const nums = Array.from(card.querySelectorAll('.card-text b')).map((b) => b.textContent.trim()); return { mls_id: saveEl ? saveEl.getAttribute('data-mlsid') : null, price: priceEl ? priceEl.textContent.trim() : null, beds: nums[0] || null, baths: nums[1] || null, sqft: nums[2] || null, address: addressEl ? addressEl.textContent.trim() : null, url: card.getAttribute('data-link'), photo_thumb_url: imgEl ? imgEl.getAttribute('src') : null }; })); }\", proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ['RESIDENTIAL'] }, maxPagesPerCrawl: 1, maxResultRecords: 30, pageLoadTimeoutSecs: 60 } }}",
-    "options": { "timeout": 120000 }
+    "jsonBody": "={{ { startUrls: [{ url: 'https://www.teamyellownow.com/index.php?showagency=1' }], pageFunction: \"async function pageFunction(context) { const { page } = context; await page.waitForSelector('.vertical-listing-card', { timeout: 30000 }); return await page.$$eval('.vertical-listing-card', (nodes) => nodes.map((card) => { const saveEl = card.querySelector('.saveListing'); const priceEl = card.querySelector('.card-title'); const addressEl = card.querySelector('p b.text-mute'); const imgEl = card.querySelector('img.card-img-top'); const nums = Array.from(card.querySelectorAll('.card-text b')).map((b) => b.textContent.trim()); return { mls_id: saveEl ? saveEl.getAttribute('data-mlsid') : null, price: priceEl ? priceEl.textContent.trim() : null, beds: nums[0] || null, baths: nums[1] || null, sqft: nums[2] || null, address: addressEl ? addressEl.textContent.trim() : null, url: card.getAttribute('data-link'), photo_thumb_url: imgEl ? imgEl.getAttribute('src') : null }; })); }\", proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ['RESIDENTIAL'], apifyProxyCountry: 'US' }, maxPagesPerCrawl: 1, maxResultRecords: 30, pageLoadTimeoutSecs: 90 } }}",
+    "options": { "timeout": 180000 }
   },
-  "credentials": { "queryAuth": { "id": "REPLACE_WITH_CREDENTIAL_ID_FROM_STEP_1", "name": "Apify API Token" } },
+  "credentials": { "httpQueryAuth": { "id": "IEJGBQErsNtkxrYM", "name": "Apify API Token" } },
   "onError": "continueRegularOutput"
 }
 ```
