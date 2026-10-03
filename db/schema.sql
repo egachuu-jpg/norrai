@@ -325,3 +325,36 @@ CREATE TRIGGER aeo_actions_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX idx_aeo_actions_client_created ON aeo_actions(client_id, created_at);
+
+
+-- ============================================================
+-- AGENT TASKS (Claude connector to-do list)
+-- ============================================================
+
+-- To-dos an agent (or their assistant) manages by talking to Claude through
+-- the Norr AI MCP connector. Optionally tied to a lead or a deal (property
+-- address). Times are stored as timestamptz; the connector reads and writes
+-- them in America/Chicago. Tasks are not append-only: status moves
+-- open -> done/cancelled.
+CREATE TABLE IF NOT EXISTS agent_tasks (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id    uuid NOT NULL REFERENCES clients(id),
+  lead_id      uuid REFERENCES leads(id),
+  deal_ref     text,                      -- free-text deal key, usually the property address
+  title        text NOT NULL,
+  due_at       timestamptz,
+  assigned_to  text,                      -- agent or assistant name; NULL = the agent
+  created_by   text,                      -- agent_email of the connector that created it
+  status       text NOT NULL DEFAULT 'open'
+    CHECK (status IN ('open', 'done', 'cancelled')),
+  completed_at timestamptz,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE OR REPLACE TRIGGER agent_tasks_updated_at
+  BEFORE UPDATE ON agent_tasks
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_agent_tasks_client_status_due
+  ON agent_tasks(client_id, status, due_at);
