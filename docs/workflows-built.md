@@ -49,3 +49,12 @@ per client, query `workflow_events` in Neon.
 - **Send filter:** marketing broadcasts suppress on BOTH `communication_opted_out != true AND email_opt_out != true`; a pre-flight canary to hello@norrai.co gates the whole batch on a real SendGrid round-trip (see `docs/lessons-learned.md`)
 - **From address:** sends from `hello@norrai.co` (the only SendGrid-verified sender) with the agent's name as display name and their real address as Reply-To. Switching the visible From to `eknutson@`/`mjasinski@teamyellownow.com` directly is a parking-lot item — it requires verifying those addresses as senders in SendGrid first (Single Sender Verification or full domain auth), not yet done.
 - **Go-live gates:** all cleared. SendGrid volume cleared earlier (Essentials 50K Email API); a manual dry-run test execution (2026-09-01, redirected to a test inbox) confirmed the full scrape → dedupe → build → send pipeline works end-to-end before the Send workflow was activated for real.
+
+## Agent MCP Connector (to-dos + hot leads in the Claude app)
+- **Status:** Built and SQL-tested locally (2026-10-03), **not yet imported or deployed**. `agent_tasks` table not yet applied to Neon prod.
+- **Two workflows:**
+  - Real Estate Agent MCP Server — `MCP Server Trigger` exposing 4 tools (`add_task`, `list_tasks`, `complete_task`, `get_hot_leads`). One copy per agent; each tool hardcodes that agent's `agent_email`.
+  - Real Estate Agent Tools (`agent_tools`) — sub-workflow every tool calls: Lookup Client → Log Triggered → Prep Input (validate + SQL-escape) → Route Action → one Postgres query per action → Log Completed → Format Result.
+- **Every query returns exactly one row** (`json_build_object(...) AS result`), so a "nothing found" answer still reaches Claude instead of an empty run.
+- **Times:** stored as timestamptz, read and written in `America/Chicago`. A date-only due date means 5pm Central.
+- **Setup + auth notes:** `docs/agent-mcp-server.md`
