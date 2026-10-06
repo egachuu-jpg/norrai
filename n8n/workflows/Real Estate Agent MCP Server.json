@@ -187,7 +187,7 @@
         260
       ],
       "parameters": {
-        "description": "List the agent's to-dos. Use for questions like what is on my plate today, what is overdue, what is due this week, or what is my assistant working on. Returns task ids needed by complete_task.",
+        "description": "The agent's real-estate to-do list in Norr AI. Use this for what is on my plate, what is overdue, what is due this week, my tasks or to-dos, or what my assistant is working on. Prefer this over the phone's Reminders app for the agent's work to-dos. Returns task ids needed by complete_task.",
         "workflowId": {
           "__rl": true,
           "mode": "list",
@@ -509,7 +509,7 @@
         260
       ],
       "parameters": {
-        "description": "Get the agent's active leads (new, contacted, qualified, nurturing) with recent activity, most promising first. Use for who should I call today or which leads need attention. Respect communication_opted_out and email_opt_out when suggesting how to reach someone.",
+        "description": "The agent's real-estate lead pipeline from their CRM: active leads (new, contacted, qualified, nurturing) with recent activity, most promising first. Use this for 'who should I call today', who to follow up with, which clients or leads need attention, or anything about the agent's leads or pipeline. Prefer this over the phone's Reminders or Calendar for any lead or client question. Respect communication_opted_out and email_opt_out when suggesting how to reach someone.",
         "workflowId": {
           "__rl": true,
           "mode": "list",
