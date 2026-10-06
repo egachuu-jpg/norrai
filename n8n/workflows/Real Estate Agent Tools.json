@@ -1,0 +1,475 @@
+{
+  "name": "Real Estate Agent Tools",
+  "nodes": [
+    {
+      "id": "at-0001-4000-8000-000000000000",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "action"
+            },
+            {
+              "name": "agent_email"
+            },
+            {
+              "name": "title"
+            },
+            {
+              "name": "due_at"
+            },
+            {
+              "name": "deal_ref"
+            },
+            {
+              "name": "assigned_to"
+            },
+            {
+              "name": "lead_id"
+            },
+            {
+              "name": "task_id"
+            },
+            {
+              "name": "status"
+            },
+            {
+              "name": "due_within_days"
+            },
+            {
+              "name": "days"
+            },
+            {
+              "name": "limit"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "at-0002-4000-8000-000000000000",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT id FROM clients WHERE primary_contact_email = '{{ String($json.agent_email || '').replace(/'/g, \"''\") }}' LIMIT 1",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "at-0003-4000-8000-000000000000",
+      "name": "Log Triggered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  COALESCE(NULLIF(NULLIF('{{ $json.id || '' }}', ''), 'null'), 'e2f9934c-4d28-4bb4-ac90-4284c1123517')::uuid,\n  'agent_tools',\n  'triggered',\n  json_build_object(\n    'execution_id', '{{ $execution.id }}',\n    'action', '{{ $('When Called by Another Workflow').first().json.action }}',\n    'agent_email', '{{ String($('When Called by Another Workflow').first().json.agent_email || '').replace(/'/g, \"''\") }}'\n  )::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "at-0004-4000-8000-000000000000",
+      "name": "Prep Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Validates the tool call and SQL-escapes every value used in a query.\n// Values come from Claude (i.e. from whatever the agent typed), so nothing\n// reaches a Postgres node unescaped.\nconst input = $('When Called by Another Workflow').first().json;\nconst clientId = $('Lookup Client').first().json.id || '';\nconst esc = (v) => String(v ?? '').trim().replace(/'/g, \"''\");\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst ACTIONS = ['add_task', 'list_tasks', 'complete_task', 'get_hot_leads'];\nconst fail = (error) => [{ json: { ok: false, error } }];\nconst int = (v, def, min, max) => {\n  const n = parseInt(v, 10);\n  return Number.isNaN(n) ? def : Math.min(max, Math.max(min, n));\n};\n\nconst action = String(input.action || '');\nif (!ACTIONS.includes(action)) return fail(`Unknown action: ${action}`);\nif (!UUID.test(clientId)) return fail('This connector is not linked to a Norr AI client yet. Contact hello@norrai.co.');\n\nconst out = {\n  ok: true,\n  action,\n  action_index: ACTIONS.indexOf(action),\n  client_id: clientId,\n  agent_email: esc(input.agent_email),\n};\n\nif (action === 'add_task') {\n  const title = String(input.title || '').trim();\n  if (!title) return fail('A task title is required.');\n  if (title.length > 300) return fail('Task title must be 300 characters or fewer.');\n  const lead = String(input.lead_id || '').trim();\n  if (lead && !UUID.test(lead)) return fail('lead_id must be a lead id returned by get_hot_leads.');\n  const due = String(input.due_at || '').trim();\n  let dueLocal = '';\n  if (due) {\n    const m = due.match(/^(\\d{4}-\\d{2}-\\d{2})(?:[T ](\\d{2}:\\d{2}))?$/);\n    if (!m) return fail('due_at must look like 2026-10-08 or 2026-10-08T14:00 (Central time).');\n    dueLocal = `${m[1]} ${m[2] || '17:00'}`; // date-only = 5pm Central\n  }\n  Object.assign(out, {\n    title: esc(title),\n    deal_ref: esc(input.deal_ref),\n    assigned_to: esc(input.assigned_to),\n    lead_id: lead,\n    due_local: dueLocal,\n  });\n}\n\nif (action === 'list_tasks') {\n  const status = String(input.status || 'open').trim().toLowerCase();\n  if (!['open', 'done'].includes(status)) return fail(\"status must be 'open' or 'done'.\");\n  Object.assign(out, {\n    status,\n    assigned_to: esc(input.assigned_to),\n    // -1 = no due-date filter; 0 = overdue + due today; 7 = due within a week\n    due_within_days: int(input.due_within_days, -1, -1, 365),\n  });\n}\n\nif (action === 'complete_task') {\n  const taskId = String(input.task_id || '').trim();\n  if (!UUID.test(taskId)) return fail('task_id must be a task id returned by list_tasks.');\n  out.task_id = taskId;\n}\n\nif (action === 'get_hot_leads') {\n  out.days = int(input.days, 14, 1, 90);\n  out.limit = int(input.limit, 15, 1, 50);\n}\n\nreturn [{ json: out }];"
+      }
+    },
+    {
+      "id": "at-0005-4000-8000-000000000000",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "at-valid-001",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "at-0006-4000-8000-000000000000",
+      "name": "Route Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1100,
+        200
+      ],
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 4,
+        "output": "={{ $json.action_index }}"
+      }
+    },
+    {
+      "id": "at-0007-4000-8000-000000000000",
+      "name": "Add Task",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=WITH ins AS (\n  INSERT INTO agent_tasks (client_id, lead_id, deal_ref, title, due_at, assigned_to, created_by)\n  VALUES (\n    '{{ $json.client_id }}',\n    (SELECT id FROM leads WHERE id = NULLIF('{{ $json.lead_id }}', '')::uuid AND client_id = '{{ $json.client_id }}'),\n    NULLIF('{{ $json.deal_ref }}', ''),\n    '{{ $json.title }}',\n    NULLIF('{{ $json.due_local }}', '')::timestamp AT TIME ZONE 'America/Chicago',\n    NULLIF('{{ $json.assigned_to }}', ''),\n    NULLIF('{{ $json.agent_email }}', '')\n  )\n  RETURNING id, title, deal_ref, assigned_to, due_at\n)\nSELECT json_build_object(\n  'added', true,\n  'id', id,\n  'title', title,\n  'deal', deal_ref,\n  'assigned_to', assigned_to,\n  'due_central', to_char(due_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD HH24:MI')\n) AS result\nFROM ins",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "at-0008-4000-8000-000000000000",
+      "name": "List Tasks",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        160
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT json_build_object(\n  'count', count(*),\n  'tasks', coalesce(json_agg(row_to_json(x)), '[]'::json)\n) AS result\nFROM (\n  SELECT\n    t.id,\n    t.title,\n    t.deal_ref AS deal,\n    t.assigned_to,\n    t.lead_id,\n    to_char(t.due_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD HH24:MI') AS due_central,\n    (t.status = 'open' AND t.due_at < now()) AS overdue,\n    to_char(t.completed_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD HH24:MI') AS completed_central\n  FROM agent_tasks t\n  WHERE t.client_id = '{{ $json.client_id }}'\n    AND t.status = '{{ $json.status }}'\n    AND ('{{ $json.assigned_to }}' = '' OR t.assigned_to ILIKE '{{ $json.assigned_to }}')\n    AND ({{ $json.due_within_days }} < 0 OR t.due_at <\n      (((now() AT TIME ZONE 'America/Chicago')::date + {{ $json.due_within_days }} + 1)::timestamp\n        AT TIME ZONE 'America/Chicago'))\n  ORDER BY t.completed_at DESC NULLS LAST, t.due_at NULLS LAST, t.created_at\n  LIMIT 50\n) x",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "at-0009-4000-8000-000000000000",
+      "name": "Complete Task",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=WITH u AS (\n  UPDATE agent_tasks\n  SET status = 'done', completed_at = now()\n  WHERE id = '{{ $json.task_id }}'\n    AND client_id = '{{ $json.client_id }}'\n    AND status = 'open'\n  RETURNING id, title, deal_ref\n)\nSELECT json_build_object(\n  'completed', (SELECT count(*) FROM u) > 0,\n  'task', (SELECT row_to_json(u) FROM u LIMIT 1),\n  'note', CASE WHEN (SELECT count(*) FROM u) = 0\n    THEN 'No open task with that id. It may already be done.' END\n) AS result",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "at-0010-4000-8000-000000000000",
+      "name": "Get Hot Leads",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        480
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT json_build_object(\n  'count', count(*),\n  'leads', coalesce(json_agg(row_to_json(x)), '[]'::json)\n) AS result\nFROM (\n  SELECT\n    l.id,\n    l.lead_name,\n    l.email,\n    l.phone,\n    l.source,\n    l.status,\n    left(l.lead_message, 280) AS lead_message,\n    l.metadata->>'property_address' AS property_address,\n    l.metadata->>'price_range' AS price_range,\n    l.communication_opted_out,\n    l.email_opt_out,\n    to_char(l.created_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS came_in,\n    to_char(l.updated_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS last_updated,\n    (SELECT count(*) FROM agent_tasks t WHERE t.lead_id = l.id AND t.status = 'open') AS open_tasks\n  FROM leads l\n  WHERE l.client_id = '{{ $json.client_id }}'\n    AND l.status IN ('new', 'contacted', 'qualified', 'nurturing')\n    AND l.updated_at >= now() - interval '{{ $json.days }} days'\n  ORDER BY\n    CASE l.status WHEN 'qualified' THEN 0 WHEN 'new' THEN 1 WHEN 'contacted' THEN 2 ELSE 3 END,\n    l.updated_at DESC\n  LIMIT {{ $json.limit }}\n) x",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "at-0011-4000-8000-000000000000",
+      "name": "Log Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1580,
+        240
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO workflow_events (client_id, workflow_name, event_type, payload)\nVALUES (\n  '{{ $('Prep Input').first().json.client_id }}'::uuid,\n  'agent_tools',\n  'completed',\n  json_build_object('execution_id', '{{ $execution.id }}', 'action', '{{ $('Prep Input').first().json.action }}')::jsonb\n)",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "at-0012-4000-8000-000000000000",
+      "name": "Format Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        240
+      ],
+      "parameters": {
+        "jsCode": "// Each query returns exactly one row with a `result` json column, so the\n// tool always gets an answer (even \"nothing found\") instead of an empty run.\nconst action = $('Prep Input').first().json.action;\nconst nodeByAction = {\n  add_task: 'Add Task',\n  list_tasks: 'List Tasks',\n  complete_task: 'Complete Task',\n  get_hot_leads: 'Get Hot Leads',\n};\nreturn [{ json: $(nodeByAction[action]).first().json.result || {} }];"
+      }
+    },
+    {
+      "id": "at-0013-4000-8000-000000000000",
+      "name": "Invalid Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        480
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "at-invalid-001",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Log Triggered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Triggered": {
+      "main": [
+        [
+          {
+            "node": "Prep Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Input": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Route Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [
+          {
+            "node": "Add Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Hot Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Task": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Tasks": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete Task": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Hot Leads": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Completed": {
+      "main": [
+        [
+          {
+            "node": "Format Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "agent-tools-v1-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "0d4efb408d47ca7fe5f9bfa9b6b5b1a6e6f8fcb31cb2584a172b735d47653914"
+  },
+  "id": "",
+  "tags": []
+}
