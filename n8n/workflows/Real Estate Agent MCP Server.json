@@ -509,7 +509,7 @@
         260
       ],
       "parameters": {
-        "description": "Get the agent's active leads (new, contacted, qualified, nurturing) with recent activity, most promising first. Use for who should I call today or which leads need attention. Respect sms_opt_out and email_opt_out when suggesting how to reach someone.",
+        "description": "Get the agent's active leads (new, contacted, qualified, nurturing) with recent activity, most promising first. Use for who should I call today or which leads need attention. Respect communication_opted_out and email_opt_out when suggesting how to reach someone.",
         "workflowId": {
           "__rl": true,
           "mode": "list",
