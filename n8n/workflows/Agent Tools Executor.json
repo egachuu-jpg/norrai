@@ -1,0 +1,142 @@
+{
+  "name": "Agent Tools Executor",
+  "active": true,
+  "nodes": [
+    {
+      "id": "ex-webhook-0001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 300],
+      "webhookId": "3f2a9c7e-1b4d-4e8a-9c2f-7a6b5d4e3c21",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-tools-exec",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": { "id": "D1QdzOHZ5UXFb23E", "name": "Agent Executor Secret" }
+      }
+    },
+    {
+      "id": "ex-if-0002",
+      "name": "Is validate_agent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [240, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-validate",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "validate_agent",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ex-lookup-0003",
+      "name": "Lookup Agent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [480, 180],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT COALESCE(\n  (SELECT json_build_object('client_id', id, 'enabled_tools', enabled_tools)\n   FROM clients\n   WHERE primary_contact_email = '{{ String($json.body.agent_email || '').replace(/'/g, \"''\") }}'\n   LIMIT 1),\n  json_build_object('client_id', null)\n) AS result",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": { "id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account" }
+      }
+    },
+    {
+      "id": "ex-respval-0004",
+      "name": "Respond Validate",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [700, 180],
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json.result }}", "options": {} }
+    },
+    {
+      "id": "ex-runtools-0005",
+      "name": "Run Tools",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [480, 420],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "wh3JN8bmLCTtPeOT",
+          "cachedResultName": "Real Estate Agent Tools"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $json.body.action }}",
+            "agent_email": "={{ $json.body.agent_email }}",
+            "title": "={{ $json.body.title }}",
+            "due_at": "={{ $json.body.due_at }}",
+            "deal_ref": "={{ $json.body.deal_ref }}",
+            "assigned_to": "={{ $json.body.assigned_to }}",
+            "lead_id": "={{ $json.body.lead_id }}",
+            "task_id": "={{ $json.body.task_id }}",
+            "status": "={{ $json.body.status }}",
+            "due_within_days": "={{ $json.body.due_within_days }}",
+            "days": "={{ $json.body.days }}",
+            "limit": "={{ $json.body.limit }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "action", "displayName": "action", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "agent_email", "displayName": "agent_email", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "title", "displayName": "title", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "due_at", "displayName": "due_at", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "deal_ref", "displayName": "deal_ref", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "assigned_to", "displayName": "assigned_to", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "lead_id", "displayName": "lead_id", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "task_id", "displayName": "task_id", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "due_within_days", "displayName": "due_within_days", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "days", "displayName": "days", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "limit", "displayName": "limit", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        }
+      }
+    },
+    {
+      "id": "ex-resptool-0006",
+      "name": "Respond Tool",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [700, 420],
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} }
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Is validate_agent?", "type": "main", "index": 0 }]] },
+    "Is validate_agent?": {
+      "main": [
+        [{ "node": "Lookup Agent", "type": "main", "index": 0 }],
+        [{ "node": "Run Tools", "type": "main", "index": 0 }]
+      ]
+    },
+    "Lookup Agent": { "main": [[{ "node": "Respond Validate", "type": "main", "index": 0 }]] },
+    "Run Tools": { "main": [[{ "node": "Respond Tool", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Al6gagYmiq1feOWq",
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}

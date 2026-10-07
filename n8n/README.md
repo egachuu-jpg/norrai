@@ -65,6 +65,7 @@ SELECT DISTINCT workflow_name FROM workflow_events ORDER BY workflow_name;
 | Weekly Marketing Drip — Send | `weekly_marketing_drip` |
 | Marketing Opt-Out | `marketing_opt_out` |
 | Real Estate Agent Tools (MCP connector backend) | `agent_tools` |
+| Agent Tools Executor (OAuth Worker → n8n webhook; validate_agent + tool proxy) | `agent_tools_executor` |
 | Decisions Pending — Digest | `cos_digest` |
 | Decisions Pending — Gmail Collector | `cos_gmail_collector` |
 | Decisions Pending — Calendar Collector | `cos_calendar_collector` |
