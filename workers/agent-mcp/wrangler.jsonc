@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agent-mcp",
+  "main": "src/index.ts",
+  "account_id": "9c58d48d8abc2dcc5a3c807f10cc5b6f",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "agent-mcp.norrai.co", "custom_domain": true }],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "c1ece604413b4f74811dffda4c78447d" }],
+  "vars": { "N8N_EXECUTOR_URL": "https://norrai.app.n8n.cloud/webhook/agent-tools-exec" }
+}
