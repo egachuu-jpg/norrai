@@ -1,9 +1,15 @@
 import { z } from "zod";
 
+// Raw zod shape accepted by v2 `McpServer.registerTool` (`Record<string, z.ZodType>`).
+// Not `z.ZodRawShape`: in zod 4 that alias widens to the loose `core.$ZodShape`
+// (`$ZodType`), which is missing the full `ZodType` surface the v2 server overload
+// requires, so it fails to bind the raw-shape `registerTool` overload.
+export type RawShape = Record<string, z.ZodType>;
+
 export interface ToolDef {
   action: string;
   description: string;
-  inputSchema: z.ZodRawShape;
+  inputSchema: RawShape;
 }
 
 export const TOOL_CATALOG: Record<string, ToolDef> = {

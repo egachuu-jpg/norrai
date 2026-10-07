@@ -1,5 +1,5 @@
 import { createMcpHandler, getMcpAuthContext } from "agents/mcp/server";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import { env } from "cloudflare:workers";
 import type { Env, Props } from "./types";
 import { TOOL_CATALOG } from "./tools";
@@ -29,14 +29,14 @@ export const mcpHandler = createMcpHandler(
       server.registerTool(
         tool.action,
         { description: tool.description, inputSchema: tool.inputSchema },
-        async (args: Record<string, unknown>) => {
+        async (args) => {
           // Re-read the auth context at call time and re-check entitlement
           // server-side before touching n8n. Never trust the registration-time
           // snapshot or any client-supplied identity.
           const callProps = (getMcpAuthContext()?.props ?? {}) as Props;
           if (!isEntitled(callProps.enabledTools ?? [], tool.action)) {
             return {
-              content: [{ type: "text", text: "This tool isn't enabled for your account." }],
+              content: [{ type: "text" as const, text: "This tool isn't enabled for your account." }],
               isError: true,
             };
           }
@@ -46,12 +46,12 @@ export const mcpHandler = createMcpHandler(
               env as unknown as Env,
               tool.action,
               callProps.email,
-              args,
+              args as Record<string, unknown>,
             );
-            return { content: [{ type: "text", text: JSON.stringify(result) }] };
+            return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
           } catch {
             return {
-              content: [{ type: "text", text: "That didn't go through — please try again in a moment." }],
+              content: [{ type: "text" as const, text: "That didn't go through — please try again in a moment." }],
               isError: true,
             };
           }
