@@ -175,7 +175,7 @@ git commit -m "feat(n8n): Agent Tools Executor webhook (validate_agent + tool pr
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.0",
+    "@cloudflare/workers-types": "^4.20250101.0",
     "typescript": "^5.6.0",
     "vitest": "^2.0.0",
     "wrangler": "^3.80.0"
@@ -206,16 +206,14 @@ Pin to the versions confirmed in Task 1 if they differ.
 - [ ] **Step 3: Create `vitest.config.ts`**
 
 ```ts
-import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+import { defineConfig } from "vitest/config";
 
-export default defineWorkersConfig({
-  test: {
-    poolOptions: {
-      workers: { wrangler: { configPath: "./wrangler.jsonc" } },
-    },
-  },
+export default defineConfig({
+  test: { environment: "node" },
 });
 ```
+
+(Unit tests in Tasks 5–8 are pure logic — plain vitest, no Workers runtime needed. The Worker itself is verified end-to-end via curl in Task 11.)
 
 - [ ] **Step 4: Create `.dev.vars.example`**
 
