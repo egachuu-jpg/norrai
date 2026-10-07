@@ -4,9 +4,9 @@
 
 **Goal:** Let an agent connect the Norr AI MCP connector in the Claude app by logging in (Cloudflare Access), with data scoped to their client and tools granted per agent.
 
-**Architecture:** A Cloudflare Worker at `agent-mcp.norrai.co` is both the OAuth authorization server (`@cloudflare/workers-oauth-provider`) and the MCP server (`McpAgent` on a Durable Object). Cloudflare Access gates the `/authorize` login; the verified email is injected as `agent_email` and scoped against `clients`. A single n8n "Agent Tools Executor" webhook runs the existing Tools sub-workflow, preserving `workflow_events` logging.
+**Architecture:** A Cloudflare Worker at `agent-mcp.norrai.co` is both the OAuth authorization server (`@cloudflare/workers-oauth-provider`) and the MCP server (`createMcpHandler` from `agents/mcp/server` — stateless, no Durable Object). Cloudflare Access gates the `/authorize` login; the verified email is injected as `agent_email` and scoped against `clients`. A single n8n "Agent Tools Executor" webhook runs the existing Tools sub-workflow, preserving `workflow_events` logging.
 
-**Tech Stack:** Cloudflare Workers, `@cloudflare/workers-oauth-provider`, `agents` (`McpAgent`), `@modelcontextprotocol/sdk`, Workers KV + Durable Objects, TypeScript, Vitest + `@cloudflare/vitest-pool-workers`, n8n, Neon Postgres.
+**Tech Stack:** Cloudflare Workers, `@cloudflare/workers-oauth-provider`, `agents` (`createMcpHandler`), `@modelcontextprotocol/sdk`, Workers KV, TypeScript, Vitest + `@cloudflare/vitest-pool-workers`, n8n, Neon Postgres.
 
 ---
 
@@ -20,9 +20,9 @@ workers/agent-mcp/
   vitest.config.ts
   .dev.vars.example       # local secrets template (never commit real .dev.vars)
   src/
-    index.ts              # OAuthProvider wiring + exported Durable Object
+    index.ts              # OAuthProvider wiring (apiHandler = mcpHandler)
     access.ts             # /authorize handler: read Access email, validate, complete grant
-    mcp.ts                # AgentMCP (McpAgent): tools/list + tools/call
+    mcp.ts                # mcpHandler (createMcpHandler): tools/list + tools/call
     tools.ts              # tool catalog (schemas + descriptions), pure data
     executor.ts           # callExecutor(): POST to n8n webhook with shared secret
     entitlements.ts       # filterTools(catalog, enabledTools)
@@ -169,9 +169,9 @@ git commit -m "feat(n8n): Agent Tools Executor webhook (validate_agent + tool pr
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@cloudflare/workers-oauth-provider": "^0.0.5",
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "agents": "^0.0.80",
+    "@cloudflare/workers-oauth-provider": "^1.2.2",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "agents": "^0.26.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -229,7 +229,6 @@ N8N_SHARED_SECRET=replace-me
 ```ts
 export interface Env {
   OAUTH_KV: KVNamespace;
-  AGENT_MCP: DurableObjectNamespace;
   OAUTH_PROVIDER: any; // helper binding injected by workers-oauth-provider
   N8N_EXECUTOR_URL: string;
   N8N_SHARED_SECRET: string;
@@ -594,35 +593,35 @@ git commit -m "feat(agent-mcp): Access login handler + agent resolution"
 **Files:**
 - Create: `workers/agent-mcp/src/mcp.ts`
 
-- [ ] **Step 1: Implement the McpAgent**
+- [ ] **Step 1: Implement `src/mcp.ts` with `createMcpHandler`**
 
-Registers only entitled tools; each tool re-checks entitlement then calls the executor. (Covered by the Task 5–7 unit tests + the Task 11 end-to-end; no separate unit test for the DO wiring.)
+Uses Cloudflare's current `createMcpHandler` (import from `agents/mcp/server`) — stateless, no Durable Object (`McpAgent` is deprecated per Task 1). Hard requirements:
+- **Only entitled tools may appear in `tools/list`** — register tools per request from the authenticated agent's `enabledTools` (read via `getMcpAuthContext()`). **Verify against the installed `agents@0.26.0` types that the auth context is readable inside the factory callback; if it is NOT, stop and report BLOCKED — do not fall back to registering all tools (that would leak tool names in `tools/list`).**
+- **`tools/call` re-checks entitlement** server-side before calling n8n.
+- `agent_email` sent to n8n is always the verified `props.email`, never client input.
+- Obtain `env` inside the tool handler (e.g. `context.env`) for `callExecutor`; confirm the exact accessor against the installed types.
 
 ```ts
-import { McpAgent } from "agents/mcp";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
+import { createMcpHandler, getMcpAuthContext } from "agents/mcp/server";
 import type { Env, Props } from "./types";
 import { TOOL_CATALOG } from "./tools";
 import { filterTools, isEntitled } from "./entitlements";
 import { callExecutor } from "./executor";
 
-export class AgentMCP extends McpAgent<Env, unknown, Props> {
-  server = new McpServer({ name: "Norr AI Agent", version: "1.0.0" });
-
-  async init() {
-    const enabled = this.props.enabledTools ?? [];
-    for (const tool of filterTools(TOOL_CATALOG, enabled)) {
-      this.server.tool(
+export const mcpHandler = createMcpHandler(
+  (server) => {
+    const { props } = getMcpAuthContext() as { props: Props };
+    for (const tool of filterTools(TOOL_CATALOG, props?.enabledTools ?? [])) {
+      server.registerTool(
         tool.action,
-        tool.description,
-        tool.inputSchema,
-        async (args: Record<string, unknown>) => {
-          if (!isEntitled(this.props.enabledTools ?? [], tool.action)) {
+        { description: tool.description, inputSchema: tool.inputSchema },
+        async (args: Record<string, unknown>, context: any) => {
+          const auth = getMcpAuthContext() as { props: Props };
+          if (!isEntitled(auth.props.enabledTools ?? [], tool.action)) {
             return { content: [{ type: "text", text: "This tool isn't enabled for your account." }], isError: true };
           }
           try {
-            const result = await callExecutor(this.env, tool.action, this.props.email, args);
+            const result = await callExecutor(context.env as Env, tool.action, auth.props.email, args);
             return { content: [{ type: "text", text: JSON.stringify(result) }] };
           } catch {
             return { content: [{ type: "text", text: "That didn't go through — please try again in a moment." }], isError: true };
@@ -630,18 +629,19 @@ export class AgentMCP extends McpAgent<Env, unknown, Props> {
         },
       );
     }
-  }
-}
+  },
+  { route: "/mcp" },
+);
 ```
 
-Match `this.server.tool(...)` signature and `McpAgent` generics to the Task 1 confirmation.
+Adjust `getMcpAuthContext`, the `context.env` accessor, and `registerTool`'s signature to the installed `agents@0.26.0` / `@modelcontextprotocol/sdk@1.32.1` types. If the auth context is not available inside the factory callback (so per-agent `tools/list` filtering is impossible), stop and report BLOCKED with what the types allow.
 
 - [ ] **Step 2: Typecheck + commit**
 
 ```bash
 cd workers/agent-mcp && npm run typecheck
 git add workers/agent-mcp/src/mcp.ts
-git commit -m "feat(agent-mcp): MCP server with entitlement-gated tools"
+git commit -m "feat(agent-mcp): MCP server (createMcpHandler) with entitlement-gated tools"
 ```
 
 ---
@@ -655,7 +655,7 @@ git commit -m "feat(agent-mcp): MCP server with entitlement-gated tools"
 
 ```ts
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import { AgentMCP } from "./mcp";
+import { mcpHandler } from "./mcp";
 import { handleAuthorize } from "./access";
 import type { Env } from "./types";
 
@@ -667,17 +667,17 @@ const defaultHandler = {
   },
 };
 
-export { AgentMCP };
-
 export default new OAuthProvider({
   apiRoute: "/mcp",
-  apiHandler: AgentMCP.mount("/mcp"),
+  apiHandler: mcpHandler,
   defaultHandler,
   authorizeEndpoint: "/authorize",
   tokenEndpoint: "/token",
   clientRegistrationEndpoint: "/register",
 });
 ```
+
+Confirm `apiHandler` accepts the `createMcpHandler` return value directly (per Task 1 it expects an `ExportedHandler`/fetch handler); wrap it if the installed types require it.
 
 - [ ] **Step 2: Create `wrangler.jsonc`**
 
@@ -691,10 +691,6 @@ export default new OAuthProvider({
   "observability": { "enabled": true },
   "routes": [{ "pattern": "agent-mcp.norrai.co", "custom_domain": true }],
   "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "<created in step 3>" }],
-  "durable_objects": {
-    "bindings": [{ "name": "AGENT_MCP", "class_name": "AgentMCP" }]
-  },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AgentMCP"] }],
   "vars": { "N8N_EXECUTOR_URL": "https://norrai.app.n8n.cloud/webhook/agent-tools-exec" }
 }
 ```
@@ -782,4 +778,4 @@ git commit -m "docs(agent-mcp): cut connector over to OAuth front door"
 
 **Placeholder scan:** No TBD/TODO. The only "adjust to confirmed API" notes (Tasks 8–9) are deliberate, tied to the Task 1 verification of version-sensitive external libraries — concrete code is provided to adjust from, not omitted.
 
-**Type consistency:** `Props {email, clientId, enabledTools}` is produced in `resolveAgent` (Task 8) and consumed in `AgentMCP` (Task 9). `callExecutor(env, action, agentEmail, args)` signature matches across Tasks 7, 8, 9. `ToolDef {action, description, inputSchema}` defined in Task 5, used in Tasks 6, 9. `filterTools`/`isEntitled` names consistent (Tasks 6, 9). `X-Norr-Secret` header consistent (Tasks 3, 7).
+**Type consistency:** `Props {email, clientId, enabledTools}` is produced in `resolveAgent` (Task 8) and consumed in the MCP tool handlers (Task 9). `callExecutor(env, action, agentEmail, args)` signature matches across Tasks 7, 8, 9. `ToolDef {action, description, inputSchema}` defined in Task 5, used in Tasks 6, 9. `filterTools`/`isEntitled` names consistent (Tasks 6, 9). `X-Norr-Secret` header consistent (Tasks 3, 7).

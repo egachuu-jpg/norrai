@@ -55,7 +55,7 @@ agent-mcp.norrai.co  — Cloudflare Worker  (workers/agent-mcp/)
   │   └─ tokens/grants in KV
   ├─ Login handler (/authorize): reads Access-verified email → validates against
   │   clients.primary_contact_email → binds {email, client_id} to the token
-  └─ MCP server (McpAgent on a Durable Object)
+  └─ MCP server (createMcpHandler — stateless, no Durable Object)
         ├─ tools/list  → only this client's enabled_tools
         └─ tools/call  → re-check entitlement, then POST to n8n executor
                           with agent_email = verified email + shared secret
@@ -81,11 +81,13 @@ agent-mcp.norrai.co  — Cloudflare Worker  (workers/agent-mcp/)
    `Cf-Access-Jwt-Assertion`), validates it against `clients`, and on match
    completes the grant binding `{email, client_id}`. Depends on: Access config,
    client lookup (via the n8n executor or a small read).
-3. **MCP server** — an `McpAgent` (Durable Object). Holds the full tool catalog
-   (schemas + descriptions, versioned in repo). `tools/list` returns only the
-   client's entitled tools; `tools/call` re-checks entitlement then calls the
-   n8n executor with the verified `agent_email`. Depends on: DO binding, executor
-   URL + shared secret.
+3. **MCP server** — Cloudflare's `createMcpHandler` (`agents/mcp/server`),
+   stateless per request (no Durable Object; `McpAgent` is deprecated per Task 1).
+   Holds the full tool catalog (schemas + descriptions, versioned in repo).
+   `tools/list` returns only the client's entitled tools (registered per request
+   from the auth context); `tools/call` re-checks entitlement then calls the n8n
+   executor with the verified `agent_email`. Depends on: executor URL + shared
+   secret; OAuth props via `getMcpAuthContext()`.
 4. **n8n Agent Tools Executor** — one webhook workflow wrapping the existing
    Tools sub-workflow. Depends on: shared secret, `wh3JN8bmLCTtPeOT`.
 
@@ -187,7 +189,7 @@ client-supplied. Per-client isolation is structural.
   `validate_agent` action vs. a direct Neon read from the Worker. Lean: a small
   read action through the same executor to keep DB access in one place.
 - **Token/grant store:** Workers KV (provider default).
-- **MCP server impl:** Cloudflare `McpAgent` (Durable Object) + `workers-oauth-provider`.
+- **MCP server impl:** Cloudflare `createMcpHandler` (`agents/mcp/server`, stateless) + `workers-oauth-provider`. `McpAgent` was the original assumption but is deprecated/feature-frozen (Task 1).
 
 ## References
 
