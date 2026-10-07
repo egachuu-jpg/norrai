@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^1.2.2",
+    "@modelcontextprotocol/client": "^2.0.0",
     "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "agents": "^0.26.0",
-    "zod": "^3.23.8"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250101.0",
