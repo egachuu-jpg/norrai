@@ -14,13 +14,13 @@ so a draft saved there would be publicly fetchable.
 
 | Needed | Why | Where to get it |
 |---|---|---|
-| **GBP profile URL** (the Maps/Search share link, e.g. `https://www.google.com/maps/place/...` or `https://maps.app.goo.gl/...`) | The one `sameAs` link that matters. **Not** the `g.page/r/CS6mxtsUw3ujEBM/review` link — that's the review form | Profile dashboard → Share profile |
+| ~~**GBP profile URL**~~ **Received 2026-10-09:** `https://share.google/v0nK6iGUhTkTlm5av` (not resolved from this environment — click it once to confirm it opens the 507 Air profile; a canonical `google.com/maps/place/...` URL is a slightly better `sameAs` value if you can grab one). Originally: (the Maps/Search share link, e.g. `https://www.google.com/maps/place/...` or `https://maps.app.goo.gl/...`) | The one `sameAs` link that matters. **Not** the `g.page/r/CS6mxtsUw3ujEBM/review` link — that's the review form | Profile dashboard → Share profile |
 | Facebook / Instagram URLs | `sameAs` | Pages don't exist yet — add only after created |
 | Place ID | Audit config `place_id` | [Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id) |
 | License #, insurance, certifications | Strong trust/entity signals; PRD lists them | Oscar. Not on the site today, so I did not invent any |
 
-Per `docs/lessons-learned.md`: never ship a placeholder in live markup. The `sameAs` array below
-stays out of `index.html` until the first real URL is in hand.
+Per `docs/lessons-learned.md`: never ship a placeholder in live markup. The GBP link is now in the `sameAs`
+array below; Facebook/Instagram entries get added only once those pages exist.
 
 ## 2. Proposed replacement for the `index.html` JSON-LD block
 
@@ -45,7 +45,7 @@ Changes vs. today: adds `@id`, `url`, `logo`, `image`, `description`, `hasMap`/`
   "openingHours": "Mo-Su 00:00-23:59",
   "knowsLanguage": ["en", "es"],
   "sameAs": [
-    "<GBP profile URL — REQUIRED before shipping>"
+    "https://share.google/v0nK6iGUhTkTlm5av"
   ],
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
@@ -66,7 +66,7 @@ Changes vs. today: adds `@id`, `url`, `logo`, `image`, `description`, `hasMap`/`
 ```
 
 Open questions before applying:
-- `sameAs` must be real or removed — an empty/placeholder entry is invalid.
+- `sameAs` now holds the real GBP share link; verify it opens the right profile before shipping.
 - `logo`/`image` paths exist in `client-sites/507-air/images/`; confirm `logo.jpg` is the one Oscar wants as the logo.
 - The schema address is **PO Box 355**, while the GBP is a service-area business with a hidden address.
   Not necessarily a problem, but it's the first thing to compare in the NAP check.
