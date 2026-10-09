@@ -91,12 +91,57 @@ test('home: hero headline, trust chips, and brands are present', async ({ page }
 });
 
 // structured data is what Google reads for hours — it has to say 24/7 too, or
-// the profile and the site disagree on the one signal that drives "open now"
+// the profile and the site disagree on the one signal that drives "open now".
+// The page now carries two ld+json blocks (HVACBusiness, FAQPage); the business
+// block is first in DOM order.
 test('home: LocalBusiness schema declares 24/7 opening hours', async ({ page }) => {
   await page.goto(`${BASE}/index.html`);
-  const raw = await page.locator('script[type="application/ld+json"]').textContent();
+  const raw = await page.locator('script[type="application/ld+json"]').first().textContent();
   const schema = JSON.parse(raw);
+  expect(schema['@type']).toBe('HVACBusiness');
   expect(schema.openingHours).toBe('Mo-Su 00:00-23:59');
+});
+
+// Both JSON-LD blocks must be valid JSON and the expected @types. Google ignores
+// a block it can't parse, so a trailing-comma typo silently kills the markup.
+test('home: both JSON-LD blocks parse and are the expected types', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  const blocks = page.locator('script[type="application/ld+json"]');
+  expect(await blocks.count()).toBe(2);
+  const types = [];
+  for (let i = 0; i < 2; i++) {
+    const schema = JSON.parse(await blocks.nth(i).textContent());
+    types.push(schema['@type']);
+  }
+  expect(types).toEqual(['HVACBusiness', 'FAQPage']);
+});
+
+// sameAs must only ever hold real https URLs — a shipped placeholder (or the
+// unresolved share link) is the failure mode lessons-learned warns about.
+test('home: every sameAs entry is an https URL', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  const raw = await page.locator('script[type="application/ld+json"]').first().textContent();
+  const schema = JSON.parse(raw);
+  expect(Array.isArray(schema.sameAs)).toBe(true);
+  expect(schema.sameAs.length).toBeGreaterThan(0);
+  for (const url of schema.sameAs) {
+    expect(url, `sameAs entry "${url}"`).toMatch(/^https:\/\/\S+$/);
+  }
+});
+
+// Google requires marked-up Q&A to be visible on the page — the FAQPage answers
+// must appear verbatim in the rendered FAQ section, or the schema is non-compliant.
+test('home: every FAQPage question and answer is visible on the page', async ({ page }) => {
+  await page.goto(`${BASE}/index.html`);
+  const blocks = page.locator('script[type="application/ld+json"]');
+  const faq = JSON.parse(await blocks.nth(1).textContent());
+  expect(faq['@type']).toBe('FAQPage');
+  expect(faq.mainEntity.length).toBe(7);
+  const faqText = await page.locator('#faq').innerText();
+  for (const qa of faq.mainEntity) {
+    expect(faqText, `FAQ question "${qa.name}" visible`).toContain(qa.name);
+    expect(faqText, `FAQ answer for "${qa.name}" visible`).toContain(qa.acceptedAnswer.text);
+  }
 });
 
 test('services: full service list from owner email is covered', async ({ page }) => {
