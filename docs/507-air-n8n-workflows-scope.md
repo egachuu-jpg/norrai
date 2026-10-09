@@ -12,11 +12,10 @@ Both must follow the **Workflow Logging Standard** in `CLAUDE.md` (Lookup Client
 
 ## Prerequisites (shared — do these first)
 
-1. **Create the 507 Air `clients` row.** 507 Air is *not* in Neon `clients` yet. Both workflows need a
-   real `client_id` to log against (do **not** reuse the B&B or norrai_internal id). Suggested insert:
-   `business_name` "507 Air Heating & Cooling, LLC", `tier` starter, `vertical` hvac, `status` active,
-   `primary_contact_email` airheatingandcooling507@outlook.com. Capture the returned `id` — it's the
-   hardcoded `client_id` in both workflows' Lookup Client nodes.
+1. ✅ **Create the 507 Air `clients` row** — DONE 2026-10-09.
+   **`client_id` = `492902e1-4f82-4a89-aaa0-c54acadebf06`** (507 Air Heating & Cooling, LLC / hvac /
+   starter / active). This is the hardcoded `client_id` for both workflows' Lookup Client nodes — do
+   **not** reuse the B&B or norrai_internal id.
 2. **Twilio:** create a 507 Air subaccount + provision an SMS-capable number; record it in
    `twilio_subaccounts`. Needed for both (review SMS + text-back). A2P 10DLC registration is required
    for US SMS at volume — see the A2P plan in memory; a single low-volume number may send before full
