@@ -34,9 +34,25 @@ Both must follow the **Workflow Logging Standard** in `CLAUDE.md` (Lookup Client
 
 ---
 
-## Workflow 1 — Review request
+## Workflow 1 — Review request — ✅ BUILT 2026-10-09 (inactive)
 
-**workflow_name:** `507air_review_request` (confirm/register in `n8n/README.md`)
+**n8n workflow id:** `dvT9jA24H98Z1fT7` ("507 Air Review Request", project Norr AI). Validates clean.
+**workflow_name:** `507air_review_request` (registered in `n8n/README.md`). Built **SMS-first** (simpler
+than the RE template, which is email-first/Claude-personalized — not reusable as-is for an HVAC one-tap link).
+
+**Before activating (both required):**
+1. Provision the 507 Air Twilio number (prereq 2) and set it as the `from` on the **Send SMS** node
+   (currently placeholder `+1XXXXXXXXXX`), pointing at the right Twilio subaccount credential.
+2. Fire a test via the `n8n-payload`/`http-request` skill against the `/webhook/507air-review-request`
+   path with header `x-norr-token`, confirm the SMS and the `triggered`/`completed` rows in
+   `workflow_events`, then set the workflow active.
+
+**As built:** Webhook (`507air-review-request`, POST) → Token Check → [Prep Fields → Wait
+(`delay_hours`, default 2) → Send SMS → Log Completed] + [Log Triggered]. Hardcoded
+`client_id 492902e1-…`, review link baked into the SMS, STOP opt-out included. Error Workflow =
+`Norr AI Workflow Error Logger`. **Payload:** `{ customer_name, phone, email?, delay_hours? }`.
+
+### Original scope (for reference)
 
 **Goal:** after a completed job, text (and optionally email) the customer a one-tap link to leave a
 Google review. Reviews are 507 Air's #1 prominence lever (8 vs competitor median 452).

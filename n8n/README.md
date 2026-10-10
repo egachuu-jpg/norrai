@@ -67,6 +67,7 @@ SELECT DISTINCT workflow_name FROM workflow_events ORDER BY workflow_name;
 | Real Estate Agent Tools (MCP connector backend) | `agent_tools` |
 | Decisions Pending — Digest | `cos_digest` |
 | Decisions Pending — Gmail Collector | `cos_gmail_collector` |
+| 507 Air Review Request | `507air_review_request` |
 | Decisions Pending — Calendar Collector | `cos_calendar_collector` |
 | Decisions Pending — Rules Expander | `cos_rules` |
 
