@@ -56,6 +56,30 @@ Connors Plumbing/Heating/Air (1608, 4.9★), Luiken's Mechanical (452, 4.9★), 
 5. Fill citations checklist → re-run audit for the full 15 pts.
 6. Add license #/certifications to the site (missing entity signal) once Oscar provides them.
 
+## Citations / NAP pass — known discrepancies to fix (observed 2026-10-10)
+
+GBP is the source of truth. Canonical NAP: name **507 Air Heating and Cooling** (GBP display;
+brand/legal is "507 Air Heating & Cooling, LLC"), phone **(507) 491-3063**, **Faribault, MN**
+service area (hidden street address), site **https://507air.com**. GBP category now public = HVAC contractor.
+
+Priority order for the citations pass:
+
+1. **Address exposure — HomeAdvisor shows a street address "17893 Alexander Ave" (Faribault).**
+   GBP is a service-area business that deliberately hides the address. **Ask Oscar** whether that address
+   should be public — if it's his private/home address, get it removed from HomeAdvisor. Higher priority
+   than any name formatting.
+2. **City mismatch — BBB lists the business under "Mankato, MN"** while GBP + site = Faribault. Correct BBB
+   to Faribault (source of truth) unless Oscar genuinely operates from Mankato. City-level NAP mismatch
+   matters more than punctuation.
+3. **Name "&" vs "and" — LOW priority / cosmetic.** Website, BBB, HomeAdvisor use "507 Air Heating &
+   Cooling"; GBP uses "...and Cooling". Search/AI normalize "&"↔"and", so this is not a real ranking risk.
+   If perfecting: align GBP to "&" (it's the outlier) — but **don't stack a GBP name edit this week** while
+   the category change is still propagating, and don't add "LLC" to the GBP name (Google discourages it).
+
+Directories seen listed so far (from a logged-out Google search): 507air.com, HomeAdvisor, BBB
+(BBB Accredited since 2026-06-26). Still to confirm in the 8-directory checklist: Bing, Apple Maps, Yelp,
+Facebook, Angi, Nextdoor.
+
 ## Note on method
 
 Places **Text Search** returned 0 results for 507 Air on all name variants, while Place **Details** by ID
