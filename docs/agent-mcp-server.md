@@ -11,6 +11,7 @@ Claude app (agent's phone / desktop)
   └─ Norr AI connector (OAuth)  →  Cloudflare Worker  agent-mcp.norrai.co
         • /authorize → Cloudflare Access login (email code) → verified email
         • /mcp       → add_task · list_tasks · complete_task · get_hot_leads
+                        · find_lead · my_activity
                         (only the agent's enabled_tools are exposed)
                           │  POST {action, agent_email, …} + X-Norr-Secret
                           ▼
@@ -65,9 +66,9 @@ workflow, no redeploy, no hardcoded email per agent.
 - **Worker ↔ n8n:** shared-secret header `X-Norr-Secret` (Worker secret
   `N8N_SHARED_SECRET` = the executor webhook's Header Auth credential). The
   executor webhook is never exposed to the agent.
-- **Hardening TODO:** the Worker currently trusts the
-  `Cf-Access-Authenticated-User-Email` header; verify the `Cf-Access-Jwt-Assertion`
-  signature (aud + key) before a second brokerage.
+- **Access JWT verified:** the Worker verifies the `Cf-Access-Jwt-Assertion`
+  signature, issuer and audience (`jose`, fail-closed) rather than trusting the
+  email header (#16).
 
 ## Test it yourself (server side, no browser)
 
@@ -104,8 +105,9 @@ In the agent's Claude app: **Settings → Profile / personal preferences** → t
 > For my real-estate work — leads, clients, showings, deals, pipeline, and work
 > follow-ups/to-dos — prefer the Norr AI connector tools (and use whichever
 > fits). When I ask who to call or who needs attention, use the connector's lead
-> tool, not the phone's Reminders or Calendar. Respect each lead's opt-out flags
-> when suggesting how to reach them.
+> tool, not the phone's Reminders or Calendar. When I ask about a specific person
+> or property, look them up with the connector. Respect each lead's opt-out flags
+> when suggesting how to reach them (they're about email, not calls or texts).
 >
 > For personal reminders unrelated to real estate, use the phone's normal
 > Reminders. Use Google Calendar only for real calendar events (showings,
@@ -160,7 +162,26 @@ reads aloud well.
 | `add_task` | `title`, `due_at` (YYYY-MM-DD or YYYY-MM-DDTHH:MM, Central), `deal_ref`, `assigned_to`, `lead_id` | Date-only = 5pm Central. A `lead_id` from another client is silently dropped. |
 | `list_tasks` | `status` (open/done), `due_within_days` (-1 all, 0 overdue+today, 7 week), `assigned_to` | Max 50; returns ids for `complete_task` |
 | `complete_task` | `task_id` | Scoped to the agent's client; double-complete is a no-op with a note |
-| `get_hot_leads` | `days` (1–90, default 14), `limit` (1–50, default 15) | Active statuses only; includes opt-out flags and open task count |
+| `get_hot_leads` | `days` (1–90, default 14), `limit` (1–50, default 15) | Ranked, each with a `why`: (0) **active again** in the window, (1) **new** in the window, (2) **qualified** with activity in 90 days. Callable (has phone) first within a tier. Active statuses only. See "How hot leads are ranked". |
+| `find_lead` | `query` (2–100 chars: name, email, phone or street) | Up to 5 matches, newest first, plus `match_count` and a narrowing `note` past 5. Returns open to-dos and a `history` of what Norr AI sent (only workflows that log `lead_id` or an attendee/buyer email). Phone search kicks in when the query is mostly digits. |
+| `my_activity` | `days` (1–90, default 7) | Agent-scoped counts: new leads (+ after-hours, by source), nurture starts/emails, labelled automation completions from `workflow_events`, tasks done. The weekly drip logs under norrai_internal, so it's excluded. |
+
+### How hot leads are ranked
+
+`updated_at` alone is useless: the 7-Touch nurture bumps it on every automated
+email. Every outbound automation also stamps a marker in the same UPDATE
+(`last_contacted_at`, `nurture_enrolled_at`, `metadata.last_outreach_at`,
+`opted_out_at`, `metadata.last_import_at`). An `updated_at` more than 2 minutes
+past all of those markers means **the lead did something**: a repeat inquiry
+(Lead Cleanser rewrites `lead_message`) or a return open-house visit (Open House
+Weichert). That's "active again". It holds until the next automated touch
+re-stamps the lead.
+
+**Any new workflow that UPDATEs `leads` must stamp a marker too**, or every lead
+it touches will rank as "active again". Known gap: the BoldTrail CSV Import's
+`DO UPDATE` doesn't yet set `metadata.last_import_at`. Add
+`metadata = COALESCE(leads.metadata, '{}'::jsonb) || EXCLUDED.metadata || jsonb_build_object('last_import_at', now()::text)`
+before re-running it.
 
 ## Adding a new tool
 
@@ -173,6 +194,9 @@ not a skill — the shape is stable enough that a runbook suffices.
    the work (a Postgres query, or a Call-Workflow to something like the Research
    Agent) returning a single `result` json. Keep the `triggered`/`completed`
    logging nodes. (Validation lives in Prep Input — add any new field checks there.)
+   **New input field?** Add it in two n8n places or it arrives empty: the
+   sub-workflow trigger's inputs (`When Called by Another Workflow`) **and** the
+   **Agent Tools Executor** → `Run Tools` mapping (`value` + `schema`).
 2. **Worker — add it to the catalog** (`workers/agent-mcp/src/tools.ts`): one
    `ToolDef` entry — `action` (must equal the n8n action string), a Claude-facing
    `description` (when to use it; add a "prefer this over the phone's X" nudge if
@@ -188,7 +212,6 @@ Because tools are a per-client allowlist, you can ship a tool to one agent only.
 
 ## Next
 
-- OAuth JWT hardening (verify `Cf-Access-Jwt-Assertion`) before a second brokerage.
 - More tools (see "Adding a new tool"): `write_listing` → listing workflow,
   `research_property` → Research Agent.
 - Skills on top: daily briefing (calendar + `list_tasks` + `get_hot_leads`), PA
