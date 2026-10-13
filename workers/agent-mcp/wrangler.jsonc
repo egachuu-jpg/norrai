@@ -6,7 +6,12 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  "workers_dev": false,
   "routes": [{ "pattern": "agent-mcp.norrai.co", "custom_domain": true }],
   "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "c1ece604413b4f74811dffda4c78447d" }],
-  "vars": { "N8N_EXECUTOR_URL": "https://norrai.app.n8n.cloud/webhook/agent-tools-exec" }
+  "vars": {
+    "N8N_EXECUTOR_URL": "https://norrai.app.n8n.cloud/webhook/agent-tools-exec",
+    "CF_ACCESS_TEAM_DOMAIN": "norrai.cloudflareaccess.com",
+    "CF_ACCESS_AUD": "c99587a27a7ca563883d7948cf4a290c0f4caee3ee3dfa32940425753319a635"
+  }
 }
