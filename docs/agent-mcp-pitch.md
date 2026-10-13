@@ -55,6 +55,21 @@ that's the bridge to price. The loop sells it better than any slide.
 > **Before Wednesday:** run "who should I call today?" against *each* of their
 > books yourself and read it as they would. If the top names look wrong to you,
 > they'll look wrong to them.
+>
+> What the 2026-10-13 prod dry run showed:
+> - **Both books are quiet:** no new or re-engaged leads in 14 days, so the
+>   answer leads with "nothing new; here are your most recent leads still on
+>   nurture." That's honest and still useful. Frame it as "the system's been
+>   working them; these are worth a personal call."
+> - **Junk in Evan's list:** `skkasjsbzb`, `gjgfsssj`, `jdjdiejr` (fake numbers)
+>   and a test lead named **Egan**. Mark them `dead` before the demo.
+> - **Duplicate in Michelle's:** "kimschroedergreen" and "Kim Green" share a phone.
+> - **"What did Norr AI do for me?"** is thin for Michelle over 30 days (no new
+>   leads); the weekly listing email carries it (≈418 of her contacts). Evan's
+>   week is also quiet; use "this month" for him.
+> - **The weekly listing email skipped Sep 14, 21 and 28** (no runs logged
+>   between Sep 10 and Oct 5). If they ask why they didn't see it those weeks,
+>   don't be surprised.
 
 > Demo tip: demo against **their** book if their logins are set up (real names =
 > real "oh wow"), or against the test client if not. Their `clients` rows already

@@ -162,9 +162,9 @@ reads aloud well.
 | `add_task` | `title`, `due_at` (YYYY-MM-DD or YYYY-MM-DDTHH:MM, Central), `deal_ref`, `assigned_to`, `lead_id` | Date-only = 5pm Central. A `lead_id` from another client is silently dropped. |
 | `list_tasks` | `status` (open/done), `due_within_days` (-1 all, 0 overdue+today, 7 week), `assigned_to` | Max 50; returns ids for `complete_task` |
 | `complete_task` | `task_id` | Scoped to the agent's client; double-complete is a no-op with a note |
-| `get_hot_leads` | `days` (1–90, default 14), `limit` (1–50, default 15) | Ranked, each with a `why`: (0) **active again** in the window, (1) **new** in the window, (2) **qualified** with activity in 90 days. Callable (has phone) first within a tier. Active statuses only. See "How hot leads are ranked". |
+| `get_hot_leads` | `days` (1–90, default 14), `limit` (1–50, default 15) | Ranked, each with a `why` and `priority`: (0) **active again** in the window, (1) **new** in the window, (2) **qualified** with activity in 90 days, (3) fallback: **recent leads still on automated nurture** (last 90 days), with a `note` telling Claude to say so plainly. Callable (has phone) first within a tier. Active statuses only. See "How hot leads are ranked". |
 | `find_lead` | `query` (2–100 chars: name, email, phone or street) | Up to 5 matches, newest first, plus `match_count` and a narrowing `note` past 5. Returns open to-dos and a `history` of what Norr AI sent (only workflows that log `lead_id` or an attendee/buyer email). Phone search kicks in when the query is mostly digits. |
-| `my_activity` | `days` (1–90, default 7) | Agent-scoped counts: new leads (+ after-hours, by source), nurture starts/emails, labelled automation completions from `workflow_events`, tasks done. The weekly drip logs under norrai_internal, so it's excluded. |
+| `my_activity` | `days` (1–90, default 7) | Agent-scoped counts: new leads (+ after-hours, by source), nurture starts/emails, labelled automation completions from `workflow_events`, tasks done. Plus `weekly_listing_email` (times sent, listings featured, this agent's contacts on the list) for the Weichert clients; the drip logs under norrai_internal, so the client list is mirrored in the query. Keep it in sync with the drip's `Get Leads` node. |
 
 ### How hot leads are ranked
 
@@ -176,6 +176,11 @@ past all of those markers means **the lead did something**: a repeat inquiry
 (Lead Cleanser rewrites `lead_message`) or a return open-house visit (Open House
 Weichert). That's "active again". It holds until the next automated touch
 re-stamps the lead.
+
+Quiet books are normal (as of 2026-10-13 both Weichert agents had no new or
+re-engaged leads in 14 days), which is why tier 3 exists: an empty answer to
+"who should I call?" is worse than an honest "nothing new; here are your most
+recent leads still on nurture." 
 
 **Any new workflow that UPDATEs `leads` must stamp a marker too**, or every lead
 it touches will rank as "active again". Known gap: the BoldTrail CSV Import's
@@ -206,7 +211,9 @@ not a skill — the shape is stable enough that a runbook suffices.
 3. **Neon — grant it** per client: add the action string to `clients.enabled_tools`
    for whoever should have it (and to the schema default in `db/schema.sql` if
    it's core). It's hidden in `tools/list` and refused on call for anyone without
-   it — no redeploy needed for a grant.
+   it — no redeploy needed for a grant. **But the grant is captured in the OAuth
+   token at login**, so an agent who is already connected must disconnect and
+   reconnect the connector (Claude settings → Connectors) to see a new tool.
 
 Because tools are a per-client allowlist, you can ship a tool to one agent only.
 

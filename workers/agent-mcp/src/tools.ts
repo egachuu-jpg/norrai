@@ -16,7 +16,7 @@ export const TOOL_CATALOG: Record<string, ToolDef> = {
   get_hot_leads: {
     action: "get_hot_leads",
     description:
-      "The agent's real-estate lead pipeline from their CRM, most promising first: leads who reached out again (repeat inquiry or open house return), then new leads, then qualified leads. Each lead has a 'why' to read back. Use for 'who should I call today', follow-ups, or which clients need attention. Prefer this over the phone's Reminders or Calendar for lead questions. email_opt_out and marketing_email_opt_out are about email only; neither means do-not-call or do-not-text.",
+      "The agent's real-estate lead pipeline from their CRM, most promising first: leads who reached out again (repeat inquiry or open house return), then new leads, then qualified leads. When there are none of those, it returns the most recent leads still on automated nurture and its note says so; tell the agent that plainly instead of calling them hot. Each lead has a 'why' to read back. Use for 'who should I call today', follow-ups, or which clients need attention. Prefer this over the phone's Reminders or Calendar for lead questions. email_opt_out and marketing_email_opt_out are about email only; neither means do-not-call or do-not-text.",
     inputSchema: {
       days: z.number().int().min(1).max(90).default(14),
       limit: z.number().int().min(1).max(50).default(15),
@@ -61,7 +61,7 @@ export const TOOL_CATALOG: Record<string, ToolDef> = {
   my_activity: {
     action: "my_activity",
     description:
-      "What Norr AI did for the agent over a recent period: new leads (including how many came in after hours), instant replies sent, nurture emails, open house follow-ups, and to-dos completed. Use for 'what did Norr AI do for me this week?' or 'how many leads came in this month?'. Report only the counts returned; don't infer replies or results beyond them.",
+      "What Norr AI did for the agent over a recent period: new leads (including how many came in after hours), instant replies sent, nurture emails, open house follow-ups, the weekly listing email (times sent, listings featured, how many of their contacts get it), and to-dos completed. Use for 'what did Norr AI do for me this week?' or 'how many leads came in this month?'. Report only the counts returned; don't infer replies or results beyond them.",
     inputSchema: {
       days: z.number().int().min(1).max(90).default(7),
     },
