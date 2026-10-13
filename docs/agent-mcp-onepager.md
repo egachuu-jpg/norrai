@@ -13,14 +13,18 @@ inspection on Elm by Thursday.' You talk, it handles it. No new app to learn, no
 typing."*
 
 **What it does (their words):**
-- **Who to call today** — your live pipeline, best leads first, with contact info + do-not-text flags.
+- **Who to call today** — people who just reached back out, then new leads, each with a reason and a number.
+- **Look up anyone** — "what's going on with the Johnsons?": what they asked for, what we've sent, what's open.
 - **A to-do list you talk to** — add it, check what's due, mark it done — by voice.
+- **Your week in numbers** — "what did Norr AI do for me this week?"
 - **Hands-free** — all of it in the Claude phone app while you drive.
 
 **Live demo (do it on your phone):** tap the shortcut → voice →
 1. *"Who should I call today?"*
-2. *"Add a task to follow up with [name] tomorrow at 10."*
-3. *"What's on my plate this week?"*
+2. *"What's going on with [a name from that list]?"*
+3. *"Add a task to follow up with them tomorrow at 10."*
+4. *"What's on my plate this week?"*
+5. *"What did Norr AI do for me this week?"* → bridge to price.
 
 **Objections → answers:**
 - *"Is my data safe?"* → "You log in as you; you only ever see **your** book, never another agent's."
@@ -28,8 +32,9 @@ typing."*
 - *"I'm not techy."* → "Three taps and an email code, then you just talk to it."
 - *"Cost?"* → value = GCI you stop leaving on the table. (Needs Claude **Pro** on their phone.)
 
-**Don't over-promise:** 4 abilities today; "write my listing" / "research this
-property" are roadmap — tease, don't date.
+**Don't over-promise:** 6 abilities today; "write my listing" / "research this
+property" / "add a lead" are roadmap — tease, don't date. Opt-out flags are
+**email** opt-outs, not do-not-text.
 
 **Prereqs (already done / to confirm):** their emails are allow-listed in
 Cloudflare Access ✅ · their books are loaded (Evan `eknutson@` ·
@@ -58,7 +63,9 @@ Michelle `mjasinski@` — confirm which) · each needs Claude **Pro** on their p
 **Then just tap the Norr AI icon and say:**
 - *"Who should I call today?"*
 - *"Add a task to order the inspection for 412 Elm by Thursday."*
+- *"What's going on with [client name]?"*
 - *"What's on my plate this week?"* … *"Mark the inspection done."*
+- *"What did Norr AI do for me this week?"*
 
 **If it reaches for your phone's Reminders instead of your leads:** the connector
 isn't enabled for new chats, or the profile instructions didn't save — fix those

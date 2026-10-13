@@ -23,20 +23,38 @@ Meeting: Wednesday. Goal: get them to try it on their own phone, then onboard.
   one kills a deal or the trust.
 - **Windshield time:** hours between showings where they can't safely type.
 
-## What it does (frame as outcomes, 3 things)
+## What it does (frame as outcomes, 4 things)
 
-1. **"Who do I call today?"** — their live pipeline, most promising first, with
-   phone/email and whether the person opted out of texts. (`get_hot_leads`)
-2. **A to-do list they talk to** — "add a task…", "what's on my plate this
+1. **"Who do I call today?"** — people who just reached out again, then new
+   leads, then qualified ones, each with a one-line *why* and their number.
+   (`get_hot_leads`)
+2. **"What's going on with the Johnsons?"** — any lead in their book by name,
+   phone or street: what they asked for, when they came in, what Norr AI already
+   sent them, open to-dos. (`find_lead`)
+3. **A to-do list they talk to** — "add a task…", "what's on my plate this
    week?", "mark the inspection done." (`add_task` / `list_tasks` / `complete_task`)
-3. **Hands-free** — all of it by voice in the Claude phone app while driving.
+4. **"What did Norr AI do for me this week?"** — new leads (and how many came in
+   after hours), instant replies sent, nurture emails, open-house follow-ups.
+   This is the proof of what they pay for. (`my_activity`)
+
+All of it hands-free, by voice in the Claude phone app.
+
+> Opt-out flags are **email** opt-outs (marketing + all email). Don't describe
+> them as do-not-call or do-not-text; the system has no reliable SMS opt-out
+> data for these leads yet.
 
 ## The "wow" moment (demo live)
 
 Do it on your phone in front of them: open voice mode and say
 *"who should I call today?"* → it reads back real leads. Then
-*"add a task to follow up with <name> tomorrow at 10."* Then
-*"what's on my plate?"* That 30-second loop sells it better than any slide.
+*"what's going on with <a name from that list>?"* Then
+*"add a task to follow up with them tomorrow at 10."* Then
+*"what's on my plate?"* Close with *"what did Norr AI do for me this week?"*:
+that's the bridge to price. The loop sells it better than any slide.
+
+> **Before Wednesday:** run "who should I call today?" against *each* of their
+> books yourself and read it as they would. If the top names look wrong to you,
+> they'll look wrong to them.
 
 > Demo tip: demo against **their** book if their logins are set up (real names =
 > real "oh wow"), or against the test client if not. Their `clients` rows already
@@ -60,8 +78,10 @@ Do it on your phone in front of them: open voice mode and say
 
 - Voice works, but confirm it on *their* phone/plan during setup (it varies by
   app version). Don't promise voice until you've seen it on their device.
-- Only these 4 abilities today. "Write the listing" / "research this property"
-  are on the roadmap — tease, don't promise a date.
+- Only these 6 abilities today. "Write the listing" / "research this property"
+  / "add a lead I just met" are on the roadmap — tease, don't promise a date.
+- No "update a lead" yet: if they say "mark the Johnsons dead," it can't. Note
+  it as a follow-up.
 
 ---
 
@@ -109,8 +129,10 @@ later, it's one `enabled_tools` edit in Neon — see `docs/agent-mcp-server.md`
 ## One-screen crib (bring this)
 
 - Hook: *"ask your phone 'who should I call today' — out loud — between showings."*
-- 3 outcomes: hot leads to call · a to-do list you talk to · hands-free by voice.
-- Demo: voice → "who should I call today?" → "add a task…" → "what's on my plate?"
+- 4 outcomes: who to call (with why) · look up any lead · a to-do list you talk to ·
+  what Norr AI did for you this week. All by voice.
+- Demo: "who should I call today?" → "what's going on with <name>?" → "add a
+  task…" → "what's on my plate?" → "what did Norr AI do for me this week?"
 - Safety: your login, your book only.
 - Setup: install Claude app (Pro) → add connector URL → email-code login →
   profile instructions → home-screen voice shortcut.

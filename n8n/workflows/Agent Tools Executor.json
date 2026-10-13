@@ -92,7 +92,8 @@
             "status": "={{ $json.body.status }}",
             "due_within_days": "={{ $json.body.due_within_days }}",
             "days": "={{ $json.body.days }}",
-            "limit": "={{ $json.body.limit }}"
+            "limit": "={{ $json.body.limit }}",
+            "query": "={{ $json.body.query }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -107,7 +108,8 @@
             { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
             { "id": "due_within_days", "displayName": "due_within_days", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
             { "id": "days", "displayName": "days", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
-            { "id": "limit", "displayName": "limit", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false }
+            { "id": "limit", "displayName": "limit", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false },
+            { "id": "query", "displayName": "query", "required": false, "defaultMatch": false, "display": true, "canBeUsedToMatch": true, "type": "string", "removed": false }
           ],
           "attemptToConvertTypes": true,
           "convertFieldsToString": false

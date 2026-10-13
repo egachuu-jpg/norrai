@@ -48,6 +48,9 @@
             },
             {
               "name": "limit"
+            },
+            {
+              "name": "query"
             }
           ]
         }
@@ -108,7 +111,7 @@
         300
       ],
       "parameters": {
-        "jsCode": "// Validates the tool call and SQL-escapes every value used in a query.\n// Values come from Claude (i.e. from whatever the agent typed), so nothing\n// reaches a Postgres node unescaped.\nconst input = $('When Called by Another Workflow').first().json;\nconst clientId = $('Lookup Client').first().json.id || '';\nconst esc = (v) => String(v ?? '').trim().replace(/'/g, \"''\");\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst ACTIONS = ['add_task', 'list_tasks', 'complete_task', 'get_hot_leads'];\nconst fail = (error) => [{ json: { ok: false, error } }];\nconst int = (v, def, min, max) => {\n  const n = parseInt(v, 10);\n  return Number.isNaN(n) ? def : Math.min(max, Math.max(min, n));\n};\n\nconst action = String(input.action || '');\nif (!ACTIONS.includes(action)) return fail(`Unknown action: ${action}`);\nif (!UUID.test(clientId)) return fail('This connector is not linked to a Norr AI client yet. Contact hello@norrai.co.');\n\nconst out = {\n  ok: true,\n  action,\n  action_index: ACTIONS.indexOf(action),\n  client_id: clientId,\n  agent_email: esc(input.agent_email),\n};\n\nif (action === 'add_task') {\n  const title = String(input.title || '').trim();\n  if (!title) return fail('A task title is required.');\n  if (title.length > 300) return fail('Task title must be 300 characters or fewer.');\n  const lead = String(input.lead_id || '').trim();\n  if (lead && !UUID.test(lead)) return fail('lead_id must be a lead id returned by get_hot_leads.');\n  const due = String(input.due_at || '').trim();\n  let dueLocal = '';\n  if (due) {\n    const m = due.match(/^(\\d{4}-\\d{2}-\\d{2})(?:[T ](\\d{2}:\\d{2}))?$/);\n    if (!m) return fail('due_at must look like 2026-10-08 or 2026-10-08T14:00 (Central time).');\n    dueLocal = `${m[1]} ${m[2] || '17:00'}`; // date-only = 5pm Central\n  }\n  Object.assign(out, {\n    title: esc(title),\n    deal_ref: esc(input.deal_ref),\n    assigned_to: esc(input.assigned_to),\n    lead_id: lead,\n    due_local: dueLocal,\n  });\n}\n\nif (action === 'list_tasks') {\n  const status = String(input.status || 'open').trim().toLowerCase();\n  if (!['open', 'done'].includes(status)) return fail(\"status must be 'open' or 'done'.\");\n  Object.assign(out, {\n    status,\n    assigned_to: esc(input.assigned_to),\n    // -1 = no due-date filter; 0 = overdue + due today; 7 = due within a week\n    due_within_days: int(input.due_within_days, -1, -1, 365),\n  });\n}\n\nif (action === 'complete_task') {\n  const taskId = String(input.task_id || '').trim();\n  if (!UUID.test(taskId)) return fail('task_id must be a task id returned by list_tasks.');\n  out.task_id = taskId;\n}\n\nif (action === 'get_hot_leads') {\n  out.days = int(input.days, 14, 1, 90);\n  out.limit = int(input.limit, 15, 1, 50);\n}\n\nreturn [{ json: out }];"
+        "jsCode": "// Validates the tool call and SQL-escapes every value used in a query.\n// Values come from Claude (i.e. from whatever the agent typed), so nothing\n// reaches a Postgres node unescaped.\nconst input = $('When Called by Another Workflow').first().json;\nconst clientId = $('Lookup Client').first().json.id || '';\nconst esc = (v) => String(v ?? '').trim().replace(/'/g, \"''\");\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst ACTIONS = ['add_task', 'list_tasks', 'complete_task', 'get_hot_leads', 'find_lead', 'my_activity'];\nconst fail = (error) => [{ json: { ok: false, error } }];\nconst int = (v, def, min, max) => {\n  const n = parseInt(v, 10);\n  return Number.isNaN(n) ? def : Math.min(max, Math.max(min, n));\n};\n\nconst action = String(input.action || '');\nif (!ACTIONS.includes(action)) return fail(`Unknown action: ${action}`);\nif (!UUID.test(clientId)) return fail('This connector is not linked to a Norr AI client yet. Contact hello@norrai.co.');\n\nconst out = {\n  ok: true,\n  action,\n  action_index: ACTIONS.indexOf(action),\n  client_id: clientId,\n  agent_email: esc(input.agent_email),\n};\n\nif (action === 'add_task') {\n  const title = String(input.title || '').trim();\n  if (!title) return fail('A task title is required.');\n  if (title.length > 300) return fail('Task title must be 300 characters or fewer.');\n  const lead = String(input.lead_id || '').trim();\n  if (lead && !UUID.test(lead)) return fail('lead_id must be a lead id returned by get_hot_leads.');\n  const due = String(input.due_at || '').trim();\n  let dueLocal = '';\n  if (due) {\n    const m = due.match(/^(\\d{4}-\\d{2}-\\d{2})(?:[T ](\\d{2}:\\d{2}))?$/);\n    if (!m) return fail('due_at must look like 2026-10-08 or 2026-10-08T14:00 (Central time).');\n    dueLocal = `${m[1]} ${m[2] || '17:00'}`; // date-only = 5pm Central\n  }\n  Object.assign(out, {\n    title: esc(title),\n    deal_ref: esc(input.deal_ref),\n    assigned_to: esc(input.assigned_to),\n    lead_id: lead,\n    due_local: dueLocal,\n  });\n}\n\nif (action === 'list_tasks') {\n  const status = String(input.status || 'open').trim().toLowerCase();\n  if (!['open', 'done'].includes(status)) return fail(\"status must be 'open' or 'done'.\");\n  Object.assign(out, {\n    status,\n    assigned_to: esc(input.assigned_to),\n    // -1 = no due-date filter; 0 = overdue + due today; 7 = due within a week\n    due_within_days: int(input.due_within_days, -1, -1, 365),\n  });\n}\n\nif (action === 'complete_task') {\n  const taskId = String(input.task_id || '').trim();\n  if (!UUID.test(taskId)) return fail('task_id must be a task id returned by list_tasks.');\n  out.task_id = taskId;\n}\n\nif (action === 'get_hot_leads') {\n  out.days = int(input.days, 14, 1, 90);\n  out.limit = int(input.limit, 15, 1, 50);\n}\n\nif (action === 'find_lead') {\n  const q = String(input.query || '').trim();\n  if (q.length < 2) return fail('Give at least 2 characters of a name, email, phone or street.');\n  if (q.length > 100) return fail('Search text must be 100 characters or fewer.');\n  const digits = q.replace(/\\D/g, '');\n  // Escape for the SQL string first, then for LIKE (backslash is the ESCAPE char).\n  out.q_like = esc(q).replace(/\\\\/g, '\\\\\\\\').replace(/%/g, '\\\\%').replace(/_/g, '\\\\_');\n  // Only treat it as a phone search when it's mostly digits (\"507-555-0101\", not \"412 Elm\").\n  out.q_digits = digits.length >= 4 && digits.length >= q.replace(/\\s/g, '').length * 0.6 ? digits : '';\n}\n\nif (action === 'my_activity') {\n  out.days = int(input.days, 7, 1, 90);\n}\n\nreturn [{ json: out }];"
       }
     },
     {
@@ -157,7 +160,7 @@
       ],
       "parameters": {
         "mode": "expression",
-        "numberOutputs": 4,
+        "numberOutputs": 6,
         "output": "={{ $json.action_index }}"
       }
     },
@@ -235,7 +238,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT json_build_object(\n  'count', count(*),\n  'leads', coalesce(json_agg(row_to_json(x)), '[]'::json)\n) AS result\nFROM (\n  SELECT\n    l.id,\n    l.lead_name,\n    l.email,\n    l.phone,\n    l.source,\n    l.status,\n    left(l.lead_message, 280) AS lead_message,\n    l.metadata->>'property_address' AS property_address,\n    l.metadata->>'price_range' AS price_range,\n    l.communication_opted_out,\n    l.email_opt_out,\n    to_char(l.created_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS came_in,\n    to_char(l.updated_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS last_updated,\n    (SELECT count(*) FROM agent_tasks t WHERE t.lead_id = l.id AND t.status = 'open') AS open_tasks\n  FROM leads l\n  WHERE l.client_id = '{{ $json.client_id }}'\n    AND l.status IN ('new', 'contacted', 'qualified', 'nurturing')\n    AND l.updated_at >= now() - interval '{{ $json.days }} days'\n  ORDER BY\n    CASE l.status WHEN 'qualified' THEN 0 WHEN 'new' THEN 1 WHEN 'contacted' THEN 2 ELSE 3 END,\n    l.updated_at DESC\n  LIMIT {{ $json.limit }}\n) x",
+        "query": "=WITH base AS (\n  SELECT\n    l.*,\n    CASE WHEN l.updated_at > l.created_at + interval '2 minutes'\n      AND l.updated_at > COALESCE(l.last_contacted_at, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(l.nurture_enrolled_at, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(l.opted_out_at, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(CASE WHEN l.metadata->>'last_outreach_at' ~ '^\\d{4}-\\d{2}-\\d{2}'\n            THEN (l.metadata->>'last_outreach_at')::timestamptz END, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(CASE WHEN l.metadata->>'last_import_at' ~ '^\\d{4}-\\d{2}-\\d{2}'\n            THEN (l.metadata->>'last_import_at')::timestamptz END, '-infinity') + interval '2 minutes'\n    THEN l.updated_at END AS reengaged_at\n  FROM leads l\n  WHERE l.client_id = '{{ $json.client_id }}'\n    AND l.status IN ('new', 'contacted', 'qualified', 'nurturing')\n),\nranked AS (\n  SELECT\n    b.*,\n    CASE\n      WHEN b.reengaged_at >= now() - interval '{{ $json.days }} days' THEN 0\n      WHEN b.created_at >= now() - interval '{{ $json.days }} days' THEN 1\n      WHEN b.status = 'qualified'\n        AND GREATEST(b.created_at, COALESCE(b.reengaged_at, b.created_at)) >= now() - interval '90 days' THEN 2\n    END AS tier\n  FROM base b\n)\nSELECT json_build_object(\n  'count', count(*),\n  'leads', coalesce(json_agg(row_to_json(x)), '[]'::json)\n) AS result\nFROM (\n  SELECT\n    r.id,\n    r.lead_name,\n    r.phone,\n    r.email,\n    CASE r.tier\n      WHEN 0 THEN 'Active again ' || to_char(r.reengaged_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD')\n        || ' (new inquiry or open house visit)'\n      WHEN 1 THEN 'New lead ' || to_char(r.created_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD')\n        || ' from ' || COALESCE(NULLIF(r.source, ''), 'unknown source')\n      ELSE 'Qualified lead'\n    END AS why,\n    r.source,\n    r.status,\n    left(r.lead_message, 280) AS lead_message,\n    r.metadata->>'property_address' AS property_address,\n    r.metadata->>'price_range' AS price_range,\n    r.email_opt_out,\n    r.communication_opted_out AS marketing_email_opt_out,\n    to_char(r.created_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS came_in,\n    to_char(r.last_contacted_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS last_automated_email,\n    (SELECT count(*) FROM agent_tasks t WHERE t.lead_id = r.id AND t.status = 'open') AS open_tasks\n  FROM ranked r\n  WHERE r.tier IS NOT NULL\n  ORDER BY\n    r.tier,\n    (NULLIF(r.phone, '') IS NULL),\n    COALESCE(r.reengaged_at, r.created_at) DESC\n  LIMIT {{ $json.limit }}\n) x",
         "options": {}
       },
       "credentials": {
@@ -277,7 +280,7 @@
         240
       ],
       "parameters": {
-        "jsCode": "// Each query returns exactly one row with a `result` json column, so the\n// tool always gets an answer (even \"nothing found\") instead of an empty run.\nconst action = $('Prep Input').first().json.action;\nconst nodeByAction = {\n  add_task: 'Add Task',\n  list_tasks: 'List Tasks',\n  complete_task: 'Complete Task',\n  get_hot_leads: 'Get Hot Leads',\n};\nreturn [{ json: $(nodeByAction[action]).first().json.result || {} }];"
+        "jsCode": "// Each query returns exactly one row with a `result` json column, so the\n// tool always gets an answer (even \"nothing found\") instead of an empty run.\nconst action = $('Prep Input').first().json.action;\nconst nodeByAction = {\n  add_task: 'Add Task',\n  list_tasks: 'List Tasks',\n  complete_task: 'Complete Task',\n  get_hot_leads: 'Get Hot Leads',\n  find_lead: 'Find Lead',\n  my_activity: 'My Activity',\n};\nreturn [{ json: $(nodeByAction[action]).first().json.result || {} }];"
       }
     },
     {
@@ -301,6 +304,48 @@
           ]
         },
         "options": {}
+      }
+    },
+    {
+      "id": "at-0014-4000-8000-000000000000",
+      "name": "Find Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        640
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=WITH m AS (\n  SELECT l.*, CASE WHEN l.updated_at > l.created_at + interval '2 minutes'\n      AND l.updated_at > COALESCE(l.last_contacted_at, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(l.nurture_enrolled_at, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(l.opted_out_at, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(CASE WHEN l.metadata->>'last_outreach_at' ~ '^\\d{4}-\\d{2}-\\d{2}'\n            THEN (l.metadata->>'last_outreach_at')::timestamptz END, '-infinity') + interval '2 minutes'\n      AND l.updated_at > COALESCE(CASE WHEN l.metadata->>'last_import_at' ~ '^\\d{4}-\\d{2}-\\d{2}'\n            THEN (l.metadata->>'last_import_at')::timestamptz END, '-infinity') + interval '2 minutes'\n    THEN l.updated_at END AS reengaged_at\n  FROM leads l\n  WHERE l.client_id = '{{ $json.client_id }}'\n    AND (\n      l.lead_name ILIKE '%{{ $json.q_like }}%' ESCAPE '\\'\n      OR l.email ILIKE '%{{ $json.q_like }}%' ESCAPE '\\'\n      OR l.metadata->>'property_address' ILIKE '%{{ $json.q_like }}%' ESCAPE '\\'\n      OR ('{{ $json.q_digits }}' <> ''\n          AND regexp_replace(COALESCE(l.phone, ''), '[^0-9]', '', 'g') LIKE '%{{ $json.q_digits }}%')\n    )\n)\nSELECT json_build_object(\n  'match_count', (SELECT count(*) FROM m),\n  'note', CASE\n    WHEN (SELECT count(*) FROM m) = 0 THEN 'No lead matched. Try a last name, email, phone number or street.'\n    WHEN (SELECT count(*) FROM m) > 5 THEN 'More than 5 matches; showing the 5 most recent. Ask the agent for a last name, phone or address to narrow it down.'\n  END,\n  'leads', COALESCE((\n    SELECT json_agg(row_to_json(x))\n    FROM (\n      SELECT\n        l.id,\n        l.lead_name,\n        l.phone,\n        l.email,\n        l.source,\n        l.status,\n        left(l.lead_message, 500) AS lead_message,\n        l.metadata->>'property_address' AS property_address,\n        l.metadata->>'price_range' AS price_range,\n        l.metadata->>'beds' AS beds,\n        l.metadata->>'open_house_notes' AS open_house_notes,\n        l.email_opt_out,\n        l.communication_opted_out AS marketing_email_opt_out,\n        to_char(l.created_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD YYYY') AS came_in,\n        to_char(l.reengaged_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD') AS active_again,\n        to_char(l.nurture_enrolled_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS nurture_started,\n        to_char(l.last_contacted_at AT TIME ZONE 'America/Chicago', 'Mon DD') AS last_automated_email,\n        (SELECT COALESCE(json_agg(json_build_object(\n            'id', t.id,\n            'title', t.title,\n            'due_central', to_char(t.due_at AT TIME ZONE 'America/Chicago', 'Dy Mon DD HH24:MI')\n          ) ORDER BY t.due_at NULLS LAST), '[]'::json)\n         FROM agent_tasks t WHERE t.lead_id = l.id AND t.status = 'open') AS open_tasks,\n        (SELECT COALESCE(json_agg(json_build_object(\n            'what', CASE e.workflow_name\n          WHEN 'instant_lead_response' THEN 'Sent an instant personalized reply'\n          WHEN 'lead_response_auto' THEN 'Sent an instant personalized reply'\n          WHEN 'open_house_follow_up' THEN 'Open house follow-up sent'\n          WHEN 'open_house_follow_up_weichert' THEN 'Open house follow-up sent'\n          WHEN 'nurture_deenroll_confirm' THEN 'Removed from nurture'\n          WHEN 'marketing_opt_out' THEN 'Unsubscribed from marketing emails'\n          WHEN 'weichert_offer_submit' THEN 'Offer submitted'\n          ELSE e.workflow_name\n        END,\n            'when', to_char(e.created_at AT TIME ZONE 'America/Chicago', 'Mon DD')\n          ) ORDER BY e.created_at DESC), '[]'::json)\n         FROM (\n           SELECT we.workflow_name, we.created_at\n           FROM workflow_events we\n           WHERE (we.event_type = 'completed' OR we.workflow_name = 'lead_response_auto')\n             AND (\n               we.payload->>'lead_id' = l.id::text\n               OR (we.client_id = l.client_id AND l.email IS NOT NULL AND l.email <> ''\n                   AND lower(COALESCE(we.payload->>'attendee_email', we.payload->>'buyer_email')) = lower(l.email))\n             )\n           ORDER BY we.created_at DESC\n           LIMIT 10\n         ) e) AS history\n      FROM m l\n      ORDER BY GREATEST(l.created_at, COALESCE(l.reengaged_at, l.created_at)) DESC\n      LIMIT 5\n    ) x\n  ), '[]'::json)\n) AS result",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "at-0015-4000-8000-000000000000",
+      "name": "My Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        800
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=WITH win AS (\n  SELECT now() - interval '{{ $json.days }} days' AS since\n),\nnl AS (\n  SELECT l.* FROM leads l, win\n  WHERE l.client_id = '{{ $json.client_id }}' AND l.created_at >= win.since\n),\nev AS (\n  SELECT we.workflow_name, count(*) AS n\n  FROM workflow_events we, win\n  WHERE we.client_id = '{{ $json.client_id }}'\n    AND we.event_type = 'completed'\n    AND we.created_at >= win.since\n  GROUP BY we.workflow_name\n),\nlabels (workflow_name, label) AS (\n  VALUES\n    ('instant_lead_response', 'New leads sent an instant personalized reply'),\n    ('lead_response_auto', 'New leads sent an instant personalized reply'),\n    ('open_house_follow_up', 'Open house follow-ups sent'),\n    ('open_house_follow_up_weichert', 'Open house follow-ups sent'),\n    ('review_request', 'Review requests sent'),\n    ('listing_description', 'Listing descriptions written'),\n    ('research_agent', 'Property research reports'),\n    ('bday_anniversary_outreach', 'Birthday and anniversary messages sent'),\n    ('weichert_offer_submit', 'Offers received through your offer form'),\n    ('agent_tools', 'Questions you asked your Norr AI assistant')\n)\nSELECT json_build_object(\n  'period', 'Last {{ $json.days }} days ('\n    || to_char((SELECT since FROM win) AT TIME ZONE 'America/Chicago', 'Mon DD') || ' to '\n    || to_char(now() AT TIME ZONE 'America/Chicago', 'Mon DD') || ')',\n  'new_leads', (SELECT count(*) FROM nl),\n  'new_leads_after_hours', (SELECT count(*) FROM nl\n    WHERE extract(hour FROM created_at AT TIME ZONE 'America/Chicago') NOT BETWEEN 8 AND 16\n       OR extract(isodow FROM created_at AT TIME ZONE 'America/Chicago') >= 6),\n  'new_leads_by_source', (SELECT COALESCE(json_agg(json_build_object('source', s, 'count', n) ORDER BY n DESC), '[]'::json)\n    FROM (SELECT COALESCE(NULLIF(source, ''), 'unknown') AS s, count(*) AS n FROM nl GROUP BY 1) x),\n  'leads_started_on_nurture', (SELECT count(*) FROM leads l, win\n    WHERE l.client_id = '{{ $json.client_id }}' AND l.nurture_enrolled_at >= win.since),\n  'leads_sent_a_nurture_email', (SELECT count(*) FROM leads l, win\n    WHERE l.client_id = '{{ $json.client_id }}' AND l.last_contacted_at >= win.since),\n  'automations', (SELECT COALESCE(json_agg(json_build_object('what', label, 'count', total) ORDER BY total DESC), '[]'::json)\n    FROM (SELECT lb.label, sum(ev.n) AS total FROM ev JOIN labels lb USING (workflow_name) GROUP BY lb.label) y),\n  'tasks_completed', (SELECT count(*) FROM agent_tasks t, win\n    WHERE t.client_id = '{{ $json.client_id }}' AND t.status = 'done' AND t.completed_at >= win.since),\n  'note', 'Counts come from Norr AI logs for this agent only. The weekly listing email is office-wide and not included.'\n) AS result",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2DDeKGMIP9Ijbd9R",
+          "name": "Postgres account"
+        }
       }
     }
   ],
@@ -397,6 +442,20 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Find Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "My Activity",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -449,6 +508,28 @@
         [
           {
             "node": "Format Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "My Activity": {
+      "main": [
+        [
+          {
+            "node": "Log Completed",
             "type": "main",
             "index": 0
           }
