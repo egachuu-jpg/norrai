@@ -85,13 +85,20 @@ Do it on your phone in front of them: open voice mode and say
    `https://agent-mcp.norrai.co/mcp`.
 3. **Log in when it prompts:** a browser opens to `norrai.cloudflareaccess.com`;
    they enter the one-time code emailed to their work address. Done — authorized.
-4. **Create their Project:** New Project named `Norr AI — <Agent> Assistant`,
-   paste the project instructions from `docs/agent-mcp-server.md` (§ Give the
-   agent a Claude Project). This makes "who should I call today" hit the connector
-   instead of the phone's Reminders.
-5. **Enable Google Calendar** in the same Connectors screen (built-in) if you want
+4. **Set profile instructions:** Settings → Profile / personal preferences →
+   paste the work-scoped instructions from `docs/agent-mcp-server.md`
+   (§ Agent setup → Profile instructions). This makes "who should I call today"
+   hit the connector instead of the phone's Reminders — and, unlike a Project, it
+   applies in the fresh voice chat the shortcut opens. Also set the connector to
+   be **enabled by default in new chats**.
+5. **Add the voice shortcut:** iOS Shortcuts → Claude → "Start Voice
+   Conversation" → Add to Home Screen (steps in `docs/agent-mcp-server.md`
+   § Agent setup → voice shortcut). This is the "tap and talk between showings"
+   magic — set it up live with them.
+6. **Enable Google Calendar** in the same Connectors screen (built-in) if you want
    calendar-aware answers.
-6. **Test together:** by text first (*"who should I call today?"*), then **voice**.
+7. **Test together:** tap the shortcut → voice → *"who should I call today?"*,
+   then *"add a task…"*, then *"what's on my plate?"*
 
 **After:** nothing to maintain per agent. To add/remove a tool for one of them
 later, it's one `enabled_tools` edit in Neon — see `docs/agent-mcp-server.md`
@@ -105,5 +112,6 @@ later, it's one `enabled_tools` edit in Neon — see `docs/agent-mcp-server.md`
 - 3 outcomes: hot leads to call · a to-do list you talk to · hands-free by voice.
 - Demo: voice → "who should I call today?" → "add a task…" → "what's on my plate?"
 - Safety: your login, your book only.
-- Setup: install Claude app (Pro) → add connector URL → email-code login → Project.
+- Setup: install Claude app (Pro) → add connector URL → email-code login →
+  profile instructions → home-screen voice shortcut.
 - Prereq you must do first: add their emails to the Access policy.

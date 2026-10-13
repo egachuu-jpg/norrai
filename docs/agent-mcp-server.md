@@ -81,45 +81,69 @@ The full OAuth login + tool calls require a browser (Access email code), i.e. th
 Claude app itself. After a tool runs, confirm `workflow_events` has `agent_tools`
 rows.
 
-## Give the agent a Claude Project (biases tool routing)
+## Agent setup: profile instructions + voice shortcut (recommended)
 
-Custom connectors behave best inside a Claude **Project**. Without one, phrases
-like *"who should I call today"* get grabbed by Claude's built-in Reminders /
-Calendar connectors instead of our tools. A Project whose instructions name the
-Norr AI tools fixes the routing. **One Project per agent.**
+The agent's day is voice-first — "ask my phone between showings." So setup
+optimizes for a one-tap fresh **voice** conversation that already knows to reach
+for the Norr AI tools. Two pieces: profile instructions (routing) + a home-screen
+voice shortcut (access).
 
-Setup (in the agent's Claude app or claude.ai — needs Pro/Max/Team):
+### 1. Profile instructions — route to the Norr AI tools everywhere
 
-1. Confirm the agent's custom connector **and** Google Calendar are added and enabled.
-2. **Projects → New project** → name it e.g. `Norr AI — <Agent> Assistant`.
-3. Paste the instructions below into the project's **instructions** box. They're
-   connector-agnostic — nothing to edit.
-4. *(Optional, improves answers)* Add **project knowledge**: the agent's
-   territory, brokerage name, email signature, preferred call hours.
-5. Make sure the connector's tools are enabled for the project, then test:
-   *"who should I call today?"* must call `get_hot_leads`, **not** Reminders.
+**Why not a Claude Project?** A Project's instructions apply only inside that
+Project, but the one-tap voice shortcut (below) opens a fresh **non-project**
+chat — so Project instructions never reach it. **Profile (personal) instructions
+apply to every chat, including the shortcut's**, which is exactly the reach the
+voice UX needs. Scope them to work context so they don't hijack personal reminders.
 
-**Project instructions (paste verbatim).** Deliberately principle-based, not a
-tool list — new connector tools (listings, research, …) are covered by the
-principle and discovered automatically, so this rarely needs re-pasting. Per-tool
-routing nudges live in each tool's n8n `description`, which propagates to every
-client on its own.
+In the agent's Claude app: **Settings → Profile / personal preferences** → the
+"how should Claude respond / custom instructions" box. Paste verbatim:
 
 > You are my real-estate assistant; I'm a real estate agent.
 >
-> Prefer the Norr AI connector for all my real-estate work — leads, clients,
-> follow-ups, my pipeline, my to-dos/tasks, and anything else its tools cover
-> (e.g. listings or property research as they're added). Use whichever Norr AI
-> tool fits. In particular: when I ask who to call or who needs attention, use
-> the connector's lead tool, **not** the phone's Reminders or Calendar; manage my
-> tasks with the connector's task tools, **not** the Reminders app (to finish
-> one, look it up first, then complete it).
+> For my real-estate work — leads, clients, showings, deals, pipeline, and work
+> follow-ups/to-dos — prefer the Norr AI connector tools (and use whichever
+> fits). When I ask who to call or who needs attention, use the connector's lead
+> tool, not the phone's Reminders or Calendar. Respect each lead's opt-out flags
+> when suggesting how to reach them.
 >
-> Use Google Calendar only for actual calendar events (showings, closings,
-> meetings).
->
-> Respect each lead's opt-out flags when suggesting how to reach them. Keep
-> answers short and skimmable — I'm often on my phone or using voice.
+> For personal reminders unrelated to real estate, use the phone's normal
+> Reminders. Use Google Calendar only for real calendar events (showings,
+> closings, meetings). Keep answers short — I'm usually on voice.
+
+Also make sure the Norr AI connector is **enabled by default in new chats** (not
+per-chat opt-in) — the voice shortcut can't toggle tools mid-conversation.
+
+### 2. One-tap voice shortcut
+
+**iOS (Shortcuts app):**
+1. Open **Shortcuts** → **+** (new shortcut).
+2. **Add Action** → search **Claude** → choose **"Start Voice Conversation"**.
+3. Name it (e.g. *Norr AI*) and save.
+4. Shortcut **⋯ / Share → Add to Home Screen** for a tappable icon (custom
+   name/icon optional).
+5. *(Optional, hands-free)* **Settings → Accessibility → Touch → Back Tap** →
+   Double Tap → the shortcut; or say *"Hey Siri, Norr AI."*
+
+**Android:**
+- Long-press the **Claude** app icon → if a **voice / "Start voice"** app
+  shortcut appears, drag it to the home screen; or add a Claude voice **widget**
+  if the app offers one.
+- Otherwise a **Google Assistant routine** ("Hey Google, Norr AI" → open Claude),
+  or just open the app and tap the voice button.
+- Android third-party shortcut support is less uniform than iOS — confirm on the
+  agent's device.
+
+Tapping the shortcut opens a fresh Claude voice chat; with the profile
+instructions set and the connector enabled by default, *"who should I call
+today?"* routes straight to `get_hot_leads` — no project, no typing.
+
+> **Optional — Claude Project for desktop/typed power use.** If an agent also
+> works at a desktop, a Project named `Norr AI — <Agent>` with the same
+> instructions plus **project knowledge** (territory, brokerage, email signature,
+> preferred call hours) gives richer typed answers. Not needed for the voice
+> shortcut — the profile instructions already handle routing — so treat it as a
+> nice-to-have, not the main path.
 
 ## Voice
 
