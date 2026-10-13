@@ -438,3 +438,17 @@ _(later, same day — lead dedupe bug)_
 - Merged `feat/weichert-weekly-drip-automation` → `main`, pushed (`57bb95c`); removed the worktree
 - Neon: story "Weichert Realty — Weekly Marketing Drip" + all 16 tasks marked `done`
 - Flagged, not fixed: SendGrid sender verification for Evan's/Michelle's own addresses (currently sends from `hello@norrai.co` + Reply-To); the live email lands in Gmail's Promotions tab — user is fine leaving it as-is
+
+### 2026-10-12
+- **Built the Agent MCP connector OAuth front door** — a Cloudflare Worker (`workers/agent-mcp/`, live at `agent-mcp.norrai.co`) that is BOTH the OAuth authorization server (`@cloudflare/workers-oauth-provider`) and the MCP server (`createMcpHandler`, stateless, no Durable Object). Cloudflare Access email-code login gates `/authorize`; the verified email IS the `agent_email` (no hardcoding), scoped to the matching `clients` row. Design spec + plan written first (`docs/superpowers/specs|plans/2026-10-06-agent-mcp-oauth*`)
+- Executed subagent-driven TDD (per-task implementer + reviews): `src/tools.ts` (catalog), `entitlements.ts`, `executor.ts`, `access.ts`, `mcp.ts`, `index.ts` — 16 Worker unit tests passing; deployed via `wrangler` (custom domain + KV `OAUTH_KV` + secret `N8N_SHARED_SECRET`)
+- Added **`clients.enabled_tools text[]`** (per-agent tool entitlements — filtered in `tools/list`, enforced on `tools/call` by the Worker; default = 4 core tools); schema + Neon
+- Built n8n **"Agent Tools Executor"** webhook (`stzpDeuObPYvlKff`, header-auth cred) → `validate_agent` client lookup + proxy to the existing Real Estate Agent Tools sub-workflow; logs `agent_tools_executor`/`agent_tools` to `workflow_events`
+- **Hardened auth (#16):** verify the `Cf-Access-Jwt-Assertion` JWT (`jose`: JWKS + `aud` = app AUD + `iss`, fail-closed) instead of trusting the `Cf-Access-Authenticated-User-Email` header; `CF_ACCESS_TEAM_DOMAIN`/`CF_ACCESS_AUD` vars + `workers_dev: false`. Confirmed with a fresh real login
+- **Verified end-to-end from the Claude app under real OAuth login** — all 4 tools logged `triggered`/`completed`; server side curl-verified (AS metadata issuer = our domain, `/authorize` → Access 302, `/mcp` 401, `/register` 201, Access path-scoped to `/authorize`)
+- Retired the secret-URL pilot (deleted per-agent n8n "Real Estate Agent MCP Server" + bearer cred); cleaned test `agent_tasks`
+- Fixes found live: `get_hot_leads` referenced nonexistent `leads.sms_opt_out` → `communication_opted_out`; Execute Sub-workflow rejected numeric args → `attemptToConvertTypes: true`
+- **Decided agent onboarding = Claude profile (personal) instructions + a phone voice shortcut, NOT a Claude Project** (the native "Start Voice Conversation" shortcut opens a fresh non-project chat Project instructions can't reach). Voice tool-calls confirmed working
+- Docs: rewrote `docs/agent-mcp-server.md` (live architecture, 3-step onboarding, auth model, "Adding a new tool" runbook); added `docs/agent-mcp-pitch.md` (Evan/Michelle pitch) + `docs/agent-mcp-onepager.md` (meeting crib + tear-off agent setup card)
+- Merged `claude/agent-mcp-oauth` + `claude/agent-mcp-jwt` → `main`, deleted both feature branches; `main` at `ac59634`
+- Neon: tasks "OAuth front door for Agent MCP connector" + "Create a Claude Project…" → `done` (the latter superseded by the profile-instructions decision)
