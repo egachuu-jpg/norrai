@@ -3,6 +3,9 @@ export interface Env {
   OAUTH_PROVIDER: any; // helper binding injected by workers-oauth-provider
   N8N_EXECUTOR_URL: string;
   N8N_SHARED_SECRET: string;
+  // Cloudflare Access JWT verification config.
+  CF_ACCESS_TEAM_DOMAIN: string; // e.g. "norrai.cloudflareaccess.com"
+  CF_ACCESS_AUD: string; // the Access app's Application Audience (AUD) tag
 }
 
 // Bound to the issued token; set in the /authorize handler.
