@@ -33,6 +33,9 @@ CREATE TABLE clients (
   website               text,
   notes                 text,
   token                 uuid NOT NULL DEFAULT gen_random_uuid(),
+  -- MCP connector: which agent tools this client's connector exposes (hidden in tools/list + enforced on tools/call by the Worker)
+  enabled_tools         text[] NOT NULL
+    DEFAULT ARRAY['get_hot_leads','list_tasks','add_task','complete_task'],
   created_at            timestamptz NOT NULL DEFAULT now(),
   updated_at            timestamptz NOT NULL DEFAULT now()
 );

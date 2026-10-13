@@ -1,18 +1,30 @@
 # Agent MCP Connector — Setup Guide
 
 Lets a real estate agent (or their assistant) manage to-dos and check hot leads
-by talking to Claude, by typing or with voice, in the Claude app. n8n is the engine; Claude is the
-interface.
+by talking to Claude, by typing or with voice, in the Claude app. A Cloudflare
+Worker is the OAuth + MCP front door; n8n is the engine; Claude is the interface.
+
+## Architecture (live as of 2026-10-12)
 
 ```
 Claude app (agent's phone / desktop)
-  └─ Norr AI connector  →  n8n "Real Estate Agent MCP Server"  (MCP Server Trigger)
-                             ├─ add_task       ┐
-                             ├─ list_tasks     ├─→ "Real Estate Agent Tools" sub-workflow → Neon
-                             ├─ complete_task  │     (logs agent_tools triggered/completed)
-                             └─ get_hot_leads  ┘
-  └─ Google Calendar connector (Claude's built-in one, enabled by the agent, so we don't build calendar access)
+  └─ Norr AI connector (OAuth)  →  Cloudflare Worker  agent-mcp.norrai.co
+        • /authorize → Cloudflare Access login (email code) → verified email
+        • /mcp       → add_task · list_tasks · complete_task · get_hot_leads
+                        (only the agent's enabled_tools are exposed)
+                          │  POST {action, agent_email, …} + X-Norr-Secret
+                          ▼
+        n8n "Agent Tools Executor" webhook
+          • validate_agent → clients lookup (client_id + enabled_tools)
+          • else           → "Real Estate Agent Tools" sub-workflow → Neon
+                              (logs agent_tools triggered/completed)
+  └─ Google Calendar connector (Claude's built-in one, enabled by the agent)
 ```
+
+The agent's **verified login email IS the `agent_email`** — nothing hardcoded.
+Data is scoped to the `clients` row whose `primary_contact_email` matches, and
+that row's `enabled_tools` array controls which tools the agent sees. Worker code
+lives in `workers/agent-mcp/`; design spec + plan in `docs/superpowers/`.
 
 ## What an MCP server is (30-second version)
 
@@ -21,78 +33,101 @@ does, here are the inputs." Claude reads the descriptions and decides when to
 call them. The tool **description** does the same job as a skill's description, so
 write it for Claude: when to use it, what it returns.
 
-## 1. Database
+## Connect URL
 
-Apply the new table to Neon (one statement per `run_sql` call if using the Neon
-MCP; or just re-run the file, since the new block is idempotent):
+`https://agent-mcp.norrai.co/mcp` — the only thing an agent pastes into Claude.
+(The old per-agent n8n MCP Server + secret-URL pilot is retired.)
+
+## Onboard an agent (3 steps, no per-agent build)
+
+1. **`clients` row** — agent's real email as `primary_contact_email`, plus
+   `vertical`/`tier`. `enabled_tools` defaults to the core 4; set it per agent to
+   grant or restrict tools.
+2. **Cloudflare Access policy** — Zero Trust → Access → the `Norr AI Agent MCP —
+   Authorize` app (path-scoped to `/authorize`): add the agent's email to the
+   Allow policy. This is the allowlist; the email must match the `clients` row.
+3. **Agent adds the connector** in their Claude app (Settings → Connectors → add
+   custom connector → the URL above) and logs in with the email code, then gets a
+   Claude Project (below).
+
+The Worker, executor, and Tools sub-workflow are shared infrastructure — no new
+workflow, no redeploy, no hardcoded email per agent.
+
+## Auth model
+
+- **Login:** Cloudflare Access (email one-time code, or Google) gates `/authorize`
+  **only**; `/mcp`, `/token`, `/register`, `/.well-known/*` stay public (the OAuth
+  token is the credential there). Do not gate the whole host.
+- **Identity → data:** the Access-verified email must equal a
+  `clients.primary_contact_email` (direct match; unknown → refused). That email is
+  injected as `agent_email` on every tool call — never client-supplied, so
+  per-client isolation is structural.
+- **Worker ↔ n8n:** shared-secret header `X-Norr-Secret` (Worker secret
+  `N8N_SHARED_SECRET` = the executor webhook's Header Auth credential). The
+  executor webhook is never exposed to the agent.
+- **Hardening TODO:** the Worker currently trusts the
+  `Cf-Access-Authenticated-User-Email` header; verify the `Cf-Access-Jwt-Assertion`
+  signature (aud + key) before a second brokerage.
+
+## Test it yourself (server side, no browser)
 
 ```bash
-psql "$DATABASE_URL" -f db/schema.sql   # agent_tasks uses IF NOT EXISTS / OR REPLACE
+curl https://agent-mcp.norrai.co/.well-known/oauth-authorization-server   # issuer = our domain
+curl -i -X POST https://agent-mcp.norrai.co/mcp -d '{}'                    # 401 + WWW-Authenticate
+curl -i https://agent-mcp.norrai.co/authorize                             # 302 → …cloudflareaccess.com
 ```
 
-Re-running the whole file errors on older non-idempotent tables, so for prod it's
-cleaner to run just the `AGENT TASKS` block at the bottom of `db/schema.sql`.
+The full OAuth login + tool calls require a browser (Access email code), i.e. the
+Claude app itself. After a tool runs, confirm `workflow_events` has `agent_tools`
+rows.
 
-## 2. Import the workflows (order matters)
+## Give the agent a Claude Project (biases tool routing)
 
-1. Import `n8n/workflows/Real Estate Agent Tools.json`. Confirm:
-   - Postgres nodes use the `Postgres account` credential.
-   - Settings → Error Workflow = `Norr AI Workflow Error Logger`.
-2. Import `n8n/workflows/Real Estate Agent MCP Server.json`, then **per agent**:
-   - In each of the 4 tool nodes: re-select **Real Estate Agent Tools** in the
-     workflow picker (IDs change on import) and replace `REPLACE_WITH_AGENT_EMAIL`
-     with the agent's `clients.primary_contact_email`.
-   - MCP Server Trigger: set the path (replace `REPLACE_WITH_SLUG`, e.g. `evan`)
-     and choose auth (see §4).
-   - Activate. Production URL: `https://norrai.app.n8n.cloud/mcp/<path>`
-     (`/mcp-test/` is the test URL; never give that to a client).
-3. Open each node after import: these node types (MCP trigger, Call Workflow
-   Tool, Switch in expression mode) were hand-written JSON and haven't been
-   round-tripped through n8n yet. If any field comes in blank, set it in the UI
-   to match the table below.
+Custom connectors behave best inside a Claude **Project**. Without one, phrases
+like *"who should I call today"* get grabbed by Claude's built-in Reminders /
+Calendar connectors instead of our tools. A Project whose instructions name the
+Norr AI tools fixes the routing. **One Project per agent.**
 
-| Node | Key settings |
-|---|---|
-| Norr AI MCP Server | Path `norrai-agent-<slug>`, auth per §4 |
-| add_task / list_tasks / complete_task / get_hot_leads | Workflow = Real Estate Agent Tools; `action` fixed to the node name; `agent_email` fixed; other inputs use `$fromAI(...)` |
-| Route Action (Switch) | Mode: Expression, 4 outputs, output = `{{ $json.action_index }}` (0 add, 1 list, 2 complete, 3 hot leads) |
+Setup (in the agent's Claude app or claude.ai — needs Pro/Max/Team):
 
-## 3. Test it yourself first (Claude Code)
+1. Confirm the agent's custom connector **and** Google Calendar are added and enabled.
+2. **Projects → New project** → name it e.g. `Norr AI — <Agent> Assistant`.
+3. Paste the instructions below into the project's **instructions** box. They're
+   connector-agnostic — nothing to edit.
+4. *(Optional, improves answers)* Add **project knowledge**: the agent's
+   territory, brokerage name, email signature, preferred call hours.
+5. Make sure the connector's tools are enabled for the project, then test:
+   *"who should I call today?"* must call `get_hot_leads`, **not** Reminders.
 
-```bash
-claude mcp add --transport http norrai-evan https://norrai.app.n8n.cloud/mcp/norrai-agent-evan \
-  --header "Authorization: Bearer <token>"
-```
+**Project instructions (paste verbatim).** Deliberately principle-based, not a
+tool list — new connector tools (listings, research, …) are covered by the
+principle and discovered automatically, so this rarely needs re-pasting. Per-tool
+routing nudges live in each tool's n8n `description`, which propagates to every
+client on its own.
 
-Then in Claude Code: *"add a task to order the inspection for 412 Elm by Thursday"*,
-*"what's on my plate this week?"*, *"mark the inspection done"*, *"who should I call today?"*.
-Check `workflow_events` for `agent_tools` rows.
-
-## 4. Auth: pilot vs. real
-
-| | How | Good for |
-|---|---|---|
-| **Bearer token** (n8n trigger auth = Bearer) | Header on every request | Your own testing in Claude Code / Claude Desktop config |
-| **Secret URL** (trigger auth = None, path includes a long random string) | The URL *is* the password | A short pilot in the agent's Claude app, since Claude's custom connector screen takes a URL and handles OAuth but may not accept a pasted static token. Rotate by changing the path. |
-| **OAuth** (Cloudflare Worker MCP template in front of n8n) | Agent logs in once; we know who they are without hardcoding `agent_email` | Anything beyond the pilot |
-
-`get_hot_leads` returns lead names, emails and phones, so the secret-URL option is
-pilot-only. Move to OAuth before a second brokerage. The Cloudflare Access +
-Token Check pattern used for the HTML forms does **not** apply here.
-
-## 5. Connect it in the agent's Claude app
-
-1. Claude settings → Connectors → add a custom connector → paste the MCP URL.
-2. Enable Google Calendar in the same screen (Claude's built-in connector).
-3. Test by text, then by voice (see below).
+> You are my real-estate assistant; I'm a real estate agent.
+>
+> Prefer the Norr AI connector for all my real-estate work — leads, clients,
+> follow-ups, my pipeline, my to-dos/tasks, and anything else its tools cover
+> (e.g. listings or property research as they're added). Use whichever Norr AI
+> tool fits. In particular: when I ask who to call or who needs attention, use
+> the connector's lead tool, **not** the phone's Reminders or Calendar; manage my
+> tasks with the connector's task tools, **not** the Reminders app (to finish
+> one, look it up first, then complete it).
+>
+> Use Google Calendar only for actual calendar events (showings, closings,
+> meetings).
+>
+> Respect each lead's opt-out flags when suggesting how to reach them. Keep
+> answers short and skimmable — I'm often on my phone or using voice.
 
 ## Voice
 
 The Claude mobile app has a voice mode, so an agent can say *"what's on my plate
-today?"* while driving between showings. **Verify that our custom connector
-works in voice mode on the pilot agent's phone before pitching it.** Tool and
-connector support in voice has varied by app version and plan. Keep tool answers short (they already are) since voice reads
-them aloud.
+today?"* while driving between showings. **Verify the connector works in voice
+mode on the agent's phone before leaning on it.** Tool/connector support in voice
+has varied by app version and plan. Tool answers are already short, which voice
+reads aloud well.
 
 ## Tools reference
 
@@ -103,9 +138,34 @@ them aloud.
 | `complete_task` | `task_id` | Scoped to the agent's client; double-complete is a no-op with a note |
 | `get_hot_leads` | `days` (1–90, default 14), `limit` (1–50, default 15) | Active statuses only; includes opt-out flags and open task count |
 
+## Adding a new tool
+
+The connector spans three places; a new tool touches each. This is a checklist,
+not a skill — the shape is stable enough that a runbook suffices.
+
+1. **n8n — teach the Tools sub-workflow the new action** (`Real Estate Agent
+   Tools`, id `wh3JN8bmLCTtPeOT`): add the action name to the `ACTIONS` array in
+   **Prep Input**, add an output to **Route Action**, and add the node that does
+   the work (a Postgres query, or a Call-Workflow to something like the Research
+   Agent) returning a single `result` json. Keep the `triggered`/`completed`
+   logging nodes. (Validation lives in Prep Input — add any new field checks there.)
+2. **Worker — add it to the catalog** (`workers/agent-mcp/src/tools.ts`): one
+   `ToolDef` entry — `action` (must equal the n8n action string), a Claude-facing
+   `description` (when to use it; add a "prefer this over the phone's X" nudge if
+   it competes with a Claude built-in), and an `inputSchema` (zod raw shape).
+   That is the only Worker code change — `tools/list`, entitlement filtering, and
+   the executor call are generic. `npm test`, then `wrangler deploy`.
+3. **Neon — grant it** per client: add the action string to `clients.enabled_tools`
+   for whoever should have it (and to the schema default in `db/schema.sql` if
+   it's core). It's hidden in `tools/list` and refused on call for anyone without
+   it — no redeploy needed for a grant.
+
+Because tools are a per-client allowlist, you can ship a tool to one agent only.
+
 ## Next
 
+- OAuth JWT hardening (verify `Cf-Access-Jwt-Assertion`) before a second brokerage.
+- More tools (see "Adding a new tool"): `write_listing` → listing workflow,
+  `research_property` → Research Agent.
 - Skills on top: daily briefing (calendar + `list_tasks` + `get_hot_leads`), PA
-  deadline extractor (PDF → calendar events + `add_task`), listing writer.
-- More tools: `write_listing` → listing workflow, `research_property` → Research Agent.
-- OAuth front door (Cloudflare Worker) → drop the per-agent hardcoded email.
+  deadline extractor (PDF → calendar events + `add_task`).
