@@ -76,9 +76,32 @@ Priority order for the citations pass:
    If perfecting: align GBP to "&" (it's the outlier) — but **don't stack a GBP name edit this week** while
    the category change is still propagating, and don't add "LLC" to the GBP name (Google discourages it).
 
-Directories seen listed so far (from a logged-out Google search): 507air.com, HomeAdvisor, BBB
-(BBB Accredited since 2026-06-26). Still to confirm in the 8-directory checklist: Bing, Apple Maps, Yelp,
-Facebook, Angi, Nextdoor.
+### Citations checklist — completed 2026-10-19
+
+| Directory | Listed | NAP match | Note |
+|---|---|---|---|
+| Google Business Profile | ✅ | ✅ | source of truth (scored under GBP pillar) |
+| Bing Places | ❌ | — | create |
+| Apple Maps | ❌ | — | create |
+| Yelp | ❌ | — | create |
+| Facebook | ❌ | — | create (no social pages yet) |
+| BBB | ✅ | ❌ | city = Mankato (should be Faribault) |
+| Angi / HomeAdvisor | ✅ | ❌ | address = 99 Laurinda Lane, Mankato MN 56001 |
+| Nextdoor | ❌ | — | no business page (only an advertise prompt) |
+
+Listed on 2 of 7 scored directories; 0 NAP matches. Punch list = create Bing/Apple/Yelp/Facebook/Nextdoor
+listings, and fix the address/city on BBB + Angi.
+
+### 🚩 Conflicting NAP across the web — top fix for Oscar
+
+Three different identities are live:
+- **GBP (truth):** Faribault, service-area business, hidden address.
+- **HomeAdvisor + BBB:** **Mankato** — HomeAdvisor lists **99 Laurinda Lane, Mankato, MN 56001**.
+- **Angi / BuildZoom (earlier search):** **17893 Alexander Ave, Faribault, MN 55021**.
+
+Two different street addresses in two different cities. This is a stronger negative NAP signal than the
+"&"/"and" name formatting. **Action:** Oscar picks one canonical address/city (matching GBP = Faribault)
+and we correct every directory to it. Also a privacy question — two personal addresses are publicly exposed.
 
 ## Note on method
 
