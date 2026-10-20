@@ -452,3 +452,17 @@ _(later, same day — lead dedupe bug)_
 - Docs: rewrote `docs/agent-mcp-server.md` (live architecture, 3-step onboarding, auth model, "Adding a new tool" runbook); added `docs/agent-mcp-pitch.md` (Evan/Michelle pitch) + `docs/agent-mcp-onepager.md` (meeting crib + tear-off agent setup card)
 - Merged `claude/agent-mcp-oauth` + `claude/agent-mcp-jwt` → `main`, deleted both feature branches; `main` at `ac59634`
 - Neon: tasks "OAuth front door for Agent MCP connector" + "Create a Claude Project…" → `done` (the latter superseded by the profile-instructions decision)
+
+### 2026-10-19
+_(507 Air AEO/GBP engagement — spanned 2026-10-09 → 10-19)_
+- **Ran the first live AEO audit for 507 Air** — resolved the Place ID (`ChIJdQvfzOyWCSYRLqbG2xTDe6M`) from the `g.page/r/<token>/review` short link (302 → `writereview?placeid=…`); built `scripts/aeo-audit/clients/507-air.json`. Baseline **29/100**
+- **Diagnosed the #1 problem: wrong GBP primary category** (General Contractor, not HVAC) — Oscar changed it to **HVAC contractor** (confirmed PRIMARY in dashboard + public panel)
+- **Built + deployed the FAQ + schema** to `507air.com` — enhanced `HVACBusiness` JSON-LD (`@id`, url, logo, image, description, `hasOfferCatalog`, verified `sameAs` Maps URL) + a visible 7-Q FAQ + matching `FAQPage`; added 4 tests (scoped the existing single-block parse to `.first()`), all **39 pass**; `wrangler deploy` → live. Website pillar **14 → 21/25**
+- **Created the 507 Air `clients` row** in Neon (`492902e1-4f82-4a89-aaa0-c54acadebf06`, hvac/starter/active)
+- **Built "507 Air Review Request" n8n workflow** (`dvT9jA24H98Z1fT7`, inactive, SMS-first, logging-standard, hardcoded client_id + review link) — the RE review request is email-first/not reusable; registered `507air_review_request` in `n8n/README.md`
+- **Completed the 8-directory citations audit** — listed on only 2 of 7 (BBB, Angi/HomeAdvisor), both NAP-mismatched; pillar **0/15**. Found **conflicting NAP**: two addresses in two cities (Mankato 99 Laurinda Ln vs Faribault 17893 Alexander Ave). Found MN license **MB800960** (pending add to site)
+- Re-ran audits: **29 → 35** (FAQ) **→ 34** (citations diagnostic, AI-presence noise)
+- **Resolved Oscar's core question** ("why isn't 507 Air in 'HVAC near me'?") — he **ranks #12** on desktop (phone was unreliable). NOT category/filtering (top competitors Streitz/K&M/Luiken's all show `general_contractor` in Places API too); it's **prominence + hidden-address proximity handicap** — Brian's Heating (4 reviews) outranks him via a visible Faribault address
+- Docs created: `507-air-aeo-findings.md`, `507-air-n8n-workflows-scope.md`, `507-air-gbp-posts-scope.md`, `507-air-oscar-message.md`
+- Neon: created story **"507 Air — AEO + GBP visibility"** (+ tasks: Twilio provisioning, activate review WF, missed-call text-back, citations remediation) and story **"AEO audit — measure GBP API-only pillars"** (+ research/impl tasks for the ~25 points the Places API can't see)
+- Merged all 507-air work to `main`; resolved a mid-session divergence with the agent-mcp work via rebase (non-destructive fast-forward)
