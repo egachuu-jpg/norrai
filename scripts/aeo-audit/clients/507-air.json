@@ -7,5 +7,14 @@
   "services": ["furnace repair", "AC installation", "AC repair", "ductless mini-split", "water heater repair"],
   "cities": ["Faribault", "Northfield", "Owatonna", "Mankato", "Lakeville"],
   "competitor_search": "HVAC contractor Faribault MN",
-  "citations": []
+  "citations": [
+    { "directory": "Google Business Profile", "listed": true, "nap_match": true, "url": "https://www.google.com/maps/place/?q=place_id:ChIJdQvfzOyWCSYRLqbG2xTDe6M" },
+    { "directory": "Bing Places", "listed": false, "nap_match": false, "url": "" },
+    { "directory": "Apple Maps", "listed": false, "nap_match": false, "url": "" },
+    { "directory": "Yelp", "listed": false, "nap_match": false, "url": "" },
+    { "directory": "Facebook", "listed": false, "nap_match": false, "url": "" },
+    { "directory": "BBB", "listed": true, "nap_match": false, "url": "https://www.bbb.org/us/mn/faribault/profile/heating-and-air-conditioning/507-air-heating-cooling-llc-0704-1000064283" },
+    { "directory": "Angi", "listed": true, "nap_match": false, "url": "https://www.homeadvisor.com/rated.nvbnv.136036812.html" },
+    { "directory": "Nextdoor", "listed": false, "nap_match": false, "url": "" }
+  ]
 }
