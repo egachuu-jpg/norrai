@@ -31,6 +31,36 @@ problem, not a broken-profile problem.**
   which explains the downward trend; there's little organic HVAC discovery underneath.
 - Conversion is fine (~10% of views interact). The gap is **top-of-funnel discovery**, not the offer/site.
 
+## RESOLVED (2026-10-19): why 507 doesn't rank for "HVAC near me"
+
+**He is not missing — he ranks ~#12** for "hvac near me" from Faribault (checked on desktop). The phone
+showing "nothing" was device personalization / local-pack display depth — Oscar's phone is an unreliable
+test. This is a **ranking-position / prominence** problem, not filtering, classification, or a broken profile.
+
+**Two earlier theories, both disproven — do not repeat them:**
+- ~~"Category stuck / not propagated to the index"~~ — FALSE. The top-ranking competitors (Streitz 335 rev,
+  K&M 233, Luiken's 458) all show `primaryType: general_contractor` in the Places API, **same as 507**. The
+  Places API collapses all contractors into `general_contractor` and cannot see the real GBP category; it is
+  **useless as a ranking proxy**. 507 ranking #12 proves he's fully in the HVAC pool.
+- ~~"Filtered out / not classified"~~ — FALSE. He appears for "air conditioning service near me," "furnace
+  repair near me," and "hvac in Skyline, MN." Discoverable and classified.
+
+**Why he sits at #12 (and why reviews aren't the whole story):**
+- **Prominence gap** vs entrenched incumbents (230–460 reviews) — can't crack the top-3 pack at 9 reviews / 4 months.
+- **Service-area-business / hidden-address handicap (key).** Brian's Heating & Mechanical ranks *above* 507
+  with only **4 reviews** (fewer than 507's 9) — because Brian's has a **visible Faribault street address**
+  ("123 …, Faribault, MN 55021") giving a strong proximity anchor, while 507 hides its address as a SAB.
+  Hidden-address SABs are structurally weaker in "near me" proximity ranking. (This is also why 507 never
+  returns in Places text search.)
+- **Thin/inconsistent citations + young profile** compound it.
+
+**Levers to climb from #12 toward the pack:** reviews (biggest controllable), citation consistency + volume,
+profile activity (posts/Q&A), time/age. The proximity/address handicap is largely **structural** — it only
+changes if Oscar has a real, displayable Faribault business address (can't fake one; if it's his home, keep
+it hidden). **Honest framing for Oscar:** he already ranks for the bread-and-butter terms (furnace/AC "near
+me") — those are the near-term wins; climbing the "hvac near me" head term past 300+-review shops is a
+6–12 month prominence build, not a settings fix.
+
 ## AEO audit scorecard — 29/100 (partial: PageSpeed skipped, citations not yet filled)
 
 Output: `scripts/aeo-audit/out/507-air-heating-cooling-2026-10-09/` (gitignored).
