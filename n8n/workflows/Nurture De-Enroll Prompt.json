@@ -93,7 +93,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'nurture_deenroll_prompt', 'completed', json_build_object('lead_count', {{ $json.lead_count }}, 'agent_email', '{{ $json.to_email }}')::jsonb)",
+        "query": "INSERT INTO workflow_events (client_id, workflow_name, event_type, payload) VALUES ('e2f9934c-4d28-4bb4-ac90-4284c1123517'::uuid, 'nurture_deenroll_prompt', 'completed', json_build_object('execution_id', '{{ $execution.id }}', 'lead_count', {{ $('Has Active Leads?').item.json.lead_count }}, 'agent_email', '{{ $('Has Active Leads?').item.json.to_email }}')::jsonb)",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
