@@ -1,7 +1,7 @@
 {
   "name": "Weekly Marketing Drip - Intake",
   "id": "KDWC5WwRJuNldOCY",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "id": "wmi-001-receive",
@@ -45,7 +45,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [600, 200],
-      "parameters": {"jsCode": "const root = $('Receive Intake').first().json;\nconst body = root.body || root;\nlet listings = Array.isArray(body.listings) ? body.listings : [];\nlistings = listings\n  .filter(l => l && typeof l.url === 'string' && l.url.trim() !== '')\n  .slice(0, 10)\n  .map(l => ({ url: String(l.url).trim(), address: (l.address != null && String(l.address).trim() !== '') ? String(l.address).trim() : null }));\nconst valid = listings.length > 0;\nconst listings_json = JSON.stringify(listings).replace(/'/g, \"''\");\nreturn [{ json: { valid, count: listings.length, listings, listings_json } }];"}
+      "parameters": {"jsCode": "const root = $('Receive Intake').first().json;\nconst body = root.body || root;\nconst str = (v, max) => (v == null || String(v).trim() === '') ? null : String(v).trim().slice(0, max);\nconst httpsUrl = (v) => { const s = str(v, 500); return s && /^https:\\/\\//i.test(s) ? s : null; };\nconst seen = new Set();\nconst listings = (Array.isArray(body.listings) ? body.listings : [])\n  .filter(l => l && /^\\d{4,12}$/.test(String(l.mls_id || '').trim()))\n  .map(l => ({\n    mls_id: String(l.mls_id).trim(),\n    address: str(l.address, 200),\n    price: str(l.price, 40),\n    beds: str(l.beds, 10),\n    baths: str(l.baths, 10),\n    sqft: str(l.sqft, 20),\n    url: httpsUrl(l.url),\n    photo_thumb_url: httpsUrl(l.photo_thumb_url),\n  }))\n  .filter(l => l.url && !seen.has(l.mls_id) && seen.add(l.mls_id)) // drip de-dupes on mls_id and needs a link\n  .slice(0, 20);\nconst valid = listings.length > 0;\nconst listings_json = JSON.stringify(listings).replace(/'/g, \"''\");\nreturn [{ json: { valid, count: listings.length, listings, listings_json } }];"}
     },
     {
       "id": "wmi-006-valid",
@@ -61,7 +61,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [1000, 380],
-      "parameters": {"respondWith": "json", "responseBody": "={ \"status\": \"error\", \"message\": \"at least one listing url is required\" }", "options": {"responseCode": 400}}
+      "parameters": {"respondWith": "json", "responseBody": "={ \"status\": \"error\", \"message\": \"at least one listing with an mls_id and https url is required\" }", "options": {"responseCode": 400}}
     },
     {
       "id": "wmi-008-insert",
@@ -70,7 +70,7 @@
       "typeVersion": 2.5,
       "position": [1000, 200],
       "onError": "continueRegularOutput",
-      "parameters": {"operation": "executeQuery", "query": "=INSERT INTO listing_queue (listings, status) VALUES ('{{ $('Validate').first().json.listings_json }}'::jsonb, 'pending') RETURNING id", "options": {}},
+      "parameters": {"operation": "executeQuery", "query": "=WITH superseded AS (UPDATE listing_queue SET status = 'cancelled' WHERE status = 'pending' RETURNING id) INSERT INTO listing_queue (listings, status) VALUES ('{{ $('Validate').first().json.listings_json }}'::jsonb, 'pending') RETURNING id, (SELECT COUNT(*) FROM superseded) AS superseded", "options": {}},
       "credentials": {"postgres": {"id": "2DDeKGMIP9Ijbd9R", "name": "Postgres account"}}
     },
     {
@@ -79,7 +79,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [1200, 200],
-      "parameters": {"respondWith": "json", "responseBody": "={{ JSON.stringify({ status: 'queued', queue_id: $json.id, count: $('Validate').first().json.count }) }}", "options": {"responseCode": 200}}
+      "parameters": {"respondWith": "json", "responseBody": "={{ JSON.stringify({ status: $json.id ? 'queued' : 'error', queue_id: $json.id || null, count: $('Validate').first().json.count, superseded: Number($json.superseded || 0) }) }}", "options": {"responseCode": "={{ $json.id ? 200 : 500 }}"}}
     },
     {
       "id": "wmi-010-log-comp",
