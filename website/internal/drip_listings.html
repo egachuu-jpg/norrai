@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drip Listings — Norr AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+<style>
+  :root {
+    --bone: #FAFAF7; --ink: #0A0F1A; --glacial: #7FA9B8; --graphite: #3A3F48;
+    --blush: #E8D4C4; --surface: #FFFFFF; --border: #E5E4DE; --muted: #9EA3AA;
+    --secondary: #6A6F78;
+    --font-display: 'Inter Tight', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); background: var(--bone); color: var(--ink); line-height: 1.5; min-height: 100dvh; }
+
+  .site-header { background: var(--ink); padding: 40px 24px 36px; border-bottom: 1px solid #1e2535; }
+  .site-header-inner { max-width: 800px; margin: 0 auto; }
+  .eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--glacial); margin-bottom: 12px; }
+  .site-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.03em; line-height: 1.1; color: var(--bone); }
+  .site-header p { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+  .wrap { max-width: 800px; margin: 0 auto; padding: 36px 16px 72px; display: flex; flex-direction: column; gap: 32px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; }
+  .card h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; margin-bottom: 16px; }
+  .card p, .card li { font-size: 14px; color: var(--graphite); }
+  .card ol { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  code { font-family: var(--font-mono); font-size: 12px; background: var(--bone); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 5px; word-break: break-all; }
+
+  .bookmarklet {
+    display: inline-block; margin: 16px 0 4px; background: #ffce00; color: var(--ink);
+    font-family: var(--font-display); font-weight: 700; font-size: 14px; text-decoration: none;
+    padding: 10px 18px; border-radius: var(--radius-sm); cursor: grab;
+  }
+  .hint { font-size: 12px; color: var(--muted); }
+
+  .summary { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .summary h2 { margin-bottom: 0; }
+  .count { font-family: var(--font-mono); font-size: 12px; color: var(--secondary); }
+
+  .listing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .listing { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+  .listing img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: var(--border); }
+  .listing .body { padding: 12px 14px; }
+  .listing .address { font-weight: 600; font-size: 14px; }
+  .listing .price { font-size: 14px; color: var(--graphite); }
+  .listing .details { font-size: 12px; color: var(--secondary); }
+  .listing .mls { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .listing .warn { font-size: 12px; color: #B91C1C; margin-top: 4px; }
+
+  textarea {
+    width: 100%; min-height: 96px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-family: var(--font-mono); font-size: 12px; background: var(--surface); color: var(--ink); resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--glacial); }
+
+  .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+  .btn-primary {
+    background: var(--ink); color: var(--bone);
+    border: none; border-radius: var(--radius-sm);
+    padding: 12px 24px; font-family: var(--font-display); font-weight: 600;
+    font-size: 14px; letter-spacing: -0.01em; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--graphite); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 20px; font-family: var(--font-display); font-weight: 500;
+    font-size: 13px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--glacial); }
+
+  .status-msg { display: none; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 12px; }
+  .status-msg.success { display: block; background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; }
+  .status-msg.error   { display: block; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 600px) {
+    .card { padding: 22px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <p class="eyebrow">Internal · Weichert Heartland</p>
+    <h1>Drip Listings</h1>
+    <p>Queue this week's office listings for the Monday marketing drip.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="card" id="preview-card" hidden>
+    <div class="summary">
+      <h2>Listings to queue</h2>
+      <span class="count" id="listing-count"></span>
+    </div>
+    <div class="listing-grid" id="listing-grid"></div>
+    <div class="actions">
+      <button class="btn-primary" id="submit-btn" type="button">Queue for Monday's drip</button>
+      <button class="btn-secondary" id="clear-btn" type="button">Clear</button>
+    </div>
+    <div class="status-msg" id="status-msg" role="status"></div>
+  </section>
+
+  <section class="card" id="install-card">
+    <h2>Each week</h2>
+    <ol>
+      <li>Open <a href="https://northstar.weichert.com/MN/Rice/Faribault/" target="_blank" rel="noopener">Weichert's Faribault listings</a> and wait for the photos to load.</li>
+      <li>Click the <strong>Send to Norr AI</strong> bookmark. This page opens with the Heartland listings it found.</li>
+      <li>Check them and click <strong>Queue for Monday's drip</strong>. The latest batch you queue replaces any earlier one.</li>
+    </ol>
+    <a class="bookmarklet" id="bookmarklet" href="#">Send to Norr AI</a>
+    <p class="hint">One-time setup: drag this button to your bookmarks bar. In Safari, show the bar with View → Show Favorites Bar.</p>
+  </section>
+
+  <section class="card" id="paste-card">
+    <h2>Paste instead</h2>
+    <p>If the bookmark can't open a new tab, it copies the listings to your clipboard. Paste them here.</p>
+    <textarea id="paste-input" placeholder='[{"mls_id":"7170710","address":"623 9th Street SW", …}]' aria-label="Listings JSON"></textarea>
+    <div class="actions">
+      <button class="btn-secondary" id="paste-btn" type="button">Preview pasted listings</button>
+    </div>
+    <div class="status-msg" id="paste-msg" role="status"></div>
+  </section>
+
+</main>
+
+<script>
+const WEBHOOK_URL = 'https://norrai.app.n8n.cloud/webhook/weekly-marketing-drip-intake';
+const NORR_TOKEN  = '8F68D963-7060-4033-BD04-7593E4B203CB';
+const PAGE_URL    = 'https://tools.norrai.co/internal/drip_listings';
+const OFFICE_RE   = /Heartland/i;
+
+// Runs inside the Weichert results page (via the bookmarklet), not on this page.
+// Kept as a plain function so its source can be serialized into the bookmark.
+function extractListings(doc, officeRe) {
+  const els = Array.from(doc.querySelectorAll('[data-mlsid],[data-mls],[data-listing-id]'));
+  const seen = new Set();
+  const out = [];
+  for (const e of els) {
+    const c = e.closest('.listing') || e;
+    const t = (s) => { const n = c.querySelector(s); return n ? n.textContent.trim().replace(/\s+/g, ' ') : ''; };
+    const id = e.getAttribute('data-mlsid') || e.getAttribute('data-mls') || e.getAttribute('data-listing-id');
+    const office = t('.card-text-misc');
+    if (!id || seen.has(id) || !officeRe.test(office)) continue;
+    seen.add(id);
+    const num = (s) => t(s).replace(/Beds?|Baths?|Sq\.\s?Ft\./gi, '').trim() || null;
+    const price = (c.textContent.match(/\$\d{1,3}(?:,\d{3})+/) || [null])[0]; // card text runs price into the bed count
+    const photo = (c.innerHTML.match(/\/\/[^"'\s&<>]+listingphotos\d+\/[^"'\s&<>]+?-1\.jpg/) || [null])[0]; // real URL; <img> may still be the lazy-load placeholder
+    const link = c.querySelector('a.propertyLink, a.card-link');
+    out.push({
+      mls_id: id,
+      address: t('.card-address') || null,
+      price,
+      beds: num('.bed'),
+      baths: num('.bath'),
+      sqft: num('.sq'),
+      url: link ? link.href : null,
+      photo_thumb_url: photo ? 'https:' + photo : null,
+    });
+  }
+  return out;
+}
+
+function buildBookmarklet() {
+  const src = `(function(){
+    var extract = ${extractListings.toString()};
+    if (!/weichert\\.com$/i.test(location.hostname)) { alert('Open the Weichert Faribault listings page first, then click Send to Norr AI.'); return; }
+    var listings = extract(document, ${OFFICE_RE.toString()});
+    if (!listings.length) { alert('No Heartland listings found on this page. Wait for the listings to load, or try the next page.'); return; }
+    var json = JSON.stringify(listings);
+    var w = window.open(${JSON.stringify(PAGE_URL)} + '#d=' + encodeURIComponent(json), '_blank');
+    if (!w) { navigator.clipboard.writeText(json).then(function(){ alert('Copied ' + listings.length + ' listings. Paste them on the Drip Listings page.'); }); }
+  })();`;
+  return 'javascript:' + encodeURIComponent(src); // keep newlines: extractListings has // comments
+}
+
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const isHttps = (u) => typeof u === 'string' && /^https:\/\//i.test(u);
+
+// Same rules as the n8n Validate node, so the preview shows exactly what gets queued.
+function normalize(raw) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  return raw
+    .filter(l => l && /^\d{4,12}$/.test(String(l.mls_id || '').trim()) && isHttps(l.url))
+    .map(l => ({
+      mls_id: String(l.mls_id).trim(),
+      address: l.address || null,
+      price: l.price || null,
+      beds: l.beds || null,
+      baths: l.baths || null,
+      sqft: l.sqft || null,
+      url: l.url,
+      photo_thumb_url: isHttps(l.photo_thumb_url) ? l.photo_thumb_url : null,
+    }))
+    .filter(l => !seen.has(l.mls_id) && seen.add(l.mls_id))
+    .slice(0, 20);
+}
+
+let current = [];
+
+function setStatus(el, msg, kind) {
+  el.textContent = msg;
+  el.className = 'status-msg' + (kind ? ' ' + kind : '');
+}
+
+function render(listings) {
+  current = listings;
+  const card = document.getElementById('preview-card');
+  const grid = document.getElementById('listing-grid');
+  const btn = document.getElementById('submit-btn');
+  setStatus(document.getElementById('status-msg'), '', '');
+  if (!listings.length) { card.hidden = true; grid.innerHTML = ''; return; }
+  card.hidden = false;
+  btn.disabled = false;
+  btn.textContent = "Queue for Monday's drip";
+  document.getElementById('listing-count').textContent = listings.length + (listings.length === 1 ? ' listing' : ' listings');
+  grid.innerHTML = listings.map(l => {
+    const details = [l.beds && l.beds + ' bd', l.baths && l.baths + ' ba', l.sqft && l.sqft + ' sq ft'].filter(Boolean).join(' · ');
+    const warn = [!l.price && 'no price', !l.photo_thumb_url && 'no photo'].filter(Boolean).join(', ');
+    return `<article class="listing" data-mls="${escapeHtml(l.mls_id)}">
+      ${l.photo_thumb_url ? `<img src="${escapeHtml(l.photo_thumb_url)}" alt="${escapeHtml(l.address || 'Listing')}" loading="lazy">` : ''}
+      <div class="body">
+        <div class="address">${escapeHtml(l.address || 'Untitled listing')}</div>
+        ${l.price ? `<div class="price">${escapeHtml(l.price)}</div>` : ''}
+        ${details ? `<div class="details">${escapeHtml(details)}</div>` : ''}
+        <div class="mls">MLS# ${escapeHtml(l.mls_id)}</div>
+        ${warn ? `<div class="warn">Missing: ${escapeHtml(warn)}</div>` : ''}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function loadFromHash() {
+  const m = location.hash.match(/^#d=(.+)$/);
+  if (!m) return;
+  try {
+    render(normalize(JSON.parse(decodeURIComponent(m[1]))));
+  } catch {
+    setStatus(document.getElementById('paste-msg'), "Couldn't read the listings from the bookmark. Try clicking it again.", 'error');
+  }
+  history.replaceState(null, '', location.pathname); // keep the payload out of history and refreshes
+}
+
+document.getElementById('bookmarklet').href = buildBookmarklet();
+document.getElementById('bookmarklet').addEventListener('click', (e) => {
+  e.preventDefault();
+  setStatus(document.getElementById('paste-msg'), 'Drag the button to your bookmarks bar, then click it from the Weichert listings page.', 'error');
+});
+
+document.getElementById('paste-btn').addEventListener('click', () => {
+  const msg = document.getElementById('paste-msg');
+  let parsed;
+  try { parsed = JSON.parse(document.getElementById('paste-input').value); } catch { parsed = null; }
+  const listings = normalize(parsed);
+  if (!listings.length) { setStatus(msg, 'No valid listings found. Each one needs an MLS number and a link.', 'error'); return; }
+  setStatus(msg, '', '');
+  render(listings);
+  document.getElementById('preview-card').scrollIntoView({ behavior: 'smooth' });
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => render([]));
+
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('submit-btn');
+  const statusEl = document.getElementById('status-msg');
+  if (!current.length) return;
+  btn.disabled = true;
+  btn.textContent = 'Queuing…';
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Norr-Token': NORR_TOKEN,
+      },
+      body: JSON.stringify({ listings: current }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.status !== 'queued') throw new Error('not queued');
+    setStatus(statusEl, `Queued ${data.count} listing${data.count === 1 ? '' : 's'} for Monday's drip.` + (data.superseded ? ' This replaces the earlier batch.' : ''), 'success');
+    btn.textContent = 'Queued';
+  } catch {
+    setStatus(statusEl, 'Error queuing listings. Try again or check n8n.', 'error');
+    btn.disabled = false;
+    btn.textContent = "Queue for Monday's drip";
+  }
+});
+
+loadFromHash();
+window.addEventListener('hashchange', loadFromHash);
+</script>
+</body>
+</html>
