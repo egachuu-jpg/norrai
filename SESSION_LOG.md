@@ -466,3 +466,17 @@ _(507 Air AEO/GBP engagement — spanned 2026-10-09 → 10-19)_
 - Docs created: `507-air-aeo-findings.md`, `507-air-n8n-workflows-scope.md`, `507-air-gbp-posts-scope.md`, `507-air-oscar-message.md`
 - Neon: created story **"507 Air — AEO + GBP visibility"** (+ tasks: Twilio provisioning, activate review WF, missed-call text-back, citations remediation) and story **"AEO audit — measure GBP API-only pillars"** (+ research/impl tasks for the ~25 points the Places API can't see)
 - Merged all 507-air work to `main`; resolved a mid-session divergence with the agent-mcp work via rebase (non-destructive fast-forward)
+
+### 2026-11-15
+- **n8n failure sweep:** found Weekly Marketing Drip scrape failing with Cloudflare 403 (Nov 2 + Nov 9), Nurture De-Enroll Prompt "Log Completed" failing silently, Marketing Opt-Out "already opted out" branch logging no completion; Cold Nurture paused on a Wait (normal)
+- Fixed **Nurture De-Enroll Prompt** (`FqLZd2QKXCdsSHQb`) Log Completed — now pulls `lead_count`/`to_email` from `$('Has Active Leads?')` + `$execution.id`
+- Added **"Log Completed (Already)"** to Marketing Opt-Out (`oiefZVdPfLPRsTZM`) after "Respond: Already" (`already_opted_out: true`); verified live (exec 2969)
+- Verified in Neon: Nov 9 opt-out click handled correctly; no drip emails to the Oct 19 opt-out since (proven from the recipient query logic); opt-out totals: 25 via link + 169 imported `email_opt_out` = 194 excluded, 738 still receiving
+- **Decided against scraping Zillow/Realtor.com** (ToS + MLS licensing); permanent fix is a Cloudflare skip rule (secret header) from teamyellownow.com's web vendor or a NorthstarMLS IDX/RESO feed — draft ask to Evan provided
+- **Manual listing-queue fallback for the drip:** Send workflow (`wSXuvtUorzoLmktv`) now checks `Get Queued Listings` (pending `listing_queue` batch, <7 days, items have `mls_id`) → `Use Queue?` → Parse Listings (queue mode, `from_queue` flag) instead of scraping; new `Mark Queue Sent` after Log Completed
+- Reactivated **Weekly Marketing Drip - Intake** (`KDWC5WwRJuNldOCY`) — validates MLS ID (`^\d{4,12}$`) + https url, de-dupes, caps at 20; insert supersedes older pending batches (CTE `UPDATE ... RETURNING` → `cancelled`); responds `{status, queue_id, count, superseded}`, 500 if no id
+- Built **`website/internal/drip_listings.html`** — "Send to Norr AI" bookmarklet run on `northstar.weichert.com/MN/Rice/Faribault/`, filters to Heartland cards, hands listings to the page via URL hash, preview + paste fallback, submits with `X-Norr-Token`; `tests/drip_listings.spec.js` (22 tests passing)
+- Test-fired the drip email to eganbonde@gmail.com only via a hardcoded-recipient ZZ TEST copy (exec 2974, no DB writes); ZZ TEST deleted afterward
+- Synced repo JSON for Opt-Out, De-Enroll, Drip Send (full live export, Slack URL placeholdered), Drip Intake; updated `docs/workflows-built.md`; PR #41 opened and merged to `main`
+- Egan ran the bookmarklet live: batch `69bc6b00` (7 Heartland listings) queued, identical to the hand-built batch; older pending batches auto-cancelled — Nov 16 drip set to send from queue
+- Flagged, not fixed: a live Slack webhook URL is already on `main` in Chief of Staff / Red Alert Scheduler / Workflow Error Logger JSON — recommended rotating; `bnb_estimate_form.spec.js` is flaky (unrelated)
