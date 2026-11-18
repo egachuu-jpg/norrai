@@ -8,6 +8,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="/norr_ai_favicon.svg">
+<link rel="apple-touch-icon" href="/norr_ai_apple_touch_180.png">
+<meta name="theme-color" content="#0A0F1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Open House">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   :root {
     --bone:      #FAFAF7;
@@ -171,6 +177,104 @@
   footer a { color: var(--muted); text-decoration: none; }
   footer a:hover { color: var(--secondary); }
 
+
+  /* ── Add-to-home-screen tip ── */
+  .a2hs {
+    display: none;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--glacial);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--secondary);
+  }
+  .a2hs.show { display: flex; }
+  .a2hs strong { color: var(--ink); }
+  .a2hs button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+  }
+  input[type="file"] { padding: 10px 12px; font-size: 14px; }
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .thumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+  /* ── Result (flyer) ── */
+  #result { display: none; }
+  #result.show { display: block; }
+  .result-actions { display: flex; flex-direction: column; gap: 10px; margin: 20px 0 8px; }
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 16px 24px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--ink); color: var(--bone); border: none; }
+  .btn-primary:hover:not(:disabled) { background: var(--graphite); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+  #flyer-stage { width: 100%; overflow: hidden; margin-top: 16px; border: 1px solid var(--border); background: var(--surface); }
+
+  /* Flyer is designed at US Letter (816x1056 CSS px) and scaled to fit on screen. */
+  #flyer {
+    width: 816px;
+    height: 1056px;
+    background: #fff;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    transform-origin: top left;
+    overflow: hidden;
+  }
+  .fl-top { background: var(--ink); color: var(--bone); padding: 36px 48px 30px; }
+  .fl-eyebrow { font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--glacial); }
+  .fl-when { font-family: var(--font-display); font-weight: 600; font-size: 26px; margin-top: 10px; }
+  .fl-address { font-family: var(--font-display); font-weight: 700; font-size: 44px; letter-spacing: -0.03em; line-height: 1.05; margin-top: 12px; }
+  .fl-photos { display: grid; gap: 6px; padding: 18px 48px 0; }
+  .fl-photos.n1 { grid-template-columns: 1fr; }
+  .fl-photos.n2 { grid-template-columns: 1fr 1fr; }
+  .fl-photos.n3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
+  .fl-photos.n3 .p0 { grid-row: 1 / span 2; }
+  .fl-photos.n4 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+  .fl-photos.n4 .p0 { grid-row: 1 / span 3; }
+  .fl-photos img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fl-photos { height: 400px; box-sizing: content-box; }
+  .fl-photos.n0 { display: none; }
+  .fl-desc { padding: 22px 48px 0; font-size: 17px; line-height: 1.55; color: var(--graphite); flex: 1; overflow: hidden; }
+  .fl-bottom { display: flex; align-items: center; gap: 22px; padding: 22px 0 34px; border-top: 1px solid var(--border); margin: 18px 48px 0; }
+  .fl-agent { display: flex; align-items: center; gap: 18px; flex: 1; min-width: 0; }
+  .fl-headshot { width: 118px; height: 118px; border-radius: 50%; object-fit: cover; border: 3px solid var(--glacial); flex: none; }
+  .fl-headshot.none { display: none; }
+  .fl-name { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.02em; }
+  .fl-line { font-size: 17px; color: var(--secondary); margin-top: 3px; overflow-wrap: anywhere; }
+  .fl-co { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+  .fl-qr { text-align: center; flex: none; }
+  .fl-qr img { width: 190px; height: 190px; display: block; }
+  .fl-qr div { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); margin-top: 6px; }
+
+  @media print {
+    @page { size: letter; margin: 0; }
+    html, body { background: #fff; }
+    .site-header, .wrap > :not(#result), #result > :not(#flyer-stage), footer { display: none !important; }
+    .wrap { padding: 0; max-width: none; }
+    #flyer-stage { border: none; height: auto !important; overflow: visible; margin: 0; }
+    #flyer { transform: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
   @media (max-width: 540px) {
     .site-header { padding: 32px 18px 28px; }
     .wrap { padding: 28px 18px 60px; }
@@ -184,12 +288,16 @@
 <header class="site-header">
   <div class="site-header-inner">
     <div class="eyebrow">Open House Setup · Weichert Realty</div>
-    <h1>Generate your<br><span class="accent">sign-in QR code.</span></h1>
-    <p>Paste your listing description and we'll extract the highlights. Attendees scan the code at the door — you get a personalized follow-up sent automatically the next morning.</p>
+    <h1>Create your<br><span class="accent">open house flyer.</span></h1>
+    <p>Add the listing and a few photos. You get a print-ready flyer with the sign-in QR code — attendees scan it at the door and get a personalized follow-up the next morning.</p>
   </div>
 </header>
 
 <div class="wrap">
+  <div class="a2hs" id="a2hs" role="note">
+    <div><strong>Tip: put this on your home screen.</strong> Tap the Share button, then <strong>Add to Home Screen</strong> — next time it's one tap away.</div>
+    <button type="button" id="a2hs-dismiss" aria-label="Dismiss tip">&times;</button>
+  </div>
   <form id="setup-form" novalidate>
 
     <div class="section-label">Your Info</div>
@@ -209,6 +317,12 @@
       <label for="agent_email">Your email <span class="req">*</span></label>
       <input type="email" id="agent_email" name="agent_email" autocomplete="email" placeholder="jane@example.com" required>
       <div class="hint">The QR code will be sent here.</div>
+    </div>
+
+    <div class="field">
+      <label for="headshot">Your headshot <span class="opt">(optional)</span></label>
+      <input type="file" id="headshot" accept="image/*">
+      <div class="hint">For the flyer. Saved on this device so you only add it once — skip it if your photo already shows up.</div>
     </div>
 
     <div class="section-label">Property</div>
@@ -247,11 +361,35 @@
       <div class="hint">If provided, attendees can tap a link to view the full listing and make an offer after signing in.</div>
     </div>
 
+    <div class="field">
+      <label for="open_house_when">Open house date &amp; time <span class="opt">(optional)</span></label>
+      <input type="text" id="open_house_when" name="open_house_when" placeholder="Sat, Nov 22 · 1–3 PM">
+      <div class="hint">Printed on the flyer.</div>
+    </div>
+
+    <div class="field">
+      <label for="photos">Photos of the house <span class="opt">(optional, up to 4)</span></label>
+      <input type="file" id="photos" accept="image/*" multiple>
+      <div class="thumbs" id="photo-thumbs"></div>
+      <div class="hint">Pick from your camera roll. The first one is the big photo at the top of the flyer.</div>
+    </div>
+
     <div id="status" class="status" role="alert"></div>
 
-    <button type="submit" id="submit-btn">Generate QR Code →</button>
+    <button type="submit" id="submit-btn">Create Flyer →</button>
 
   </form>
+
+  <div id="result">
+    <div id="result-status" class="status success show" role="status"></div>
+    <div class="result-actions">
+      <button type="button" class="btn-primary" id="print-btn" disabled>Print flyer</button>
+      <button type="button" class="btn-secondary" id="another-btn">Start another</button>
+    </div>
+    <div id="flyer-stage">
+      <div id="flyer" aria-label="Open house flyer preview"></div>
+    </div>
+  </div>
 
   <footer>
     <p>Norr AI &nbsp;·&nbsp; <a href="https://norrai.co">norrai.co</a></p>
@@ -261,25 +399,216 @@
 <script>
   const WEBHOOK_URL     = 'https://norrai.app.n8n.cloud/webhook/open-house-setup';
   const AGENT_TOKEN_KEY = 'norrai_agent_token';
+  const AGENT_INFO_KEY  = 'norrai_oh_agent';
+  const HEADSHOT_KEY    = 'norrai_oh_headshot';
+  const A2HS_KEY        = 'norrai_oh_a2hs_dismissed';
+  const MAX_PHOTOS      = 4;
+
+  // Headshots we already host, keyed by agent email.
+  const KNOWN_HEADSHOTS = {
+    'eknutson@teamyellownow.com':  '/weichert_evan_headshot.jpg',
+    'mjasinski@teamyellownow.com': '/weichert_michelle_headshot.jpg',
+  };
+
+  // localStorage can throw (private mode, blocked site data) — never let it break the form.
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+  };
+
   (function () {
     const t = new URLSearchParams(window.location.search).get('agent_token');
-    if (t) localStorage.setItem(AGENT_TOKEN_KEY, t);
+    if (t) store.set(AGENT_TOKEN_KEY, t);
   }());
 
-  const form   = document.getElementById('setup-form');
-  const btn    = document.getElementById('submit-btn');
-  const status = document.getElementById('status');
+  const form      = document.getElementById('setup-form');
+  const btn       = document.getElementById('submit-btn');
+  const status    = document.getElementById('status');
+  const result    = document.getElementById('result');
+  const resultMsg = document.getElementById('result-status');
+  const flyer     = document.getElementById('flyer');
+  const stage     = document.getElementById('flyer-stage');
+  const printBtn  = document.getElementById('print-btn');
+  const thumbs    = document.getElementById('photo-thumbs');
 
+  // ── Add to Home Screen ──────────────────────────────────────────────────────
+  // The manifest is built at runtime so start_url keeps this agent's ?agent_token.
+  (function setupHomeScreen() {
+    try {
+      const manifest = {
+        name: 'Open House — Norr AI',
+        short_name: 'Open House',
+        start_url: window.location.href,
+        scope: '/clients/',
+        display: 'standalone',
+        background_color: '#0A0F1A',
+        theme_color: '#0A0F1A',
+        icons: [
+          { src: location.origin + '/norr_ai_app_192.png', sizes: '192x192', type: 'image/png' },
+          { src: location.origin + '/norr_ai_app_512.png', sizes: '512x512', type: 'image/png' },
+        ],
+      };
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }));
+      document.head.appendChild(link);
+    } catch (_) { /* tip still works without a manifest */ }
+
+    const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+    const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    const tip = document.getElementById('a2hs');
+    if (!standalone && mobile && !store.get(A2HS_KEY)) tip.classList.add('show');
+    document.getElementById('a2hs-dismiss').addEventListener('click', () => {
+      store.set(A2HS_KEY, '1');
+      tip.classList.remove('show');
+    });
+  }());
+
+  // ── Prefill agent info saved from last time ────────────────────────────────
+  (function prefill() {
+    try {
+      const saved = JSON.parse(store.get(AGENT_INFO_KEY) || '{}');
+      ['agent_name', 'agent_phone', 'agent_email'].forEach(id => {
+        if (saved[id]) document.getElementById(id).value = saved[id];
+      });
+    } catch (_) {}
+  }());
+
+  // ── Images ──────────────────────────────────────────────────────────────────
+  // Downscale on the phone so a 12MB camera photo becomes a ~200KB JPEG.
+  function resizeImage(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement('canvas');
+        c.width  = Math.max(1, Math.round(img.naturalWidth * scale));
+        c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read ' + (file.name || 'photo'))); };
+      img.src = url;
+    });
+  }
+
+  let photoData = [];
+  document.getElementById('photos').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []).slice(0, MAX_PHOTOS);
+    photoData = [];
+    thumbs.textContent = '';
+    for (const f of files) {
+      try {
+        const d = await resizeImage(f, 1400, 0.82);
+        photoData.push(d);
+        const t = document.createElement('img');
+        t.src = d; t.alt = '';
+        thumbs.appendChild(t);
+      } catch (_) { /* skip unreadable file */ }
+    }
+  });
+
+  let headshotData = store.get(HEADSHOT_KEY) || '';
+  document.getElementById('headshot').addEventListener('change', async (e) => {
+    const f = (e.target.files || [])[0];
+    if (!f) return;
+    try {
+      headshotData = await resizeImage(f, 400, 0.85);
+      store.set(HEADSHOT_KEY, headshotData);
+    } catch (_) {}
+  });
+
+  // ── Flyer ───────────────────────────────────────────────────────────────────
+  function clampDescription(text, max) {
+    const t = (text || '').replace(/\s+/g, ' ').trim();
+    if (t.length <= max) return t;
+    const cut = t.slice(0, max);
+    const lastStop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+    return lastStop > max * 0.5 ? cut.slice(0, lastStop + 1) : cut.replace(/\s+\S*$/, '') + '…';
+  }
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function buildFlyer(d) {
+    flyer.textContent = '';
+
+    const top = el('div', 'fl-top');
+    top.append(el('div', 'fl-eyebrow', 'Open House'));
+    if (d.when) top.append(el('div', 'fl-when', d.when));
+    top.append(el('div', 'fl-address', d.property_address));
+    flyer.append(top);
+
+    const photos = el('div', 'fl-photos n' + d.photos.length);
+    d.photos.forEach((src, i) => {
+      const im = el('img'); im.src = src; im.alt = ''; im.className = 'p' + i;
+      photos.append(im);
+    });
+    flyer.append(photos);
+
+    flyer.append(el('div', 'fl-desc', clampDescription(d.listing_description, d.photos.length ? 620 : 1100)));
+
+    const bottom = el('div', 'fl-bottom');
+    const agent = el('div', 'fl-agent');
+    const hs = el('img', 'fl-headshot'); hs.alt = '';
+    if (d.headshot) hs.src = d.headshot; else hs.classList.add('none');
+    const info = el('div');
+    info.append(el('div', 'fl-name', d.agent_name));
+    info.append(el('div', 'fl-line', d.agent_phone));
+    info.append(el('div', 'fl-line', d.agent_email));
+    if (d.company) info.append(el('div', 'fl-co', d.company));
+    agent.append(hs, info);
+
+    const qr = el('div', 'fl-qr');
+    const qrImg = el('img'); qrImg.alt = 'Sign-in QR code';
+    qrImg.addEventListener('load', () => { printBtn.disabled = false; });
+    qrImg.addEventListener('error', () => {
+      printBtn.disabled = true;
+      resultMsg.textContent = 'The QR image could not load. Check your connection and tap Create Flyer again — the QR is also in your email.';
+    });
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' + encodeURIComponent(d.signin_url);
+    qr.append(qrImg, el('div', null, 'Scan to sign in'));
+    bottom.append(agent, qr);
+    flyer.append(bottom);
+  }
+
+  function fitFlyer() {
+    const w = stage.clientWidth;
+    if (!w) return;
+    const scale = Math.min(1, w / 816);
+    flyer.style.transform = 'scale(' + scale + ')';
+    stage.style.height = Math.round(1056 * scale) + 'px';
+  }
+  window.addEventListener('resize', fitFlyer);
+
+  printBtn.addEventListener('click', () => window.print());
+  document.getElementById('another-btn').addEventListener('click', () => {
+    result.classList.remove('show');
+    form.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Create Flyer →';
+    ['street_address', 'city', 'zip', 'listing_description', 'listing_url', 'open_house_when'].forEach(id => { form.elements[id].value = ''; });
+    document.getElementById('photos').value = '';
+    photoData = [];
+    thumbs.textContent = '';
+    window.scrollTo(0, 0);
+  });
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
     }
 
     const fd = new FormData(form);
-
     const street  = fd.get('street_address') || '';
     const city    = fd.get('city')           || '';
     const state   = fd.get('state')          || 'MN';
@@ -299,12 +628,12 @@
       listing_description: fd.get('listing_description') || '',
       listing_url:         fd.get('listing_url')         || '',
       source_form:         'weichert_open_house_setup',
-      agent_token:         localStorage.getItem(AGENT_TOKEN_KEY) || '',
+      agent_token:         store.get(AGENT_TOKEN_KEY) || '',
     };
 
     status.className = 'status';
     btn.disabled = true;
-    btn.textContent = 'Generating…';
+    btn.textContent = 'Creating flyer…';
 
     try {
       const res = await fetch(WEBHOOK_URL, {
@@ -315,23 +644,50 @@
         },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
-      const _s1 = document.createElement('strong');
-      _s1.textContent = 'QR code on its way.';
-      const _s2 = document.createElement('strong');
-      _s2.textContent = payload.agent_email;
-      status.textContent = '';
-      status.append(_s1, ' Check your email at ', _s2, ' — it should arrive within a minute. Print it and tape it to the door before the open house.');
-      status.className = 'status success show';
-      form.style.display = 'none';
+      let data = {};
+      try { data = await res.json(); } catch (_) { /* older workflow replies with plain text */ }
 
+      store.set(AGENT_INFO_KEY, JSON.stringify({
+        agent_name: payload.agent_name, agent_phone: payload.agent_phone, agent_email: payload.agent_email,
+      }));
+
+      form.style.display = 'none';
+      result.classList.add('show');
+      resultMsg.textContent = '';
+
+      if (data && data.signin_url) {
+        const headshot = KNOWN_HEADSHOTS[payload.agent_email.trim().toLowerCase()] || headshotData || '';
+        printBtn.disabled = true;
+        printBtn.style.display = '';
+        buildFlyer({
+          property_address:    propertyAddress,
+          listing_description: payload.listing_description,
+          agent_name:          payload.agent_name,
+          agent_phone:         payload.agent_phone,
+          agent_email:         payload.agent_email,
+          company:             data.company || 'Weichert, Realtors® – Heartland',
+          when:                (fd.get('open_house_when') || '').trim(),
+          photos:              photoData.slice(0, MAX_PHOTOS),
+          headshot,
+          signin_url:          data.signin_url,
+        });
+        resultMsg.append(el('strong', null, 'Your flyer is ready.'), ' Tap Print flyer below. A copy of the QR code was also emailed to ', el('strong', null, payload.agent_email), '.');
+        document.getElementById('flyer-stage').style.display = '';
+        fitFlyer();
+      } else {
+        // Workflow replied without a link — the emailed QR still works.
+        document.getElementById('flyer-stage').style.display = 'none';
+        printBtn.style.display = 'none';
+        resultMsg.append(el('strong', null, 'QR code on its way.'), ' Check your email at ', el('strong', null, payload.agent_email), ' — it should arrive within a minute. Print it and tape it to the door before the open house.');
+      }
+      window.scrollTo(0, 0);
     } catch (err) {
       status.textContent = `Something went wrong: ${err.message}. Try again or contact hello@norrai.co.`;
       status.className = 'status error show';
       btn.disabled = false;
-      btn.textContent = 'Generate QR Code →';
+      btn.textContent = 'Create Flyer →';
     }
   });
 </script>
