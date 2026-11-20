@@ -206,6 +206,7 @@ Forms that touch the n8n → Claude → SendGrid pipeline are **high risk** — 
 | `workflow_events` | Audit log of every n8n workflow trigger/completion/failure |
 | `stories` / `tasks` | Mission Control — project tasks (status CHECK on stories: `active｜paused｜done｜cancelled`) |
 | `research_cache` | Research Agent cache, 7-day TTL by address |
+| `contacts` / `contact_transactions` | A client's own customer book (households) + their deal history — feeds mailing labels and outreach; `stage` = past_client/active_client/sphere/prospect |
 
 **Vertical-specific lead fields** go in `leads.metadata` jsonb — e.g. real estate `{property_address, price_range, beds}`, insurance `{policy_type, renewal_date, current_carrier}`, dental `{procedure_type, insurance, last_visit}`.
 

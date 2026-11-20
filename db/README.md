@@ -41,6 +41,8 @@ Find your connection string in the Neon dashboard under **Connection Details**. 
 | `aeo_queries` | AEO query battery results (append-only) — one row per question per run, whether the client was mentioned, competitors named, cited URLs |
 | `aeo_actions` | AEO Optimizer action list — typed by who applies it (`auto_apply`, `norr_applies`, `recommend_only`), tracked from `proposed` through `done` against the query/pillar it targets |
 | `weichert_sent_listings` | Dedupe log for the Weichert Weekly Drip auto-scrape; one row per MLS ID ever featured |
+| `contacts` | A client's own customer book, one row per household, scoped by `client_id` (same convention as `leads`; Norr AI's own would be `norrai_contacts`). `stage`: `past_client`, `active_client`, `sphere`, `prospect`. `address_status` says how trustworthy the mailing address is: `buyer_property`, `contact_file`, `needs_lookup`, `verified`, `undeliverable`. Re-imports are idempotent via `(client_id, source, source_key)` |
+| `contact_transactions` | One row per closed deal for a contact (side, closing date, property address, source id). Loaded by `scripts/load_contacts.py` |
 
 ## Vertical-specific lead fields
 
