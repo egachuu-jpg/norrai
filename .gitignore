@@ -25,3 +25,8 @@ playwright-report/
 __pycache__/
 *.pyc
 scripts/aeo-audit/out/
+
+# Private client data exports (contacts / transactions / labels) -- never commit
+/data/
+clients_out/
+*_UNVERIFIED.pdf
