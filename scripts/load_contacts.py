@@ -241,6 +241,26 @@ WHERE c.id = x.contact_id
 """
 
 
+FLAG_DUPLICATES = """
+WITH people AS (
+  SELECT id, lower(first_name) AS f, lower(last_name) AS l FROM contacts
+   WHERE client_id = %(client_id)s AND first_name IS NOT NULL AND last_name IS NOT NULL
+     AND stage IN ('past_client', 'active_client', 'prospect') AND NOT do_not_mail
+  UNION
+  SELECT id, lower(second_first_name), lower(second_last_name) FROM contacts
+   WHERE client_id = %(client_id)s AND second_first_name IS NOT NULL AND second_last_name IS NOT NULL
+     AND stage IN ('past_client', 'active_client', 'prospect') AND NOT do_not_mail),
+dup AS (SELECT DISTINCT a.id FROM people a JOIN people b ON a.f = b.f AND a.l = b.l AND a.id <> b.id)
+UPDATE contacts c SET review_reasons = CASE
+    WHEN c.id IN (SELECT id FROM dup)
+      THEN array_append(array_remove(c.review_reasons, 'possible_duplicate_contact'), 'possible_duplicate_contact')
+    ELSE array_remove(c.review_reasons, 'possible_duplicate_contact') END
+WHERE c.client_id = %(client_id)s
+"""
+# (a person's name on two live contacts = the same family loaded twice, or two people with
+#  the same name; either way the agent decides on the review sheet)
+
+
 def street_key(street):
     return re.sub(r"[^a-z0-9]", "", (street or "").lower())
 
@@ -367,6 +387,7 @@ def main():
             stats["tx_inserted" if inserted else "tx_updated"] += 1
 
         conn.execute(RECOMPUTE, {"client_id": a.client_id})
+        conn.execute(FLAG_DUPLICATES, {"client_id": a.client_id})
         after_rows = dict(conn.execute("SELECT id, stage FROM contacts WHERE client_id = %s",
                                        (a.client_id,)).fetchall())
         moves = {}
