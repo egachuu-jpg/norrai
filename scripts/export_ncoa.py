@@ -6,7 +6,7 @@ One row per household:
                                   CASS fixes ZIPs/abbreviations even if they did not)
   address_source = last_sold   -> no current address (seller who moved): the house they SOLD,
                                   so NCOA can return the forwarding address they filed with USPS
-Skipped: prospects, sphere, do_not_mail, verified/undeliverable addresses, and active clients with
+Skipped: prospects, sphere, do_not_mail, verified/county_record/undeliverable addresses, and active clients with
 no current address (they still live in the house they are selling).
 
 record_id is the contact id -- keep it in the provider's output so results can be matched back.
@@ -29,7 +29,7 @@ LEFT JOIN LATERAL (
   WHERE t.contact_id = c.id AND t.side = 'Seller' AND t.deal_status = 'closed'
   ORDER BY t.closing_date DESC LIMIT 1) sold ON TRUE
 WHERE c.client_id = %s AND c.stage IN ('past_client', 'active_client') AND NOT c.do_not_mail
-  AND c.address_status NOT IN ('verified', 'undeliverable')
+  AND c.address_status NOT IN ('verified', 'county_record', 'undeliverable')
 """
 COLS = ["record_id", "address_source", "first_name", "last_name", "full_name",
         "address1", "city", "state", "zip"]

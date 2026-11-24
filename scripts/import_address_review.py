@@ -26,7 +26,7 @@ from clean_contacts import norm_street, title_name  # noqa: E402
 
 ADDRESS_FLAGS = ["no_current_address_sold_or_seller_side", "purchase_5plus_years_ago_may_have_moved",
                  "zip_is_city_default_validate_with_usps", "zip_missing", "address_truncated_or_incomplete",
-                 "address_differs_from_purchase"]
+                 "address_differs_from_purchase", "county_owner_changed", "county_review"]
 
 SET_ADDRESS = """
 UPDATE contacts SET mail_street = %(street)s, mail_city = %(city)s, mail_state = %(state)s,

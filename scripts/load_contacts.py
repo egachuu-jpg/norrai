@@ -12,7 +12,8 @@ never overwrites hand-curated data:
   - a household already loaded from ANOTHER source (e.g. Back Agent, then BrokerSumo) is
     matched by person name and merged into the existing contact, not duplicated; a deal that
     already exists from the other source (same contact, close date and street) is skipped
-  - address is kept if address_status is 'verified' or 'undeliverable'
+  - address is kept if address_status is 'verified', 'county_record' or 'undeliverable',
+    unless a newer closed purchase arrives (then they really did move)
   - opt-out / do_not_mail flags are never touched
 
 DRY RUN IS THE DEFAULT. Nothing is written without --apply.
@@ -172,11 +173,11 @@ DO UPDATE SET
   first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name,
   second_first_name = EXCLUDED.second_first_name, second_last_name = EXCLUDED.second_last_name,
   phone = COALESCE(EXCLUDED.phone, contacts.phone), email = COALESCE(EXCLUDED.email, contacts.email),
-  mail_street = CASE WHEN contacts.address_status IN ('verified','undeliverable') THEN contacts.mail_street ELSE EXCLUDED.mail_street END,
-  mail_city   = CASE WHEN contacts.address_status IN ('verified','undeliverable') THEN contacts.mail_city   ELSE EXCLUDED.mail_city   END,
-  mail_state  = CASE WHEN contacts.address_status IN ('verified','undeliverable') THEN contacts.mail_state  ELSE EXCLUDED.mail_state  END,
-  mail_zip    = CASE WHEN contacts.address_status IN ('verified','undeliverable') THEN contacts.mail_zip    ELSE EXCLUDED.mail_zip    END,
-  address_status = CASE WHEN contacts.address_status IN ('verified','undeliverable') THEN contacts.address_status ELSE EXCLUDED.address_status END,
+  mail_street = CASE WHEN (contacts.address_status IN ('verified','undeliverable','county_record') AND NOT (EXCLUDED.address_status = 'buyer_property' AND EXCLUDED.last_closing > contacts.address_verified_at::date)) THEN contacts.mail_street ELSE EXCLUDED.mail_street END,
+  mail_city   = CASE WHEN (contacts.address_status IN ('verified','undeliverable','county_record') AND NOT (EXCLUDED.address_status = 'buyer_property' AND EXCLUDED.last_closing > contacts.address_verified_at::date)) THEN contacts.mail_city   ELSE EXCLUDED.mail_city   END,
+  mail_state  = CASE WHEN (contacts.address_status IN ('verified','undeliverable','county_record') AND NOT (EXCLUDED.address_status = 'buyer_property' AND EXCLUDED.last_closing > contacts.address_verified_at::date)) THEN contacts.mail_state  ELSE EXCLUDED.mail_state  END,
+  mail_zip    = CASE WHEN (contacts.address_status IN ('verified','undeliverable','county_record') AND NOT (EXCLUDED.address_status = 'buyer_property' AND EXCLUDED.last_closing > contacts.address_verified_at::date)) THEN contacts.mail_zip    ELSE EXCLUDED.mail_zip    END,
+  address_status = CASE WHEN (contacts.address_status IN ('verified','undeliverable','county_record') AND NOT (EXCLUDED.address_status = 'buyer_property' AND EXCLUDED.last_closing > contacts.address_verified_at::date)) THEN contacts.address_status ELSE EXCLUDED.address_status END,
   review_reasons = EXCLUDED.review_reasons,
   first_closing = EXCLUDED.first_closing, last_closing = EXCLUDED.last_closing,
   deal_count = EXCLUDED.deal_count,
@@ -323,7 +324,7 @@ def main():
         # existing contacts for this client, indexed by person, for cross-source merging
         existing = conn.execute(
             """SELECT id, source, source_key, first_name, last_name, second_first_name, second_last_name,
-                      address_status, last_closing FROM contacts WHERE client_id = %s""",
+                      address_status, last_closing, address_verified_at FROM contacts WHERE client_id = %s""",
             (a.client_id,)).fetchall()
         by_src_key = {(r[1], r[2]): r for r in existing}
         by_person = {}
@@ -354,9 +355,14 @@ def main():
                 continue
             if target:
                 ex = info[target]
-                ex_status, ex_last = ex[7], ex[8]
-                take = (ex_status not in ("verified", "undeliverable") and c["address_status"] != "needs_lookup"
-                        and (ex_status == "needs_lookup" or (c["last_closing"] and (not ex_last or c["last_closing"] > ex_last))))
+                ex_status, ex_last, ex_verified = ex[7], ex[8], ex[9]
+                newer_purchase = (c["address_status"] == "buyer_property" and c["last_closing"]
+                                  and (not ex_verified or c["last_closing"] > ex_verified.date()))
+                if ex_status in ("verified", "undeliverable", "county_record"):
+                    take = bool(newer_purchase)  # confirmed addresses only yield to a newer purchase
+                else:
+                    take = (c["address_status"] != "needs_lookup"
+                            and (ex_status == "needs_lookup" or (c["last_closing"] and (not ex_last or c["last_closing"] > ex_last))))
                 conn.execute(MERGE_CONTACT, {**params, "id": target, "take_addr": take})
                 key_to_id[(c["source"], c["source_key"])] = target
                 stats["contacts_merged"] += 1

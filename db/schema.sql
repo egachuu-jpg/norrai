@@ -389,7 +389,9 @@ CREATE TABLE IF NOT EXISTS contacts (
   mail_state       text,
   mail_zip         text,
   address_status   text NOT NULL DEFAULT 'needs_lookup'
-    CHECK (address_status IN ('buyer_property', 'contact_file', 'needs_lookup', 'verified', 'undeliverable')),
+    CONSTRAINT contacts_address_status_check
+    CHECK (address_status IN ('buyer_property', 'contact_file', 'needs_lookup', 'verified',
+                              'county_record', 'undeliverable')),
   address_verified_at timestamptz,                       -- set when checked against USPS/county records
   stage            text NOT NULL DEFAULT 'past_client'
     CHECK (stage IN ('past_client', 'active_client', 'sphere', 'prospect')),

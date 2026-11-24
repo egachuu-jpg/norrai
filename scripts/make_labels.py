@@ -6,7 +6,7 @@ keeps only rows that are safe to mail, and lays them out on standard label sheet
 
 A row is mailable when ALL of these hold:
   - it has a street, city, state and 5-digit ZIP
-  - address_status is in --status (default: buyer_property, contact_file, verified)
+  - address_status is in --status (default: buyer_property, contact_file, verified, county_record)
     -> 'needs_lookup' (sold / no current address) and 'undeliverable' are never printed by default
   - it is not do_not_mail (database mode)
   - it has none of the --exclude-reason flags (default: address_truncated_or_incomplete,
@@ -155,7 +155,7 @@ def main():
     ap.add_argument("-o", "--output", required=True)
     ap.add_argument("--template", default="5160", choices=sorted(TEMPLATES))
     ap.add_argument("--stage", action="append", help="repeatable; default past_client")
-    ap.add_argument("--status", default="buyer_property,contact_file,verified",
+    ap.add_argument("--status", default="buyer_property,contact_file,verified,county_record",
                     help="comma-separated address_status values to print")
     ap.add_argument("--exclude-reason", action="append",
                     help="repeatable review_reasons flag that blocks printing "
