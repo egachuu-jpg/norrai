@@ -7,8 +7,9 @@ Inputs  (paths are arguments -- client data never lives in the repo):
                   (side, display_name, client, started, closing, detail_url, ...).
                   --format brokersumo: the BrokerSumo API extract (one row per party:
                   transaction_id, status_code, contact_name, contact_role, close_date, ...).
-                  BrokerSumo status 3 and 8 are cancelled and dropped; a closed deal makes the
-                  household past_client, an open or pending one active_client.
+                  Every deal gets a deal_status (active/pending/closed/cancelled); BrokerSumo
+                  3 and 8 are cancelled. A household whose deals are ALL cancelled is marked
+                  cancelled_only (the loader will not create it).
   --contacts      XLSX/CSV contacts export (vCard-style: GivenName, FamilyName, Phone, Email,
                   StreetAddress, Locality, Region, PostalCode, OrganizationName, ...)
   --out           output directory (created if missing)
@@ -66,7 +67,7 @@ MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
 STATE_ABBR = {"minnesota": "MN", "wisconsin": "WI", "iowa": "IA", "south dakota": "SD",
               "north dakota": "ND", "illinois": "IL"}
-BROKERSUMO_KEEP = {"0", "1", "2"}  # 0 active, 1 pending, 2 closed; 3 and 8 are cancelled
+BROKERSUMO_STATUS = {"0": "active", "1": "pending", "2": "closed", "3": "cancelled", "8": "cancelled"}
 
 
 # ── small helpers ────────────────────────────────────────────────────────────
@@ -207,7 +208,7 @@ def read_brokersumo(rows, today):
     groups = defaultdict(list)
     for r in rows:
         role, name = clean(r.get("contact_role")), clean(r.get("contact_name"))
-        if clean(r.get("status_code")) not in BROKERSUMO_KEEP or role not in ("Buyer", "Seller") or not name:
+        if clean(r.get("status_code")) not in BROKERSUMO_STATUS or role not in ("Buyer", "Seller") or not name:
             continue
         groups[(clean(r.get("transaction_id")), role)].append(r)
     txs = []
@@ -225,7 +226,9 @@ def read_brokersumo(rows, today):
         state = STATE_ABBR.get(state.lower(), state.upper()[:2])
         addr = parse_address(f'{r0.get("street", "")}, {r0.get("city", "")}, {state} {clean(r0.get("zip"))}')
         closing = iso_date(r0.get("close_date"))
-        closed = bool(closing and closing <= today) and clean(r0.get("status_code")) in ("0", "1", "2")
+        status = BROKERSUMO_STATUS[clean(r0.get("status_code"))]
+        if status in ("active", "pending") and closing and closing <= today:
+            status = "closed"  # close date passed; BrokerSumo status lags
         side = role
         if "Lease" in clean(r0.get("side")):
             side = "Tenant" if role == "Buyer" else "Landlord"
@@ -237,7 +240,7 @@ def read_brokersumo(rows, today):
             "closing": closing, "started": iso_date(r0.get("contract_date")),
             "phase": "status_" + clean(r0.get("status_code")), "agent": clean(r0.get("agents")),
             "detail_url": f"brokersumo:{tid}:{side}", "source": "brokersumo",
-            "stage": "past_client" if closed else "active_client",
+            "deal_status": status,
             "email": emails[0] if emails else "", "phone": phones[0] if phones else "",
             **addr,
         })
@@ -287,7 +290,8 @@ def main():
             "phase": clean(r.get("phase", "")),
             "agent": clean(r.get("agent", "")),
             "detail_url": clean(r.get("detail_url", "")),
-            "source": "back_agent", "stage": "past_client", "email": "", "phone": "",
+            "source": "back_agent", "email": "", "phone": "",
+            "deal_status": "cancelled" if clean(r.get("phase", "")).lower().startswith("termination") else "closed",
             **addr,
         })
 
@@ -379,7 +383,7 @@ def main():
         sold = {addr_key(t["street"], t["city"]) for t in dated if t["side"] != "Buyer"}
         # only a CLOSED purchase is where they live now (an active buyer still lives elsewhere)
         buyer = [t for t in dated if t["side"] == "Buyer" and t["street"]
-                 and t["closing"] and t["closing"] <= today]
+                 and t["deal_status"] == "closed" and t["closing"]]
         cand = None
         for t in reversed(buyer):
             if addr_key(t["street"], t["city"]) not in {
@@ -388,7 +392,10 @@ def main():
                 cand = t
                 break
         c_addr = next((contact_addr(contacts[ci]) for ci in use if contact_addr(contacts[ci])), None)
-        last_close = max((t["closing"] for t in items if t["closing"] and t["closing"] <= today), default=None)
+        live = [t for t in items if t["deal_status"] != "cancelled"]
+        open_deals = [t for t in items if t["deal_status"] in ("active", "pending")]
+        closed_deals = [t for t in items if t["deal_status"] == "closed" and t["closing"]]
+        last_close = max((t["closing"] for t in closed_deals), default=None)
         years = round((today - last_close).days / 365.25, 1) if last_close else ""
 
         if c_addr:
@@ -423,10 +430,10 @@ def main():
             "person_2_first": people[1]["first"] if len(people) > 1 else "",
             "person_2_last": people[1]["last"] if len(people) > 1 else "",
             "people_count": len(people),
-            "deal_count": len(items),
+            "deal_count": len(live),
             "buyer_deals": sum(t["side"] == "Buyer" for t in items),
             "seller_deals": sum(t["side"] == "Seller" for t in items),
-            "first_closing": min((t["closing"] for t in items if t["closing"] and t["closing"] <= today), default="") or "",
+            "first_closing": min((t["closing"] for t in closed_deals), default="") or "",
             "last_closing": last_close or "",
             "years_since_last_close": years,
             "mail_street": m["street"] if m else "",
@@ -439,7 +446,8 @@ def main():
             "email": emails[0] if emails else "",
             "contact_match": match,
             "review_reasons": ";".join(dict.fromkeys(reasons)),
-            "stage": "active_client" if any(t["stage"] == "active_client" for t in items) else "past_client",
+            "stage": "active_client" if open_deals else "past_client",
+            "cancelled_only": not live,
             "source": items[0]["source"],
         })
         for t in items:
@@ -486,7 +494,7 @@ def main():
         "closing_date": t["closing"] or "", "started_date": t["started"] or "", "phase": t["phase"],
         "agent": t["agent"], "street": t["street"], "city": t["city"], "state": t["state"],
         "zip": t["zip"], "zip_source": t["zip_source"], "address_incomplete": t["address_incomplete"],
-        "detail_url": t["detail_url"], "source": t["source"]} for t in txs])
+        "detail_url": t["detail_url"], "source": t["source"], "deal_status": t["deal_status"]} for t in txs])
     write("contacts_unmatched.csv", unmatched)
 
     # ---- summary (counts only -- no personal data) -------------------------
@@ -495,7 +503,8 @@ def main():
     rs = Counter(r for h in households for r in h["review_reasons"].split(";") if r)
     print(f"transactions: {len(txs)}  households: {len(households)}")
     print("address_status:", dict(st))
-    print("stage:", dict(Counter(h["stage"] for h in households)))
+    print("stage:", dict(Counter("cancelled_only" if h["cancelled_only"] else h["stage"] for h in households)))
+    print("deal_status:", dict(Counter(t["deal_status"] for t in txs)))
     print("contact_match:", dict(Counter(h["contact_match"] for h in households)))
     print("with phone:", sum(bool(h["phone"]) for h in households),
           " with email:", sum(bool(h["email"]) for h in households))

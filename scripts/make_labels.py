@@ -9,7 +9,8 @@ A row is mailable when ALL of these hold:
   - address_status is in --status (default: buyer_property, contact_file, verified)
     -> 'needs_lookup' (sold / no current address) and 'undeliverable' are never printed by default
   - it is not do_not_mail (database mode)
-  - it has none of the --exclude-reason flags (default: address_truncated_or_incomplete)
+  - it has none of the --exclude-reason flags (default: address_truncated_or_incomplete,
+    only_cancelled_deals)
 Everything skipped is listed, with the reason, in <output>.skipped.csv.
 
 Examples:
@@ -158,7 +159,7 @@ def main():
                     help="comma-separated address_status values to print")
     ap.add_argument("--exclude-reason", action="append",
                     help="repeatable review_reasons flag that blocks printing "
-                         "(default: address_truncated_or_incomplete)")
+                         "(default: address_truncated_or_incomplete, only_cancelled_deals)")
     ap.add_argument("--skip", type=int, default=0, help="blank label positions to leave at the start (used sheets)")
     ap.add_argument("--limit", type=int, default=0, help="print only the first N labels (0 = all)")
     ap.add_argument("--uppercase", action="store_true", help="USPS-style: UPPERCASE, no commas")
@@ -171,7 +172,7 @@ def main():
     per_page = t["cols"] * t["rows"]
     stages = set(a.stage or ["past_client"])
     statuses = {s.strip() for s in a.status.split(",") if s.strip()}
-    bad = set(a.exclude_reason or ["address_truncated_or_incomplete"])
+    bad = set(a.exclude_reason or ["address_truncated_or_incomplete", "only_cancelled_deals"])
 
     font = "Helvetica"
     if a.font:

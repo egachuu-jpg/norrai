@@ -4,7 +4,11 @@
 Writes `contacts` (one row per household) and `contact_transactions` (one row per deal).
 Safe to re-run: rows are upserted on (client_id, source, source_key|source_ref), and a re-run
 never overwrites hand-curated data:
-  - stage only ever moves up: past_client -> active_client when a live deal appears
+  - stage is DERIVED after every load from each contact's deals (any active/pending deal ->
+    active_client, else any closed deal -> past_client); contacts with stage_locked are skipped,
+    and contacts whose deals are all cancelled get 'only_cancelled_deals' and become prospect
+    (they never closed with the agent)
+  - a household whose deals are all cancelled is never created; it is only updated if it exists
   - a household already loaded from ANOTHER source (e.g. Back Agent, then BrokerSumo) is
     matched by person name and merged into the existing contact, not duplicated; a deal that
     already exists from the other source (same contact, close date and street) is skipped
@@ -101,6 +105,7 @@ def build(households, transactions, unmatched):
             "first_closing": d(h["first_closing"]), "last_closing": d(h["last_closing"]),
             "deal_count": int(h["deal_count"] or 0),
             "stage": n(h.get("stage")) or "past_client",
+            "cancelled_only": (h.get("cancelled_only") or "").strip() == "True",
             "metadata": {"contact_match": h.get("contact_match"),
                          "last_known_property": n(h.get("last_known_property"))},
         })
@@ -124,6 +129,7 @@ def build(households, transactions, unmatched):
             "phase": n(t["phase"]), "agent_name": n(t["agent"]),
             "street": n(t["street"]), "city": n(t["city"]), "state": n(t["state"]), "zip": n(t["zip"]),
             "address_incomplete": t["address_incomplete"] == "True",
+            "deal_status": n(t.get("deal_status")) or "closed",
             "source": n(t.get("source")) or "back_agent", "source_ref": t["detail_url"].strip(),
         })
 
@@ -174,23 +180,23 @@ DO UPDATE SET
   review_reasons = EXCLUDED.review_reasons,
   first_closing = EXCLUDED.first_closing, last_closing = EXCLUDED.last_closing,
   deal_count = EXCLUDED.deal_count,
-  metadata = COALESCE(contacts.metadata, '{}'::jsonb) || EXCLUDED.metadata,
-  stage = CASE WHEN EXCLUDED.stage = 'active_client' AND contacts.stage = 'past_client'
-               THEN 'active_client' ELSE contacts.stage END
-  -- opt-out / do_not_mail flags are deliberately NOT updated
+  metadata = COALESCE(contacts.metadata, '{}'::jsonb) || EXCLUDED.metadata
+  -- stage is recomputed from deals after the load; opt-out / do_not_mail never touched
 RETURNING id, source_key, (xmax = 0) AS inserted
 """
 
 UPSERT_TX = """
 INSERT INTO contact_transactions (contact_id, client_id, side, closing_date, started_date, phase,
-  agent_name, street, city, state, zip, address_incomplete, source, source_ref)
+  agent_name, street, city, state, zip, address_incomplete, source, source_ref, deal_status)
 VALUES (%(contact_id)s, %(client_id)s, %(side)s, %(closing_date)s, %(started_date)s, %(phase)s,
-  %(agent_name)s, %(street)s, %(city)s, %(state)s, %(zip)s, %(address_incomplete)s, %(source)s, %(source_ref)s)
+  %(agent_name)s, %(street)s, %(city)s, %(state)s, %(zip)s, %(address_incomplete)s, %(source)s,
+  %(source_ref)s, %(deal_status)s)
 ON CONFLICT (client_id, source, source_ref) WHERE source IS NOT NULL AND source_ref IS NOT NULL
 DO UPDATE SET contact_id = EXCLUDED.contact_id, side = EXCLUDED.side,
   closing_date = EXCLUDED.closing_date, started_date = EXCLUDED.started_date, phase = EXCLUDED.phase,
   agent_name = EXCLUDED.agent_name, street = EXCLUDED.street, city = EXCLUDED.city,
-  state = EXCLUDED.state, zip = EXCLUDED.zip, address_incomplete = EXCLUDED.address_incomplete
+  state = EXCLUDED.state, zip = EXCLUDED.zip, address_incomplete = EXCLUDED.address_incomplete,
+  deal_status = EXCLUDED.deal_status
 RETURNING (xmax = 0) AS inserted
 """
 
@@ -208,18 +214,28 @@ UPDATE contacts SET
   mail_zip    = CASE WHEN %(take_addr)s::boolean THEN %(mail_zip)s::text    ELSE mail_zip    END,
   address_status = CASE WHEN %(take_addr)s::boolean THEN %(address_status)s::text ELSE address_status END,
   review_reasons = CASE WHEN %(take_addr)s::boolean THEN %(review_reasons)s::text[] ELSE review_reasons END,
-  stage = CASE WHEN %(stage)s::text = 'active_client' AND stage = 'past_client'
-               THEN 'active_client' ELSE stage END,
   metadata = COALESCE(metadata, '{}'::jsonb)
              || jsonb_build_object('also_in_' || %(source)s::text, %(source_key)s::text)
 WHERE id = %(id)s::uuid
 """
 
 RECOMPUTE = """
-UPDATE contacts c SET deal_count = x.n, first_closing = x.mn, last_closing = x.mx
-FROM (SELECT contact_id, count(*) AS n,
-             min(closing_date) FILTER (WHERE closing_date <= current_date) AS mn,
-             max(closing_date) FILTER (WHERE closing_date <= current_date) AS mx
+UPDATE contacts c SET
+  deal_count = x.n_live, first_closing = x.mn, last_closing = x.mx,
+  stage = CASE WHEN c.stage_locked THEN c.stage
+               WHEN x.n_open > 0 THEN 'active_client'
+               WHEN x.n_closed > 0 THEN 'past_client'
+               WHEN c.stage IN ('active_client', 'past_client') THEN 'prospect'  -- never closed: deals all cancelled
+               ELSE c.stage END,
+  review_reasons = CASE WHEN x.n_live = 0
+                        THEN array_append(array_remove(c.review_reasons, 'only_cancelled_deals'), 'only_cancelled_deals')
+                        ELSE array_remove(c.review_reasons, 'only_cancelled_deals') END
+FROM (SELECT contact_id,
+             count(*) FILTER (WHERE deal_status <> 'cancelled') AS n_live,
+             count(*) FILTER (WHERE deal_status IN ('active', 'pending')) AS n_open,
+             count(*) FILTER (WHERE deal_status = 'closed') AS n_closed,
+             min(closing_date) FILTER (WHERE deal_status = 'closed') AS mn,
+             max(closing_date) FILTER (WHERE deal_status = 'closed') AS mx
       FROM contact_transactions WHERE client_id = %(client_id)s GROUP BY contact_id) x
 WHERE c.id = x.contact_id
 """
@@ -227,6 +243,23 @@ WHERE c.id = x.contact_id
 
 def street_key(street):
     return re.sub(r"[^a-z0-9]", "", (street or "").lower())
+
+
+def house_no(street):
+    m = re.match(r"\s*(\d+)", street or "")
+    return m.group(1) if m else None
+
+
+def same_deal(existing, t):
+    """The same sale recorded by two systems: same side, close dates within 3 days,
+    same street (normalized) or same house number."""
+    side, cd, street, src = existing
+    if src == t["source"] or side != t["side"] or not cd or not t["closing_date"]:
+        return False
+    if abs((cd - t["closing_date"]).days) > 3:
+        return False
+    return street_key(street) == street_key(t["street"]) or (
+        house_no(street) is not None and house_no(street) == house_no(t["street"]))
 
 
 def main():
@@ -280,6 +313,9 @@ def main():
                     by_person.setdefault(canon(f, l), set()).add(r[0])
         info = {r[0]: r for r in existing}
 
+        before = dict(conn.execute("SELECT id, stage FROM contacts WHERE client_id = %s",
+                                   (a.client_id,)).fetchall())
+        stats["skipped_cancelled_only"] = 0
         key_to_id = {}
         for c in contacts + sphere:
             params = {**c, "client_id": a.client_id, "metadata": Jsonb(c["metadata"])}
@@ -293,6 +329,9 @@ def main():
                 elif len(ids) > 1:
                     stats["merge_ambiguous"] += 1  # inserted as its own contact; flagged below
                     params["review_reasons"] = c["review_reasons"] + ["possible_duplicate_contact"]
+            if c.get("cancelled_only") and not target and (c["source"], c["source_key"]) not in by_src_key:
+                stats["skipped_cancelled_only"] += 1  # never closed with the agent: not a client
+                continue
             if target:
                 ex = info[target]
                 ex_status, ex_last = ex[7], ex[8]
@@ -306,24 +345,36 @@ def main():
             key_to_id[(c["source"], key)] = cid
             stats["contacts_inserted" if inserted else "contacts_updated"] += 1
 
-        # deals already recorded from another source: same contact + close date + street
-        seen_deals = {(r[0], r[1], street_key(r[2])) for r in conn.execute(
-            "SELECT contact_id, closing_date, street FROM contact_transactions WHERE client_id = %s",
-            (a.client_id,)).fetchall()}
+        # deals already recorded from another source (see same_deal)
+        deals_by_contact = {}
+        for r in conn.execute("""SELECT contact_id, side, closing_date, street, source
+                                 FROM contact_transactions WHERE client_id = %s""", (a.client_id,)).fetchall():
+            deals_by_contact.setdefault(r[0], []).append(r[1:])
         own_refs = {(r[0], r[1]) for r in conn.execute(
             "SELECT source, source_ref FROM contact_transactions WHERE client_id = %s", (a.client_id,)).fetchall()}
         for t in txs:
-            contact_id = key_to_id[(t["source"], t["contact_key"])]
-            dkey = (contact_id, t["closing_date"], street_key(t["street"]))
-            if (t["source"], t["source_ref"]) not in own_refs and t["closing_date"] and dkey in seen_deals:
+            contact_id = key_to_id.get((t["source"], t["contact_key"]))
+            if contact_id is None:
+                continue  # household skipped (cancelled only)
+            if (t["source"], t["source_ref"]) not in own_refs and any(
+                    same_deal(e, t) for e in deals_by_contact.get(contact_id, [])):
                 stats["tx_skipped_duplicate"] += 1
                 continue
             params = {**t, "client_id": a.client_id, "contact_id": contact_id}
             (inserted,) = conn.execute(UPSERT_TX, params).fetchone()
-            seen_deals.add(dkey)
+            deals_by_contact.setdefault(contact_id, []).append(
+                (t["side"], t["closing_date"], t["street"], t["source"]))
             stats["tx_inserted" if inserted else "tx_updated"] += 1
 
         conn.execute(RECOMPUTE, {"client_id": a.client_id})
+        after_rows = dict(conn.execute("SELECT id, stage FROM contacts WHERE client_id = %s",
+                                       (a.client_id,)).fetchall())
+        moves = {}
+        for cid, st in after_rows.items():
+            if cid in before and before[cid] != st:
+                k = before[cid] + " -> " + st
+                moves[k] = moves.get(k, 0) + 1
+        print("stage changes on existing contacts:", moves or "none")
         after = conn.execute(
             """SELECT stage, count(*) FROM contacts WHERE client_id = %s GROUP BY stage ORDER BY stage""",
             (a.client_id,)).fetchall()

@@ -369,7 +369,9 @@ CREATE INDEX IF NOT EXISTS idx_agent_tasks_client_status_due
 -- to the client business via client_id -- same convention as leads/appointments.
 -- Norr AI's own contacts would be `norrai_contacts`, like `norrai_meetings`.
 -- Vertical-specific fields go in metadata jsonb. `stage` is the relationship:
--- past_client / active_client / sphere / prospect. A row is created by an import
+-- past_client / active_client / sphere / prospect, DERIVED from deals after every load
+-- (open deal -> active_client, else closed deal -> past_client) unless stage_locked.
+-- A row is created by an import
 -- (source + source_key make re-imports idempotent) or promoted from a lead.
 CREATE TABLE IF NOT EXISTS contacts (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -391,6 +393,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   address_verified_at timestamptz,                       -- set when checked against USPS/county records
   stage            text NOT NULL DEFAULT 'past_client'
     CHECK (stage IN ('past_client', 'active_client', 'sphere', 'prospect')),
+  stage_locked     boolean NOT NULL DEFAULT FALSE,       -- TRUE = set by hand; loads never change stage
   review_reasons   text[] NOT NULL DEFAULT '{}',         -- why a human should look at this row
   first_closing    date,
   last_closing     date,
@@ -432,6 +435,9 @@ CREATE TABLE IF NOT EXISTS contact_transactions (
   state            text,
   zip              text,
   address_incomplete boolean NOT NULL DEFAULT FALSE,     -- truncated/partial in the source
+  deal_status      text NOT NULL DEFAULT 'closed'
+    CONSTRAINT contact_transactions_deal_status_check
+    CHECK (deal_status IN ('active', 'pending', 'closed', 'cancelled')),
   source           text,
   source_ref       text,                                 -- stable id of the deal in the source system
   created_at       timestamptz NOT NULL DEFAULT now()
