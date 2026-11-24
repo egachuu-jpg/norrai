@@ -6,6 +6,8 @@ One row per household:
                                   CASS fixes ZIPs/abbreviations even if they did not)
   address_source = last_sold   -> no current address (seller who moved): the house they SOLD,
                                   so NCOA can return the forwarding address they filed with USPS
+  address_source = last_owned  -> no current address and no sale through the agent (county shows a
+                                  new owner): the house they BOUGHT, i.e. the last place they lived
 Skipped: prospects, sphere, do_not_mail, verified/county_record/undeliverable addresses, and active clients with
 no current address (they still live in the house they are selling).
 
@@ -22,12 +24,17 @@ import sys
 QUERY = """
 SELECT c.id::text, c.first_name, c.last_name, c.display_name, c.stage, c.address_status,
        c.mail_street, c.mail_city, c.mail_state, c.mail_zip,
-       sold.street, sold.city, sold.state, sold.zip, sold.closing_date
+       sold.street, sold.city, sold.state, sold.zip, sold.closing_date,
+       bought.street, bought.city, bought.state, bought.zip
 FROM contacts c
 LEFT JOIN LATERAL (
   SELECT t.street, t.city, t.state, t.zip, t.closing_date FROM contact_transactions t
   WHERE t.contact_id = c.id AND t.side = 'Seller' AND t.deal_status = 'closed'
   ORDER BY t.closing_date DESC LIMIT 1) sold ON TRUE
+LEFT JOIN LATERAL (
+  SELECT t.street, t.city, t.state, t.zip FROM contact_transactions t
+  WHERE t.contact_id = c.id AND t.side = 'Buyer' AND t.deal_status = 'closed'
+  ORDER BY t.closing_date DESC LIMIT 1) bought ON TRUE
 WHERE c.client_id = %s AND c.stage IN ('past_client', 'active_client') AND NOT c.do_not_mail
   AND c.address_status NOT IN ('verified', 'county_record', 'undeliverable')
 """
@@ -49,7 +56,7 @@ def main():
 
     out, skipped = [], {"active_seller_still_at_listing": 0, "no_address_at_all": 0}
     for (cid, first, last, display, stage, status, st, city, state, zipc,
-         s_st, s_city, s_state, s_zip, s_date) in rows:
+         s_st, s_city, s_state, s_zip, s_date, b_st, b_city, b_state, b_zip) in rows:
         if status != "needs_lookup" and st:
             src, addr = "current", (st, city, state, zipc)
         elif stage == "active_client":
@@ -57,6 +64,8 @@ def main():
             continue
         elif s_st:
             src, addr = "last_sold", (s_st, s_city, s_state, s_zip)
+        elif b_st:  # sold on their own (e.g. county shows a new owner): the house they bought
+            src, addr = "last_owned", (b_st, b_city, b_state, b_zip)
         else:
             skipped["no_address_at_all"] += 1
             continue
