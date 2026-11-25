@@ -11,8 +11,9 @@ Per row, keyed by contact_id (rows with nothing filled in are ignored):
 Address-related review flags are cleared once an address is verified.
 
 DRY RUN IS THE DEFAULT; pass --apply to write. Prints counts and row numbers only.
+Accepts the sheet as .csv or .xlsx (first worksheet), e.g. the file from export_address_request.py.
 Usage:
-  python3 scripts/import_address_review.py --client-id <uuid> --csv reviewed.csv [--apply]
+  python3 scripts/import_address_review.py --client-id <uuid> --csv reviewed.csv|.xlsx [--apply]
 """
 import argparse
 import csv
@@ -26,7 +27,8 @@ from clean_contacts import norm_street, title_name  # noqa: E402
 
 ADDRESS_FLAGS = ["no_current_address_sold_or_seller_side", "purchase_5plus_years_ago_may_have_moved",
                  "zip_is_city_default_validate_with_usps", "zip_missing", "address_truncated_or_incomplete",
-                 "address_differs_from_purchase", "county_owner_changed", "county_review"]
+                 "address_differs_from_purchase", "county_owner_changed", "county_review",
+                 "address_requested_from_agent"]
 
 SET_ADDRESS = """
 UPDATE contacts SET mail_street = %(street)s, mail_city = %(city)s, mail_state = %(state)s,
@@ -59,8 +61,17 @@ def main():
     uuid.UUID(a.client_id)
 
     plan, problems = [], []
-    with open(a.csv, encoding="utf-8-sig", newline="") as f:
-        for i, r in enumerate(csv.DictReader(f), start=2):  # row 1 is the header
+    if a.csv.lower().endswith((".xlsx", ".xlsm")):
+        from openpyxl import load_workbook
+        ws = load_workbook(a.csv, read_only=True, data_only=True).worksheets[0]
+        it = ws.iter_rows(values_only=True)
+        header = [str(h or "").strip() for h in next(it)]
+        sheet = [{k: ("" if v is None else str(v)) for k, v in zip(header, row)} for row in it]
+    else:
+        with open(a.csv, encoding="utf-8-sig", newline="") as f:
+            sheet = list(csv.DictReader(f))
+    if True:
+        for i, r in enumerate(sheet, start=2):  # row 1 is the header
             cid = clean(r.get("contact_id"))
             street, city = clean(r.get("NEW_street")), clean(r.get("NEW_city"))
             state = clean(r.get("NEW_state")).upper() or ("MN" if street else "")
