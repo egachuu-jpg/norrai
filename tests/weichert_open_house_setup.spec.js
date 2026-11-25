@@ -1,6 +1,9 @@
 const { test, expect } = require('@playwright/test');
 
 const FORM_URL   = '/clients/weichert_open_house_setup.html';
+// `npx serve` 301-redirects .html -> clean URL and drops the query string, so URLs that carry
+// ?agent_token use the clean path (same pattern as the other client-form specs).
+const FORM_URL_CLEAN = '/clients/weichert_open_house_setup';
 const TOKEN      = 'c1a35bff-5894-4511-b003-34bd40ad72e4';
 const SIGNIN_URL = 'https://tools.norrai.co/open_house.html?address=123%20Maple%20St&wf=weichert';
 
@@ -91,7 +94,7 @@ test.describe('Payload shape', () => {
   test('keeps the existing contract and sends no image data', async ({ page }) => {
     await mockWebhookJson(page);
     await mockQr(page);
-    await page.goto(`${FORM_URL}?agent_token=${TOKEN}`);
+    await page.goto(`${FORM_URL_CLEAN}?agent_token=${TOKEN}`);
     await fillRequired(page);
     await page.fill('#zip', '55021');
     await page.fill('#open_house_when', 'Sat 1-3');
@@ -122,7 +125,7 @@ test.describe('Payload shape', () => {
   test('agent_token persists in localStorage from the URL', async ({ page }) => {
     await mockWebhookJson(page);
     await mockQr(page);
-    await page.goto(`${FORM_URL}?agent_token=${TOKEN}`);
+    await page.goto(`${FORM_URL_CLEAN}?agent_token=${TOKEN}`);
     expect(await page.evaluate(() => localStorage.getItem('norrai_agent_token'))).toBe(TOKEN);
     await page.goto(FORM_URL);
     await fillRequired(page);
@@ -304,6 +307,9 @@ test.describe('Returning agent and home screen', () => {
     await page.goto(FORM_URL);
     await fillRequired(page);
     await submit(page);
+    // agent info is saved after the response arrives -- wait for the result before leaving
+    await expect(page.locator('#result.show')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('norrai_oh_agent'))).toContain('Jane Smith');
     await page.goto(FORM_URL);
     await expect(page.locator('#agent_name')).toHaveValue('Jane Smith');
     await expect(page.locator('#agent_phone')).toHaveValue('5071234567');
@@ -311,14 +317,14 @@ test.describe('Returning agent and home screen', () => {
   });
 
   test('manifest start_url keeps the agent token so the home-screen app stays authorized', async ({ page }) => {
-    await page.goto(`${FORM_URL}?agent_token=${TOKEN}`);
+    await page.goto(`${FORM_URL_CLEAN}?agent_token=${TOKEN}`);
     const manifest = await page.evaluate(async () => {
       const href = document.querySelector('link[rel="manifest"]').href;
       return (await fetch(href)).json();
     });
     expect(manifest.display).toBe('standalone');
     expect(manifest.start_url).toContain(`agent_token=${TOKEN}`);
-    expect(manifest.start_url).toContain('/clients/weichert_open_house_setup.html');
+    expect(manifest.start_url).toContain('/clients/weichert_open_house_setup');
     expect(manifest.icons.length).toBeGreaterThan(0);
   });
 
