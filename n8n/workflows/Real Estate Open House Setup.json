@@ -10,7 +10,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "open-house-setup",
-        "options": {}
+        "options": {},
+        "responseMode": "responseNode"
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -241,6 +242,81 @@
       ],
       "id": "cv-250fbe0dcfaa49df",
       "name": "Client Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, signin_url: $('Build QR URL').first().json.signin_url, highlights: $('Build QR URL').first().json.highlights }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "ohs-respond-ok-0001",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: \"forbidden\" }) }}",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        176
+      ],
+      "id": "ohs-respond-403-0002",
+      "name": "Respond Forbidden (Token)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: \"unknown_client\" }) }}",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        448
+      ],
+      "id": "ohs-respond-403-0003",
+      "name": "Respond Forbidden (Client)"
     }
   ],
   "connections": {
@@ -260,6 +336,13 @@
         [
           {
             "node": "Build Token Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Forbidden (Token)",
             "type": "main",
             "index": 0
           }
@@ -341,7 +424,24 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Respond Forbidden (Client)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email QR to Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

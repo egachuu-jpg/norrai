@@ -25,3 +25,14 @@ playwright-report/
 __pycache__/
 *.pyc
 scripts/aeo-audit/out/
+
+# Private client data exports (contacts / transactions / labels) -- never commit
+/data/
+clients_out/
+*_UNVERIFIED.pdf
+# Client contracts, lead emails and contact dumps (scrubbed from history 2026-11) -- keep local
+/Norr AI - * Contract.pdf
+/Contract Generator — Norr AI.pdf
+docs/*.eml
+docs/clients/*_contacts_combined.csv
+docs/clients/*.csv
